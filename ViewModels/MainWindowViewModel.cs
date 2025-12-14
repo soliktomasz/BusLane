@@ -25,6 +25,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _showDeadLetter;
     [ObservableProperty] private string _newMessageBody = "";
     [ObservableProperty] private bool _showStatusPopup;
+    [ObservableProperty] private bool _showSendMessagePopup;
+    [ObservableProperty] private SendMessageViewModel? _sendMessageViewModel;
     
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
@@ -287,6 +289,14 @@ public partial class MainWindowViewModel : ViewModelBase
             
             StatusMessage = $"{Messages.Count} message(s)";
         }
+        catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx) when (sbEx.Reason == Azure.Messaging.ServiceBus.ServiceBusFailureReason.MessagingEntityNotFound)
+        {
+            StatusMessage = $"Error: Entity '{entityName}' not found. Ensure you have 'Azure Service Bus Data Receiver' role assigned at the namespace or entity level.";
+        }
+        catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx)
+        {
+            StatusMessage = $"Error: {sbEx.Reason} - {sbEx.Message}. If unauthorized, ensure you have 'Azure Service Bus Data Receiver' role assigned.";
+        }
         catch (Exception ex)
         {
             StatusMessage = $"Error: {ex.Message}";
@@ -305,31 +315,35 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task SendMessageAsync()
+    private void OpenSendMessagePopup()
     {
-        if (SelectedNamespace == null || string.IsNullOrWhiteSpace(NewMessageBody)) return;
+        if (SelectedNamespace == null) return;
         
         string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
         if (entityName == null) return;
         
-        IsLoading = true;
-        StatusMessage = "Sending message...";
-        
-        try
-        {
-            await _serviceBus.SendMessageAsync(SelectedNamespace.Endpoint, entityName, NewMessageBody, null);
-            NewMessageBody = "";
-            StatusMessage = "Message sent";
-            await LoadMessagesAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        SendMessageViewModel = new SendMessageViewModel(
+            _serviceBus,
+            SelectedNamespace.Endpoint,
+            entityName,
+            CloseSendMessagePopup,
+            msg => StatusMessage = msg
+        );
+        ShowSendMessagePopup = true;
+    }
+
+    private async void CloseSendMessagePopup()
+    {
+        ShowSendMessagePopup = false;
+        SendMessageViewModel = null;
+        await LoadMessagesAsync();
+    }
+
+    [RelayCommand]
+    private void CancelSendMessage()
+    {
+        ShowSendMessagePopup = false;
+        SendMessageViewModel = null;
     }
 
     [RelayCommand]
