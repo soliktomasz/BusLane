@@ -1,0 +1,213 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Apple-inspired minimal design system -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="#FAFAFA"/>
+        <Setter Property="FontFamily" Value="Inter"/>
+    </Style>
+    
+    <Style Selector="TextBlock.title">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#1D1D1F"/>
+    </Style>
+    
+    <Style Selector="TextBlock.subtitle">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#86868B"/>
+    </Style>
+    
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="#1D1D1F"/>
+    </Style>
+    
+    <Style Selector="TextBlock.heading">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#1D1D1F"/>
+    </Style>
+    
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="#007AFF"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#0066D6"/>
+    </Style>
+    
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="#F5F5F7"/>
+        <Setter Property="Foreground" Value="#1D1D1F"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E8E8ED"/>
+    </Style>
+    
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="#FF3B30"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E6352B"/>
+    </Style>
+    
+    <Style Selector="Button.small">
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+    
+    <Style Selector="Button.icon">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.icon:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E8E8ED"/>
+    </Style>
+    
+    <Style Selector="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    
+    <Style Selector="ListBoxItem">
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#F0F0F5"/>
+    </Style>
+    
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E8E8ED"/>
+    </Style>
+    
+    <Style Selector="TextBox">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderBrush" Value="#D2D2D7"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Background" Value="White"/>
+    </Style>
+    
+    <Style Selector="TextBox:focus">
+        <Setter Property="BorderBrush" Value="#007AFF"/>
+    </Style>
+    
+    <Style Selector="ComboBox">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderBrush" Value="#D2D2D7"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Background" Value="White"/>
+    </Style>
+    
+    <Style Selector="ToggleButton.pill">
+        <Setter Property="Background" Value="#F5F5F7"/>
+        <Setter Property="Foreground" Value="#86868B"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="ToggleButton.pill:checked /template/ ContentPresenter">
+        <Setter Property="Background" Value="#007AFF"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+    
+    <!-- Card style -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #10000000"/>
+    </Style>
+    
+    <!-- Sidebar -->
+    <Style Selector="Border.sidebar">
+        <Setter Property="Background" Value="#F5F5F7"/>
+        <Setter Property="Width" Value="260"/>
+    </Style>
+    
+    <!-- Badge -->
+    <Style Selector="Border.badge">
+        <Setter Property="Background" Value="#007AFF"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    
+    <Style Selector="Border.badge-warning">
+        <Setter Property="Background" Value="#FF9500"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    
+    <Style Selector="Border.badge-danger">
+        <Setter Property="Background" Value="#FF3B30"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    
+    <Style Selector="Border.badge-success">
+        <Setter Property="Background" Value="#34C759"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    
+    <Style Selector="Border.badge-muted">
+        <Setter Property="Background" Value="#E8E8ED"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    
+    <!-- Separator -->
+    <Style Selector="Separator">
+        <Setter Property="Background" Value="#E8E8ED"/>
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="0,12"/>
+    </Style>
+    
+    <!-- ScrollViewer -->
+    <Style Selector="ScrollViewer">
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+    </Style>
+    
+    <!-- Modal overlay -->
+    <Style Selector="Border.modal-overlay">
+        <Setter Property="Background" Value="#80000000"/>
+    </Style>
+    
+    <Style Selector="Border.modal">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="BoxShadow" Value="0 8 32 0 #30000000"/>
+        <Setter Property="MaxWidth" Value="600"/>
+        <Setter Property="MaxHeight" Value="500"/>
+    </Style>
+</Styles>
