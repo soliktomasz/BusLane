@@ -21,18 +21,44 @@
                 
                 <!-- Auth Section -->
                 <Border DockPanel.Dock="Top" Margin="12,0,12,16">
-                    <StackPanel>
+                    <StackPanel Spacing="8">
+                        <!-- Connection Library Button (always visible) -->
                         <Button Classes="primary" 
-                                Content="Sign in with Azure"
+                                Content="📚 My Connections"
+                                Command="{Binding OpenConnectionLibraryCommand}"
+                                HorizontalAlignment="Stretch"/>
+                        
+                        <!-- Azure Sign In (when not authenticated and not using connection string) -->
+                        <Button Classes="secondary" 
+                                Content="🔐 Sign in with Azure"
                                 Command="{Binding LoginCommand}"
                                 IsVisible="{Binding !IsAuthenticated}"
                                 HorizontalAlignment="Stretch"/>
                         
+                        <!-- Sign Out (when authenticated with Azure) -->
                         <Button Classes="secondary" 
                                 Content="Sign Out"
                                 Command="{Binding LogoutCommand}"
                                 IsVisible="{Binding IsAuthenticated}"
                                 HorizontalAlignment="Stretch"/>
+                        
+                        <!-- Disconnect from Connection String -->
+                        <Button Classes="secondary" 
+                                Content="Disconnect"
+                                Command="{Binding DisconnectConnectionCommand}"
+                                IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Active Connection Info (when using connection string) -->
+                <Border DockPanel.Dock="Top" Margin="12,0,12,16"
+                        IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Background="#1a1a1a" CornerRadius="8" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Connected to" Classes="subtitle" FontSize="11"/>
+                        <TextBlock Text="{Binding ActiveConnection.Name}" FontWeight="SemiBold" FontSize="14" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding ActiveConnection.EntityName}" Classes="subtitle" FontSize="11" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Border>
                 
@@ -88,17 +114,56 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <!-- Welcome / Not Authenticated -->
+            <!-- Welcome / Not Connected -->
             <StackPanel Grid.Row="1" 
                         VerticalAlignment="Center" 
                         HorizontalAlignment="Center"
-                        IsVisible="{Binding !IsAuthenticated}">
-                <TextBlock Text="Welcome" Classes="title" HorizontalAlignment="Center"/>
-                <TextBlock Text="Sign in with your Azure account to get started" 
-                           Classes="subtitle" HorizontalAlignment="Center" Margin="0,8"/>
+                        MaxWidth="500">
+                <!-- Show when not authenticated and no active connection -->
+                <StackPanel IsVisible="{Binding !IsAuthenticated}">
+                    <StackPanel IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNull}}">
+                        <TextBlock Text="Welcome" Classes="title" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Connect using a connection string or sign in with your Azure account" 
+                                   Classes="subtitle" HorizontalAlignment="Center" Margin="0,8,0,24" TextWrapping="Wrap" TextAlignment="Center"/>
+                        
+                        <!-- Quick Actions -->
+                        <StackPanel Spacing="12" HorizontalAlignment="Center">
+                            <Button Classes="primary" 
+                                    Content="📚 Open Connection Library"
+                                    Command="{Binding OpenConnectionLibraryCommand}"
+                                    HorizontalAlignment="Center"
+                                    Padding="24,12"/>
+                        </StackPanel>
+                        
+                        <!-- Saved Connections Preview -->
+                        <StackPanel Margin="0,32,0,0" IsVisible="{Binding SavedConnections.Count}">
+                            <TextBlock Text="Recent Connections" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <ItemsControl ItemsSource="{Binding SavedConnections}" MaxHeight="200">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:SavedConnection">
+                                        <Button Classes="secondary" 
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Margin="0,0,0,8"
+                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                                <TextBlock Text="📡" FontSize="16" VerticalAlignment="Center"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding EntityName}" Classes="subtitle" FontSize="11"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
             
-            <!-- Content when namespace selected -->
+            <!-- Content when namespace selected (Azure mode) -->
             <Grid Grid.Row="0" Grid.RowSpan="2" 
                   IsVisible="{Binding SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
                   RowDefinitions="Auto,*">
@@ -315,6 +380,224 @@
                                                                        Foreground="#86868B" FontSize="10"/>
                                                         </Border>
                                                     </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            
+            <!-- Content when connected via connection string -->
+            <Grid Grid.Row="0" Grid.RowSpan="2" 
+                  IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  RowDefinitions="Auto,*">
+                
+                <!-- Header -->
+                <Grid Grid.Row="0" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ActiveConnection.Name}" Classes="title"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                            <Border Background="#E8E8ED" CornerRadius="4" Padding="8,4">
+                                <TextBlock Text="{Binding ActiveConnection.TypeDisplayName}" FontSize="12" Foreground="#636366"/>
+                            </Border>
+                            <TextBlock Text="{Binding ActiveConnection.EntityName}" Classes="subtitle" VerticalAlignment="Center"
+                                       IsVisible="{Binding ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Text="{Binding ActiveConnection.Endpoint}" Classes="subtitle" VerticalAlignment="Center"
+                                       IsVisible="{Binding ActiveConnection.IsNamespaceLevel}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Button Classes="secondary small" Content="↻ Refresh" 
+                            Command="{Binding RefreshConnectionCommand}"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"/>
+                </Grid>
+                
+                <!-- Main content for connection string mode -->
+                <Grid Grid.Row="1" ColumnDefinitions="1.2*,1.8*">
+                    <!-- Entity Tree for connection string mode -->
+                    <Border Grid.Column="0" Classes="card" Margin="0,0,8,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="Entities" Classes="heading" Margin="0,0,0,12"/>
+                            <ScrollViewer>
+                                <StackPanel>
+                                    <!-- Queues Section -->
+                                    <Expander IsExpanded="True" Margin="0,0,0,8" IsVisible="{Binding HasQueues}">
+                                        <Expander.Header>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="📥" FontSize="14"/>
+                                                <TextBlock Text="Queues" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                                <Border Classes="badge-muted" Margin="4,0,0,0">
+                                                    <TextBlock Text="{Binding Queues.Count}" FontSize="10" Foreground="#86868B"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Expander.Header>
+                                        <ListBox ItemsSource="{Binding Queues}"
+                                                 SelectedItem="{Binding SelectedQueue}"
+                                                 Margin="8,4,0,0">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate x:DataType="models:QueueInfo">
+                                                    <Button Classes="icon"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectQueueForConnectionCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="13"/>
+                                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="6">
+                                                                <Border Classes="badge">
+                                                                    <TextBlock Text="{Binding ActiveMessageCount}" 
+                                                                               Foreground="White" FontSize="10" FontWeight="Medium"/>
+                                                                </Border>
+                                                                <Border Classes="badge-danger" IsVisible="{Binding DeadLetterCount}">
+                                                                    <TextBlock Text="{Binding DeadLetterCount, StringFormat='DLQ: {0}'}" 
+                                                                               Foreground="White" FontSize="10" FontWeight="Medium"/>
+                                                                </Border>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+                                    
+                                    <!-- Topics Section -->
+                                    <Expander IsExpanded="True" IsVisible="{Binding HasTopics}">
+                                        <Expander.Header>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="📤" FontSize="14"/>
+                                                <TextBlock Text="Topics" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                                <Border Classes="badge-muted" Margin="4,0,0,0">
+                                                    <TextBlock Text="{Binding Topics.Count}" FontSize="10" Foreground="#86868B"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Expander.Header>
+                                        <ItemsControl ItemsSource="{Binding Topics}" Margin="8,4,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:TopicInfo">
+                                                    <Expander Margin="0,2">
+                                                        <Expander.Header>
+                                                            <Button Classes="icon"
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectTopicForConnectionCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    HorizontalContentAlignment="Left"
+                                                                    Padding="4">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="13"/>
+                                                                    <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscription(s)'}" 
+                                                                               Classes="subtitle" FontSize="11" Margin="0,4,0,0"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Expander.Header>
+                                                        <!-- Topic Subscriptions -->
+                                                        <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TopicSubscriptions}"
+                                                                 SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSubscription}"
+                                                                 Margin="16,4,0,0"
+                                                                 IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                            <ListBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="models:SubscriptionInfo">
+                                                                    <Button Classes="icon"
+                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionForConnectionCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel>
+                                                                            <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="13"/>
+                                                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="6">
+                                                                                <Border Classes="badge">
+                                                                                    <TextBlock Text="{Binding ActiveMessageCount}" 
+                                                                                               Foreground="White" FontSize="10" FontWeight="Medium"/>
+                                                                                </Border>
+                                                                                <Border Classes="badge-danger" IsVisible="{Binding DeadLetterCount}">
+                                                                                    <TextBlock Text="{Binding DeadLetterCount, StringFormat='DLQ: {0}'}" 
+                                                                                               Foreground="White" FontSize="10" FontWeight="Medium"/>
+                                                                                </Border>
+                                                                            </StackPanel>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                </DataTemplate>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </Expander>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+                    
+                    <!-- Messages Panel (reusing same structure as Azure mode) -->
+                    <Border Grid.Column="1" Classes="card" Margin="8,0,0,0">
+                        <DockPanel>
+                            <!-- Header -->
+                            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
+                                    <ToggleButton Content="🪦 Dead Letter"
+                                                  IsChecked="{Binding ShowDeadLetter}"
+                                                  Command="{Binding ToggleDeadLetterCommand}"
+                                                  Classes="secondary small"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="secondary small" Content="↻ Refresh" Command="{Binding LoadMessagesCommand}"/>
+                                    <Button Classes="danger small" Content="🗑 Purge" Command="{Binding PurgeMessagesCommand}"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Send Message Button -->
+                            <Border DockPanel.Dock="Top" 
+                                    Margin="0,0,0,12"
+                                    IsVisible="{Binding SelectedQueue, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <Button Classes="primary small" 
+                                        Content="✉ Send Message"
+                                        Command="{Binding OpenSendMessagePopupCommand}"
+                                        HorizontalAlignment="Left"/>
+                            </Border>
+                            
+                            <Border DockPanel.Dock="Top" 
+                                    Margin="0,0,0,12"
+                                    IsVisible="{Binding SelectedTopic, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <Button Classes="primary small" 
+                                        Content="✉ Send Message"
+                                        Command="{Binding OpenSendMessagePopupCommand}"
+                                        HorizontalAlignment="Left"/>
+                            </Border>
+                            
+                            <!-- Messages List -->
+                            <ScrollViewer>
+                                <ListBox ItemsSource="{Binding Messages}"
+                                         SelectedItem="{Binding SelectedMessage}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:MessageInfo">
+                                            <Button Classes="icon"
+                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Margin="0,4">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0" 
+                                                                   Text="{Binding MessageId}" 
+                                                                   FontWeight="Medium" 
+                                                                   FontSize="12"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Grid.Column="1" 
+                                                                   Text="{Binding EnqueuedTime, StringFormat='{}{0:HH:mm:ss}'}" 
+                                                                   Classes="subtitle" 
+                                                                   FontSize="11"/>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Body}" 
+                                                               Classes="subtitle" 
+                                                               FontSize="11"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxLines="2"
+                                                               Margin="0,4,0,0"/>
                                                 </StackPanel>
                                             </Button>
                                         </DataTemplate>
@@ -729,6 +1012,163 @@
                                                         Content="🗑"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
                                                         CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Border>
+        
+        <!-- Connection Library Modal -->
+        <Border Grid.Column="0" 
+                Grid.ColumnSpan="2" 
+                Classes="modal-overlay"
+                IsVisible="{Binding ShowConnectionLibrary}">
+            <Border Classes="modal" 
+                    VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    MinWidth="600"
+                    MaxWidth="800"
+                    MaxHeight="600">
+                <DockPanel>
+                    <!-- Header -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                        <TextBlock Text="My Connections" Classes="heading"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button Classes="secondary small" 
+                                    Content="🗑 Clear All"
+                                    Command="{Binding ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
+                                    IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                            <Button Classes="primary small" 
+                                    Content="+ Add Connection"
+                                    Command="{Binding ConnectionLibraryViewModel.StartAddConnectionCommand}"
+                                    IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                            <Button Classes="icon" 
+                                    Content="✕" 
+                                    Command="{Binding CloseConnectionLibraryCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- Add/Edit Connection Form (shown when adding or editing) -->
+                    <Border DockPanel.Dock="Top" 
+                            IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}"
+                            Background="#F5F5F7" 
+                            CornerRadius="8" 
+                            Padding="16" 
+                            Margin="0,0,0,16">
+                        <StackPanel Spacing="12">
+                            <Panel>
+                                <TextBlock Text="Add New Connection" FontWeight="SemiBold" FontSize="14"
+                                           IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                <TextBlock Text="Edit Connection" FontWeight="SemiBold" FontSize="14"
+                                           IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                            </Panel>
+                            
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Connection Name" Classes="subtitle"/>
+                                <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionName}" 
+                                         Watermark="e.g., Production Service Bus"/>
+                            </StackPanel>
+                            
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Connection String" Classes="subtitle"/>
+                                <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionString}" 
+                                         Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
+                                         PasswordChar="●"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="False"
+                                         MaxHeight="100"/>
+                            </StackPanel>
+                            
+                            <!-- Detected info for namespace connections -->
+                            <Border Background="#E8F5E9" CornerRadius="4" Padding="8"
+                                    IsVisible="{Binding ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <TextBlock Text="{Binding ConnectionLibraryViewModel.DetectedInfo}" 
+                                           Foreground="#2E7D32"/>
+                            </Border>
+                            
+                            <TextBlock Text="{Binding ConnectionLibraryViewModel.ValidationMessage}" 
+                                       Foreground="#FF3B30"
+                                       IsVisible="{Binding ConnectionLibraryViewModel.ValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       TextWrapping="Wrap"/>
+                            
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                <Button Classes="secondary small" 
+                                        Content="Cancel" 
+                                        Command="{Binding ConnectionLibraryViewModel.CancelAddConnectionCommand}"/>
+                                <Button Classes="primary small" 
+                                        Content="Save Connection" 
+                                        Command="{Binding ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                        IsEnabled="{Binding ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
+                                        IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                <Button Classes="primary small" 
+                                        Content="Update Connection" 
+                                        Command="{Binding ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                        IsEnabled="{Binding ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
+                                        IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Saved Connections List -->
+                    <ScrollViewer>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="No saved connections yet" 
+                                       Classes="subtitle" 
+                                       HorizontalAlignment="Center"
+                                       Margin="0,40"
+                                       IsVisible="{Binding !ConnectionLibraryViewModel.SavedConnections.Count, FallbackValue=True}"/>
+                            
+                            <ItemsControl ItemsSource="{Binding ConnectionLibraryViewModel.SavedConnections}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:SavedConnection">
+                                        <Border Background="#F5F5F7" 
+                                                CornerRadius="8" 
+                                                Padding="16" 
+                                                Margin="0,0,0,4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="📡" 
+                                                           FontSize="24" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,12,0"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                                        <Border Background="#E8E8ED" CornerRadius="4" Padding="6,2">
+                                                            <TextBlock Text="{Binding TypeDisplayName}" FontSize="11" Foreground="#636366"/>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding EntityName}" Classes="subtitle" FontSize="12" VerticalAlignment="Center"
+                                                                   IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                        <TextBlock Text="{Binding Endpoint}" Classes="subtitle" FontSize="12" VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsNamespaceLevel}"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='Added: {0:d}'}" 
+                                                               Classes="subtitle" FontSize="11" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2" 
+                                                            Orientation="Horizontal" 
+                                                            Spacing="8"
+                                                            VerticalAlignment="Center">
+                                                    <Button Classes="primary small" 
+                                                            Content="Connect"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.SelectConnectionCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Classes="icon" 
+                                                            Content="✏️"
+                                                            ToolTip.Tip="Edit"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.StartEditConnectionCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Classes="icon" 
+                                                            Content="🗑"
+                                                            ToolTip.Tip="Delete"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.DeleteConnectionCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>

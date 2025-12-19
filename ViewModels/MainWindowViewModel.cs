@@ -6,10 +6,19 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+public enum ConnectionMode
+{
+    None,
+    AzureAccount,
+    ConnectionString
+}
+
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IAzureAuthService _auth;
     private readonly IServiceBusService _serviceBus;
+    private readonly IConnectionStorageService _connectionStorage;
+    private readonly IConnectionStringService _connectionStringService;
 
     [ObservableProperty] private bool _isAuthenticated;
     [ObservableProperty] private bool _isLoading;
@@ -28,37 +37,65 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _showSendMessagePopup;
     [ObservableProperty] private SendMessageViewModel? _sendMessageViewModel;
     
+    // Connection mode properties
+    [ObservableProperty] private ConnectionMode _currentMode = ConnectionMode.None;
+    [ObservableProperty] private bool _showConnectionLibrary;
+    [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
+    [ObservableProperty] private SavedConnection? _activeConnection;
+    
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
     public ObservableCollection<TopicInfo> Topics { get; } = [];
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
     public ObservableCollection<MessageInfo> Messages { get; } = [];
+    public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
+    
+    // Computed properties for visibility bindings (Count doesn't notify on collection changes)
+    public bool HasQueues => Queues.Count > 0;
+    public bool HasTopics => Topics.Count > 0;
 
-    public MainWindowViewModel(IAzureAuthService auth, IServiceBusService serviceBus)
+    public MainWindowViewModel(
+        IAzureAuthService auth, 
+        IServiceBusService serviceBus,
+        IConnectionStorageService connectionStorage,
+        IConnectionStringService connectionStringService)
     {
         _auth = auth;
         _serviceBus = serviceBus;
+        _connectionStorage = connectionStorage;
+        _connectionStringService = connectionStringService;
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
+        
+        // Subscribe to collection changes to notify visibility properties
+        Queues.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasQueues));
+        Topics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTopics));
     }
 
     public async Task InitializeAsync()
     {
-        // Try to restore previous session using cached credentials
         IsLoading = true;
-        StatusMessage = "Checking for saved credentials...";
+        StatusMessage = "Loading saved connections...";
         
         try
         {
+            // Load saved connections first
+            await LoadSavedConnectionsAsync();
+            
+            // Try to restore previous Azure session using cached credentials
+            StatusMessage = "Checking for saved Azure credentials...";
             if (await _auth.TrySilentLoginAsync())
             {
+                CurrentMode = ConnectionMode.AzureAccount;
                 StatusMessage = "Loading subscriptions...";
                 await LoadSubscriptionsAsync();
-                StatusMessage = "Restored previous session";
+                StatusMessage = "Restored previous Azure session";
             }
             else
             {
-                StatusMessage = "Please sign in to continue";
+                StatusMessage = SavedConnections.Count > 0 
+                    ? "Select a saved connection or sign in with Azure"
+                    : "Add a connection or sign in with Azure to get started";
             }
         }
         catch (Exception ex)
@@ -68,6 +105,16 @@ public partial class MainWindowViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task LoadSavedConnectionsAsync()
+    {
+        SavedConnections.Clear();
+        var connections = await _connectionStorage.GetConnectionsAsync();
+        foreach (var conn in connections.OrderByDescending(c => c.CreatedAt))
+        {
+            SavedConnections.Add(conn);
         }
     }
 
@@ -81,6 +128,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             if (await _auth.LoginAsync())
             {
+                CurrentMode = ConnectionMode.AzureAccount;
+                ActiveConnection = null;
                 StatusMessage = "Loading subscriptions...";
                 await LoadSubscriptionsAsync();
                 StatusMessage = "Ready";
@@ -104,6 +153,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task LogoutAsync()
     {
         await _auth.LogoutAsync();
+        CurrentMode = ConnectionMode.None;
+        ActiveConnection = null;
         Subscriptions.Clear();
         Namespaces.Clear();
         Queues.Clear();
@@ -116,7 +167,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedTopic = null;
         SelectedSubscription = null;
         SelectedMessage = null;
-        StatusMessage = "Signed out";
+        StatusMessage = "Disconnected";
     }
 
     private async Task LoadSubscriptionsAsync()
@@ -254,6 +305,13 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadMessagesAsync()
     {
+        // Route to appropriate method based on current mode
+        if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+        {
+            await LoadMessagesForConnectionAsync();
+            return;
+        }
+        
         if (SelectedNamespace == null) return;
         
         string? entityName = null;
@@ -317,18 +375,36 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSendMessagePopup()
     {
-        if (SelectedNamespace == null) return;
-        
         string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
         if (entityName == null) return;
         
-        SendMessageViewModel = new SendMessageViewModel(
-            _serviceBus,
-            SelectedNamespace.Endpoint,
-            entityName,
-            CloseSendMessagePopup,
-            msg => StatusMessage = msg
-        );
+        if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+        {
+            // Connection string mode
+            SendMessageViewModel = new SendMessageViewModel(
+                _connectionStringService,
+                ActiveConnection.ConnectionString,
+                entityName,
+                CloseSendMessagePopup,
+                msg => StatusMessage = msg
+            );
+        }
+        else if (SelectedNamespace != null)
+        {
+            // Azure account mode
+            SendMessageViewModel = new SendMessageViewModel(
+                _serviceBus,
+                SelectedNamespace.Endpoint,
+                entityName,
+                CloseSendMessagePopup,
+                msg => StatusMessage = msg
+            );
+        }
+        else
+        {
+            return;
+        }
+        
         ShowSendMessagePopup = true;
     }
 
@@ -349,8 +425,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task PurgeMessagesAsync()
     {
-        if (SelectedNamespace == null) return;
-        
         string? entityName = null;
         string? subscription = null;
         
@@ -371,9 +445,23 @@ public partial class MainWindowViewModel : ViewModelBase
         
         try
         {
-            await _serviceBus.PurgeMessagesAsync(
-                SelectedNamespace.Endpoint, entityName, subscription, ShowDeadLetter
-            );
+            if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+            {
+                await _connectionStringService.PurgeMessagesAsync(
+                    ActiveConnection.ConnectionString, entityName, subscription, ShowDeadLetter
+                );
+            }
+            else if (SelectedNamespace != null)
+            {
+                await _serviceBus.PurgeMessagesAsync(
+                    SelectedNamespace.Endpoint, entityName, subscription, ShowDeadLetter
+                );
+            }
+            else
+            {
+                return;
+            }
+            
             StatusMessage = "Purge complete";
             await LoadMessagesAsync();
         }
@@ -390,8 +478,14 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        if (SelectedNamespace != null)
+        if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+        {
+            await ConnectToSavedConnectionAsync(ActiveConnection);
+        }
+        else if (SelectedNamespace != null)
+        {
             await SelectNamespaceAsync(SelectedNamespace);
+        }
     }
 
     [RelayCommand]
@@ -417,4 +511,276 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ShowStatusPopup = false;
     }
+
+    // Connection Library Commands
+    [RelayCommand]
+    private async Task OpenConnectionLibraryAsync()
+    {
+        ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
+            _connectionStorage,
+            _connectionStringService,
+            OnConnectionSelected,
+            msg => StatusMessage = msg
+        );
+        await ConnectionLibraryViewModel.LoadConnectionsAsync();
+        ShowConnectionLibrary = true;
+    }
+
+    [RelayCommand]
+    private void CloseConnectionLibrary()
+    {
+        ShowConnectionLibrary = false;
+        ConnectionLibraryViewModel = null;
+    }
+
+    private async void OnConnectionSelected(SavedConnection connection)
+    {
+        ShowConnectionLibrary = false;
+        ConnectionLibraryViewModel = null;
+        await ConnectToSavedConnectionAsync(connection);
+    }
+
+    [RelayCommand]
+    private async Task ConnectToSavedConnectionAsync(SavedConnection connection)
+    {
+        IsLoading = true;
+        StatusMessage = $"Connecting to {connection.Name}...";
+
+        try
+        {
+            // Clear any previous state
+            Queues.Clear();
+            Topics.Clear();
+            TopicSubscriptions.Clear();
+            Messages.Clear();
+            Subscriptions.Clear();
+            Namespaces.Clear();
+            SelectedNamespace = null;
+            SelectedQueue = null;
+            SelectedTopic = null;
+            SelectedSubscription = null;
+            SelectedMessage = null;
+
+            CurrentMode = ConnectionMode.ConnectionString;
+            ActiveConnection = connection;
+
+            // Load entity info based on connection type
+            if (connection.Type == ConnectionType.Namespace)
+            {
+                // Namespace-level connection - load all queues and topics
+                StatusMessage = "Loading queues and topics...";
+                
+                var queues = await _connectionStringService.GetQueuesFromConnectionAsync(connection.ConnectionString);
+                foreach (var queue in queues)
+                {
+                    Queues.Add(queue);
+                }
+                
+                var topics = await _connectionStringService.GetTopicsFromConnectionAsync(connection.ConnectionString);
+                foreach (var topic in topics)
+                {
+                    Topics.Add(topic);
+                }
+                
+                StatusMessage = $"Connected to {connection.Name} - {Queues.Count} queue(s), {Topics.Count} topic(s)";
+            }
+            else if (connection.Type == ConnectionType.Queue)
+            {
+                var queueInfo = await _connectionStringService.GetQueueInfoAsync(
+                    connection.ConnectionString, connection.EntityName!);
+                
+                if (queueInfo != null)
+                {
+                    Queues.Add(queueInfo);
+                    SelectedQueue = queueInfo;
+                    SelectedEntity = queueInfo;
+                    await LoadMessagesForConnectionAsync();
+                }
+                else
+                {
+                    StatusMessage = $"Could not find queue '{connection.EntityName}'";
+                }
+            }
+            else if (connection.Type == ConnectionType.Topic)
+            {
+                var topicInfo = await _connectionStringService.GetTopicInfoAsync(
+                    connection.ConnectionString, connection.EntityName!);
+                
+                if (topicInfo != null)
+                {
+                    Topics.Add(topicInfo);
+                    SelectedTopic = topicInfo;
+                    SelectedEntity = topicInfo;
+                    
+                    // Load subscriptions for the topic
+                    var subs = await _connectionStringService.GetTopicSubscriptionsAsync(
+                        connection.ConnectionString, connection.EntityName!);
+                    foreach (var sub in subs)
+                    {
+                        TopicSubscriptions.Add(sub);
+                    }
+                    
+                    StatusMessage = $"Connected to {connection.Name}";
+                }
+                else
+                {
+                    StatusMessage = $"Could not find topic '{connection.EntityName}'";
+                }
+            }
+
+            if (connection.Type != ConnectionType.Namespace)
+            {
+                StatusMessage = $"Connected to {connection.Name}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            CurrentMode = ConnectionMode.None;
+            ActiveConnection = null;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DisconnectConnectionAsync()
+    {
+        CurrentMode = ConnectionMode.None;
+        ActiveConnection = null;
+        Queues.Clear();
+        Topics.Clear();
+        TopicSubscriptions.Clear();
+        Messages.Clear();
+        SelectedQueue = null;
+        SelectedTopic = null;
+        SelectedSubscription = null;
+        SelectedMessage = null;
+        SelectedEntity = null;
+        await LoadSavedConnectionsAsync();
+        StatusMessage = "Disconnected";
+    }
+
+    private async Task LoadMessagesForConnectionAsync()
+    {
+        if (ActiveConnection == null) return;
+
+        string? entityName = null;
+        string? subscription = null;
+        bool requiresSession = false;
+
+        if (SelectedQueue != null)
+        {
+            entityName = SelectedQueue.Name;
+            requiresSession = SelectedQueue.RequiresSession;
+        }
+        else if (SelectedSubscription != null)
+        {
+            entityName = SelectedSubscription.TopicName;
+            subscription = SelectedSubscription.Name;
+            requiresSession = SelectedSubscription.RequiresSession;
+        }
+
+        if (entityName == null) return;
+
+        IsLoading = true;
+        StatusMessage = "Loading messages...";
+
+        try
+        {
+            Messages.Clear();
+            var msgs = await _connectionStringService.PeekMessagesAsync(
+                ActiveConnection.ConnectionString, entityName, subscription, 100, ShowDeadLetter, requiresSession
+            );
+
+            foreach (var m in msgs)
+                Messages.Add(m);
+
+            StatusMessage = $"{Messages.Count} message(s)";
+        }
+        catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx)
+        {
+            StatusMessage = $"Error: {sbEx.Reason} - {sbEx.Message}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SelectSubscriptionForConnectionAsync(SubscriptionInfo sub)
+    {
+        if (CurrentMode != ConnectionMode.ConnectionString) return;
+        
+        SelectedSubscription = sub;
+        SelectedQueue = null;
+        SelectedEntity = sub;
+        await LoadMessagesForConnectionAsync();
+    }
+
+    [RelayCommand]
+    private async Task SelectQueueForConnectionAsync(QueueInfo queue)
+    {
+        if (CurrentMode != ConnectionMode.ConnectionString || ActiveConnection == null) return;
+        
+        SelectedQueue = queue;
+        SelectedTopic = null;
+        SelectedSubscription = null;
+        SelectedEntity = queue;
+        TopicSubscriptions.Clear();
+        await LoadMessagesForConnectionAsync();
+    }
+
+    [RelayCommand]
+    private async Task SelectTopicForConnectionAsync(TopicInfo topic)
+    {
+        if (CurrentMode != ConnectionMode.ConnectionString || ActiveConnection == null) return;
+        
+        SelectedTopic = topic;
+        SelectedQueue = null;
+        SelectedSubscription = null;
+        SelectedEntity = topic;
+        Messages.Clear();
+        TopicSubscriptions.Clear();
+        
+        IsLoading = true;
+        StatusMessage = $"Loading subscriptions for {topic.Name}...";
+        
+        try
+        {
+            var subs = await _connectionStringService.GetTopicSubscriptionsAsync(
+                ActiveConnection.ConnectionString, topic.Name);
+            foreach (var sub in subs)
+            {
+                TopicSubscriptions.Add(sub);
+            }
+            
+            StatusMessage = $"{TopicSubscriptions.Count} subscription(s)";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RefreshConnectionAsync()
+    {
+        if (ActiveConnection != null)
+        {
+            await ConnectToSavedConnectionAsync(ActiveConnection);
+        }
+    }
 }
+

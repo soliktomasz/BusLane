@@ -25,6 +25,8 @@ class Program
     {
         services.AddSingleton<IAzureAuthService, AzureAuthService>();
         services.AddSingleton<IServiceBusService, ServiceBusService>();
+        services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
+        services.AddSingleton<IConnectionStringService, ConnectionStringService>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<NamespaceViewModel>();

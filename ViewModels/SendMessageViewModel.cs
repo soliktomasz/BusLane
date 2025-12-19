@@ -9,9 +9,11 @@ namespace BusLane.ViewModels;
 
 public partial class SendMessageViewModel : ViewModelBase
 {
-    private readonly IServiceBusService _serviceBus;
+    private readonly IServiceBusService? _serviceBus;
+    private readonly IConnectionStringService? _connectionStringService;
     private readonly string _endpoint;
     private readonly string _entityName;
+    private readonly string? _connectionString;
     private readonly Action _onClose;
     private readonly Action<string> _onStatusUpdate;
     
@@ -45,6 +47,7 @@ public partial class SendMessageViewModel : ViewModelBase
     
     public string EntityName => _entityName;
 
+    // Constructor for Azure account mode
     public SendMessageViewModel(
         IServiceBusService serviceBus, 
         string endpoint, 
@@ -53,8 +56,29 @@ public partial class SendMessageViewModel : ViewModelBase
         Action<string> onStatusUpdate)
     {
         _serviceBus = serviceBus;
+        _connectionStringService = null;
         _endpoint = endpoint;
         _entityName = entityName;
+        _connectionString = null;
+        _onClose = onClose;
+        _onStatusUpdate = onStatusUpdate;
+        
+        LoadSavedMessages();
+    }
+
+    // Constructor for connection string mode
+    public SendMessageViewModel(
+        IConnectionStringService connectionStringService, 
+        string connectionString, 
+        string entityName,
+        Action onClose,
+        Action<string> onStatusUpdate)
+    {
+        _serviceBus = null;
+        _connectionStringService = connectionStringService;
+        _endpoint = "";
+        _entityName = entityName;
+        _connectionString = connectionString;
         _onClose = onClose;
         _onStatusUpdate = onStatusUpdate;
         
@@ -109,23 +133,48 @@ public partial class SendMessageViewModel : ViewModelBase
                 properties[prop.Key] = prop.Value ?? "";
             }
 
-            await _serviceBus.SendMessageAsync(
-                _endpoint,
-                _entityName,
-                Body,
-                properties,
-                ContentType,
-                CorrelationId,
-                MessageId,
-                SessionId,
-                Subject,
-                To,
-                ReplyTo,
-                ReplyToSessionId,
-                PartitionKey,
-                timeToLive,
-                scheduledTime
-            );
+            if (_connectionStringService != null && _connectionString != null)
+            {
+                // Connection string mode
+                await _connectionStringService.SendMessageAsync(
+                    _connectionString,
+                    _entityName,
+                    Body,
+                    properties,
+                    ContentType,
+                    CorrelationId,
+                    MessageId,
+                    SessionId,
+                    Subject,
+                    To,
+                    ReplyTo,
+                    ReplyToSessionId,
+                    PartitionKey,
+                    timeToLive,
+                    scheduledTime
+                );
+            }
+            else if (_serviceBus != null)
+            {
+                // Azure account mode
+                await _serviceBus.SendMessageAsync(
+                    _endpoint,
+                    _entityName,
+                    Body,
+                    properties,
+                    ContentType,
+                    CorrelationId,
+                    MessageId,
+                    SessionId,
+                    Subject,
+                    To,
+                    ReplyTo,
+                    ReplyToSessionId,
+                    PartitionKey,
+                    timeToLive,
+                    scheduledTime
+                );
+            }
 
             _onStatusUpdate("Message sent successfully");
             _onClose();
