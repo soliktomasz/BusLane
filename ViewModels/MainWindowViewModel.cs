@@ -21,7 +21,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IConnectionStringService _connectionStringService;
     private readonly IVersionService _versionService;
 
-    [ObservableProperty] private bool _isAuthenticated;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
+    private bool _isAuthenticated;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _selectedSubscriptionId;
@@ -44,7 +46,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private SendMessageViewModel? _sendMessageViewModel;
     
     // Connection mode properties
-    [ObservableProperty] private ConnectionMode _currentMode = ConnectionMode.None;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
+    private ConnectionMode _currentMode = ConnectionMode.None;
     [ObservableProperty] private bool _showConnectionLibrary;
     [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
     [ObservableProperty] private SavedConnection? _activeConnection;
@@ -64,6 +68,9 @@ public partial class MainWindowViewModel : ViewModelBase
     // Computed properties for visibility bindings (Count doesn't notify on collection changes)
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
+    
+    // Show Azure sections only when authenticated AND in Azure account mode (not using saved connection)
+    public bool ShowAzureSections => IsAuthenticated && CurrentMode == ConnectionMode.AzureAccount;
     
     // Total dead letter count across all queues and topic subscriptions
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
