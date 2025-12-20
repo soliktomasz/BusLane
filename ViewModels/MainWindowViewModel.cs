@@ -30,7 +30,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private QueueInfo? _selectedQueue;
     [ObservableProperty] private TopicInfo? _selectedTopic;
     [ObservableProperty] private SubscriptionInfo? _selectedSubscription;
-    [ObservableProperty] private MessageInfo? _selectedMessage;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(FormattedMessageBody))]
+    [NotifyPropertyChangedFor(nameof(IsMessageBodyJson))]
+    [NotifyPropertyChangedFor(nameof(FormattedApplicationProperties))]
+    private MessageInfo? _selectedMessage;
     [ObservableProperty] private bool _showDeadLetter;
     [ObservableProperty] private string _newMessageBody = "";
     [ObservableProperty] private bool _showStatusPopup;
@@ -54,6 +58,64 @@ public partial class MainWindowViewModel : ViewModelBase
     // Computed properties for visibility bindings (Count doesn't notify on collection changes)
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
+    
+    // Sorting properties
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(SortButtonText))]
+    private bool _sortDescending = true; // Default: newest first
+    
+    public string SortButtonText => SortDescending ? "↓ Newest" : "↑ Oldest";
+    
+    // Computed properties for message body formatting
+    public bool IsMessageBodyJson
+    {
+        get
+        {
+            if (SelectedMessage?.Body == null) return false;
+            var trimmed = SelectedMessage.Body.Trim();
+            return (trimmed.StartsWith("{") && trimmed.EndsWith("}")) ||
+                   (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
+        }
+    }
+    
+    public string? FormattedMessageBody
+    {
+        get
+        {
+            if (SelectedMessage?.Body == null) return null;
+            if (!IsMessageBodyJson) return SelectedMessage.Body;
+            
+            try
+            {
+                var jsonDoc = System.Text.Json.JsonDocument.Parse(SelectedMessage.Body);
+                return System.Text.Json.JsonSerializer.Serialize(jsonDoc.RootElement, 
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            catch
+            {
+                return SelectedMessage.Body;
+            }
+        }
+    }
+    
+    public string? FormattedApplicationProperties
+    {
+        get
+        {
+            if (SelectedMessage?.Properties == null || SelectedMessage.Properties.Count == 0) 
+                return null;
+            
+            try
+            {
+                return System.Text.Json.JsonSerializer.Serialize(SelectedMessage.Properties, 
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            catch
+            {
+                return string.Join("\n", SelectedMessage.Properties.Select(p => $"{p.Key}: {p.Value}"));
+            }
+        }
+    }
 
     public MainWindowViewModel(
         IAzureAuthService auth, 
@@ -342,7 +404,12 @@ public partial class MainWindowViewModel : ViewModelBase
                 SelectedNamespace.Endpoint, entityName, subscription, 100, ShowDeadLetter, requiresSession
             );
             
-            foreach (var m in msgs)
+            // Apply sorting
+            var sortedMsgs = SortDescending 
+                ? msgs.OrderByDescending(m => m.EnqueuedTime)
+                : msgs.OrderBy(m => m.EnqueuedTime);
+            
+            foreach (var m in sortedMsgs)
                 Messages.Add(m);
             
             StatusMessage = $"{Messages.Count} message(s)";
@@ -498,6 +565,26 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ClearSelectedMessage()
     {
         SelectedMessage = null;
+    }
+    
+    [RelayCommand]
+    private void ToggleSortOrder()
+    {
+        SortDescending = !SortDescending;
+        ApplySorting();
+    }
+    
+    private void ApplySorting()
+    {
+        if (Messages.Count == 0) return;
+        
+        var sorted = SortDescending 
+            ? Messages.OrderByDescending(m => m.EnqueuedTime).ToList()
+            : Messages.OrderBy(m => m.EnqueuedTime).ToList();
+        
+        Messages.Clear();
+        foreach (var m in sorted)
+            Messages.Add(m);
     }
 
     [RelayCommand]
@@ -695,7 +782,12 @@ public partial class MainWindowViewModel : ViewModelBase
                 ActiveConnection.ConnectionString, entityName, subscription, 100, ShowDeadLetter, requiresSession
             );
 
-            foreach (var m in msgs)
+            // Apply sorting
+            var sortedMsgs = SortDescending 
+                ? msgs.OrderByDescending(m => m.EnqueuedTime)
+                : msgs.OrderBy(m => m.EnqueuedTime);
+
+            foreach (var m in sortedMsgs)
                 Messages.Add(m);
 
             StatusMessage = $"{Messages.Count} message(s)";

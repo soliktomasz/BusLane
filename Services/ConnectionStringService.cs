@@ -286,7 +286,19 @@ public class ConnectionStringService : IConnectionStringService
             m.SequenceNumber,
             m.DeliveryCount,
             m.SessionId,
-            m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value)
+            m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
+            m.Subject,
+            m.To,
+            m.ReplyTo,
+            m.ReplyToSessionId,
+            m.PartitionKey,
+            m.TimeToLive,
+            m.ExpiresAt,
+            m.LockToken,
+            m.LockedUntil,
+            m.DeadLetterSource,
+            m.DeadLetterReason,
+            m.DeadLetterErrorDescription
         ));
     }
 
