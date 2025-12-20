@@ -47,8 +47,8 @@
                             HorizontalContentAlignment="Center"/>
                 </StackPanel>
                 
-                <!-- Active Connection Card (when using connection string) -->
-                <Border DockPanel.Dock="Top" Margin="12,0,12,12"
+                <!-- Active Connection Card (when using connection string) - Docked to bottom -->
+                <Border DockPanel.Dock="Bottom" Margin="12,12,12,16"
                         IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
                         Classes="card" Padding="0">
                     <StackPanel>
