@@ -8,6 +8,7 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private readonly Action _onClose;
     private string _originalTheme = "Light";
+    private bool _isLoading;
 
     [ObservableProperty] private bool _confirmBeforeDelete = true;
     [ObservableProperty] private bool _confirmBeforePurge = true;
@@ -31,23 +32,35 @@ public partial class SettingsViewModel : ViewModelBase
 
     partial void OnThemeChanged(string value)
     {
+        // Skip theme preview during initial load
+        if (_isLoading)
+            return;
+            
         // Apply theme immediately as preview when user changes it
         App.Instance?.ApplyTheme(value);
     }
 
     private void LoadSettings()
     {
-        // Load settings from preferences/storage
-        ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
-        ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
-        AutoRefreshMessages = Preferences.AutoRefreshMessages;
-        AutoRefreshIntervalSeconds = Preferences.AutoRefreshIntervalSeconds;
-        DefaultMessageCount = Preferences.DefaultMessageCount;
-        ShowDeadLetterBadges = Preferences.ShowDeadLetterBadges;
-        EnableMessagePreview = Preferences.EnableMessagePreview;
-        
-        // Set theme field directly to avoid triggering OnThemeChanged during load
-        _theme = Preferences.Theme;
+        _isLoading = true;
+        try
+        {
+            // Load settings from preferences/storage
+            ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
+            ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
+            AutoRefreshMessages = Preferences.AutoRefreshMessages;
+            AutoRefreshIntervalSeconds = Preferences.AutoRefreshIntervalSeconds;
+            DefaultMessageCount = Preferences.DefaultMessageCount;
+            ShowDeadLetterBadges = Preferences.ShowDeadLetterBadges;
+            EnableMessagePreview = Preferences.EnableMessagePreview;
+            
+            // Use the generated property instead of the field
+            Theme = Preferences.Theme;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     [RelayCommand]
