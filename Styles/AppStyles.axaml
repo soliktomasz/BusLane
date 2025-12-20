@@ -1,91 +1,162 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    <!-- Apple-inspired minimal design system -->
+    <!-- Microsoft Fluent Design 2 System -->
+    <!-- Colors based on Fluent 2 semantic tokens -->
+    
     <Style Selector="Window">
-        <Setter Property="Background" Value="#FAFAFA"/>
-        <Setter Property="FontFamily" Value="Inter"/>
+        <Setter Property="Background" Value="#F3F3F3"/>
+        <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, San Francisco, Helvetica Neue, Arial"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+    </Style>
+    
+    <!-- Typography - Fluent 2 Type Ramp -->
+    <Style Selector="TextBlock.display">
+        <Setter Property="FontSize" Value="40"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="LineHeight" Value="52"/>
     </Style>
     
     <Style Selector="TextBlock.title">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="LineHeight" Value="32"/>
+    </Style>
+    
+    <Style Selector="TextBlock.title-large">
         <Setter Property="FontSize" Value="28"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="#1D1D1F"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
     </Style>
     
     <Style Selector="TextBlock.subtitle">
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Foreground" Value="#86868B"/>
+        <Setter Property="Foreground" Value="#616161"/>
+        <Setter Property="LineHeight" Value="18"/>
     </Style>
     
     <Style Selector="TextBlock.body">
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Foreground" Value="#1D1D1F"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="LineHeight" Value="20"/>
+    </Style>
+    
+    <Style Selector="TextBlock.body-strong">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+    </Style>
+    
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="#616161"/>
+        <Setter Property="LineHeight" Value="16"/>
     </Style>
     
     <Style Selector="TextBlock.heading">
         <Setter Property="FontSize" Value="16"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="#1D1D1F"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="LineHeight" Value="22"/>
     </Style>
     
+    <!-- Buttons - Fluent 2 -->
     <Style Selector="Button.primary">
-        <Setter Property="Background" Value="#007AFF"/>
+        <Setter Property="Background" Value="#0F6CBD"/>
         <Setter Property="Foreground" Value="White"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,10"/>
-        <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#0F6CBD"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#0066D6"/>
+        <Setter Property="Background" Value="#115EA3"/>
+        <Setter Property="BorderBrush" Value="#115EA3"/>
+    </Style>
+    
+    <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#0C4A7E"/>
+        <Setter Property="BorderBrush" Value="#0C4A7E"/>
     </Style>
     
     <Style Selector="Button.secondary">
-        <Setter Property="Background" Value="#F5F5F7"/>
-        <Setter Property="Foreground" Value="#1D1D1F"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,10"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontWeight" Value="Regular"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#D1D1D1"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
     <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#E8E8ED"/>
+        <Setter Property="Background" Value="#F5F5F5"/>
+        <Setter Property="BorderBrush" Value="#C7C7C7"/>
     </Style>
     
-    <Style Selector="Button.danger">
-        <Setter Property="Background" Value="#FF3B30"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,10"/>
+    <Style Selector="Button.secondary:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E0E0E0"/>
+        <Setter Property="BorderBrush" Value="#B3B3B3"/>
+    </Style>
+    
+    <Style Selector="Button.subtle">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
+    <Style Selector="Button.subtle:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#0A000000"/>
+    </Style>
+    
+    <Style Selector="Button.subtle:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#12000000"/>
+    </Style>
+    
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="#C42B1C"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#C42B1C"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
     <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#E6352B"/>
+        <Setter Property="Background" Value="#A32014"/>
+        <Setter Property="BorderBrush" Value="#A32014"/>
     </Style>
     
     <Style Selector="Button.danger-outline">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="#FF6B6B"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="Foreground" Value="#C42B1C"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="#FF6B6B"/>
+        <Setter Property="BorderBrush" Value="#C42B1C"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
     <Style Selector="Button.danger-outline:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#FF3B30"/>
+        <Setter Property="Background" Value="#C42B1C"/>
         <Setter Property="Foreground" Value="White"/>
     </Style>
     
     <Style Selector="Button.small">
-        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontSize" Value="12"/>
     </Style>
     
@@ -93,14 +164,21 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="8"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="32"/>
+        <Setter Property="MinHeight" Value="32"/>
     </Style>
     
     <Style Selector="Button.icon:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#E8E8ED"/>
+        <Setter Property="Background" Value="#0A000000"/>
     </Style>
     
+    <Style Selector="Button.icon:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#12000000"/>
+    </Style>
+    
+    <!-- ListBox - Fluent 2 -->
     <Style Selector="ListBox">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -108,102 +186,146 @@
     
     <Style Selector="ListBoxItem">
         <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Margin" Value="2"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
     <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#F0F0F5"/>
+        <Setter Property="Background" Value="#0A000000"/>
     </Style>
     
     <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-        <Setter Property="Background" Value="#E8E8ED"/>
+        <Setter Property="Background" Value="#E6F2FB"/>
     </Style>
     
+    <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#D4E9F7"/>
+    </Style>
+    
+    <!-- Input Controls - Fluent 2 -->
     <Style Selector="TextBox">
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="BorderBrush" Value="#D2D2D7"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderBrush" Value="#D1D1D1"/>
+        <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     
     <Style Selector="TextBox:focus">
-        <Setter Property="BorderBrush" Value="#007AFF"/>
+        <Setter Property="BorderBrush" Value="#0F6CBD"/>
+        <Setter Property="BorderThickness" Value="1,1,1,2"/>
+    </Style>
+    
+    <Style Selector="TextBox:pointerover">
+        <Setter Property="BorderBrush" Value="#1A1A1A"/>
     </Style>
     
     <Style Selector="ComboBox">
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="BorderBrush" Value="#D2D2D7"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderBrush" Value="#D1D1D1"/>
+        <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     
+    <Style Selector="ComboBox:pointerover">
+        <Setter Property="BorderBrush" Value="#1A1A1A"/>
+    </Style>
+    
+    <!-- Toggle/Pill Button - Fluent 2 style -->
     <Style Selector="ToggleButton.pill">
-        <Setter Property="Background" Value="#F5F5F7"/>
-        <Setter Property="Foreground" Value="#86868B"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#616161"/>
+        <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="12,6"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#D1D1D1"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
+    <Style Selector="ToggleButton.pill:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#0A000000"/>
+    </Style>
+    
     <Style Selector="ToggleButton.pill:checked /template/ ContentPresenter">
-        <Setter Property="Background" Value="#007AFF"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="Foreground" Value="#0F6CBD"/>
+        <Setter Property="BorderBrush" Value="#0F6CBD"/>
     </Style>
     
-    <!-- Card style -->
+    <!-- Card - Fluent 2 with elevation -->
     <Style Selector="Border.card">
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="16"/>
-        <Setter Property="BoxShadow" Value="0 2 8 0 #10000000"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BoxShadow" Value="0 2 4 0 #0F000000"/>
     </Style>
     
-    <!-- Sidebar -->
+    <Style Selector="Border.card-elevated">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BoxShadow" Value="0 8 16 0 #1A000000"/>
+    </Style>
+    
+    <!-- Navigation Pane / Sidebar - Fluent 2 -->
     <Style Selector="Border.sidebar">
-        <Setter Property="Background" Value="#F5F5F7"/>
-        <Setter Property="Width" Value="260"/>
+        <Setter Property="Background" Value="#FAFAFA"/>
+        <Setter Property="Width" Value="280"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BorderThickness" Value="0,0,1,0"/>
     </Style>
     
-    <!-- Badge -->
+    <!-- Badges - Fluent 2 with semantic colors -->
     <Style Selector="Border.badge">
-        <Setter Property="Background" Value="#007AFF"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Background" Value="#0F6CBD"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
     </Style>
     
     <Style Selector="Border.badge-warning">
-        <Setter Property="Background" Value="#FF9500"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Background" Value="#F7630C"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
     </Style>
     
     <Style Selector="Border.badge-danger">
-        <Setter Property="Background" Value="#FF3B30"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Background" Value="#C42B1C"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
     </Style>
     
     <Style Selector="Border.badge-success">
-        <Setter Property="Background" Value="#34C759"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Background" Value="#0E7A0D"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
     </Style>
     
     <Style Selector="Border.badge-muted">
-        <Setter Property="Background" Value="#E8E8ED"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Background" Value="#E0E0E0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
     </Style>
     
-    <!-- Separator -->
+    <Style Selector="Border.badge-info">
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
+    </Style>
+
+    <!-- Separator - Fluent 2 -->
     <Style Selector="Separator">
-        <Setter Property="Background" Value="#E8E8ED"/>
+        <Setter Property="Background" Value="#E0E0E0"/>
         <Setter Property="Height" Value="1"/>
-        <Setter Property="Margin" Value="0,12"/>
+        <Setter Property="Margin" Value="0,8"/>
     </Style>
     
     <!-- ScrollViewer -->
@@ -212,17 +334,59 @@
         <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
     </Style>
     
-    <!-- Modal overlay -->
+    <!-- Expander - Fluent 2 style -->
+    <Style Selector="Expander">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    
+    <!-- Modal overlay - Fluent 2 with blur hint -->
     <Style Selector="Border.modal-overlay">
-        <Setter Property="Background" Value="#80000000"/>
+        <Setter Property="Background" Value="#66000000"/>
     </Style>
     
     <Style Selector="Border.modal">
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="24"/>
-        <Setter Property="BoxShadow" Value="0 8 32 0 #30000000"/>
-        <Setter Property="MaxWidth" Value="600"/>
-        <Setter Property="MaxHeight" Value="500"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BoxShadow" Value="0 16 32 0 #26000000"/>
+        <Setter Property="MaxWidth" Value="640"/>
+        <Setter Property="MaxHeight" Value="560"/>
+    </Style>
+    
+    <!-- Progress - Fluent 2 accent color -->
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="#0F6CBD"/>
+        <Setter Property="Background" Value="#E0E0E0"/>
+        <Setter Property="CornerRadius" Value="2"/>
+    </Style>
+    
+    <!-- Info/Surface backgrounds - Fluent 2 -->
+    <Style Selector="Border.surface-subtle">
+        <Setter Property="Background" Value="#FAFAFA"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <Style Selector="Border.surface-brand">
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <Style Selector="Border.surface-danger">
+        <Setter Property="Background" Value="#FCE9E8"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <Style Selector="Border.surface-success">
+        <Setter Property="Background" Value="#E6F4E6"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <Style Selector="Border.surface-warning">
+        <Setter Property="Background" Value="#FDF4E5"/>
+        <Setter Property="CornerRadius" Value="4"/>
     </Style>
 </Styles>
