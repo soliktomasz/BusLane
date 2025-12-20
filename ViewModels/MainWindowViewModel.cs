@@ -368,7 +368,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task ToggleDeadLetterAsync()
     {
-        ShowDeadLetter = !ShowDeadLetter;
+        ShowDeadLetter = ShowDeadLetter;
         await LoadMessagesAsync();
     }
 
