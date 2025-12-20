@@ -257,21 +257,14 @@ public class ConnectionStringService : IConnectionStringService
         }
         else
         {
-            ServiceBusReceiver receiver;
-            if (subscription != null)
-            {
-                var options = deadLetter ? new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter } : null;
-                receiver = options != null
-                    ? client.CreateReceiver(entityName, subscription, options)
-                    : client.CreateReceiver(entityName, subscription);
-            }
-            else
-            {
-                var options = deadLetter ? new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter } : null;
-                receiver = options != null
-                    ? client.CreateReceiver(entityName, options)
-                    : client.CreateReceiver(entityName);
-            }
+            // Use the proper overload for subscriptions vs queues with proper disposal
+            await using ServiceBusReceiver receiver = subscription != null
+                ? (deadLetter 
+                    ? client.CreateReceiver(entityName, subscription, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
+                    : client.CreateReceiver(entityName, subscription))
+                : (deadLetter 
+                    ? client.CreateReceiver(entityName, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
+                    : client.CreateReceiver(entityName));
 
             messages = await receiver.PeekMessagesAsync(count, cancellationToken: ct);
         }
@@ -321,7 +314,7 @@ public class ConnectionStringService : IConnectionStringService
         CancellationToken ct = default)
     {
         await using var client = new ServiceBusClient(connectionString);
-        var sender = client.CreateSender(entityName);
+        await using var sender = client.CreateSender(entityName);
 
         var msg = new ServiceBusMessage(body);
 
@@ -374,7 +367,7 @@ public class ConnectionStringService : IConnectionStringService
         if (deadLetter)
             options.SubQueue = SubQueue.DeadLetter;
 
-        ServiceBusReceiver receiver = subscription != null
+        await using ServiceBusReceiver receiver = subscription != null
             ? client.CreateReceiver(entityName, subscription, options)
             : client.CreateReceiver(entityName, options);
 

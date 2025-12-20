@@ -1,7 +1,4 @@
 using Azure.Messaging.ServiceBus;
-using Azure.Messaging.ServiceBus.Administration;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.ServiceBus;
 using BusLane.Models;
 
@@ -124,13 +121,25 @@ public class ServiceBusService : IServiceBusService
         string endpoint, string queueOrTopic, string? subscription, 
         int count, bool deadLetter, bool requiresSession = false, CancellationToken ct = default)
     {
-        if (_auth.Credential == null) return [];
+        if (_auth.Credential == null) 
+            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
         
         // Ensure endpoint is in the correct format (fully qualified namespace)
         var fullyQualifiedNamespace = endpoint
             .Replace("sb://", "")
             .Replace("https://", "")
             .TrimEnd('/');
+        
+        // Ensure the namespace has the correct suffix
+        if (!fullyQualifiedNamespace.Contains("."))
+        {
+            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
+        }
+
+        if (queueOrTopic.Contains('~'))
+        {
+            queueOrTopic = queueOrTopic.Replace('~', '/');
+        }        
         
         await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
         
@@ -215,23 +224,13 @@ public class ServiceBusService : IServiceBusService
         else
         {
             // Use the proper overload for subscriptions vs queues
-            ServiceBusReceiver receiver;
-            if (subscription != null)
-            {
-                // Use the dedicated subscription overload
-                var options = deadLetter ? new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter } : null;
-                receiver = options != null 
-                    ? client.CreateReceiver(queueOrTopic, subscription, options)
-                    : client.CreateReceiver(queueOrTopic, subscription);
-            }
-            else
-            {
-                // Queue path
-                var options = deadLetter ? new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter } : null;
-                receiver = options != null
-                    ? client.CreateReceiver(queueOrTopic, options)
-                    : client.CreateReceiver(queueOrTopic);
-            }
+            await using ServiceBusReceiver receiver = subscription != null
+                ? (deadLetter 
+                    ? client.CreateReceiver(queueOrTopic, subscription, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
+                    : client.CreateReceiver(queueOrTopic, subscription))
+                : (deadLetter 
+                    ? client.CreateReceiver(queueOrTopic, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
+                    : client.CreateReceiver(queueOrTopic));
             
             messages = await receiver.PeekMessagesAsync(count, cancellationToken: ct);
         }
@@ -288,7 +287,8 @@ public class ServiceBusService : IServiceBusService
         DateTimeOffset? scheduledEnqueueTime,
         CancellationToken ct = default)
     {
-        if (_auth.Credential == null) return;
+        if (_auth.Credential == null) 
+            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
         
         // Ensure endpoint is in the correct format (fully qualified namespace)
         var fullyQualifiedNamespace = endpoint
@@ -296,8 +296,14 @@ public class ServiceBusService : IServiceBusService
             .Replace("https://", "")
             .TrimEnd('/');
         
+        // Ensure the namespace has the correct suffix
+        if (!fullyQualifiedNamespace.Contains("."))
+        {
+            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
+        }
+        
         await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
-        var sender = client.CreateSender(queueOrTopic);
+        await using var sender = client.CreateSender(queueOrTopic);
         
         var msg = new ServiceBusMessage(body);
         
@@ -337,7 +343,8 @@ public class ServiceBusService : IServiceBusService
         string endpoint, string queueOrTopic, string? subscription, 
         long sequenceNumber, CancellationToken ct = default)
     {
-        if (_auth.Credential == null) return;
+        if (_auth.Credential == null) 
+            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
         
         // Ensure endpoint is in the correct format (fully qualified namespace)
         var fullyQualifiedNamespace = endpoint
@@ -345,23 +352,18 @@ public class ServiceBusService : IServiceBusService
             .Replace("https://", "")
             .TrimEnd('/');
         
+        // Ensure the namespace has the correct suffix
+        if (!fullyQualifiedNamespace.Contains("."))
+        {
+            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
+        }
+        
         await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
         
-        ServiceBusReceiver receiver;
-        if (subscription != null)
-        {
-            receiver = client.CreateReceiver(queueOrTopic, subscription, new ServiceBusReceiverOptions
-            {
-                ReceiveMode = ServiceBusReceiveMode.PeekLock
-            });
-        }
-        else
-        {
-            receiver = client.CreateReceiver(queueOrTopic, new ServiceBusReceiverOptions
-            {
-                ReceiveMode = ServiceBusReceiveMode.PeekLock
-            });
-        }
+        var receiverOptions = new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.PeekLock };
+        await using var receiver = subscription != null
+            ? client.CreateReceiver(queueOrTopic, subscription, receiverOptions)
+            : client.CreateReceiver(queueOrTopic, receiverOptions);
         
         var msg = await receiver.ReceiveDeferredMessageAsync(sequenceNumber, ct);
         if (msg != null)
@@ -372,7 +374,8 @@ public class ServiceBusService : IServiceBusService
         string endpoint, string queueOrTopic, string? subscription, 
         bool deadLetter, CancellationToken ct = default)
     {
-        if (_auth.Credential == null) return;
+        if (_auth.Credential == null) 
+            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
         
         // Ensure endpoint is in the correct format (fully qualified namespace)
         var fullyQualifiedNamespace = endpoint
@@ -380,9 +383,14 @@ public class ServiceBusService : IServiceBusService
             .Replace("https://", "")
             .TrimEnd('/');
         
+        // Ensure the namespace has the correct suffix
+        if (!fullyQualifiedNamespace.Contains("."))
+        {
+            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
+        }
+        
         await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
         
-        ServiceBusReceiver receiver;
         var options = new ServiceBusReceiverOptions
         {
             ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete
@@ -391,14 +399,9 @@ public class ServiceBusService : IServiceBusService
         if (deadLetter)
             options.SubQueue = SubQueue.DeadLetter;
         
-        if (subscription != null)
-        {
-            receiver = client.CreateReceiver(queueOrTopic, subscription, options);
-        }
-        else
-        {
-            receiver = client.CreateReceiver(queueOrTopic, options);
-        }
+        await using var receiver = subscription != null
+            ? client.CreateReceiver(queueOrTopic, subscription, options)
+            : client.CreateReceiver(queueOrTopic, options);
         
         while (!ct.IsCancellationRequested)
         {
