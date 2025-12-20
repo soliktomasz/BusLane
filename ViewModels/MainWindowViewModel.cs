@@ -430,7 +430,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Messages.Clear();
             var msgs = await _serviceBus.PeekMessagesAsync(
-                SelectedNamespace.Endpoint, entityName, subscription, 100, ShowDeadLetter, requiresSession
+                SelectedNamespace.Endpoint, entityName, subscription, Preferences.DefaultMessageCount, ShowDeadLetter, requiresSession
             );
             
             // Apply sorting
@@ -832,7 +832,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Messages.Clear();
             var msgs = await _connectionStringService.PeekMessagesAsync(
-                ActiveConnection.ConnectionString, entityName, subscription, 100, ShowDeadLetter, requiresSession
+                ActiveConnection.ConnectionString, entityName, subscription, Preferences.DefaultMessageCount, ShowDeadLetter, requiresSession
             );
 
             // Apply sorting
