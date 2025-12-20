@@ -42,9 +42,10 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void LoadSettings()
     {
-        _isLoading = true;
         try
         {
+            _isLoading = true;
+            
             // Load settings from preferences/storage
             ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
             ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
