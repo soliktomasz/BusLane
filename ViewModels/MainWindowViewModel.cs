@@ -49,6 +49,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
     [ObservableProperty] private SavedConnection? _activeConnection;
     
+    // Settings properties
+    [ObservableProperty] private bool _showSettings;
+    [ObservableProperty] private SettingsViewModel? _settingsViewModel;
+    
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
@@ -645,6 +649,21 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ShowConnectionLibrary = false;
         ConnectionLibraryViewModel = null;
+    }
+
+    // Settings Commands
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        SettingsViewModel = new SettingsViewModel(CloseSettings);
+        ShowSettings = true;
+    }
+
+    [RelayCommand]
+    private void CloseSettings()
+    {
+        ShowSettings = false;
+        SettingsViewModel = null;
     }
 
     private async void OnConnectionSelected(SavedConnection connection)
