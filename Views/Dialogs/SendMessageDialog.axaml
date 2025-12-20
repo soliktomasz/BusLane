@@ -16,15 +16,15 @@
             <!-- Header Section -->
             <DockPanel>
                 <Border DockPanel.Dock="Top" 
-                        Background="#FAFAFA" 
+                        Background="{DynamicResource SurfaceSubtle}" 
                         Padding="24,20" 
                         CornerRadius="12,12,0,0"
-                        BorderBrush="#E8E8E8"
+                        BorderBrush="{DynamicResource BorderMuted}"
                         BorderThickness="0,0,0,1">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <!-- Icon -->
-                            <Border Background="#E6F2FB" 
+                            <Border Background="{DynamicResource SurfaceBrand}" 
                                     CornerRadius="8" 
                                     Width="40" Height="40"
                                     VerticalAlignment="Center">
@@ -32,7 +32,7 @@
                                            FontSize="18" 
                                            HorizontalAlignment="Center" 
                                            VerticalAlignment="Center"
-                                           Foreground="#0F6CBD"/>
+                                           Foreground="{DynamicResource AccentBrand}"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="Send Message" Classes="heading"/>
@@ -41,7 +41,7 @@
                                     <TextBlock Text="{Binding SendMessageViewModel.EntityName}" 
                                                Classes="caption"
                                                FontWeight="SemiBold"
-                                               Foreground="#0F6CBD"/>
+                                               Foreground="{DynamicResource AccentBrand}"/>
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>
@@ -110,7 +110,7 @@
                                     <TextBlock Text="Save" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Border Width="1" Height="20" Background="#E0E0E0" Margin="8,0"/>
+                            <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="8,0"/>
                             <Button Classes="toolbar" 
                                     ToolTip.Tip="Clear all fields"
                                     Command="{Binding SendMessageViewModel.ClearFormCommand}">
@@ -135,7 +135,7 @@
                         <TextBlock Text="⚠" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1" 
                                    Text="{Binding SendMessageViewModel.ErrorMessage}" 
-                                   Foreground="#C42B1C"
+                                   Foreground="{DynamicResource TextDanger}"
                                    TextWrapping="Wrap"/>
                     </Grid>
                 </Border>
@@ -143,9 +143,9 @@
                 <!-- Footer with Buttons -->
                 <Border DockPanel.Dock="Bottom" 
                         Padding="24,16" 
-                        Background="#FAFAFA"
+                        Background="{DynamicResource SurfaceSubtle}"
                         CornerRadius="0,0,12,12"
-                        BorderBrush="#E8E8E8"
+                        BorderBrush="{DynamicResource BorderMuted}"
                         BorderThickness="0,1,0,0">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -329,7 +329,7 @@
                                                 <Border Classes="badge-muted" Padding="6,2" 
                                                         IsVisible="{Binding SendMessageViewModel.CustomProperties.Count}">
                                                     <TextBlock Text="{Binding SendMessageViewModel.CustomProperties.Count}" 
-                                                               FontSize="10" Foreground="#424242"/>
+                                                               FontSize="10" Foreground="{DynamicResource SubtleForeground}"/>
                                                 </Border>
                                             </StackPanel>
                                             <TextBlock Text="Add custom key-value pairs" Classes="caption" FontSize="11"/>
@@ -363,7 +363,7 @@
                                                                 Classes="icon" 
                                                                 Content="✕"
                                                                 FontSize="12"
-                                                                Foreground="#8A8A8A"
+                                                                Foreground="{DynamicResource MutedForeground}"
                                                                 ToolTip.Tip="Remove property"
                                                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.RemoveCustomPropertyCommand}"
                                                                 CommandParameter="{Binding}"/>

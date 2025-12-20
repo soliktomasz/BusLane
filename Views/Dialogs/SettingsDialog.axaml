@@ -19,7 +19,7 @@
                             Content="×" 
                             FontSize="18"
                             HorizontalAlignment="Right"
-                            Command="{Binding CloseSettingsCommand}"/>
+                            Command="{Binding SettingsViewModel.CancelCommand}"/>
                 </Grid>
                 
                 <ScrollViewer>
@@ -99,7 +99,7 @@
                                     Command="{Binding SettingsViewModel.ResetToDefaultsCommand}"/>
                             <Button Classes="secondary small" 
                                     Content="Cancel" 
-                                    Command="{Binding CloseSettingsCommand}"/>
+                                    Command="{Binding SettingsViewModel.CancelCommand}"/>
                             <Button Classes="primary small" 
                                     Content="Save Settings" 
                                     Command="{Binding SettingsViewModel.SaveSettingsCommand}"/>

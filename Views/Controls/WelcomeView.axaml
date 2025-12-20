@@ -38,7 +38,7 @@
                                         CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border Classes="surface-brand" Padding="8" CornerRadius="4">
-                                            <TextBlock Text="↗" FontSize="14" Foreground="#0F6CBD" VerticalAlignment="Center"/>
+                                            <TextBlock Text="↗" FontSize="14" Foreground="{DynamicResource AccentBrand}" VerticalAlignment="Center"/>
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>

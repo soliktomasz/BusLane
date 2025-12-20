@@ -14,7 +14,7 @@
             <StackPanel Spacing="20">
                 <!-- Header with icon -->
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                    <Border Background="#E6F2FB" 
+                    <Border Background="{DynamicResource SurfaceBrand}" 
                             CornerRadius="8" 
                             Width="40" Height="40">
                         <TextBlock Text="💾" 

@@ -33,7 +33,7 @@
                                     </StackPanel>
                                 </StackPanel>
                                 <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Queues.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
+                                    <TextBlock Text="{Binding Queues.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -71,7 +71,7 @@
                                                 </Border.Background>
                                                 <Grid ColumnDefinitions="Auto,*">
                                                     <Border Grid.Column="0" Classes="entity-icon-queue" Margin="0,0,12,0">
-                                                        <TextBlock Text="Q" FontWeight="Bold" FontSize="14" Foreground="#0F6CBD" 
+                                                        <TextBlock Text="Q" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource AccentBrand}" 
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -80,23 +80,23 @@
                                                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="8">
                                                             <Border Classes="counter-active">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="Active:" FontSize="10" Foreground="#0F6CBD"/>
+                                                                    <TextBlock Text="Active:" FontSize="10" Foreground="{DynamicResource AccentBrand}"/>
                                                                     <TextBlock Text="{Binding ActiveMessageCount}" 
-                                                                               FontSize="10" FontWeight="SemiBold" Foreground="#0F6CBD"/>
+                                                                               FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrand}"/>
                                                                 </StackPanel>
                                                             </Border>
                                                             <Border Classes="counter-dead" IsVisible="{Binding DeadLetterCount}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="DLQ:" FontSize="10" Foreground="#C42B1C"/>
+                                                                    <TextBlock Text="DLQ:" FontSize="10" Foreground="{DynamicResource TextDanger}"/>
                                                                     <TextBlock Text="{Binding DeadLetterCount}" 
-                                                                               FontSize="10" FontWeight="SemiBold" Foreground="#C42B1C"/>
+                                                                               FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextDanger}"/>
                                                                 </StackPanel>
                                                             </Border>
                                                             <Border Classes="counter-scheduled" IsVisible="{Binding ScheduledCount}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="Scheduled:" FontSize="10" Foreground="#986F0B"/>
+                                                                    <TextBlock Text="Scheduled:" FontSize="10" Foreground="{DynamicResource TextWarning}"/>
                                                                     <TextBlock Text="{Binding ScheduledCount}" 
-                                                                               FontSize="10" FontWeight="SemiBold" Foreground="#986F0B"/>
+                                                                               FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextWarning}"/>
                                                                 </StackPanel>
                                                             </Border>
                                                         </StackPanel>
@@ -126,7 +126,7 @@
                                     </StackPanel>
                                 </StackPanel>
                                 <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Topics.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
+                                    <TextBlock Text="{Binding Topics.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -165,7 +165,7 @@
                                                         </Border.Background>
                                                         <Grid ColumnDefinitions="Auto,*">
                                                             <Border Grid.Column="0" Classes="entity-icon-topic" Margin="0,0,12,0">
-                                                                <TextBlock Text="T" FontWeight="Bold" FontSize="14" Foreground="#0E7A0D" 
+                                                                <TextBlock Text="T" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextSuccess}" 
                                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
                                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -174,7 +174,7 @@
                                                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Spacing="8">
                                                                     <Border Classes="badge-muted">
                                                                         <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscriptions'}" 
-                                                                                   FontSize="10" Foreground="#616161"/>
+                                                                                   FontSize="10" Foreground="{DynamicResource SubtleForeground}"/>
                                                                     </Border>
                                                                 </StackPanel>
                                                             </StackPanel>
@@ -210,7 +210,7 @@
                                                             </Border>
                                                             
                                                             <!-- Subscription content with selection background -->
-                                                            <Border Grid.Column="1" CornerRadius="6" Padding="10,8" BorderBrush="#E8E8E8" BorderThickness="1">
+                                                            <Border Grid.Column="1" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource BorderMuted}" BorderThickness="1">
                                                                 <Border.Background>
                                                                     <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                         <Binding Path="."/>
@@ -219,7 +219,7 @@
                                                                 </Border.Background>
                                                                 <Grid ColumnDefinitions="Auto,*">
                                                                     <Border Grid.Column="0" Classes="entity-icon-subscription" Width="28" Height="28" Margin="0,0,10,0">
-                                                                        <TextBlock Text="S" FontWeight="Bold" FontSize="12" Foreground="#986F0B" 
+                                                                        <TextBlock Text="S" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextWarning}" 
                                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                     </Border>
                                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -229,15 +229,15 @@
                                                                             <Border Classes="counter-active" Padding="4,2">
                                                                                 <StackPanel Orientation="Horizontal" Spacing="3">
                                                                                     <TextBlock Text="{Binding ActiveMessageCount}" 
-                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="#0F6CBD"/>
-                                                                                    <TextBlock Text="active" FontSize="9" Foreground="#0F6CBD"/>
+                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrand}"/>
+                                                                                    <TextBlock Text="active" FontSize="9" Foreground="{DynamicResource AccentBrand}"/>
                                                                                 </StackPanel>
                                                                             </Border>
                                                                             <Border Classes="counter-dead" Padding="4,2" IsVisible="{Binding DeadLetterCount}">
                                                                                 <StackPanel Orientation="Horizontal" Spacing="3">
                                                                                     <TextBlock Text="{Binding DeadLetterCount}" 
-                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="#C42B1C"/>
-                                                                                    <TextBlock Text="dead" FontSize="9" Foreground="#C42B1C"/>
+                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextDanger}"/>
+                                                                                    <TextBlock Text="dead" FontSize="9" Foreground="{DynamicResource TextDanger}"/>
                                                                                 </StackPanel>
                                                                             </Border>
                                                                         </StackPanel>

@@ -1,6 +1,8 @@
 using System.Globalization;
+using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 namespace BusLane.Converters;
 
@@ -34,23 +36,38 @@ public class EntitySelectionConverter : IMultiValueConverter
 public class EntitySelectionBackgroundConverter : IMultiValueConverter
 {
     public static readonly EntitySelectionBackgroundConverter Instance = new();
-    
-    private static readonly IBrush SelectedBackground = new SolidColorBrush(Color.Parse("#E6F2FB"));
-    private static readonly IBrush TransparentBackground = Brushes.Transparent;
 
     public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
-            return TransparentBackground;
+            return Brushes.Transparent;
 
         var currentItem = values[0];
         var selectedItem = values[1];
 
         if (currentItem == null || selectedItem == null)
-            return TransparentBackground;
+            return Brushes.Transparent;
 
         var isSelected = ReferenceEquals(currentItem, selectedItem) || currentItem.Equals(selectedItem);
-        return isSelected ? SelectedBackground : TransparentBackground;
+        
+        if (isSelected)
+        {
+            // Try to get the theme-aware resource
+            var app = Application.Current;
+            if (app != null)
+            {
+                var themeVariant = app.ActualThemeVariant;
+                if (app.Resources.TryGetResource("SelectedBackground", themeVariant, out var resource) 
+                    && resource is IBrush brush)
+                {
+                    return brush;
+                }
+            }
+            // Fallback for light theme
+            return new SolidColorBrush(Color.Parse("#E6F2FB"));
+        }
+        
+        return Brushes.Transparent;
     }
 }
 

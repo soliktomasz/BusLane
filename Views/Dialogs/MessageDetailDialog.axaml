@@ -27,17 +27,17 @@
                         <Border Classes="surface-danger" Padding="12" Margin="0,0,0,8"
                                 IsVisible="{Binding SelectedMessage.DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Dead Letter Information" FontWeight="Bold" Foreground="#C42B1C"/>
+                                <TextBlock Text="Dead Letter Information" FontWeight="Bold" Foreground="{DynamicResource TextDanger}"/>
                                 <StackPanel IsVisible="{Binding SelectedMessage.DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Reason" Classes="caption" Foreground="#C42B1C" Margin="0,0,0,2"/>
+                                    <TextBlock Text="Reason" Classes="caption" Foreground="{DynamicResource TextDanger}" Margin="0,0,0,2"/>
                                     <SelectableTextBlock Text="{Binding SelectedMessage.DeadLetterReason}" TextWrapping="Wrap"/>
                                 </StackPanel>
                                 <StackPanel IsVisible="{Binding SelectedMessage.DeadLetterErrorDescription, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Error Description" Classes="caption" Foreground="#C42B1C" Margin="0,0,0,2"/>
+                                    <TextBlock Text="Error Description" Classes="caption" Foreground="{DynamicResource TextDanger}" Margin="0,0,0,2"/>
                                     <SelectableTextBlock Text="{Binding SelectedMessage.DeadLetterErrorDescription}" TextWrapping="Wrap"/>
                                 </StackPanel>
                                 <StackPanel IsVisible="{Binding SelectedMessage.DeadLetterSource, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Source" Classes="caption" Foreground="#C42B1C" Margin="0,0,0,2"/>
+                                    <TextBlock Text="Source" Classes="caption" Foreground="{DynamicResource TextDanger}" Margin="0,0,0,2"/>
                                     <SelectableTextBlock Text="{Binding SelectedMessage.DeadLetterSource}" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </StackPanel>

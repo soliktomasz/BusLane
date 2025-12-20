@@ -8,7 +8,7 @@
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
-            <Border Grid.Row="0" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="16,16,16,12">
+            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16,16,16,12">
                 <Grid RowDefinitions="Auto">
                     <!-- Title and Actions Row -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -38,7 +38,7 @@
                                     Content="↻ Refresh" 
                                     Command="{Binding LoadMessagesCommand}"
                                     Padding="8,6"/>
-                            <Border Width="1" Background="#E0E0E0" Margin="4,4"/>
+                            <Border Width="1" Background="{DynamicResource BorderDefault}" Margin="4,4"/>
                             <Button Classes="danger-subtle small" 
                                     Content="Purge" 
                                     Command="{Binding PurgeMessagesCommand}"
@@ -77,7 +77,7 @@
                                                            Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
                                                            Classes="caption" 
                                                            FontSize="10"
-                                                           Foreground="#707070"/>
+                                                           Foreground="{DynamicResource MutedForeground}"/>
                                             </Grid>
                                             <TextBlock Text="{Binding Body}" 
                                                        Classes="caption" 
@@ -85,15 +85,15 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        MaxLines="2"
                                                        Margin="0,6,0,0"
-                                                       Foreground="#505050"/>
+                                                       Foreground="{DynamicResource SubtleForeground}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
                                                     <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
-                                                               Foreground="#616161" FontSize="10"/>
+                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                                 <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
                                                     <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}" 
-                                                               Foreground="#616161" FontSize="10"/>
+                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                             </StackPanel>
                                         </StackPanel>
@@ -129,13 +129,13 @@
                                                            Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
                                                            Classes="caption" 
                                                            FontSize="10"
-                                                           Foreground="#707070"/>
+                                                           Foreground="{DynamicResource MutedForeground}"/>
                                             </Grid>
                                             <!-- Dead Letter Reason -->
-                                            <Border Background="#FDE7E9" Padding="8,4" Margin="0,6,0,0" CornerRadius="4"
+                                            <Border Background="{DynamicResource SurfaceDanger}" Padding="8,4" Margin="0,6,0,0" CornerRadius="4"
                                                     IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                                 <TextBlock Text="{Binding DeadLetterReason}" 
-                                                           Foreground="#C42B1C" 
+                                                           Foreground="{DynamicResource TextDanger}" 
                                                            FontSize="11"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </Border>
@@ -145,15 +145,15 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        MaxLines="2"
                                                        Margin="0,6,0,0"
-                                                       Foreground="#505050"/>
+                                                       Foreground="{DynamicResource SubtleForeground}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
                                                     <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
-                                                               Foreground="#616161" FontSize="10"/>
+                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                                 <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
                                                     <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}" 
-                                                               Foreground="#616161" FontSize="10"/>
+                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                             </StackPanel>
                                         </StackPanel>

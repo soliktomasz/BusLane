@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -6,6 +7,7 @@ namespace BusLane.ViewModels;
 public partial class SettingsViewModel : ViewModelBase
 {
     private readonly Action _onClose;
+    private string _originalTheme = "Light";
 
     [ObservableProperty] private bool _confirmBeforeDelete = true;
     [ObservableProperty] private bool _confirmBeforePurge = true;
@@ -24,18 +26,18 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _onClose = onClose;
         LoadSettings();
+        _originalTheme = Theme;
     }
 
     partial void OnThemeChanged(string value)
     {
-        // Apply theme immediately when changed
+        // Apply theme immediately as preview when user changes it
         App.Instance?.ApplyTheme(value);
     }
 
     private void LoadSettings()
     {
         // Load settings from preferences/storage
-        // For now, use defaults - these could be persisted to a JSON file
         ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
         ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
         AutoRefreshMessages = Preferences.AutoRefreshMessages;
@@ -43,12 +45,17 @@ public partial class SettingsViewModel : ViewModelBase
         DefaultMessageCount = Preferences.DefaultMessageCount;
         ShowDeadLetterBadges = Preferences.ShowDeadLetterBadges;
         EnableMessagePreview = Preferences.EnableMessagePreview;
-        Theme = Preferences.Theme;
+        
+        // Set theme field directly to avoid triggering OnThemeChanged during load
+        _theme = Preferences.Theme;
     }
 
     [RelayCommand]
     private void SaveSettings()
     {
+        // Store the theme we want to keep
+        var themeToApply = Theme;
+        
         // Save settings to preferences/storage
         Preferences.ConfirmBeforeDelete = ConfirmBeforeDelete;
         Preferences.ConfirmBeforePurge = ConfirmBeforePurge;
@@ -57,15 +64,27 @@ public partial class SettingsViewModel : ViewModelBase
         Preferences.DefaultMessageCount = DefaultMessageCount;
         Preferences.ShowDeadLetterBadges = ShowDeadLetterBadges;
         Preferences.EnableMessagePreview = EnableMessagePreview;
-        Preferences.Theme = Theme;
+        Preferences.Theme = themeToApply;
         Preferences.Save();
         
+        // Close the dialog
         _onClose();
+        
+        // Use Dispatcher to re-apply theme after UI has updated
+        Dispatcher.UIThread.Post(() =>
+        {
+            App.Instance?.ApplyTheme(themeToApply);
+        }, DispatcherPriority.Background);
     }
 
     [RelayCommand]
     private void Cancel()
     {
+        // Revert theme to original if it was changed
+        if (Theme != _originalTheme)
+        {
+            App.Instance?.ApplyTheme(_originalTheme);
+        }
         _onClose();
     }
 
