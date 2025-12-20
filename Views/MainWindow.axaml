@@ -4,7 +4,7 @@
         xmlns:models="using:BusLane.Models"
         x:Class="BusLane.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Service Bus Manager"
+        Title="Bus Lane - Service Bus Manager"
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen">
