@@ -339,12 +339,16 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     </Style>
     
     <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     </Style>
     
     <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pointerover">
@@ -353,6 +357,12 @@
     
     <Style Selector="Expander /template/ Border#ExpanderContent">
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+    
+    <Style Selector="Expander /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     </Style>
     
     <!-- Modal overlay - Fluent 2 with blur hint -->
@@ -510,5 +520,168 @@
         <Setter Property="Background" Value="#FAFAFA"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="24,32"/>
+    </Style>
+    
+    <!-- Tab-like navigation for dialogs -->
+    <Style Selector="Border.tab-nav">
+        <Setter Property="Background" Value="#F5F5F5"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="4"/>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-item">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#616161"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Regular"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="GroupName" Value="TabGroup"/>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-item:checked">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-item:pointerover">
+        <Setter Property="Background" Value="#E8E8E8"/>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-item:checked:pointerover">
+        <Setter Property="Background" Value="#FFFFFF"/>
+    </Style>
+    
+    <!-- Field group header -->
+    <Style Selector="TextBlock.field-group-header">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#0F6CBD"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    
+    <!-- Form field label -->
+    <Style Selector="TextBlock.field-label">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="#424242"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    
+    <!-- Form field hint -->
+    <Style Selector="TextBlock.field-hint">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="#8A8A8A"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+    </Style>
+    
+    <!-- Code/JSON editor style -->
+    <Style Selector="TextBox.code-editor">
+        <Setter Property="FontFamily" Value="JetBrains Mono, Cascadia Code, Consolas, monospace"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Background" Value="#1E1E1E"/>
+        <Setter Property="Foreground" Value="#D4D4D4"/>
+        <Setter Property="BorderBrush" Value="#3C3C3C"/>
+        <Setter Property="CaretBrush" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12"/>
+    </Style>
+    
+    <Style Selector="TextBox.code-editor:focus">
+        <Setter Property="BorderBrush" Value="#0F6CBD"/>
+    </Style>
+    
+    <!-- Toolbar button -->
+    <Style Selector="Button.toolbar">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#616161"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+    </Style>
+    
+    <Style Selector="Button.toolbar:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E8E8E8"/>
+    </Style>
+    
+    <Style Selector="Button.toolbar:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#D4D4D4"/>
+    </Style>
+    
+    <!-- Property row for custom properties -->
+    <Style Selector="Border.property-row">
+        <Setter Property="Background" Value="#F9F9F9"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+    
+    <Style Selector="Border.property-row:pointerover">
+        <Setter Property="Background" Value="#F0F0F0"/>
+    </Style>
+    
+    <!-- Send message dialog specific -->
+    <Style Selector="Border.send-message-panel">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BoxShadow" Value="0 16 48 0 #26000000"/>
+    </Style>
+    
+    <!-- Quick action chip -->
+    <Style Selector="Button.chip">
+        <Setter Property="Background" Value="#F0F0F0"/>
+        <Setter Property="Foreground" Value="#424242"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.chip:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E0E0E0"/>
+    </Style>
+    
+    <!-- InfoBar styles -->
+    <Style Selector="Border.infobar">
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#B4D6F4"/>
+    </Style>
+    
+    <Style Selector="Border.infobar-success">
+        <Setter Property="Background" Value="#E6F4E6"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#A3D9A3"/>
+    </Style>
+    
+    <Style Selector="Border.infobar-warning">
+        <Setter Property="Background" Value="#FDF4E5"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#F7D87C"/>
+    </Style>
+    
+    <Style Selector="Border.infobar-error">
+        <Setter Property="Background" Value="#FCE9E8"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#F5A9A5"/>
     </Style>
 </Styles>
