@@ -341,6 +341,20 @@
         <Setter Property="Padding" Value="0"/>
     </Style>
     
+    <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pointerover">
+        <Setter Property="Background" Value="#0A000000"/>
+    </Style>
+    
+    <Style Selector="Expander /template/ Border#ExpanderContent">
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    
     <!-- Modal overlay - Fluent 2 with blur hint -->
     <Style Selector="Border.modal-overlay">
         <Setter Property="Background" Value="#66000000"/>
@@ -388,5 +402,113 @@
     <Style Selector="Border.surface-warning">
         <Setter Property="Background" Value="#FDF4E5"/>
         <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <!-- Entity Card Styles - Fluent 2 -->
+    <Style Selector="Border.entity-item">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Border.entity-item:pointerover">
+        <Setter Property="Background" Value="#F5F5F5"/>
+        <Setter Property="BorderBrush" Value="#E8E8E8"/>
+    </Style>
+    
+    <Style Selector="Border.entity-item-selected">
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#B4D6F4"/>
+    </Style>
+    
+    <Style Selector="Border.entity-item-selected:pointerover">
+        <Setter Property="Background" Value="#D4E9F7"/>
+        <Setter Property="BorderBrush" Value="#9ECAF1"/>
+    </Style>
+    
+    <!-- Selection indicator bar (Fluent 2 accent bar on left) -->
+    <Style Selector="Border.selection-indicator">
+        <Setter Property="Width" Value="3"/>
+        <Setter Property="Background" Value="#0F6CBD"/>
+        <Setter Property="CornerRadius" Value="2"/>
+        <Setter Property="Margin" Value="0,4"/>
+    </Style>
+    
+    <!-- Entity Icon Container -->
+    <Style Selector="Border.entity-icon">
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    
+    <Style Selector="Border.entity-icon-queue">
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    
+    <Style Selector="Border.entity-icon-topic">
+        <Setter Property="Background" Value="#E6F4E6"/>
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    
+    <Style Selector="Border.entity-icon-subscription">
+        <Setter Property="Background" Value="#FDF4E5"/>
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    
+    <!-- Section Header - Fluent 2 -->
+    <Style Selector="Border.section-header">
+        <Setter Property="Background" Value="#FAFAFA"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,4,0,8"/>
+    </Style>
+    
+    <!-- Message Counter Styles -->
+    <Style Selector="Border.counter-active">
+        <Setter Property="Background" Value="#E6F2FB"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.counter-dead">
+        <Setter Property="Background" Value="#FCE9E8"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.counter-scheduled">
+        <Setter Property="Background" Value="#FDF4E5"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <!-- Divider line for sections -->
+    <Style Selector="Border.section-divider">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Background" Value="#E8E8E8"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+    
+    <!-- Empty state -->
+    <Style Selector="Border.empty-state">
+        <Setter Property="Background" Value="#FAFAFA"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="24,32"/>
     </Style>
 </Styles>
