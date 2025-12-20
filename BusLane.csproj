@@ -7,6 +7,18 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    
+    <!-- Version Information -->
+    <Version>0.2.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+    <InformationalVersion>0.2.0</InformationalVersion>
+    
+    <!-- Application Metadata -->
+    <Product>Bus Lane</Product>
+    <Description>Azure Service Bus Manager</Description>
+    <Company>Bus Lane</Company>
+    <Copyright>Copyright © 2025 Bus Lane</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

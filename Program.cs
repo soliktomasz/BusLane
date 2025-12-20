@@ -23,6 +23,7 @@ class Program
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<IVersionService, VersionService>();
         services.AddSingleton<IAzureAuthService, AzureAuthService>();
         services.AddSingleton<IServiceBusService, ServiceBusService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();

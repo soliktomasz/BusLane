@@ -16,7 +16,10 @@
                 <!-- App Header -->
                 <StackPanel DockPanel.Dock="Top" Margin="16,20,16,12">
                     <TextBlock Text="Bus Lane" Classes="title"/>
-                    <TextBlock Text="Service Bus Manager" Classes="caption" Margin="0,4,0,0"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <TextBlock Text="Service Bus Manager" Classes="caption"/>
+                        <TextBlock Text="{Binding AppVersion}" Classes="caption" Foreground="#0F6CBD"/>
+                    </StackPanel>
                 </StackPanel>
                 
                 <Separator DockPanel.Dock="Top" Margin="16,0"/>

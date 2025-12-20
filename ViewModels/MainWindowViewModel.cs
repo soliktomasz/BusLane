@@ -19,6 +19,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IServiceBusService _serviceBus;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IConnectionStringService _connectionStringService;
+    private readonly IVersionService _versionService;
 
     [ObservableProperty] private bool _isAuthenticated;
     [ObservableProperty] private bool _isLoading;
@@ -120,17 +121,24 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
     }
+    
+    /// <summary>
+    /// Gets the application version for display in the UI.
+    /// </summary>
+    public string AppVersion => _versionService.DisplayVersion;
 
     public MainWindowViewModel(
         IAzureAuthService auth, 
         IServiceBusService serviceBus,
         IConnectionStorageService connectionStorage,
-        IConnectionStringService connectionStringService)
+        IConnectionStringService connectionStringService,
+        IVersionService versionService)
     {
         _auth = auth;
         _serviceBus = serviceBus;
         _connectionStorage = connectionStorage;
         _connectionStringService = connectionStringService;
+        _versionService = versionService;
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
         
         // Subscribe to collection changes to notify visibility properties
