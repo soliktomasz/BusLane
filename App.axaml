@@ -1,9 +1,94 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="BusLane.App"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Default">
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="/Styles/AppStyles.axaml"/>
     </Application.Styles>
+    
+    <!-- Fluent Design 2 Theme Resources -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Light Theme -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppBackground" Color="#F3F3F3"/>
+                    <SolidColorBrush x:Key="AppForeground" Color="#1A1A1A"/>
+                    <SolidColorBrush x:Key="SubtleForeground" Color="#616161"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#8A8A8A"/>
+                    <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="SidebarBackground" Color="#FAFAFA"/>
+                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#FAFAFA"/>
+                    <SolidColorBrush x:Key="BorderDefault" Color="#E0E0E0"/>
+                    <SolidColorBrush x:Key="BorderStrong" Color="#D1D1D1"/>
+                    <SolidColorBrush x:Key="BorderMuted" Color="#E8E8E8"/>
+                    <SolidColorBrush x:Key="AccentBrand" Color="#0F6CBD"/>
+                    <SolidColorBrush x:Key="AccentBrandHover" Color="#115EA3"/>
+                    <SolidColorBrush x:Key="AccentBrandPressed" Color="#0C4A7E"/>
+                    <SolidColorBrush x:Key="SurfaceBrand" Color="#E6F2FB"/>
+                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#D4E9F7"/>
+                    <SolidColorBrush x:Key="SurfaceDanger" Color="#FCE9E8"/>
+                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#E6F4E6"/>
+                    <SolidColorBrush x:Key="SurfaceWarning" Color="#FDF4E5"/>
+                    <SolidColorBrush x:Key="TextDanger" Color="#C42B1C"/>
+                    <SolidColorBrush x:Key="TextSuccess" Color="#0E7A0D"/>
+                    <SolidColorBrush x:Key="TextWarning" Color="#F7630C"/>
+                    <SolidColorBrush x:Key="HoverBackground" Color="#0A000000"/>
+                    <SolidColorBrush x:Key="PressedBackground" Color="#12000000"/>
+                    <SolidColorBrush x:Key="SelectedBackground" Color="#E6F2FB"/>
+                    <SolidColorBrush x:Key="SelectedBorder" Color="#B4D6F4"/>
+                    <SolidColorBrush x:Key="ModalOverlay" Color="#66000000"/>
+                    <SolidColorBrush x:Key="InputBackground" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="TabNavBackground" Color="#F5F5F5"/>
+                    <SolidColorBrush x:Key="TabItemHover" Color="#E8E8E8"/>
+                    <SolidColorBrush x:Key="ToolbarHover" Color="#E8E8E8"/>
+                    <SolidColorBrush x:Key="ToolbarPressed" Color="#D4D4D4"/>
+                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#F9F9F9"/>
+                    <SolidColorBrush x:Key="PropertyRowHover" Color="#F0F0F0"/>
+                    <SolidColorBrush x:Key="ChipBackground" Color="#F0F0F0"/>
+                    <SolidColorBrush x:Key="ChipHover" Color="#E0E0E0"/>
+                </ResourceDictionary>
+                
+                <!-- Dark Theme -->
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppBackground" Color="#202020"/>
+                    <SolidColorBrush x:Key="AppForeground" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="SubtleForeground" Color="#A0A0A0"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#707070"/>
+                    <SolidColorBrush x:Key="CardBackground" Color="#2D2D2D"/>
+                    <SolidColorBrush x:Key="SidebarBackground" Color="#252525"/>
+                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#2D2D2D"/>
+                    <SolidColorBrush x:Key="BorderDefault" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="BorderStrong" Color="#4D4D4D"/>
+                    <SolidColorBrush x:Key="BorderMuted" Color="#333333"/>
+                    <SolidColorBrush x:Key="AccentBrand" Color="#479EF5"/>
+                    <SolidColorBrush x:Key="AccentBrandHover" Color="#62ABF5"/>
+                    <SolidColorBrush x:Key="AccentBrandPressed" Color="#2886DE"/>
+                    <SolidColorBrush x:Key="SurfaceBrand" Color="#0A2E4A"/>
+                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#0D3A5E"/>
+                    <SolidColorBrush x:Key="SurfaceDanger" Color="#3B1716"/>
+                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#1B3A1B"/>
+                    <SolidColorBrush x:Key="SurfaceWarning" Color="#3D2C15"/>
+                    <SolidColorBrush x:Key="TextDanger" Color="#F87C6E"/>
+                    <SolidColorBrush x:Key="TextSuccess" Color="#6CCB5F"/>
+                    <SolidColorBrush x:Key="TextWarning" Color="#F9A825"/>
+                    <SolidColorBrush x:Key="HoverBackground" Color="#0AFFFFFF"/>
+                    <SolidColorBrush x:Key="PressedBackground" Color="#15FFFFFF"/>
+                    <SolidColorBrush x:Key="SelectedBackground" Color="#0A2E4A"/>
+                    <SolidColorBrush x:Key="SelectedBorder" Color="#2886DE"/>
+                    <SolidColorBrush x:Key="ModalOverlay" Color="#99000000"/>
+                    <SolidColorBrush x:Key="InputBackground" Color="#2D2D2D"/>
+                    <SolidColorBrush x:Key="TabNavBackground" Color="#333333"/>
+                    <SolidColorBrush x:Key="TabItemHover" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="ToolbarHover" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="ToolbarPressed" Color="#4D4D4D"/>
+                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#333333"/>
+                    <SolidColorBrush x:Key="PropertyRowHover" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="ChipBackground" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="ChipHover" Color="#4D4D4D"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

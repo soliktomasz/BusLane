@@ -26,6 +26,12 @@ public partial class SettingsViewModel : ViewModelBase
         LoadSettings();
     }
 
+    partial void OnThemeChanged(string value)
+    {
+        // Apply theme immediately when changed
+        App.Instance?.ApplyTheme(value);
+    }
+
     private void LoadSettings()
     {
         // Load settings from preferences/storage
