@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.3.4)'
+        required: true
+        type: string
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-and-release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            runtime: linux-x64
+            artifact: BusLane-linux-x64
+          - os: windows-latest
+            runtime: win-x64
+            artifact: BusLane-win-x64
+          - os: macos-latest
+            runtime: osx-x64
+            artifact: BusLane-osx-x64
+          - os: macos-latest
+            runtime: osx-arm64
+            artifact: BusLane-osx-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish
+
+    - name: Create archive (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd publish
+        tar -czvf ../${{ matrix.artifact }}.tar.gz .
+
+    - name: Create archive (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Compress-Archive -Path ./publish/* -DestinationPath ./${{ matrix.artifact }}.zip
+
+    - name: Upload artifact (Linux/macOS)
+      if: runner.os != 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact }}
+        path: ${{ matrix.artifact }}.tar.gz
+        retention-days: 30
+
+    - name: Upload artifact (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact }}
+        path: ${{ matrix.artifact }}.zip
+        retention-days: 30
+
+  create-release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display structure of downloaded files
+      run: ls -R artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/**/*.tar.gz
+          artifacts/**/*.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

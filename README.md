@@ -5,19 +5,40 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet)
 ![Avalonia UI](https://img.shields.io/badge/Avalonia-11.1-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Version](https://img.shields.io/badge/Version-0.3.4-blue.svg)
 
 ## Features
 
+### Connection Options
 - 🔐 **Azure Authentication** - Sign in with your Azure account using Azure Identity
+- 🔗 **Connection String Support** - Connect directly using Service Bus connection strings
+- 📚 **Connection Library** - Save and manage multiple connection strings for quick access
+
+### Namespace & Entity Management
 - 📋 **Subscription Management** - Browse and switch between Azure subscriptions
 - 🏢 **Namespace Explorer** - View all Service Bus namespaces in your subscription
 - 📬 **Queue Management** - Browse queues, view message counts, and manage messages
 - 📨 **Topic & Subscription Support** - Full support for topics and their subscriptions
+- 🔄 **Session-Enabled Queues** - Support for session-enabled queues and subscriptions
+
+### Messaging Features
 - 👀 **Message Peek** - Preview messages without consuming them
-- ✉️ **Send Messages** - Send new messages with custom properties, headers, and scheduling
+- ✉️ **Send Messages** - Send new messages with full control over:
+  - Message body and content type
+  - Custom properties (key-value pairs)
+  - System properties (CorrelationId, SessionId, Subject, etc.)
+  - Message scheduling (ScheduledEnqueueTime)
+  - Time-to-live (TTL) settings
+  - Partition keys and reply-to settings
+- 💾 **Save & Load Messages** - Save message templates for reuse
 - 🗑️ **Dead Letter Queue** - View and manage dead-lettered messages
 - 🧹 **Purge Messages** - Bulk delete messages from queues or subscriptions
+- 🔍 **Message Details** - View complete message details including headers and properties
+
+### User Experience
 - 💾 **Session Persistence** - Automatically restores your previous session
+- ⚙️ **Settings Dialog** - Configure application preferences
+- 🎨 **Modern UI** - Clean, intuitive Fluent design interface
 
 ## Screenshots
 
@@ -67,6 +88,7 @@ dotnet publish -c Release -r linux-x64 --self-contained
 
 ## Usage
 
+### Azure Account Mode
 1. **Sign In** - Click "Sign in with Azure" to authenticate with your Azure account
 2. **Select Subscription** - Choose the Azure subscription containing your Service Bus namespaces
 3. **Browse Namespaces** - Click on a namespace to view its queues and topics
@@ -74,20 +96,39 @@ dotnet publish -c Release -r linux-x64 --self-contained
 5. **Toggle Dead Letter** - Use the dead letter toggle to view dead-lettered messages
 6. **Send Messages** - Click the send button to compose and send new messages
 
+### Connection String Mode
+1. **Open Connection Library** - Access saved connections or add new ones
+2. **Add Connection** - Paste your Service Bus connection string and give it a name
+3. **Connect** - Select a saved connection to browse queues and topics
+4. **Manage Messages** - View, send, and manage messages just like in Azure mode
+
 ## Architecture
 
 BusLane follows the MVVM (Model-View-ViewModel) pattern:
 
 ```
 BusLane/
-├── Models/          # Data models (QueueInfo, TopicInfo, MessageInfo, etc.)
+├── Models/          # Data models
+│   ├── QueueInfo.cs              # Queue metadata
+│   ├── TopicInfo.cs              # Topic metadata
+│   ├── SubscriptionInfo.cs       # Subscription metadata
+│   ├── MessageInfo.cs            # Message details
+│   ├── SavedConnection.cs        # Stored connection strings
+│   └── SavedMessage.cs           # Message templates
 ├── Services/        # Azure integration services
 │   ├── IAzureAuthService.cs      # Authentication interface
 │   ├── AzureAuthService.cs       # Azure Identity implementation
 │   ├── IServiceBusService.cs     # Service Bus operations interface
-│   └── ServiceBusService.cs      # Service Bus implementation
+│   ├── ServiceBusService.cs      # Service Bus implementation
+│   ├── IConnectionStringService.cs   # Connection string operations
+│   ├── ConnectionStringService.cs    # Connection string implementation
+│   ├── IConnectionStorageService.cs  # Connection storage interface
+│   └── ConnectionStorageService.cs   # Local connection storage
 ├── ViewModels/      # MVVM ViewModels with CommunityToolkit.Mvvm
 ├── Views/           # Avalonia XAML views
+│   ├── Controls/    # Reusable UI components
+│   └── Dialogs/     # Modal dialogs (Send, Save, Settings, etc.)
+├── Converters/      # Value converters for data binding
 └── Styles/          # Application styles and themes
 ```
 
@@ -96,12 +137,16 @@ BusLane/
 | Package | Version | Purpose |
 |---------|---------|---------|
 | Avalonia | 11.1.0 | Cross-platform UI framework |
+| Avalonia.Desktop | 11.1.0 | Desktop platform support |
 | Avalonia.Themes.Fluent | 11.1.0 | Fluent design theme |
+| Avalonia.Fonts.Inter | 11.1.0 | Inter font family |
+| Avalonia.ReactiveUI | 11.1.0 | ReactiveUI integration |
 | Azure.Identity | 1.17.1 | Azure authentication |
 | Azure.ResourceManager | 1.13.2 | Azure Resource Manager SDK |
 | Azure.ResourceManager.ServiceBus | 1.1.0 | Service Bus management |
 | Azure.Messaging.ServiceBus | 7.20.1 | Service Bus messaging |
 | CommunityToolkit.Mvvm | 8.2.2 | MVVM toolkit with source generators |
+| Microsoft.Extensions.DependencyInjection | 8.0.0 | Dependency injection |
 
 ## Contributing
 

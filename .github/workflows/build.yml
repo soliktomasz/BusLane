@@ -1,0 +1,35 @@
+name: Build
+      continue-on-error: true
+      run: dotnet test --no-build --configuration Release --verbosity normal
+    - name: Test
+
+      run: dotnet build --no-restore --configuration Release
+    - name: Build
+
+      run: dotnet restore
+    - name: Restore dependencies
+
+        dotnet-version: '8.0.x'
+      with:
+      uses: actions/setup-dotnet@v4
+    - name: Setup .NET
+
+      uses: actions/checkout@v4
+    - name: Checkout repository
+    steps:
+    
+    runs-on: ${{ matrix.os }}
+    
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      matrix:
+    strategy:
+  build:
+jobs:
+
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+on:
+
+
