@@ -69,6 +69,21 @@
         <Setter Property="Background" Value="#E6352B"/>
     </Style>
     
+    <Style Selector="Button.danger-outline">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#FF6B6B"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#FF6B6B"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.danger-outline:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FF3B30"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+    
     <Style Selector="Button.small">
         <Setter Property="Padding" Value="10,6"/>
         <Setter Property="FontSize" Value="12"/>

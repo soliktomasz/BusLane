@@ -59,6 +59,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
     
+    // Total dead letter count across all queues and topic subscriptions
+    public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
+    public bool HasDeadLetters => TotalDeadLetterCount > 0;
+    
     // Sorting properties
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(SortButtonText))]
@@ -130,8 +134,18 @@ public partial class MainWindowViewModel : ViewModelBase
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
         
         // Subscribe to collection changes to notify visibility properties
-        Queues.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasQueues));
+        Queues.CollectionChanged += (_, _) => 
+        {
+            OnPropertyChanged(nameof(HasQueues));
+            OnPropertyChanged(nameof(TotalDeadLetterCount));
+            OnPropertyChanged(nameof(HasDeadLetters));
+        };
         Topics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTopics));
+        TopicSubscriptions.CollectionChanged += (_, _) => 
+        {
+            OnPropertyChanged(nameof(TotalDeadLetterCount));
+            OnPropertyChanged(nameof(HasDeadLetters));
+        };
     }
 
     public async Task InitializeAsync()

@@ -50,19 +50,8 @@
                         Background="#1a1a1a" CornerRadius="12" Padding="0"
                         BorderBrush="#333333" BorderThickness="1">
                     <StackPanel>
-                        <!-- Disconnect Header -->
-                        <Button Classes="secondary" 
-                                Content="Disconnect"
-                                Command="{Binding DisconnectConnectionCommand}"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Padding="16,12"
-                                CornerRadius="12,12,0,0"/>
-                        
                         <!-- Connection Info -->
-                        <Border Background="#252525" CornerRadius="0,0,12,12" Padding="16,12">
+                        <Border Background="#252525" CornerRadius="12,12,0,0" Padding="16,12">
                             <StackPanel>
                                 <TextBlock Text="Connected to" Foreground="#888888" FontSize="11"/>
                                 <TextBlock Text="{Binding ActiveConnection.Name}" 
@@ -75,8 +64,25 @@
                                            FontSize="11" 
                                            Margin="0,2,0,0"
                                            IsVisible="{Binding ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                
+                                <!-- Dead Letter Count Badge -->
+                                <Border Background="#FF3B30" CornerRadius="6" Padding="8,4" Margin="0,8,0,0"
+                                        HorizontalAlignment="Left"
+                                        IsVisible="{Binding HasDeadLetters}">
+                                    <TextBlock Text="{Binding TotalDeadLetterCount, StringFormat='⚠️ {0} Dead Letters'}"
+                                               Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                </Border>
                             </StackPanel>
                         </Border>
+                        
+                        <!-- Disconnect Button -->
+                        <Button Classes="danger-outline" 
+                                Content="Disconnect"
+                                Command="{Binding DisconnectConnectionCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Margin="12"
+                                Padding="12,8"/>
                     </StackPanel>
                 </Border>
                 
