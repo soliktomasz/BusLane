@@ -155,6 +155,23 @@
         <Setter Property="Foreground" Value="White"/>
     </Style>
     
+    <Style Selector="Button.danger-subtle">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#C42B1C"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.danger-subtle:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FDE7E9"/>
+    </Style>
+    
+    <Style Selector="Button.danger-subtle:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#F9D0D4"/>
+    </Style>
+    
     <Style Selector="Button.small">
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontSize" Value="12"/>
@@ -201,6 +218,33 @@
     
     <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="#D4E9F7"/>
+    </Style>
+    
+    <!-- TabControl - Fluent 2 -->
+    <Style Selector="TabControl">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    
+    <Style Selector="TabItem">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Regular"/>
+        <Setter Property="Foreground" Value="#616161"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="TabItem:pointerover">
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="Background" Value="#08000000"/>
+    </Style>
+    
+    <Style Selector="TabItem:selected">
+        <Setter Property="Foreground" Value="#0F6CBD"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     
     <!-- Input Controls - Fluent 2 -->

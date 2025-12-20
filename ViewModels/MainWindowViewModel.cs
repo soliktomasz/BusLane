@@ -37,6 +37,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(FormattedApplicationProperties))]
     private MessageInfo? _selectedMessage;
     [ObservableProperty] private bool _showDeadLetter;
+    [ObservableProperty] private int _selectedMessageTabIndex; // 0 = Active, 1 = Dead Letter
     [ObservableProperty] private string _newMessageBody = "";
     [ObservableProperty] private bool _showStatusPopup;
     [ObservableProperty] private bool _showSendMessagePopup;
@@ -264,6 +265,13 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedSubscriptionId = value.Id;
     }
 
+    partial void OnSelectedMessageTabIndexChanged(int value)
+    {
+        // Sync ShowDeadLetter with tab index (0 = Active, 1 = Dead Letter)
+        ShowDeadLetter = value == 1;
+        _ = LoadMessagesAsync();
+    }
+
     private async Task LoadNamespacesAsync(string subscriptionId)
     {
         IsLoading = true;
@@ -442,12 +450,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    private async Task ToggleDeadLetterAsync()
-    {
-        ShowDeadLetter = ShowDeadLetter;
-        await LoadMessagesAsync();
-    }
 
     [RelayCommand]
     private void OpenSendMessagePopup()
