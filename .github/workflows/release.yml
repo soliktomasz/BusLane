@@ -15,25 +15,74 @@ env:
   DOTNET_VERSION: '8.0.x'
 
 jobs:
-  build-and-release:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish
+      run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish
+
+    - name: Create archive
+      run: |
+        cd publish
+        tar -czvf ../BusLane-linux-x64.tar.gz .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BusLane-linux-x64
+        path: BusLane-linux-x64.tar.gz
+        retention-days: 30
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish
+      run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish
+
+    - name: Create archive
+      run: |
+        Compress-Archive -Path ./publish/* -DestinationPath ./BusLane-win-x64.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BusLane-win-x64
+        path: BusLane-win-x64.zip
+        retention-days: 30
+
+  build-macos:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            runtime: linux-x64
-            artifact: BusLane-linux-x64
-          - os: windows-latest
-            runtime: win-x64
-            artifact: BusLane-win-x64
-          - os: macos-latest
-            runtime: osx-x64
-            artifact: BusLane-osx-x64
-          - os: macos-latest
-            runtime: osx-arm64
-            artifact: BusLane-osx-arm64
-
-    runs-on: ${{ matrix.os }}
-
+          - runtime: osx-x64
+            arch: x64
+          - runtime: osx-arm64
+            arch: arm64
+    
+    runs-on: macos-latest
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -49,35 +98,54 @@ jobs:
     - name: Publish
       run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish
 
-    - name: Create archive (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Create macOS App Bundle
       run: |
-        cd publish
-        tar -czvf ../${{ matrix.artifact }}.tar.gz .
+        APP_NAME="Bus Lane"
+        APP_BUNDLE="${APP_NAME}.app"
+        
+        # Create app bundle structure
+        mkdir -p "${APP_BUNDLE}/Contents/MacOS"
+        mkdir -p "${APP_BUNDLE}/Contents/Resources"
+        
+        # Copy published files to MacOS folder
+        cp -R ./publish/* "${APP_BUNDLE}/Contents/MacOS/"
+        
+        # Copy Info.plist
+        cp Info.plist "${APP_BUNDLE}/Contents/"
+        
+        # Copy icon
+        cp Assets/icon.icns "${APP_BUNDLE}/Contents/Resources/icon.icns"
+        
+        # Make the main executable executable
+        chmod +x "${APP_BUNDLE}/Contents/MacOS/BusLane"
+        
+        # Create PkgInfo file
+        echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
 
-    - name: Create archive (Windows)
-      if: runner.os == 'Windows'
+    - name: Create DMG installer
       run: |
-        Compress-Archive -Path ./publish/* -DestinationPath ./${{ matrix.artifact }}.zip
+        APP_NAME="Bus Lane"
+        DMG_NAME="BusLane-osx-${{ matrix.arch }}"
+        
+        # Create a temporary directory for DMG contents
+        mkdir -p dmg_contents
+        cp -R "${APP_NAME}.app" dmg_contents/
+        
+        # Create a symbolic link to Applications folder
+        ln -s /Applications dmg_contents/Applications
+        
+        # Create the DMG
+        hdiutil create -volname "${APP_NAME}" -srcfolder dmg_contents -ov -format UDZO "${DMG_NAME}.dmg"
 
-    - name: Upload artifact (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Upload DMG artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifact }}
-        path: ${{ matrix.artifact }}.tar.gz
-        retention-days: 30
-
-    - name: Upload artifact (Windows)
-      if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.artifact }}
-        path: ${{ matrix.artifact }}.zip
+        name: BusLane-osx-${{ matrix.arch }}
+        path: BusLane-osx-${{ matrix.arch }}.dmg
         retention-days: 30
 
   create-release:
-    needs: build-and-release
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     
@@ -99,6 +167,7 @@ jobs:
         files: |
           artifacts/**/*.tar.gz
           artifacts/**/*.zip
+          artifacts/**/*.dmg
         generate_release_notes: true
         draft: false
         prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
