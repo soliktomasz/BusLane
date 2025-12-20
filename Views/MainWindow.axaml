@@ -1269,12 +1269,19 @@
                             
                             <!-- Message Body (at the end) -->
                             <StackPanel Margin="0,8,0,0">
-                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
-                                    <TextBlock Text="Body" Classes="body-strong"/>
-                                    <Border Classes="badge" IsVisible="{Binding IsMessageBodyJson}">
-                                        <TextBlock Text="JSON" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
-                                    </Border>
-                                </StackPanel>
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="Body" Classes="body-strong"/>
+                                        <Border Classes="badge" IsVisible="{Binding IsMessageBodyJson}">
+                                            <TextBlock Text="JSON" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" 
+                                            Classes="subtle small"
+                                            Content="Copy"
+                                            Command="{Binding CopyMessageBodyCommand}"
+                                            ToolTip.Tip="Copy body to clipboard"/>
+                                </Grid>
                                 <Border Classes="surface-subtle" Padding="12" MaxHeight="300">
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto">
                                         <SelectableTextBlock Text="{Binding FormattedMessageBody}" 
