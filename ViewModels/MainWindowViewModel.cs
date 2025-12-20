@@ -144,21 +144,9 @@ public partial class MainWindowViewModel : ViewModelBase
             // Load saved connections first
             await LoadSavedConnectionsAsync();
             
-            // Try to restore previous Azure session using cached credentials
-            StatusMessage = "Checking for saved Azure credentials...";
-            if (await _auth.TrySilentLoginAsync())
-            {
-                CurrentMode = ConnectionMode.AzureAccount;
-                StatusMessage = "Loading subscriptions...";
-                await LoadSubscriptionsAsync();
-                StatusMessage = "Restored previous Azure session";
-            }
-            else
-            {
-                StatusMessage = SavedConnections.Count > 0 
-                    ? "Select a saved connection or sign in with Azure"
-                    : "Add a connection or sign in with Azure to get started";
-            }
+            StatusMessage = SavedConnections.Count > 0 
+                ? "Select a saved connection or sign in with Azure"
+                : "Add a connection or sign in with Azure to get started";
         }
         catch (Exception ex)
         {
