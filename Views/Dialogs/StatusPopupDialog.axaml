@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.StatusPopupDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowStatusPopup}">
+        <Border Classes="modal" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                MinWidth="400"
+                MaxWidth="600">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <TextBlock Text="Status Message" Classes="heading"/>
+                    <Button Classes="icon" 
+                            Content="×" 
+                            FontSize="18"
+                            HorizontalAlignment="Right"
+                            Command="{Binding CloseStatusPopupCommand}"/>
+                </Grid>
+                <Border Classes="surface-subtle" Padding="12">
+                    <SelectableTextBlock Text="{Binding StatusMessage}" 
+                                         TextWrapping="Wrap" 
+                                         FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                         FontSize="12"/>
+                </Border>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>
+

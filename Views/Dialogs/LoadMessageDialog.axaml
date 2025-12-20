@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Dialogs.LoadMessageDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding SendMessageViewModel.ShowLoadDialog, FallbackValue=False, TargetNullValue=False}">
+        <Border Classes="send-message-panel" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                Width="520"
+                MaxHeight="500"
+                Padding="0">
+            <DockPanel>
+                <!-- Header -->
+                <Border DockPanel.Dock="Top" 
+                        Background="#FAFAFA" 
+                        Padding="24,20" 
+                        CornerRadius="12,12,0,0"
+                        BorderBrush="#E8E8E8"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Border Background="#E6F2FB" 
+                                    CornerRadius="8" 
+                                    Width="40" Height="40">
+                                <TextBlock Text="📂" 
+                                           FontSize="18" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Load Template" Classes="heading"/>
+                                <TextBlock Text="Select a saved message template" Classes="caption"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Classes="icon" 
+                                Content="×" 
+                                FontSize="20"
+                                FontWeight="Light"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Command="{Binding SendMessageViewModel.HideLoadCommand}"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Content -->
+                <ScrollViewer Padding="16">
+                    <StackPanel Spacing="8">
+                        <!-- Empty state -->
+                        <Border Classes="empty-state"
+                                IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}">
+                            <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                <TextBlock Text="📭" FontSize="32" HorizontalAlignment="Center"/>
+                                <TextBlock Text="No saved templates yet" 
+                                           Classes="body-strong" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Save a message to reuse it later" 
+                                           Classes="caption" 
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Template list -->
+                        <ItemsControl ItemsSource="{Binding SendMessageViewModel.SavedMessages}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:SavedMessage">
+                                    <Border Classes="property-row" Padding="14,12" Margin="0,0,0,4">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}" 
+                                                               Classes="caption" FontSize="11"/>
+                                                    <TextBlock Text="•" Classes="caption" FontSize="11"/>
+                                                    <TextBlock Text="{Binding ContentType}" 
+                                                               Classes="caption" FontSize="11"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Body}" 
+                                                           Classes="caption"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxLines="1"
+                                                           FontSize="11"
+                                                           Foreground="#8A8A8A"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" 
+                                                        Orientation="Horizontal" 
+                                                        Spacing="8"
+                                                        VerticalAlignment="Center">
+                                                <Button Classes="primary small" 
+                                                        Content="Use Template"
+                                                        Padding="14,6"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="icon" 
+                                                        Content="🗑" 
+                                                        FontSize="12"
+                                                        ToolTip.Tip="Delete template"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>
+

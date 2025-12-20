@@ -1,0 +1,262 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:models="using:BusLane.Models"
+             xmlns:converters="using:BusLane.Converters"
+             x:Class="BusLane.Views.Controls.AzureEntityTreeView"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <UserControl.Resources>
+        <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
+        <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
+    </UserControl.Resources>
+    
+    <Border Classes="card" Padding="0">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Margin="16,16,16,16">
+                <TextBlock Text="Entities" Classes="heading"/>
+                <TextBlock Text="Queues, topics and subscriptions" Classes="caption" Margin="0,4,0,0"/>
+            </StackPanel>
+            <ScrollViewer>
+                <StackPanel Spacing="12" Margin="16,0,16,16">
+                    <!-- Queues Section -->
+                    <StackPanel>
+                        <Border Classes="section-header">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                    <Border Classes="entity-icon-queue">
+                                        <TextBlock Text="📥" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Queues" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="Point-to-point messaging" Classes="caption" FontSize="11"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Queues.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        
+                        <ItemsControl ItemsSource="{Binding Queues}" Margin="4,0,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:QueueInfo">
+                                    <Button Classes="subtle"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectQueueCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="0"
+                                            Margin="0,2">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <!-- Selection indicator bar (Fluent 2 accent bar) -->
+                                            <Border Grid.Column="0" Classes="selection-indicator" 
+                                                    VerticalAlignment="Stretch"
+                                                    Margin="0,4,4,4">
+                                                <Border.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                        <Binding Path="."/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedQueue"/>
+                                                    </MultiBinding>
+                                                </Border.IsVisible>
+                                            </Border>
+                                            
+                                            <!-- Entity content with selection background -->
+                                            <Border Grid.Column="1" Padding="12,10" CornerRadius="6">
+                                                <Border.Background>
+                                                    <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                        <Binding Path="."/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedQueue"/>
+                                                    </MultiBinding>
+                                                </Border.Background>
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <Border Grid.Column="0" Classes="entity-icon-queue" Margin="0,0,12,0">
+                                                        <TextBlock Text="Q" FontWeight="Bold" FontSize="14" Foreground="#0F6CBD" 
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" 
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="8">
+                                                            <Border Classes="counter-active">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                    <TextBlock Text="Active:" FontSize="10" Foreground="#0F6CBD"/>
+                                                                    <TextBlock Text="{Binding ActiveMessageCount}" 
+                                                                               FontSize="10" FontWeight="SemiBold" Foreground="#0F6CBD"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Classes="counter-dead" IsVisible="{Binding DeadLetterCount}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                    <TextBlock Text="DLQ:" FontSize="10" Foreground="#C42B1C"/>
+                                                                    <TextBlock Text="{Binding DeadLetterCount}" 
+                                                                               FontSize="10" FontWeight="SemiBold" Foreground="#C42B1C"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Classes="counter-scheduled" IsVisible="{Binding ScheduledCount}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                    <TextBlock Text="Scheduled:" FontSize="10" Foreground="#986F0B"/>
+                                                                    <TextBlock Text="{Binding ScheduledCount}" 
+                                                                               FontSize="10" FontWeight="SemiBold" Foreground="#986F0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    
+                    <Border Classes="section-divider"/>
+                    
+                    <!-- Topics Section -->
+                    <StackPanel>
+                        <Border Classes="section-header">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                    <Border Classes="entity-icon-topic">
+                                        <TextBlock Text="📤" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Topics" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="Publish-subscribe messaging" Classes="caption" FontSize="11"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Topics.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        
+                        <ItemsControl ItemsSource="{Binding Topics}" Margin="4,0,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:TopicInfo">
+                                    <Expander Margin="0,2" IsExpanded="False">
+                                        <Expander.Header>
+                                            <Button Classes="subtle"
+                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectTopicCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    Padding="0">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <!-- Selection indicator bar -->
+                                                    <Border Grid.Column="0" Classes="selection-indicator" 
+                                                            VerticalAlignment="Stretch"
+                                                            Margin="0,4,4,4">
+                                                        <Border.IsVisible>
+                                                            <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                <Binding Path="."/>
+                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic"/>
+                                                            </MultiBinding>
+                                                        </Border.IsVisible>
+                                                    </Border>
+                                                    
+                                                    <!-- Topic content with selection background -->
+                                                    <Border Grid.Column="1" Padding="8,8" CornerRadius="6">
+                                                        <Border.Background>
+                                                            <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                <Binding Path="."/>
+                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic"/>
+                                                            </MultiBinding>
+                                                        </Border.Background>
+                                                        <Grid ColumnDefinitions="Auto,*">
+                                                            <Border Grid.Column="0" Classes="entity-icon-topic" Margin="0,0,12,0">
+                                                                <TextBlock Text="T" FontWeight="Bold" FontSize="14" Foreground="#0E7A0D" 
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"
+                                                                           TextTrimming="CharacterEllipsis"/>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Spacing="8">
+                                                                    <Border Classes="badge-muted">
+                                                                        <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscriptions'}" 
+                                                                                   FontSize="10" Foreground="#616161"/>
+                                                                    </Border>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
+                                            </Button>
+                                        </Expander.Header>
+                                        <!-- Topic Subscriptions -->
+                                        <ItemsControl ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TopicSubscriptions}"
+                                                      Margin="20,8,0,4"
+                                                      IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:SubscriptionInfo">
+                                                    <Button Classes="subtle"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            Padding="0"
+                                                            Margin="0,2">
+                                                        <Grid ColumnDefinitions="Auto,*">
+                                                            <!-- Selection indicator bar -->
+                                                            <Border Grid.Column="0" Classes="selection-indicator" 
+                                                                    VerticalAlignment="Stretch"
+                                                                    Margin="0,4,4,4">
+                                                                <Border.IsVisible>
+                                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                        <Binding Path="."/>
+                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSubscription"/>
+                                                                    </MultiBinding>
+                                                                </Border.IsVisible>
+                                                            </Border>
+                                                            
+                                                            <!-- Subscription content with selection background -->
+                                                            <Border Grid.Column="1" CornerRadius="6" Padding="10,8" BorderBrush="#E8E8E8" BorderThickness="1">
+                                                                <Border.Background>
+                                                                    <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                        <Binding Path="."/>
+                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSubscription"/>
+                                                                    </MultiBinding>
+                                                                </Border.Background>
+                                                                <Grid ColumnDefinitions="Auto,*">
+                                                                    <Border Grid.Column="0" Classes="entity-icon-subscription" Width="28" Height="28" Margin="0,0,10,0">
+                                                                        <TextBlock Text="S" FontWeight="Bold" FontSize="12" Foreground="#986F0B" 
+                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
+                                                                                   TextTrimming="CharacterEllipsis"/>
+                                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Spacing="6">
+                                                                            <Border Classes="counter-active" Padding="4,2">
+                                                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                                                    <TextBlock Text="{Binding ActiveMessageCount}" 
+                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="#0F6CBD"/>
+                                                                                    <TextBlock Text="active" FontSize="9" Foreground="#0F6CBD"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border Classes="counter-dead" Padding="4,2" IsVisible="{Binding DeadLetterCount}">
+                                                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                                                    <TextBlock Text="{Binding DeadLetterCount}" 
+                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="#C42B1C"/>
+                                                                                    <TextBlock Text="dead" FontSize="9" Foreground="#C42B1C"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </StackPanel>
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>
+

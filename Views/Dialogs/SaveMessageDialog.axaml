@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.SaveMessageDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding SendMessageViewModel.ShowSaveDialog, FallbackValue=False, TargetNullValue=False}">
+        <Border Classes="send-message-panel" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                Width="420"
+                Padding="24">
+            <StackPanel Spacing="20">
+                <!-- Header with icon -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Border Background="#E6F2FB" 
+                            CornerRadius="8" 
+                            Width="40" Height="40">
+                        <TextBlock Text="💾" 
+                                   FontSize="18" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Save as Template" Classes="heading"/>
+                        <TextBlock Text="Reuse this message later" Classes="caption"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <!-- Form -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Template Name" Classes="field-label"/>
+                    <TextBox Text="{Binding SendMessageViewModel.SaveMessageName}" 
+                             Watermark="Enter a descriptive name..."
+                             Padding="12,10"/>
+                    <TextBlock Text="Choose a name that helps you identify this template" Classes="field-hint"/>
+                </StackPanel>
+                
+                <!-- Actions -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                    <Button Classes="secondary" 
+                            Content="Cancel" 
+                            Padding="16,10"
+                            Command="{Binding SendMessageViewModel.HideSaveCommand}"/>
+                    <Button Classes="primary" 
+                            Padding="20,10"
+                            Command="{Binding SendMessageViewModel.SaveMessageCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Save Template"/>
+                            <TextBlock Text="✓" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Border>
+</UserControl>
+

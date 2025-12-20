@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Controls.MessagesPanelView"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="card" Padding="0">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header Bar with Tabs and Actions -->
+            <Border Grid.Row="0" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="16,16,16,12">
+                <Grid RowDefinitions="Auto">
+                    <!-- Title and Actions Row -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
+                            <!-- Send Message Button (compact, inline) -->
+                            <Button Classes="primary small" 
+                                    Content="+ Send"
+                                    Command="{Binding OpenSendMessagePopupCommand}"
+                                    Padding="12,6"
+                                    VerticalAlignment="Center">
+                                <Button.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                        <Binding Path="SelectedQueue" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                        <Binding Path="SelectedTopic" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                    </MultiBinding>
+                                </Button.IsVisible>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                            <Button Classes="subtle small" 
+                                    Content="{Binding SortButtonText}"
+                                    Command="{Binding ToggleSortOrderCommand}"
+                                    ToolTip.Tip="Toggle sort order"
+                                    Padding="8,6"/>
+                            <Button Classes="subtle small" 
+                                    Content="↻ Refresh" 
+                                    Command="{Binding LoadMessagesCommand}"
+                                    Padding="8,6"/>
+                            <Border Width="1" Background="#E0E0E0" Margin="4,4"/>
+                            <Button Classes="danger-subtle small" 
+                                    Content="Purge" 
+                                    Command="{Binding PurgeMessagesCommand}"
+                                    Padding="8,6"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+            
+            <!-- Tab Content Area -->
+            <TabControl Grid.Row="1" 
+                        SelectedIndex="{Binding SelectedMessageTabIndex}">
+                
+                <TabItem Header="Active Messages">
+                    <ScrollViewer Padding="8">
+                        <ListBox ItemsSource="{Binding Messages}"
+                                 SelectedItem="{Binding SelectedMessage}"
+                                 Background="Transparent">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:MessageInfo">
+                                    <Button Classes="subtle"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="12,10"
+                                            Margin="0,2">
+                                        <StackPanel>
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="{Binding MessageId}" 
+                                                           FontWeight="SemiBold" 
+                                                           FontSize="12"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1" 
+                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
+                                                           Classes="caption" 
+                                                           FontSize="10"
+                                                           Foreground="#707070"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Body}" 
+                                                       Classes="caption" 
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="2"
+                                                       Margin="0,6,0,0"
+                                                       Foreground="#505050"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
+                                                <Border Classes="badge-muted" Padding="6,3">
+                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
+                                                               Foreground="#616161" FontSize="10"/>
+                                                </Border>
+                                                <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
+                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}" 
+                                                               Foreground="#616161" FontSize="10"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </TabItem>
+                
+                <TabItem Header="Dead Letter">
+                    <ScrollViewer Padding="8">
+                        <ListBox ItemsSource="{Binding Messages}"
+                                 SelectedItem="{Binding SelectedMessage}"
+                                 Background="Transparent">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:MessageInfo">
+                                    <Button Classes="subtle"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="12,10"
+                                            Margin="0,2">
+                                        <StackPanel>
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="{Binding MessageId}" 
+                                                           FontWeight="SemiBold" 
+                                                           FontSize="12"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1" 
+                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
+                                                           Classes="caption" 
+                                                           FontSize="10"
+                                                           Foreground="#707070"/>
+                                            </Grid>
+                                            <!-- Dead Letter Reason -->
+                                            <Border Background="#FDE7E9" Padding="8,4" Margin="0,6,0,0" CornerRadius="4"
+                                                    IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="{Binding DeadLetterReason}" 
+                                                           Foreground="#C42B1C" 
+                                                           FontSize="11"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding Body}" 
+                                                       Classes="caption" 
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="2"
+                                                       Margin="0,6,0,0"
+                                                       Foreground="#505050"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
+                                                <Border Classes="badge-muted" Padding="6,3">
+                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
+                                                               Foreground="#616161" FontSize="10"/>
+                                                </Border>
+                                                <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
+                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}" 
+                                                               Foreground="#616161" FontSize="10"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Border>
+</UserControl>
+

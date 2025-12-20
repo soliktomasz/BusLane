@@ -1,0 +1,395 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Dialogs.SendMessageDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowSendMessagePopup}">
+        <Border Classes="send-message-panel" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                Width="800"
+                MaxHeight="750">
+            
+            <!-- Header Section -->
+            <DockPanel>
+                <Border DockPanel.Dock="Top" 
+                        Background="#FAFAFA" 
+                        Padding="24,20" 
+                        CornerRadius="12,12,0,0"
+                        BorderBrush="#E8E8E8"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <!-- Icon -->
+                            <Border Background="#E6F2FB" 
+                                    CornerRadius="8" 
+                                    Width="40" Height="40"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="✉" 
+                                           FontSize="18" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"
+                                           Foreground="#0F6CBD"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Send Message" Classes="heading"/>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="to" Classes="caption"/>
+                                    <TextBlock Text="{Binding SendMessageViewModel.EntityName}" 
+                                               Classes="caption"
+                                               FontWeight="SemiBold"
+                                               Foreground="#0F6CBD"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- Header Actions -->
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" 
+                                    VerticalAlignment="Center"
+                                    Spacing="4">
+                            <Button Classes="toolbar" ToolTip.Tip="Load saved template">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="📂" FontSize="14"/>
+                                    <TextBlock Text="Load" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Button.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedRight">
+                                        <Border MinWidth="280" MaxHeight="350">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Text="Saved Templates" Classes="body-strong"/>
+                                                <ScrollViewer MaxHeight="280">
+                                                    <StackPanel Spacing="4">
+                                                        <ItemsControl ItemsSource="{Binding SendMessageViewModel.SavedMessages}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="models:SavedMessage">
+                                                                    <Border Classes="property-row" Padding="10,8">
+                                                                        <Grid ColumnDefinitions="*,Auto">
+                                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                                                <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}" 
+                                                                                           Classes="caption" FontSize="11"/>
+                                                                            </StackPanel>
+                                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                                <Button Classes="primary small" 
+                                                                                        Content="Use"
+                                                                                        Padding="12,4"
+                                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
+                                                                                        CommandParameter="{Binding}"/>
+                                                                                <Button Classes="icon" 
+                                                                                        Content="🗑" FontSize="12"
+                                                                                        ToolTip.Tip="Delete template"
+                                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
+                                                                                        CommandParameter="{Binding}"/>
+                                                                            </StackPanel>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <TextBlock Text="No saved templates yet" 
+                                                                   Classes="caption" 
+                                                                   HorizontalAlignment="Center"
+                                                                   Margin="0,12"
+                                                                   IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}"/>
+                                                    </StackPanel>
+                                                </ScrollViewer>
+                                            </StackPanel>
+                                        </Border>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                            <Button Classes="toolbar" 
+                                    ToolTip.Tip="Save as template"
+                                    Command="{Binding SendMessageViewModel.ShowSaveCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="💾" FontSize="14"/>
+                                    <TextBlock Text="Save" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Border Width="1" Height="20" Background="#E0E0E0" Margin="8,0"/>
+                            <Button Classes="toolbar" 
+                                    ToolTip.Tip="Clear all fields"
+                                    Command="{Binding SendMessageViewModel.ClearFormCommand}">
+                                <TextBlock Text="🔄" FontSize="14"/>
+                            </Button>
+                            <Button Classes="icon" 
+                                    Content="×" 
+                                    FontSize="20"
+                                    FontWeight="Light"
+                                    ToolTip.Tip="Close"
+                                    Command="{Binding CancelSendMessageCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                
+                <!-- Error Message -->
+                <Border DockPanel.Dock="Top" 
+                        Classes="infobar-error" 
+                        Margin="24,16,24,0"
+                        IsVisible="{Binding SendMessageViewModel.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Text="⚠" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding SendMessageViewModel.ErrorMessage}" 
+                                   Foreground="#C42B1C"
+                                   TextWrapping="Wrap"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Footer with Buttons -->
+                <Border DockPanel.Dock="Bottom" 
+                        Padding="24,16" 
+                        Background="#FAFAFA"
+                        CornerRadius="0,0,12,12"
+                        BorderBrush="#E8E8E8"
+                        BorderThickness="0,1,0,0">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="💡" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Text="Press Ctrl+Enter to send quickly" 
+                                       Classes="caption" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" 
+                                    Spacing="8">
+                            <Button Classes="secondary" 
+                                    Content="Cancel" 
+                                    Padding="20,10"
+                                    Command="{Binding CancelSendMessageCommand}"/>
+                            <Button Classes="primary" 
+                                    Padding="24,10"
+                                    Command="{Binding SendMessageViewModel.SendCommand}"
+                                    IsEnabled="{Binding !SendMessageViewModel.IsSending}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Send Message" VerticalAlignment="Center"/>
+                                    <TextBlock Text="→" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                
+                <!-- Main Content -->
+                <ScrollViewer Padding="24,20">
+                    <StackPanel Spacing="20">
+                        
+                        <!-- Message Body Section -->
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Message Body" Classes="body-strong"/>
+                                    <Border Classes="badge-danger" Padding="4,1">
+                                        <TextBlock Text="Required" FontSize="9" Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                                <!-- Format toolbar -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <Button Classes="chip" Content="JSON" Padding="10,4" FontSize="11"/>
+                                    <Button Classes="chip" Content="XML" Padding="10,4" FontSize="11"/>
+                                    <Button Classes="chip" Content="Plain" Padding="10,4" FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBox Text="{Binding SendMessageViewModel.Body}"
+                                     Classes="code-editor"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     Height="160"
+                                     Watermark="Enter your message body here...&#x0a;&#x0a;{&#x0a;  &quot;key&quot;: &quot;value&quot;&#x0a;}"/>
+                        </StackPanel>
+                        
+                        <!-- Standard Properties - Collapsed by default with summary -->
+                        <Border Classes="surface-subtle" Padding="20" CornerRadius="8">
+                            <Expander IsExpanded="True" HorizontalAlignment="Stretch">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="⚙" FontSize="16" VerticalAlignment="Center"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Message Properties" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="Content type, IDs, routing" Classes="caption" FontSize="11"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Expander.Header>
+                                
+                                <StackPanel Margin="0,20,0,0" Spacing="20">
+                                    <!-- Essential Properties Group -->
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="ESSENTIAL" Classes="field-group-header"/>
+                                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Content Type" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.ContentType}" 
+                                                         Watermark="application/json"/>
+                                                <TextBlock Text="MIME type of the message body" Classes="field-hint"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Message ID" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.MessageId}" 
+                                                         Watermark="Leave empty to auto-generate"/>
+                                                <TextBlock Text="Unique identifier for the message" Classes="field-hint"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                    
+                                    <!-- Correlation Group -->
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="CORRELATION &amp; SESSIONS" Classes="field-group-header"/>
+                                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto">
+                                            <StackPanel Grid.Row="0" Grid.Column="0">
+                                                <TextBlock Text="Correlation ID" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.CorrelationId}" 
+                                                         Watermark="Optional"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="0" Grid.Column="2">
+                                                <TextBlock Text="Session ID" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.SessionId}" 
+                                                         Watermark="Required for session-enabled entities"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="2" Grid.Column="0">
+                                                <TextBlock Text="Reply To Session ID" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.ReplyToSessionId}" 
+                                                         Watermark="Optional"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="2" Grid.Column="2">
+                                                <TextBlock Text="Partition Key" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.PartitionKey}" 
+                                                         Watermark="Optional"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                    
+                                    <!-- Routing Group -->
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="ROUTING &amp; ADDRESSING" Classes="field-group-header"/>
+                                        <Grid ColumnDefinitions="*,16,*,16,*" RowDefinitions="Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Subject (Label)" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.Subject}" 
+                                                         Watermark="Optional"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="To" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.To}" 
+                                                         Watermark="Destination"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="4">
+                                                <TextBlock Text="Reply To" Classes="field-label"/>
+                                                <TextBox Text="{Binding SendMessageViewModel.ReplyTo}" 
+                                                         Watermark="Reply address"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+                        </Border>
+                        
+                        <!-- Scheduling Section -->
+                        <Border Classes="surface-subtle" Padding="20" CornerRadius="8">
+                            <Expander HorizontalAlignment="Stretch">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="⏱" FontSize="16" VerticalAlignment="Center"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Scheduling" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="TTL and scheduled delivery" Classes="caption" FontSize="11"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Expander.Header>
+                                
+                                <Grid ColumnDefinitions="*,16,*" Margin="0,20,0,0">
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Time to Live" Classes="field-label"/>
+                                        <TextBox Text="{Binding SendMessageViewModel.TimeToLiveText}" 
+                                                 Watermark="e.g., 00:30:00 or 1800"/>
+                                        <TextBlock Text="Format: HH:MM:SS or seconds" Classes="field-hint"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Scheduled Enqueue Time" Classes="field-label"/>
+                                        <TextBox Text="{Binding SendMessageViewModel.ScheduledEnqueueTimeText}" 
+                                                 Watermark="e.g., 2024-12-25T10:00:00Z"/>
+                                        <TextBlock Text="ISO 8601 format" Classes="field-hint"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Expander>
+                        </Border>
+                        
+                        <!-- Custom Properties Section -->
+                        <Border Classes="surface-subtle" Padding="20" CornerRadius="8">
+                            <Expander HorizontalAlignment="Stretch">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="🏷" FontSize="16" VerticalAlignment="Center"/>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="Custom Properties" FontWeight="SemiBold" FontSize="14"/>
+                                                <Border Classes="badge-muted" Padding="6,2" 
+                                                        IsVisible="{Binding SendMessageViewModel.CustomProperties.Count}">
+                                                    <TextBlock Text="{Binding SendMessageViewModel.CustomProperties.Count}" 
+                                                               FontSize="10" Foreground="#424242"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Add custom key-value pairs" Classes="caption" FontSize="11"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Expander.Header>
+                                
+                                <StackPanel Margin="0,20,0,0" Spacing="8">
+                                    <!-- Header row for properties -->
+                                    <Grid ColumnDefinitions="*,16,*,40" 
+                                          Margin="12,0,12,4"
+                                          IsVisible="{Binding SendMessageViewModel.CustomProperties.Count}">
+                                        <TextBlock Grid.Column="0" Text="KEY" Classes="field-group-header" Margin="0"/>
+                                        <TextBlock Grid.Column="2" Text="VALUE" Classes="field-group-header" Margin="0"/>
+                                    </Grid>
+                                    
+                                    <ItemsControl ItemsSource="{Binding SendMessageViewModel.CustomProperties}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:CustomProperty">
+                                                <Border Classes="property-row">
+                                                    <Grid ColumnDefinitions="*,16,*,Auto">
+                                                        <TextBox Grid.Column="0" 
+                                                                 Text="{Binding Key}" 
+                                                                 Watermark="Enter key"
+                                                                 Padding="10,8"/>
+                                                        <TextBox Grid.Column="2" 
+                                                                 Text="{Binding Value}" 
+                                                                 Watermark="Enter value"
+                                                                 Padding="10,8"/>
+                                                        <Button Grid.Column="3" 
+                                                                Classes="icon" 
+                                                                Content="✕"
+                                                                FontSize="12"
+                                                                Foreground="#8A8A8A"
+                                                                ToolTip.Tip="Remove property"
+                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.RemoveCustomPropertyCommand}"
+                                                                CommandParameter="{Binding}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    
+                                    <Button Classes="secondary small" 
+                                            Padding="16,8"
+                                            HorizontalAlignment="Left"
+                                            Command="{Binding SendMessageViewModel.AddCustomPropertyCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="+" FontWeight="Bold"/>
+                                            <TextBlock Text="Add Property"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Expander>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>
+

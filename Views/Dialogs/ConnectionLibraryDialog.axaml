@@ -1,0 +1,166 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Dialogs.ConnectionLibraryDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowConnectionLibrary}">
+        <Border Classes="modal" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                MinWidth="600"
+                MaxWidth="800"
+                MaxHeight="600">
+            <DockPanel>
+                <!-- Header -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <TextBlock Text="My Connections" Classes="heading"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Classes="secondary small" 
+                                Content="Clear All"
+                                Command="{Binding ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
+                                IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                        <Button Classes="primary small" 
+                                Content="+ Add Connection"
+                                Command="{Binding ConnectionLibraryViewModel.StartAddConnectionCommand}"
+                                IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                        <Button Classes="icon" 
+                                Content="×" 
+                                FontSize="18"
+                                Command="{Binding CloseConnectionLibraryCommand}"/>
+                    </StackPanel>
+                </Grid>
+                
+                <!-- Add/Edit Connection Form (shown when adding or editing) -->
+                <Border DockPanel.Dock="Top" 
+                        IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}"
+                        Classes="surface-subtle" 
+                        Padding="16" 
+                        Margin="0,0,0,16">
+                    <StackPanel Spacing="12">
+                        <Panel>
+                            <TextBlock Text="Add New Connection" FontWeight="SemiBold" FontSize="14"
+                                       IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                            <TextBlock Text="Edit Connection" FontWeight="SemiBold" FontSize="14"
+                                       IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                        </Panel>
+                        
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Connection Name" Classes="caption"/>
+                            <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionName}" 
+                                     Watermark="e.g., Production Service Bus"/>
+                        </StackPanel>
+                        
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Connection String" Classes="caption"/>
+                            <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionString}" 
+                                     Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
+                                     PasswordChar="●"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="False"
+                                     MaxHeight="100"/>
+                        </StackPanel>
+                        
+                        <!-- Detected info for namespace connections -->
+                        <Border Classes="surface-success" Padding="8"
+                                IsVisible="{Binding ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding ConnectionLibraryViewModel.DetectedInfo}" 
+                                       Foreground="#0E7A0D"/>
+                        </Border>
+                        
+                        <TextBlock Text="{Binding ConnectionLibraryViewModel.ValidationMessage}" 
+                                   Foreground="#C42B1C"
+                                   IsVisible="{Binding ConnectionLibraryViewModel.ValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   TextWrapping="Wrap"/>
+                        
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                            <Button Classes="secondary small" 
+                                    Content="Cancel" 
+                                    Command="{Binding ConnectionLibraryViewModel.CancelAddConnectionCommand}"/>
+                            <Button Classes="primary small" 
+                                    Content="Save Connection" 
+                                    Command="{Binding ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                    IsEnabled="{Binding ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
+                                    IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                            <Button Classes="primary small" 
+                                    Content="Update Connection" 
+                                    Command="{Binding ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                    IsEnabled="{Binding ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
+                                    IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Saved Connections List -->
+                <ScrollViewer>
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="No saved connections yet" 
+                                   Classes="caption" 
+                                   HorizontalAlignment="Center"
+                                   Margin="0,40"
+                                   IsVisible="{Binding !ConnectionLibraryViewModel.SavedConnections.Count, FallbackValue=True}"/>
+                        
+                        <ItemsControl ItemsSource="{Binding ConnectionLibraryViewModel.SavedConnections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:SavedConnection">
+                                    <Border Classes="surface-subtle" 
+                                            Padding="16" 
+                                            Margin="0,0,0,4">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <Border Grid.Column="0" 
+                                                    Classes="surface-brand"
+                                                    Padding="10"
+                                                    CornerRadius="4"
+                                                    VerticalAlignment="Center"
+                                                    Margin="0,0,12,0">
+                                                <TextBlock Text="↗" FontSize="16" Foreground="#0F6CBD"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                                    <Border Classes="badge-info" Padding="6,2">
+                                                        <TextBlock Text="{Binding TypeDisplayName}" FontSize="11" Foreground="#0F6CBD"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding EntityName}" Classes="caption" FontSize="12" VerticalAlignment="Center"
+                                                               IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                    <TextBlock Text="{Binding Endpoint}" Classes="caption" FontSize="12" VerticalAlignment="Center"
+                                                               IsVisible="{Binding IsNamespaceLevel}"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding CreatedAt, StringFormat='Added: {0:d}'}" 
+                                                           Classes="caption" FontSize="11" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" 
+                                                        Orientation="Horizontal" 
+                                                        Spacing="8"
+                                                        VerticalAlignment="Center">
+                                                <Button Classes="primary small" 
+                                                        Content="Connect"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.SelectConnectionCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="icon" 
+                                                        Content="✎"
+                                                        FontSize="14"
+                                                        ToolTip.Tip="Edit"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.StartEditConnectionCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="icon" 
+                                                        Content="×"
+                                                        FontSize="18"
+                                                        ToolTip.Tip="Delete"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.DeleteConnectionCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>
+
