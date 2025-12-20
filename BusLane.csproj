@@ -34,4 +34,23 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
+
+  <!-- macOS App Bundle Configuration -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <None Update="Info.plist">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="Assets/icon.icns">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- Include Assets as Avalonia Resources -->
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/icon.svg" />
+    <AvaloniaResource Include="Assets/icon.png" />
+    <None Remove="Assets/icon.iconset/**" />
+    <None Remove="Assets/*.sh" />
+    <None Remove="Assets/*.py" />
+  </ItemGroup>
 </Project>

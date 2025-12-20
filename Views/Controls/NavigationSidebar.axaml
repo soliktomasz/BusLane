@@ -17,9 +17,47 @@
             <Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceSubtle}" Padding="16,16,16,12">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource AccentBrand}">
-                            <TextBlock Text="🚌" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Viewbox Width="32" Height="32">
+                            <Canvas Width="512" Height="512">
+                                <!-- Rounded square background -->
+                                <Rectangle Canvas.Left="32" Canvas.Top="32" Width="448" Height="448" RadiusX="96" RadiusY="96" Fill="#0F172A"/>
+                                
+                                <!-- Road -->
+                                <Rectangle Canvas.Left="32" Canvas.Top="240" Width="448" Height="120" Fill="#1E293B"/>
+                                
+                                <!-- Lane dashes -->
+                                <Rectangle Canvas.Left="72" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
+                                <Rectangle Canvas.Left="152" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
+                                <Rectangle Canvas.Left="232" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
+                                <Rectangle Canvas.Left="312" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
+                                <Rectangle Canvas.Left="392" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
+                                
+                                <!-- Bus body -->
+                                <Rectangle Canvas.Left="120" Canvas.Top="136" Width="272" Height="136" RadiusX="24" RadiusY="24" Fill="#F59E0B"/>
+                                
+                                <!-- Roof accent -->
+                                <Rectangle Canvas.Left="120" Canvas.Top="136" Width="272" Height="20" RadiusX="24" RadiusY="24" Fill="#D97706"/>
+                                <Rectangle Canvas.Left="120" Canvas.Top="148" Width="272" Height="8" Fill="#D97706"/>
+                                
+                                <!-- Windows row -->
+                                <Rectangle Canvas.Left="152" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
+                                <Rectangle Canvas.Left="216" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
+                                <Rectangle Canvas.Left="280" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
+                                <Rectangle Canvas.Left="344" Canvas.Top="168" Width="32" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
+                                
+                                <!-- Front -->
+                                <Rectangle Canvas.Left="360" Canvas.Top="224" Width="24" Height="24" RadiusX="6" RadiusY="6" Fill="#FDE68A"/>
+                                
+                                <!-- Back -->
+                                <Rectangle Canvas.Left="128" Canvas.Top="224" Width="16" Height="24" RadiusX="4" RadiusY="4" Fill="#DC2626"/>
+                                
+                                <!-- Wheels -->
+                                <Ellipse Canvas.Left="160" Canvas.Top="240" Width="64" Height="64" Fill="#0F172A"/>
+                                <Ellipse Canvas.Left="176" Canvas.Top="256" Width="32" Height="32" Fill="#475569"/>
+                                <Ellipse Canvas.Left="288" Canvas.Top="240" Width="64" Height="64" Fill="#0F172A"/>
+                                <Ellipse Canvas.Left="304" Canvas.Top="256" Width="32" Height="32" Fill="#475569"/>
+                            </Canvas>
+                        </Viewbox>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Bus Lane" FontSize="18" FontWeight="SemiBold"/>
                             <StackPanel Orientation="Horizontal" Spacing="6">

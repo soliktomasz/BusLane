@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Bus Lane</string>
+    <key>CFBundleDisplayName</key>
+    <string>Bus Lane</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.buslane.app</string>
+    <key>CFBundleVersion</key>
+    <string>0.3.4</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.3.4</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleExecutable</key>
+    <string>BusLane</string>
+    <key>CFBundleIconFile</key>
+    <string>icon</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2025 Bus Lane</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+</dict>
+</plist>
+

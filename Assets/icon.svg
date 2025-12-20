@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded square background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="#0F172A"/>
+  
+  <!-- Road -->
+  <rect x="32" y="240" width="448" height="120" fill="#1E293B"/>
+  
+  <!-- Lane dashes -->
+  <rect x="72" y="292" width="56" height="16" rx="8" fill="#475569"/>
+  <rect x="152" y="292" width="56" height="16" rx="8" fill="#475569"/>
+  <rect x="232" y="292" width="56" height="16" rx="8" fill="#475569"/>
+  <rect x="312" y="292" width="56" height="16" rx="8" fill="#475569"/>
+  <rect x="392" y="292" width="56" height="16" rx="8" fill="#475569"/>
+  
+  <!-- Bus body -->
+  <rect x="120" y="136" width="272" height="136" rx="24" fill="#F59E0B"/>
+  
+  <!-- Roof accent -->
+  <rect x="120" y="136" width="272" height="20" rx="24" fill="#D97706"/>
+  <rect x="120" y="148" width="272" height="8" fill="#D97706"/>
+  
+  <!-- Windows row -->
+  <rect x="152" y="168" width="48" height="40" rx="8" fill="#0F172A"/>
+  <rect x="216" y="168" width="48" height="40" rx="8" fill="#0F172A"/>
+  <rect x="280" y="168" width="48" height="40" rx="8" fill="#0F172A"/>
+  <rect x="344" y="168" width="32" height="40" rx="8" fill="#0F172A"/>
+  
+  <!-- Front -->
+  <rect x="360" y="224" width="24" height="24" rx="6" fill="#FDE68A"/>
+  
+  <!-- Back -->
+  <rect x="128" y="224" width="16" height="24" rx="4" fill="#DC2626"/>
+  
+  <!-- Wheels -->
+  <circle cx="192" cy="272" r="32" fill="#0F172A"/>
+  <circle cx="192" cy="272" r="16" fill="#475569"/>
+  <circle cx="320" cy="272" r="32" fill="#0F172A"/>
+  <circle cx="320" cy="272" r="16" fill="#475569"/>
+</svg>
+
