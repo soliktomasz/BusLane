@@ -5,7 +5,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)
 ![Avalonia UI](https://img.shields.io/badge/Avalonia-11.3-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Version](https://img.shields.io/badge/Version-0.5.10-blue.svg)
+![Version](https://img.shields.io/badge/Version-0.5.11-blue.svg)
 
 ## Features
 
