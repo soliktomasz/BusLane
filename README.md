@@ -93,8 +93,11 @@ Alternatively, you can right-click the app and select "Open" to bypass the warni
 ### Publish as Self-Contained
 
 ```bash
-# For macOS
+# For macOS (Intel)
 dotnet publish -c Release -r osx-x64 --self-contained
+
+# For macOS (Apple Silicon)
+dotnet publish -c Release -r osx-arm64 --self-contained
 
 # For Windows
 dotnet publish -c Release -r win-x64 --self-contained
