@@ -6,10 +6,13 @@ namespace BusLane.Services;
 public class ConnectionStorageService : IConnectionStorageService
 {
     private readonly string _storageFilePath;
+    private readonly IEncryptionService _encryptionService;
     private List<SavedConnection> _connections = [];
 
-    public ConnectionStorageService()
+    public ConnectionStorageService(IEncryptionService encryptionService)
     {
+        _encryptionService = encryptionService;
+        
         var appDataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "BusLane"
@@ -65,17 +68,57 @@ public class ConnectionStorageService : IConnectionStorageService
         try
         {
             var json = await File.ReadAllTextAsync(_storageFilePath);
-            _connections = JsonSerializer.Deserialize<List<SavedConnection>>(json, GetJsonOptions()) ?? [];
+            var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, GetJsonOptions()) ?? [];
+            
+            _connections = storedConnections
+                .Select(stored =>
+                {
+                    // Decrypt the connection string
+                    // The decryption handles both encrypted and legacy unencrypted strings
+                    var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString) 
+                                          ?? stored.EncryptedConnectionString;
+                    
+                    return new SavedConnection(
+                        stored.Id,
+                        stored.Name,
+                        connectionString,
+                        stored.Type,
+                        stored.EntityName,
+                        stored.CreatedAt
+                    );
+                })
+                .ToList();
         }
         catch
         {
-            _connections = [];
+            // Try loading legacy format (unencrypted SavedConnection)
+            try
+            {
+                var json = await File.ReadAllTextAsync(_storageFilePath);
+                _connections = JsonSerializer.Deserialize<List<SavedConnection>>(json, GetJsonOptions()) ?? [];
+            }
+            catch
+            {
+                _connections = [];
+            }
         }
     }
 
     private async Task PersistConnectionsAsync()
     {
-        var json = JsonSerializer.Serialize(_connections, GetJsonOptions());
+        // Convert to stored format with encrypted connection strings
+        var storedConnections = _connections
+            .Select(conn => new StoredConnection(
+                conn.Id,
+                conn.Name,
+                _encryptionService.Encrypt(conn.ConnectionString),
+                conn.Type,
+                conn.EntityName,
+                conn.CreatedAt
+            ))
+            .ToList();
+        
+        var json = JsonSerializer.Serialize(storedConnections, GetJsonOptions());
         await File.WriteAllTextAsync(_storageFilePath, json);
     }
 
