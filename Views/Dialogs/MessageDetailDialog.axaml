@@ -15,11 +15,32 @@
             <DockPanel>
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
                     <TextBlock Text="Message Details" Classes="heading"/>
-                    <Button Classes="icon" 
-                            HorizontalAlignment="Right"
-                            Command="{Binding ClearSelectedMessageCommand}">
-                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
-                    </Button>
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
+                        <!-- Resend Message Button -->
+                        <Button Classes="subtle small" 
+                                Command="{Binding ResendMessageCommand}"
+                                CommandParameter="{Binding SelectedMessage}"
+                                ToolTip.Tip="Resend this message (sends immediately with same content)">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <PathIcon Data="{StaticResource IconSend}" Width="12" Height="12"/>
+                                <TextBlock Text="Resend"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Clone Message Button -->
+                        <Button Classes="subtle small" 
+                                Command="{Binding CloneMessageCommand}"
+                                CommandParameter="{Binding SelectedMessage}"
+                                ToolTip.Tip="Clone this message (opens send dialog with pre-filled content)">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <PathIcon Data="{StaticResource IconEdit}" Width="12" Height="12"/>
+                                <TextBlock Text="Clone"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="icon" 
+                                Command="{Binding ClearSelectedMessageCommand}">
+                            <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                        </Button>
+                    </StackPanel>
                 </Grid>
                 <ScrollViewer>
                     <StackPanel Spacing="12">

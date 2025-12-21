@@ -682,6 +682,119 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedMessage = null;
     }
+
+    [RelayCommand]
+    private async Task ResendMessageAsync(MessageInfo? message = null)
+    {
+        var msg = message ?? SelectedMessage;
+        if (msg == null) return;
+
+        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        if (entityName == null) return;
+
+        IsLoading = true;
+        StatusMessage = "Resending message...";
+
+        try
+        {
+            var properties = msg.Properties.ToDictionary(p => p.Key, p => p.Value);
+
+            if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+            {
+                await _connectionStringService.SendMessageAsync(
+                    ActiveConnection.ConnectionString,
+                    entityName,
+                    msg.Body,
+                    properties,
+                    msg.ContentType,
+                    msg.CorrelationId,
+                    null, // Generate new MessageId
+                    msg.SessionId,
+                    msg.Subject,
+                    msg.To,
+                    msg.ReplyTo,
+                    msg.ReplyToSessionId,
+                    msg.PartitionKey,
+                    msg.TimeToLive,
+                    null // No scheduled enqueue time for resend
+                );
+            }
+            else if (SelectedNamespace != null)
+            {
+                await _serviceBus.SendMessageAsync(
+                    SelectedNamespace.Endpoint,
+                    entityName,
+                    msg.Body,
+                    properties,
+                    msg.ContentType,
+                    msg.CorrelationId,
+                    null, // Generate new MessageId
+                    msg.SessionId,
+                    msg.Subject,
+                    msg.To,
+                    msg.ReplyTo,
+                    msg.ReplyToSessionId,
+                    msg.PartitionKey,
+                    msg.TimeToLive,
+                    null // No scheduled enqueue time for resend
+                );
+            }
+
+            StatusMessage = "Message resent successfully";
+            await LoadMessagesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error resending message: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CloneMessage(MessageInfo? message = null)
+    {
+        var msg = message ?? SelectedMessage;
+        if (msg == null) return;
+
+        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        if (entityName == null) return;
+
+        // Create the SendMessageViewModel and pre-populate with the message data
+        if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+        {
+            SendMessageViewModel = new SendMessageViewModel(
+                _connectionStringService,
+                ActiveConnection.ConnectionString,
+                entityName,
+                CloseSendMessagePopup,
+                status => StatusMessage = status
+            );
+        }
+        else if (SelectedNamespace != null)
+        {
+            SendMessageViewModel = new SendMessageViewModel(
+                _serviceBus,
+                SelectedNamespace.Endpoint,
+                entityName,
+                CloseSendMessagePopup,
+                status => StatusMessage = status
+            );
+        }
+        else
+        {
+            return;
+        }
+
+        // Pre-populate with message data
+        SendMessageViewModel!.PopulateFromMessage(msg);
+        ShowSendMessagePopup = true;
+        
+        // Clear selected message to close the detail dialog
+        SelectedMessage = null;
+    }
     
     [RelayCommand]
     private async Task CopyMessageBodyAsync()

@@ -289,6 +289,31 @@ public partial class SendMessageViewModel : ViewModelBase
         PersistSavedMessages();
     }
 
+    /// <summary>
+    /// Populates the form with data from an existing message (for cloning).
+    /// </summary>
+    public void PopulateFromMessage(Models.MessageInfo message)
+    {
+        Body = message.Body;
+        ContentType = message.ContentType;
+        CorrelationId = message.CorrelationId;
+        MessageId = null; // Don't copy MessageId - let it generate a new one
+        SessionId = message.SessionId;
+        Subject = message.Subject;
+        To = message.To;
+        ReplyTo = message.ReplyTo;
+        ReplyToSessionId = message.ReplyToSessionId;
+        PartitionKey = message.PartitionKey;
+        TimeToLiveText = message.TimeToLive?.ToString();
+        ScheduledEnqueueTimeText = null; // Don't copy scheduled time
+        
+        CustomProperties.Clear();
+        foreach (var prop in message.Properties)
+        {
+            CustomProperties.Add(new CustomProperty { Key = prop.Key, Value = prop.Value?.ToString() ?? "" });
+        }
+    }
+
     [RelayCommand]
     private void ClearForm()
     {

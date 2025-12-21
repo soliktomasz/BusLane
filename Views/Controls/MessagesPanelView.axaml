@@ -86,6 +86,24 @@
                                             HorizontalContentAlignment="Left"
                                             Padding="12,10"
                                             Margin="0,2">
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Resend" 
+                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Clone" 
+                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
                                         <StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBlock Grid.Column="0" 
@@ -160,6 +178,24 @@
                                             HorizontalContentAlignment="Left"
                                             Padding="12,10"
                                             Margin="0,2">
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Resend" 
+                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Clone" 
+                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
                                         <StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBlock Grid.Column="0" 
