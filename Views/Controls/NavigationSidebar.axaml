@@ -219,6 +219,57 @@
                 <Separator Margin="12,4,12,0"/>
             </StackPanel>
             
+            <!-- Live Stream, Charts, Alerts Buttons - Docked to bottom -->
+            <StackPanel DockPanel.Dock="Bottom" Margin="12,0,12,4" Spacing="4">
+                <Separator Margin="0,8,0,8"/>
+                
+                <!-- Live Stream Button -->
+                <Button Classes="subtle" 
+                        Command="{Binding OpenLiveStreamCommand}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource IconStream}" Width="16" Height="16"/>
+                        <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <!-- Charts Button -->
+                <Button Classes="subtle" 
+                        Command="{Binding OpenChartsCommand}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource IconChart}" Width="16" Height="16"/>
+                        <TextBlock Text="Charts" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <!-- Alerts Button with Badge -->
+                <Button Classes="subtle" 
+                        Command="{Binding OpenAlertsCommand}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,10">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{StaticResource IconBell}" Width="16" Height="16"/>
+                            <TextBlock Text="Alerts" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Border Grid.Column="2" 
+                                Background="{DynamicResource DangerBackground}" 
+                                CornerRadius="10" 
+                                Padding="8,2"
+                                IsVisible="{Binding ActiveAlertCount}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ActiveAlertCount}" 
+                                       FontSize="11" 
+                                       Foreground="White"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                    </Grid>
+                </Button>
+            </StackPanel>
+            
             <!-- Settings Button - Docked to bottom -->
             <Button DockPanel.Dock="Bottom"
                     Classes="subtle" 

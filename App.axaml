@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.App"
              RequestedThemeVariant="Default">
     <Application.Styles>
@@ -13,6 +14,21 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="/Styles/Icons.axaml"/>
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Converters for Live Stream, Charts, and Alerts -->
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <converters:BoolToStatusColorConverter x:Key="BoolToStatusColorConverter"/>
+            <converters:BoolToStatusTextConverter x:Key="BoolToStatusTextConverter"/>
+            <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+            <converters:SeverityToColorConverter x:Key="SeverityToColorConverter"/>
+            <converters:SeverityToBackgroundConverter x:Key="SeverityToBackgroundConverter"/>
+            
+            <!-- Additional theme resources -->
+            <SolidColorBrush x:Key="DangerBackground" Color="#D13438"/>
+            <SolidColorBrush x:Key="SuccessForeground" Color="#107C10"/>
+            <SolidColorBrush x:Key="AccentSubtle" Color="#E6F2FB"/>
+            <SolidColorBrush x:Key="SurfaceDefault" Color="#FFFFFF"/>
+            
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light Theme -->
                 <ResourceDictionary x:Key="Light">
