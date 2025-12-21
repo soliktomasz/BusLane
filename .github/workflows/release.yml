@@ -4,12 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version number (e.g., 0.3.4)'
-        required: true
-        type: string
 
 env:
   DOTNET_VERSION: '10.0.x'
@@ -21,23 +15,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for MinVer to work properly
+          fetch-depth: 0  # Required for MinVer
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build and display version
+      - name: Restore and Build
         run: |
+          dotnet restore
           dotnet build -c Release --no-restore
-          echo "Build version information:"
-          dotnet msbuild -getProperty:Version
-          dotnet msbuild -getProperty:AssemblyVersion
-          dotnet msbuild -getProperty:InformationalVersion
 
       - name: Publish
         run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish --no-build
@@ -67,16 +55,10 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build and display version
+      - name: Restore and Build
         run: |
+          dotnet restore
           dotnet build -c Release --no-restore
-          echo "Build version information:"
-          dotnet msbuild -getProperty:Version
-          dotnet msbuild -getProperty:AssemblyVersion
-          dotnet msbuild -getProperty:InformationalVersion
 
       - name: Publish
         run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish --no-build
@@ -114,16 +96,10 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build and display version
+      - name: Restore and Build
         run: |
+          dotnet restore
           dotnet build -c Release --no-restore
-          echo "Build version information:"
-          dotnet msbuild -getProperty:Version
-          dotnet msbuild -getProperty:AssemblyVersion
-          dotnet msbuild -getProperty:InformationalVersion
 
       - name: Publish
         run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish --no-build
@@ -180,39 +156,22 @@ jobs:
   create-release:
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     
     permissions:
       contents: write
 
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Display structure of downloaded files
-        run: ls -R artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/**/*.tar.gz
-            artifacts/**/*.zip
-            artifacts/**/*.dmg
-          generate_release_notes: true
-          draft: false
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Generate release notes from commits
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate release notes
         id: release_notes
         run: |
           # Get the previous tag
@@ -225,6 +184,17 @@ jobs:
           fi
           
           echo "$COMMITS" > release_notes.md
-          
-          echo "Generated release notes:"
           cat release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+            artifacts/**/*.dmg
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

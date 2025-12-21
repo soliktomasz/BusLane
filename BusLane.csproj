@@ -7,13 +7,13 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    
-    <!-- Version Information -->
+
+    <!-- MinVer Configuration -->
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <MinVerMinimumMajorMinor>0.5</MinVerMinimumMajorMinor>
-    <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
     <MinVerVerbosity>normal</MinVerVerbosity>
-    
+
     <!-- Application Metadata -->
     <Product>Bus Lane</Product>
     <Description>Azure Service Bus Manager</Description>
@@ -33,6 +33,8 @@
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+
+    <!-- MinVer for automatic versioning from Git tags -->
     <PackageReference Include="MinVer" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -58,4 +60,17 @@
     <None Remove="Assets/*.sh" />
     <None Remove="Assets/*.py" />
   </ItemGroup>
+
+  <!-- Custom target to display version information -->
+  <Target Name="DisplayVersion" AfterTargets="MinVer">
+    <Message Importance="high" Text="=================================================================================" />
+    <Message Importance="high" Text="  Version Information" />
+    <Message Importance="high" Text="=================================================================================" />
+    <Message Importance="high" Text="  Version:              $(Version)" />
+    <Message Importance="high" Text="  Assembly Version:     $(AssemblyVersion)" />
+    <Message Importance="high" Text="  File Version:         $(FileVersion)" />
+    <Message Importance="high" Text="  Informational:        $(InformationalVersion)" />
+    <Message Importance="high" Text="  MinVer Version:       $(MinVerVersion)" />
+    <Message Importance="high" Text="=================================================================================" />
+  </Target>
 </Project>
