@@ -15,10 +15,10 @@
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
                     <TextBlock Text="Status Message" Classes="heading"/>
                     <Button Classes="icon" 
-                            Content="×" 
-                            FontSize="18"
                             HorizontalAlignment="Right"
-                            Command="{Binding CloseStatusPopupCommand}"/>
+                            Command="{Binding CloseStatusPopupCommand}">
+                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                    </Button>
                 </Grid>
                 <Border Classes="surface-subtle" Padding="12">
                     <SelectableTextBlock Text="{Binding StatusMessage}" 

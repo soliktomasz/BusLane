@@ -27,9 +27,9 @@
                                 Command="{Binding ConnectionLibraryViewModel.StartAddConnectionCommand}"
                                 IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                         <Button Classes="icon" 
-                                Content="×" 
-                                FontSize="18"
-                                Command="{Binding CloseConnectionLibraryCommand}"/>
+                                Command="{Binding CloseConnectionLibraryCommand}">
+                            <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
                 
@@ -115,12 +115,12 @@
                                                     CornerRadius="4"
                                                     VerticalAlignment="Center"
                                                     Margin="0,0,12,0">
-                                                <TextBlock Text="↗" FontSize="16" Foreground="{DynamicResource AccentBrand}"/>
+                                                <PathIcon Data="{StaticResource IconConnection}" Width="16" Height="16" Foreground="{DynamicResource AccentBrand}"/>
                                             </Border>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
-                                                    <TextBlock Text="★" FontSize="14" Foreground="{DynamicResource AccentBrand}" 
+                                                    <PathIcon Data="{StaticResource IconStarFilled}" Width="14" Height="14" Foreground="{DynamicResource AccentBrand}" 
                                                                IsVisible="{Binding IsFavorite}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
@@ -144,8 +144,8 @@
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.ToggleFavoriteCommand}"
                                                         CommandParameter="{Binding}">
                                                     <Panel>
-                                                        <TextBlock Text="☆" FontSize="16" IsVisible="{Binding !IsFavorite}"/>
-                                                        <TextBlock Text="★" FontSize="16" Foreground="{DynamicResource AccentBrand}" IsVisible="{Binding IsFavorite}"/>
+                                                        <PathIcon Data="{StaticResource IconStarOutline}" Width="16" Height="16" IsVisible="{Binding !IsFavorite}"/>
+                                                        <PathIcon Data="{StaticResource IconStarFilled}" Width="16" Height="16" Foreground="{DynamicResource AccentBrand}" IsVisible="{Binding IsFavorite}"/>
                                                     </Panel>
                                                 </Button>
                                                 <Button Classes="primary small" 
@@ -153,17 +153,17 @@
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.SelectConnectionCommand}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Classes="icon" 
-                                                        Content="✎"
-                                                        FontSize="14"
                                                         ToolTip.Tip="Edit"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.StartEditConnectionCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
+                                                </Button>
                                                 <Button Classes="icon" 
-                                                        Content="×"
-                                                        FontSize="18"
                                                         ToolTip.Tip="Delete"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.DeleteConnectionCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                                                </Button>
                                             </StackPanel>
                                         </Grid>
                                     </Border>

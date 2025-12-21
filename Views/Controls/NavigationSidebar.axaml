@@ -80,7 +80,7 @@
                         HorizontalContentAlignment="Center"
                         Padding="12,10">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="📚" FontSize="14"/>
+                        <PathIcon Data="{StaticResource IconLibrary}" Width="16" Height="16"/>
                         <TextBlock Text="My Connections" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Button>
@@ -93,7 +93,7 @@
                         HorizontalContentAlignment="Center"
                         Padding="12,10">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="☁️" FontSize="14"/>
+                        <PathIcon Data="{StaticResource IconCloud}" Width="16" Height="16"/>
                         <TextBlock Text="Sign in with Azure"/>
                     </StackPanel>
                 </Button>
@@ -106,7 +106,7 @@
                         HorizontalContentAlignment="Center"
                         Padding="12,10">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="🚪" FontSize="14"/>
+                        <PathIcon Data="{StaticResource IconSignOut}" Width="16" Height="16"/>
                         <TextBlock Text="Sign Out"/>
                     </StackPanel>
                 </Button>
@@ -126,18 +126,18 @@
                               x:Name="FavoritesToggleButton">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="★" FontSize="14" Foreground="{DynamicResource AccentBrand}"/>
+                            <PathIcon Data="{StaticResource IconStarFilled}" Width="14" Height="14" Foreground="{DynamicResource AccentBrand}"/>
                             <TextBlock Text="Favorites" Classes="body-strong"/>
                         </StackPanel>
                         <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center" Padding="8,3" Margin="0,0,8,0">
                             <TextBlock Text="{Binding FavoriteConnections.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
                         </Border>
                         <Panel Grid.Column="3" VerticalAlignment="Center">
-                            <TextBlock Text="▼" 
-                                       FontSize="10"
+                            <PathIcon Data="{StaticResource IconChevronDown}" 
+                                       Width="10" Height="10"
                                        IsVisible="{Binding #FavoritesToggleButton.IsChecked}"/>
-                            <TextBlock Text="▶" 
-                                       FontSize="10"
+                            <PathIcon Data="{StaticResource IconChevronRight}" 
+                                       Width="10" Height="10"
                                        IsVisible="{Binding !#FavoritesToggleButton.IsChecked}"/>
                         </Panel>
                     </Grid>
@@ -182,9 +182,9 @@
                                                     CornerRadius="6" 
                                                     Background="{DynamicResource SurfaceBrand}"
                                                     Margin="0,0,10,0">
-                                                <TextBlock Text="↗" FontWeight="Bold" FontSize="14" 
-                                                           Foreground="{DynamicResource AccentBrand}"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <PathIcon Data="{StaticResource IconConnection}" Width="16" Height="16" 
+                                                          Foreground="{DynamicResource AccentBrand}"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             
                                             <!-- Connection Details -->
@@ -217,7 +217,7 @@
                     Margin="12,8,12,12"
                     Padding="12,10">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="⚙️" FontSize="16" VerticalAlignment="Center"/>
+                    <PathIcon Data="{StaticResource IconSettings}" Width="16" Height="16"/>
                     <TextBlock Text="Settings" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
@@ -275,7 +275,7 @@
                 <Border Background="{DynamicResource SurfaceSubtle}" Padding="12,10" Margin="12,0">
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="☁️" FontSize="12"/>
+                            <PathIcon Data="{StaticResource IconCloud}" Width="12" Height="12" Foreground="{DynamicResource SubtleForeground}"/>
                             <TextBlock Text="Azure Subscription" Classes="caption" FontWeight="SemiBold"/>
                         </StackPanel>
                         <ComboBox ItemsSource="{Binding Subscriptions}"
@@ -296,7 +296,7 @@
                 <!-- Namespaces Section Header -->
                 <Grid Margin="16,4,16,8" ColumnDefinitions="Auto,*,Auto">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="📡" FontSize="14"/>
+                        <PathIcon Data="{StaticResource IconNamespace}" Width="14" Height="14" Foreground="{DynamicResource AccentBrand}"/>
                         <TextBlock Text="Namespaces" Classes="body-strong"/>
                     </StackPanel>
                     <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center" Padding="8,3">
@@ -357,7 +357,7 @@
                                                            FontSize="13"
                                                            TextTrimming="CharacterEllipsis"/>
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="📍" FontSize="10"/>
+                                                    <PathIcon Data="{StaticResource IconLocation}" Width="10" Height="10" Foreground="{DynamicResource SubtleForeground}"/>
                                                     <TextBlock Text="{Binding Location}" 
                                                                Classes="caption" 
                                                                FontSize="11"
@@ -383,7 +383,7 @@
                     </MultiBinding>
                 </Border.IsVisible>
                 <StackPanel HorizontalAlignment="Center" Spacing="12">
-                    <TextBlock Text="☁️" FontSize="32" HorizontalAlignment="Center"/>
+                    <PathIcon Data="{StaticResource IconCloud}" Width="32" Height="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
                     <TextBlock Text="Get Started" FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center"/>
                     <TextBlock Text="Sign in with Azure or use a&#10;saved connection to browse&#10;your Service Bus resources." 
                                Classes="caption" 

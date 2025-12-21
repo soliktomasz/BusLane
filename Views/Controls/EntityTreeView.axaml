@@ -26,7 +26,8 @@
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                                     <Border Classes="entity-icon-queue">
-                                        <TextBlock Text="📥" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <PathIcon Data="{StaticResource IconQueue}" Width="16" Height="16" Foreground="{DynamicResource AccentBrand}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="Queues" FontWeight="SemiBold" FontSize="14"/>
@@ -125,7 +126,8 @@
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                                     <Border Classes="entity-icon-topic">
-                                        <TextBlock Text="📤" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <PathIcon Data="{StaticResource IconTopic}" Width="16" Height="16" Foreground="{DynamicResource TextSuccess}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="Topics" FontWeight="SemiBold" FontSize="14"/>
