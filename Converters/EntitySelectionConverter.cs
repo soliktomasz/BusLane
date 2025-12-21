@@ -30,6 +30,38 @@ public class EntitySelectionConverter : IMultiValueConverter
 }
 
 /// <summary>
+/// Converter for dead letter badge visibility that combines the count and the setting.
+/// Values[0] = DeadLetterCount (long), Values[1] = ShowDeadLetterBadges (bool)
+/// </summary>
+public class DeadLetterBadgeVisibilityConverter : IMultiValueConverter
+{
+    public static readonly DeadLetterBadgeVisibilityConverter Instance = new();
+
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+            return false;
+
+        // First value is the dead letter count
+        var hasDeadLetters = values[0] switch
+        {
+            long count => count > 0,
+            int count => count > 0,
+            _ => false
+        };
+
+        // Second value is the ShowDeadLetterBadges setting
+        var showBadges = values[1] switch
+        {
+            bool show => show,
+            _ => true // Default to showing if setting is not available
+        };
+
+        return hasDeadLetters && showBadges;
+    }
+}
+
+/// <summary>
 /// Converts entity selection state to a background brush.
 /// Returns the selected background color when selected, transparent otherwise.
 /// </summary>

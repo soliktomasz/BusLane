@@ -9,6 +9,7 @@
     <UserControl.Resources>
         <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
         <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
+        <converters:DeadLetterBadgeVisibilityConverter x:Key="DeadLetterBadgeVisibilityConverter"/>
     </UserControl.Resources>
     
     <Border Classes="card" Padding="0">
@@ -85,7 +86,13 @@
                                                                                FontSize="10" FontWeight="SemiBold" Foreground="#0F6CBD"/>
                                                                 </StackPanel>
                                                             </Border>
-                                                            <Border Classes="counter-dead" IsVisible="{Binding DeadLetterCount}">
+                                                            <Border Classes="counter-dead">
+                                                                <Border.IsVisible>
+                                                                    <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
+                                                                        <Binding Path="DeadLetterCount"/>
+                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ShowDeadLetterBadges"/>
+                                                                    </MultiBinding>
+                                                                </Border.IsVisible>
                                                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                                                     <TextBlock Text="DLQ:" FontSize="10" Foreground="#C42B1C"/>
                                                                     <TextBlock Text="{Binding DeadLetterCount}" 
@@ -233,7 +240,13 @@
                                                                                     <TextBlock Text="active" FontSize="9" Foreground="#0F6CBD"/>
                                                                                 </StackPanel>
                                                                             </Border>
-                                                                            <Border Classes="counter-dead" Padding="4,2" IsVisible="{Binding DeadLetterCount}">
+                                                                            <Border Classes="counter-dead" Padding="4,2">
+                                                                                <Border.IsVisible>
+                                                                                    <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
+                                                                                        <Binding Path="DeadLetterCount"/>
+                                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ShowDeadLetterBadges"/>
+                                                                                    </MultiBinding>
+                                                                                </Border.IsVisible>
                                                                                 <StackPanel Orientation="Horizontal" Spacing="3">
                                                                                     <TextBlock Text="{Binding DeadLetterCount}" 
                                                                                                FontSize="9" FontWeight="SemiBold" Foreground="#C42B1C"/>

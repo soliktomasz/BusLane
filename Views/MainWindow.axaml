@@ -122,6 +122,7 @@
         <dialogs:LoadMessageDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:ConnectionLibraryDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="2"/>
+        <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>
 

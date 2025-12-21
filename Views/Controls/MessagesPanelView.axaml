@@ -85,7 +85,8 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        MaxLines="2"
                                                        Margin="0,6,0,0"
-                                                       Foreground="{DynamicResource SubtleForeground}"/>
+                                                       Foreground="{DynamicResource SubtleForeground}"
+                                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnableMessagePreview}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
                                                     <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
@@ -145,7 +146,8 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        MaxLines="2"
                                                        Margin="0,6,0,0"
-                                                       Foreground="{DynamicResource SubtleForeground}"/>
+                                                       Foreground="{DynamicResource SubtleForeground}"
+                                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnableMessagePreview}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
                                                     <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 

@@ -57,6 +57,16 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _showSettings;
     [ObservableProperty] private SettingsViewModel? _settingsViewModel;
     
+    // Confirmation dialog properties
+    [ObservableProperty] private bool _showConfirmDialog;
+    [ObservableProperty] private string _confirmDialogTitle = "";
+    [ObservableProperty] private string _confirmDialogMessage = "";
+    [ObservableProperty] private string _confirmDialogConfirmText = "Confirm";
+    private Func<Task>? _confirmDialogAction;
+    
+    // Auto-refresh timer
+    private System.Timers.Timer? _autoRefreshTimer;
+    
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
@@ -75,6 +85,10 @@ public partial class MainWindowViewModel : ViewModelBase
     // Total dead letter count across all queues and topic subscriptions
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
+    
+    // Settings-driven computed properties
+    public bool ShowDeadLetterBadges => Preferences.ShowDeadLetterBadges;
+    public bool EnableMessagePreview => Preferences.EnableMessagePreview;
     
     // Sorting properties
     [ObservableProperty] 
@@ -166,6 +180,55 @@ public partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
+        
+        // Initialize auto-refresh timer
+        InitializeAutoRefreshTimer();
+    }
+    
+    private void InitializeAutoRefreshTimer()
+    {
+        _autoRefreshTimer = new System.Timers.Timer();
+        _autoRefreshTimer.Elapsed += async (_, _) =>
+        {
+            if (Preferences.AutoRefreshMessages && (SelectedQueue != null || SelectedSubscription != null))
+            {
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    await LoadMessagesAsync();
+                });
+            }
+        };
+        UpdateAutoRefreshTimer();
+    }
+    
+    /// <summary>
+    /// Updates the auto-refresh timer based on current preferences.
+    /// Call this after settings are saved.
+    /// </summary>
+    public void UpdateAutoRefreshTimer()
+    {
+        if (_autoRefreshTimer == null) return;
+        
+        if (Preferences.AutoRefreshMessages)
+        {
+            _autoRefreshTimer.Interval = Preferences.AutoRefreshIntervalSeconds * 1000;
+            _autoRefreshTimer.Start();
+        }
+        else
+        {
+            _autoRefreshTimer.Stop();
+        }
+    }
+    
+    /// <summary>
+    /// Notifies that settings-driven properties have changed.
+    /// Call this after settings are saved.
+    /// </summary>
+    public void NotifySettingsChanged()
+    {
+        OnPropertyChanged(nameof(ShowDeadLetterBadges));
+        OnPropertyChanged(nameof(EnableMessagePreview));
+        UpdateAutoRefreshTimer();
     }
 
     public async Task InitializeAsync()
@@ -530,6 +593,26 @@ public partial class MainWindowViewModel : ViewModelBase
         
         if (entityName == null) return;
         
+        // Check if confirmation is required
+        if (Preferences.ConfirmBeforePurge)
+        {
+            var queueType = ShowDeadLetter ? "dead letter queue" : "queue";
+            var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
+            ShowConfirmation(
+                "Confirm Purge",
+                $"Are you sure you want to purge all messages from the {queueType} of '{targetName}'? This action cannot be undone.",
+                "Purge",
+                async () => await ExecutePurgeAsync(entityName, subscription)
+            );
+        }
+        else
+        {
+            await ExecutePurgeAsync(entityName, subscription);
+        }
+    }
+    
+    private async Task ExecutePurgeAsync(string entityName, string? subscription)
+    {
         IsLoading = true;
         StatusMessage = "Purging messages...";
         
@@ -662,7 +745,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSettings()
     {
-        SettingsViewModel = new SettingsViewModel(CloseSettings);
+        SettingsViewModel = new SettingsViewModel(CloseSettings, this);
         ShowSettings = true;
     }
 
@@ -927,5 +1010,35 @@ public partial class MainWindowViewModel : ViewModelBase
             await ConnectToSavedConnectionAsync(ActiveConnection);
         }
     }
+    
+    #region Confirmation Dialog
+    
+    private void ShowConfirmation(string title, string message, string confirmText, Func<Task> action)
+    {
+        ConfirmDialogTitle = title;
+        ConfirmDialogMessage = message;
+        ConfirmDialogConfirmText = confirmText;
+        _confirmDialogAction = action;
+        ShowConfirmDialog = true;
+    }
+    
+    [RelayCommand]
+    private async Task ExecuteConfirmDialogAsync()
+    {
+        ShowConfirmDialog = false;
+        if (_confirmDialogAction != null)
+        {
+            await _confirmDialogAction();
+            _confirmDialogAction = null;
+        }
+    }
+    
+    [RelayCommand]
+    private void CancelConfirmDialog()
+    {
+        ShowConfirmDialog = false;
+        _confirmDialogAction = null;
+    }
+    
+    #endregion
 }
-

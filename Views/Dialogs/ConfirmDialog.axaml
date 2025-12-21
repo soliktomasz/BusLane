@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.ConfirmDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowConfirmDialog}">
+        <Border Classes="modal" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                MinWidth="400"
+                MaxWidth="500">
+            <DockPanel>
+                <!-- Header -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <TextBlock Text="{Binding ConfirmDialogTitle}" Classes="heading"/>
+                    <Button Classes="icon" 
+                            Content="×" 
+                            FontSize="18"
+                            HorizontalAlignment="Right"
+                            Command="{Binding CancelConfirmDialogCommand}"/>
+                </Grid>
+                
+                <!-- Message -->
+                <TextBlock DockPanel.Dock="Top" 
+                           Text="{Binding ConfirmDialogMessage}" 
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,24"/>
+                
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Classes="secondary small" 
+                            Content="Cancel" 
+                            Command="{Binding CancelConfirmDialogCommand}"/>
+                    <Button Classes="danger small" 
+                            Content="{Binding ConfirmDialogConfirmText}" 
+                            Command="{Binding ExecuteConfirmDialogCommand}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>
+
