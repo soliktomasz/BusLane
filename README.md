@@ -1,44 +1,44 @@
 # BusLane
 
-A modern, cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 8.
+A modern, cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10.
 
-![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet)
-![Avalonia UI](https://img.shields.io/badge/Avalonia-11.1-8B44AC?style=flat)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)
+![Avalonia UI](https://img.shields.io/badge/Avalonia-11.3-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Version](https://img.shields.io/badge/Version-0.3.4-blue.svg)
+![Version](https://img.shields.io/badge/Version-0.3.6-blue.svg)
 
 ## Features
 
 ### Connection Options
-- 🔐 **Azure Authentication** - Sign in with your Azure account using Azure Identity
-- 🔗 **Connection String Support** - Connect directly using Service Bus connection strings
-- 📚 **Connection Library** - Save and manage multiple connection strings for quick access
+- **Azure Authentication** - Sign in with your Azure account using Azure Identity
+- **Connection String Support** - Connect directly using Service Bus connection strings
+- **Connection Library** - Save and manage multiple connection strings for quick access
 
 ### Namespace & Entity Management
-- 📋 **Subscription Management** - Browse and switch between Azure subscriptions
-- 🏢 **Namespace Explorer** - View all Service Bus namespaces in your subscription
-- 📬 **Queue Management** - Browse queues, view message counts, and manage messages
-- 📨 **Topic & Subscription Support** - Full support for topics and their subscriptions
-- 🔄 **Session-Enabled Queues** - Support for session-enabled queues and subscriptions
+- **Subscription Management** - Browse and switch between Azure subscriptions
+- **Namespace Explorer** - View all Service Bus namespaces in your subscription
+- **Queue Management** - Browse queues, view message counts, and manage messages
+- **Topic & Subscription Support** - Full support for topics and their subscriptions
+- **Session-Enabled Queues** - Support for session-enabled queues and subscriptions
 
 ### Messaging Features
-- 👀 **Message Peek** - Preview messages without consuming them
-- ✉️ **Send Messages** - Send new messages with full control over:
+- **Message Peek** - Preview messages without consuming them
+- **Send Messages** - Send new messages with full control over:
   - Message body and content type
   - Custom properties (key-value pairs)
   - System properties (CorrelationId, SessionId, Subject, etc.)
   - Message scheduling (ScheduledEnqueueTime)
   - Time-to-live (TTL) settings
   - Partition keys and reply-to settings
-- 💾 **Save & Load Messages** - Save message templates for reuse
-- 🗑️ **Dead Letter Queue** - View and manage dead-lettered messages
-- 🧹 **Purge Messages** - Bulk delete messages from queues or subscriptions
-- 🔍 **Message Details** - View complete message details including headers and properties
+- **Save & Load Messages** - Save message templates for reuse
+- **Dead Letter Queue** - View and manage dead-lettered messages
+- **Purge Messages** - Bulk delete messages from queues or subscriptions
+- **Message Details** - View complete message details including headers and properties
 
 ### User Experience
-- 💾 **Session Persistence** - Automatically restores your previous session
-- ⚙️ **Settings Dialog** - Configure application preferences
-- 🎨 **Modern UI** - Clean, intuitive Fluent design interface
+- **Session Persistence** - Automatically restores your previous session
+- **Settings Dialog** - Configure application preferences
+- **Modern UI** - Clean, intuitive Fluent design interface
 
 ## Screenshots
 
@@ -46,7 +46,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 
 ## Prerequisites
 
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - An Azure account with access to Azure Service Bus resources
 - Required Azure RBAC roles:
   - `Azure Service Bus Data Receiver` - to peek/receive messages
@@ -136,8 +136,8 @@ BusLane/
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| Avalonia | 11.1.0 | Cross-platform UI framework |
-| Avalonia.Desktop | 11.1.0 | Desktop platform support |
+| Avalonia | 11.3.10 | Cross-platform UI framework |
+| Avalonia.Desktop | 11.3.10 | Desktop platform support |
 | Avalonia.Themes.Fluent | 11.1.0 | Fluent design theme |
 | Avalonia.Fonts.Inter | 11.1.0 | Inter font family |
 | Avalonia.ReactiveUI | 11.1.0 | ReactiveUI integration |
@@ -145,8 +145,8 @@ BusLane/
 | Azure.ResourceManager | 1.13.2 | Azure Resource Manager SDK |
 | Azure.ResourceManager.ServiceBus | 1.1.0 | Service Bus management |
 | Azure.Messaging.ServiceBus | 7.20.1 | Service Bus messaging |
-| CommunityToolkit.Mvvm | 8.2.2 | MVVM toolkit with source generators |
-| Microsoft.Extensions.DependencyInjection | 8.0.0 | Dependency injection |
+| CommunityToolkit.Mvvm | 8.4.0 | MVVM toolkit with source generators |
+| Microsoft.Extensions.DependencyInjection | 10.0.1 | Dependency injection |
 
 ## Contributing
 
