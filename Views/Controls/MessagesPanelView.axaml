@@ -9,9 +9,9 @@
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
             <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16,16,16,12">
-                <Grid RowDefinitions="Auto">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
                     <!-- Title and Actions Row -->
-                    <Grid ColumnDefinitions="*,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
                             <!-- Send Message Button (compact, inline) -->
@@ -45,6 +45,38 @@
                                     Padding="8,6"/>
                         </StackPanel>
                     </Grid>
+                    
+                    <!-- Search Row -->
+                    <Border Grid.Row="1" 
+                            Background="{DynamicResource SurfaceSubtle}" 
+                            CornerRadius="6" 
+                            Padding="8,6">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <PathIcon Grid.Column="0" 
+                                      Data="{StaticResource IconSearch}" 
+                                      Width="14" Height="14" 
+                                      Foreground="{DynamicResource MutedForeground}"
+                                      Margin="4,0,8,0"
+                                      VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" 
+                                     Text="{Binding MessageSearchText, Mode=TwoWay}"
+                                     Watermark="Search by message ID, body, correlation ID, subject..."
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Padding="0,4"
+                                     FontSize="13"
+                                     VerticalAlignment="Center"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Grid.Column="2" 
+                                    Classes="subtle small"
+                                    Command="{Binding ClearMessageSearchCommand}"
+                                    IsVisible="{Binding MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Padding="4"
+                                    ToolTip.Tip="Clear search">
+                                <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
             
@@ -67,7 +99,7 @@
                                     <TextBlock Text="Loading messages..." FontSize="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
-                            <ListBox ItemsSource="{Binding Messages}"
+                            <ListBox ItemsSource="{Binding FilteredMessages}"
                              SelectedItem="{Binding SelectedMessage}"
                              Background="Transparent"
                              Padding="8"
@@ -159,7 +191,7 @@
                                     <TextBlock Text="Loading messages..." FontSize="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
-                            <ListBox ItemsSource="{Binding Messages}"
+                            <ListBox ItemsSource="{Binding FilteredMessages}"
                              SelectedItem="{Binding SelectedMessage}"
                              Background="Transparent"
                              Padding="8"

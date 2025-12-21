@@ -100,6 +100,41 @@ public partial class MainWindowViewModel : ViewModelBase
     
     public string SortButtonText => SortDescending ? "↓ Newest" : "↑ Oldest";
     
+    // Search properties
+    [ObservableProperty] 
+    private string _messageSearchText = "";
+    
+    partial void OnMessageSearchTextChanged(string value)
+    {
+        ApplyMessageFilter();
+    }
+    
+    public ObservableCollection<MessageInfo> FilteredMessages { get; } = [];
+    
+    private void ApplyMessageFilter()
+    {
+        FilteredMessages.Clear();
+        
+        var filtered = string.IsNullOrWhiteSpace(MessageSearchText)
+            ? Messages
+            : Messages.Where(m => 
+                (m.MessageId?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.Body?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.CorrelationId?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.Subject?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.DeadLetterReason?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                m.SequenceNumber.ToString().Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase));
+        
+        foreach (var msg in filtered)
+            FilteredMessages.Add(msg);
+    }
+    
+    [RelayCommand]
+    private void ClearMessageSearch()
+    {
+        MessageSearchText = "";
+    }
+    
     // Computed properties for message body formatting
     public bool IsMessageBodyJson
     {
@@ -498,6 +533,7 @@ public partial class MainWindowViewModel : ViewModelBase
         
         IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
+        MessageSearchText = ""; // Clear search when loading new messages
         
         try
         {
@@ -514,6 +550,7 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var m in sortedMsgs)
                 Messages.Add(m);
             
+            ApplyMessageFilter(); // Apply filter after loading
             StatusMessage = $"{Messages.Count} message(s)";
         }
         catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx) when (sbEx.Reason == Azure.Messaging.ServiceBus.ServiceBusFailureReason.MessagingEntityNotFound)
@@ -1045,6 +1082,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
+        MessageSearchText = ""; // Clear search when loading new messages
 
         try
         {
@@ -1061,6 +1099,7 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var m in sortedMsgs)
                 Messages.Add(m);
 
+            ApplyMessageFilter(); // Apply filter after loading
             StatusMessage = $"{Messages.Count} message(s)";
         }
         catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx)
