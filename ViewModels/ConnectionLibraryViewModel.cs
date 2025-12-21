@@ -12,6 +12,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     private readonly IConnectionStringService _connectionStringService;
     private readonly Action<SavedConnection> _onConnectionSelected;
     private readonly Action<string> _onStatusUpdate;
+    private readonly Func<Task>? _onFavoritesChanged;
 
     [ObservableProperty] private string _newConnectionName = "";
     [ObservableProperty] private string _newConnectionString = "";
@@ -30,12 +31,14 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         IConnectionStorageService connectionStorage,
         IConnectionStringService connectionStringService,
         Action<SavedConnection> onConnectionSelected,
-        Action<string> onStatusUpdate)
+        Action<string> onStatusUpdate,
+        Func<Task>? onFavoritesChanged = null)
     {
         _connectionStorage = connectionStorage;
         _connectionStringService = connectionStringService;
         _onConnectionSelected = onConnectionSelected;
         _onStatusUpdate = onStatusUpdate;
+        _onFavoritesChanged = onFavoritesChanged;
     }
 
     public async Task LoadConnectionsAsync()
@@ -197,6 +200,28 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     {
         SelectedConnection = connection;
         _onConnectionSelected(connection);
+    }
+
+    [RelayCommand]
+    private async Task ToggleFavoriteAsync(SavedConnection connection)
+    {
+        var updatedConnection = connection with { IsFavorite = !connection.IsFavorite };
+        await _connectionStorage.SaveConnectionAsync(updatedConnection);
+        
+        var index = SavedConnections.IndexOf(connection);
+        if (index >= 0)
+        {
+            SavedConnections[index] = updatedConnection;
+        }
+        
+        if (_onFavoritesChanged != null)
+        {
+            await _onFavoritesChanged();
+        }
+        
+        _onStatusUpdate(updatedConnection.IsFavorite 
+            ? $"'{connection.Name}' added to favorites" 
+            : $"'{connection.Name}' removed from favorites");
     }
 }
 

@@ -84,7 +84,8 @@ public class ConnectionStorageService : IConnectionStorageService
                         connectionString,
                         stored.Type,
                         stored.EntityName,
-                        stored.CreatedAt
+                        stored.CreatedAt,
+                        stored.IsFavorite
                     );
                 })
                 .ToList();
@@ -114,7 +115,8 @@ public class ConnectionStorageService : IConnectionStorageService
                 _encryptionService.Encrypt(conn.ConnectionString),
                 conn.Type,
                 conn.EntityName,
-                conn.CreatedAt
+                conn.CreatedAt,
+                conn.IsFavorite
             ))
             .ToList();
         

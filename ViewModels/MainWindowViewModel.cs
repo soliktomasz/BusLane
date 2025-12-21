@@ -74,10 +74,12 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
     public ObservableCollection<MessageInfo> Messages { get; } = [];
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
+    public ObservableCollection<SavedConnection> FavoriteConnections { get; } = [];
     
     // Computed properties for visibility bindings (Count doesn't notify on collection changes)
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
+    public bool HasFavoriteConnections => FavoriteConnections.Count > 0;
     
     // Show Azure sections only when authenticated AND in Azure account mode (not using saved connection)
     public bool ShowAzureSections => IsAuthenticated && CurrentMode == ConnectionMode.AzureAccount;
@@ -180,6 +182,7 @@ public partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
+        FavoriteConnections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFavoriteConnections));
         
         // Initialize auto-refresh timer
         InitializeAutoRefreshTimer();
@@ -258,11 +261,17 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task LoadSavedConnectionsAsync()
     {
         SavedConnections.Clear();
+        FavoriteConnections.Clear();
         var connections = await _connectionStorage.GetConnectionsAsync();
         foreach (var conn in connections.OrderByDescending(c => c.CreatedAt))
         {
             SavedConnections.Add(conn);
+            if (conn.IsFavorite)
+            {
+                FavoriteConnections.Add(conn);
+            }
         }
+        OnPropertyChanged(nameof(HasFavoriteConnections));
     }
 
     [RelayCommand]
@@ -728,10 +737,22 @@ public partial class MainWindowViewModel : ViewModelBase
             _connectionStorage,
             _connectionStringService,
             OnConnectionSelected,
-            msg => StatusMessage = msg
+            msg => StatusMessage = msg,
+            RefreshFavoriteConnectionsAsync
         );
         await ConnectionLibraryViewModel.LoadConnectionsAsync();
         ShowConnectionLibrary = true;
+    }
+
+    private async Task RefreshFavoriteConnectionsAsync()
+    {
+        FavoriteConnections.Clear();
+        var connections = await _connectionStorage.GetConnectionsAsync();
+        foreach (var conn in connections.Where(c => c.IsFavorite).OrderByDescending(c => c.CreatedAt))
+        {
+            FavoriteConnections.Add(conn);
+        }
+        OnPropertyChanged(nameof(HasFavoriteConnections));
     }
 
     [RelayCommand]

@@ -118,7 +118,11 @@
                                                 <TextBlock Text="↗" FontSize="16" Foreground="{DynamicResource AccentBrand}"/>
                                             </Border>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                    <TextBlock Text="★" FontSize="14" Foreground="{DynamicResource AccentBrand}" 
+                                                               IsVisible="{Binding IsFavorite}" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
                                                     <Border Classes="badge-info" Padding="6,2">
                                                         <TextBlock Text="{Binding TypeDisplayName}" FontSize="11" Foreground="{DynamicResource AccentBrand}"/>
@@ -135,6 +139,15 @@
                                                         Orientation="Horizontal" 
                                                         Spacing="8"
                                                         VerticalAlignment="Center">
+                                                <Button Classes="icon" 
+                                                        ToolTip.Tip="{Binding IsFavorite, Converter={x:Static BoolConverters.Not}, ConverterParameter='Add to favorites', FallbackValue='Add to favorites'}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.ToggleFavoriteCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Panel>
+                                                        <TextBlock Text="☆" FontSize="16" IsVisible="{Binding !IsFavorite}"/>
+                                                        <TextBlock Text="★" FontSize="16" Foreground="{DynamicResource AccentBrand}" IsVisible="{Binding IsFavorite}"/>
+                                                    </Panel>
+                                                </Button>
                                                 <Button Classes="primary small" 
                                                         Content="Connect"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.SelectConnectionCommand}"

@@ -10,6 +10,7 @@ internal record StoredConnection(
     string EncryptedConnectionString,
     ConnectionType Type,
     string? EntityName,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    bool IsFavorite = false
 );
 

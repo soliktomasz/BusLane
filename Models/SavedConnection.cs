@@ -13,7 +13,8 @@ public record SavedConnection(
     string ConnectionString,
     ConnectionType Type,
     string? EntityName, // Null for namespace-level connections
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    bool IsFavorite = false
 )
 {
     // Extract namespace endpoint from connection string
