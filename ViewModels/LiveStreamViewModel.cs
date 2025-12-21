@@ -82,8 +82,9 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         });
     }
 
-    partial void OnFilterTextChanged(string _)
+    partial void OnFilterTextChanged(string value)
     {
+        _ = value; // Suppress unused warning
         ApplyFilter();
     }
 
@@ -186,9 +187,12 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _messageSubscription?.Dispose();
+        _messageSubscription = null;
         _liveStreamService.StreamingStatusChanged -= OnStreamingStatusChanged;
         _liveStreamService.StreamError -= OnStreamError;
-        await _liveStreamService.DisposeAsync();
+        
+        // Only stop the stream, don't dispose the singleton service
+        await _liveStreamService.StopStreamAsync();
         
         GC.SuppressFinalize(this);
     }
