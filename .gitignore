@@ -148,3 +148,19 @@ FakesAssemblies/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Security & Secrets
+# Connection strings and user data are stored in AppData, but explicitly exclude them here
+connections.json
+*.env
+*.env.*
+.env.local
+.env.*.local
+appsettings.*.json
+secrets.json
+*.key
+*.pem
+*.pfx
+*.p12
+*.cer
+*.crt
+
