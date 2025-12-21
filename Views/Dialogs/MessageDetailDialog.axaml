@@ -133,12 +133,17 @@
                         <StackPanel Spacing="8"
                                     IsVisible="{Binding FormattedApplicationProperties, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                             <TextBlock Text="Application Properties" Classes="body-strong" Margin="0,8,0,4"/>
-                            <Border Classes="surface-subtle" Padding="12">
-                                <SelectableTextBlock Text="{Binding FormattedApplicationProperties}" 
-                                                     TextWrapping="Wrap" 
-                                                     FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                     FontSize="12"/>
-                            </Border>
+                            <TextBox Text="{Binding FormattedApplicationProperties, Mode=OneWay}" 
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     MaxHeight="150"
+                                     FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                     FontSize="12"
+                                     Background="{DynamicResource SurfaceSubtle}"
+                                     BorderThickness="0"
+                                     Padding="12"
+                                     CornerRadius="4"/>
                         </StackPanel>
                         
                         <!-- Message Body (at the end) -->
@@ -156,14 +161,17 @@
                                         Command="{Binding CopyMessageBodyCommand}"
                                         ToolTip.Tip="Copy body to clipboard"/>
                             </Grid>
-                            <Border Classes="surface-subtle" Padding="12" MaxHeight="300">
-                                <ScrollViewer HorizontalScrollBarVisibility="Auto">
-                                    <SelectableTextBlock Text="{Binding FormattedMessageBody}" 
-                                                         TextWrapping="Wrap" 
-                                                         FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                         FontSize="12"/>
-                                </ScrollViewer>
-                            </Border>
+                            <TextBox Text="{Binding FormattedMessageBody, Mode=OneWay}" 
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     MaxHeight="300"
+                                     FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                     FontSize="12"
+                                     Background="{DynamicResource SurfaceSubtle}"
+                                     BorderThickness="0"
+                                     Padding="12"
+                                     CornerRadius="4"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
