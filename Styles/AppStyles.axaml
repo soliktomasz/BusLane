@@ -196,10 +196,33 @@
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
     </Style>
     
-    <!-- ListBox - Fluent 2 -->
+    <!-- ListBox - Fluent 2 with Virtualization Support -->
     <Style Selector="ListBox">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+    
+    <!-- ListBox for custom item templates (no default item selection styling) -->
+    <Style Selector="ListBox.entity-list">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+    
+    <Style Selector="ListBox.entity-list ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Focusable" Value="False"/>
+    </Style>
+    
+    <Style Selector="ListBox.entity-list ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    
+    <Style Selector="ListBox.entity-list ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
     </Style>
     
     <Style Selector="ListBoxItem">

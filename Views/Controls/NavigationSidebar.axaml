@@ -143,9 +143,19 @@
                     </Grid>
                 </ToggleButton>
                 
-                <ItemsControl ItemsSource="{Binding FavoriteConnections}" Margin="8,0,8,8"
-                              IsVisible="{Binding #FavoritesToggleButton.IsChecked}">
-                    <ItemsControl.ItemTemplate>
+                <ListBox ItemsSource="{Binding FavoriteConnections}" 
+                         Margin="8,0,8,8"
+                         Classes="entity-list"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         IsVisible="{Binding #FavoritesToggleButton.IsChecked}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:SavedConnection">
                             <Button Classes="subtle" 
                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
@@ -203,8 +213,8 @@
                                 </Grid>
                             </Button>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </ListBox.ItemTemplate>
+                </ListBox>
                 
                 <Separator Margin="12,4,12,0"/>
             </StackPanel>
@@ -305,10 +315,20 @@
                 </Grid>
             </StackPanel>
             
-            <!-- Namespaces List (Scrollable) -->
-            <ScrollViewer IsVisible="{Binding ShowAzureSections}" Margin="0,0,0,8">
-                <ItemsControl ItemsSource="{Binding Namespaces}" Margin="8,0,8,8">
-                    <ItemsControl.ItemTemplate>
+            <!-- Namespaces List (Scrollable with virtualization) -->
+            <ListBox ItemsSource="{Binding Namespaces}" 
+                     IsVisible="{Binding ShowAzureSections}" 
+                     Margin="8,0,8,8"
+                     Classes="entity-list"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:ServiceBusNamespace">
                             <Button Classes="subtle" 
                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectNamespaceCommand}"
@@ -368,10 +388,9 @@
                                     </Border>
                                 </Grid>
                             </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
             
             <!-- Empty State when not authenticated and no active connection -->
             <Border Margin="12,24,12,12"

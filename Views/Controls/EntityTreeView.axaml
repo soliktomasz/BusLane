@@ -40,8 +40,18 @@
                             </Grid>
                         </Border>
                         
-                        <ItemsControl ItemsSource="{Binding Queues}" Margin="4,0,0,0">
-                            <ItemsControl.ItemTemplate>
+                        <ListBox ItemsSource="{Binding Queues}" 
+                                 Margin="4,0,0,0"
+                                 Classes="entity-list"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:QueueInfo">
                                     <Button Classes="subtle"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectQueueForConnectionCommand}"
@@ -114,8 +124,8 @@
                                         </Grid>
                                     </Button>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </StackPanel>
                     
                     <Border Classes="section-divider" IsVisible="{Binding HasQueues}"/>
@@ -140,8 +150,18 @@
                             </Grid>
                         </Border>
                         
-                        <ItemsControl ItemsSource="{Binding Topics}" Margin="4,0,0,0">
-                            <ItemsControl.ItemTemplate>
+                        <ListBox ItemsSource="{Binding Topics}" 
+                                 Margin="4,0,0,0"
+                                 Classes="entity-list"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:TopicInfo">
                                     <Expander Margin="0,2" IsExpanded="False">
                                         <Expander.Header>
@@ -193,10 +213,19 @@
                                             </Button>
                                         </Expander.Header>
                                         <!-- Topic Subscriptions -->
-                                        <ItemsControl ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TopicSubscriptions}"
-                                                      Margin="20,8,0,4"
-                                                      IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                            <ItemsControl.ItemTemplate>
+                                        <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TopicSubscriptions}"
+                                                 Margin="20,8,0,4"
+                                                 Classes="entity-list"
+                                                 Background="Transparent"
+                                                 BorderThickness="0"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                 IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <VirtualizingStackPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            <ListBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:SubscriptionInfo">
                                                     <Button Classes="subtle"
                                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionForConnectionCommand}"
@@ -262,12 +291,12 @@
                                                         </Grid>
                                                     </Button>
                                                 </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
                                     </Expander>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

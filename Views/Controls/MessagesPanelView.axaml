@@ -53,11 +53,17 @@
                         SelectedIndex="{Binding SelectedMessageTabIndex}">
                 
                 <TabItem Header="Active Messages">
-                    <ScrollViewer Padding="8">
-                        <ListBox ItemsSource="{Binding Messages}"
-                                 SelectedItem="{Binding SelectedMessage}"
-                                 Background="Transparent">
-                            <ListBox.ItemTemplate>
+                    <ListBox ItemsSource="{Binding Messages}"
+                             SelectedItem="{Binding SelectedMessage}"
+                             Background="Transparent"
+                             Padding="8"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:MessageInfo">
                                     <Button Classes="subtle"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
@@ -102,15 +108,20 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                    </ScrollViewer>
                 </TabItem>
                 
                 <TabItem Header="Dead Letter">
-                    <ScrollViewer Padding="8">
-                        <ListBox ItemsSource="{Binding Messages}"
-                                 SelectedItem="{Binding SelectedMessage}"
-                                 Background="Transparent">
-                            <ListBox.ItemTemplate>
+                    <ListBox ItemsSource="{Binding Messages}"
+                             SelectedItem="{Binding SelectedMessage}"
+                             Background="Transparent"
+                             Padding="8"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:MessageInfo">
                                     <Button Classes="subtle"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
@@ -163,7 +174,6 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                    </ScrollViewer>
                 </TabItem>
             </TabControl>
         </Grid>

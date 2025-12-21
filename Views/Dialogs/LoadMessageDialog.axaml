@@ -46,25 +46,36 @@
                 </Border>
                 
                 <!-- Content -->
-                <ScrollViewer Padding="16">
-                    <StackPanel Spacing="8">
-                        <!-- Empty state -->
-                        <Border Classes="empty-state"
-                                IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}">
-                            <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                <PathIcon Data="{StaticResource IconMessage}" Width="32" Height="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
-                                <TextBlock Text="No saved templates yet" 
-                                           Classes="body-strong" 
-                                           HorizontalAlignment="Center"/>
-                                <TextBlock Text="Save a message to reuse it later" 
-                                           Classes="caption" 
-                                           HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-                        
-                        <!-- Template list -->
-                        <ItemsControl ItemsSource="{Binding SendMessageViewModel.SavedMessages}">
-                            <ItemsControl.ItemTemplate>
+                <DockPanel>
+                    <!-- Empty state -->
+                    <Border DockPanel.Dock="Top"
+                            Classes="empty-state"
+                            IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}"
+                            Margin="16">
+                        <StackPanel HorizontalAlignment="Center" Spacing="8">
+                            <PathIcon Data="{StaticResource IconMessage}" Width="32" Height="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
+                            <TextBlock Text="No saved templates yet" 
+                                       Classes="body-strong" 
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Save a message to reuse it later" 
+                                       Classes="caption" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Template list -->
+                    <ListBox ItemsSource="{Binding SendMessageViewModel.SavedMessages}"
+                             Classes="entity-list"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="8"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:SavedMessage">
                                     <Border Classes="property-row" Padding="14,12" Margin="0,0,0,4">
                                         <Grid ColumnDefinitions="*,Auto">
@@ -102,11 +113,10 @@
                                             </StackPanel>
                                         </Grid>
                                     </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
             </DockPanel>
         </Border>
     </Border>

@@ -94,16 +94,24 @@
                 </Border>
                 
                 <!-- Saved Connections List -->
-                <ScrollViewer>
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="No saved connections yet" 
-                                   Classes="caption" 
-                                   HorizontalAlignment="Center"
-                                   Margin="0,40"
-                                   IsVisible="{Binding !ConnectionLibraryViewModel.SavedConnections.Count, FallbackValue=True}"/>
-                        
-                        <ItemsControl ItemsSource="{Binding ConnectionLibraryViewModel.SavedConnections}">
-                            <ItemsControl.ItemTemplate>
+                <StackPanel>
+                    <TextBlock Text="No saved connections yet" 
+                               Classes="caption" 
+                               HorizontalAlignment="Center"
+                               Margin="0,40"
+                               IsVisible="{Binding !ConnectionLibraryViewModel.SavedConnections.Count, FallbackValue=True}"/>
+                </StackPanel>
+                <ListBox ItemsSource="{Binding ConnectionLibraryViewModel.SavedConnections}"
+                         Classes="entity-list"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:SavedConnection">
                                     <Border Classes="surface-subtle" 
                                             Padding="16" 
@@ -167,11 +175,9 @@
                                             </StackPanel>
                                         </Grid>
                                     </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
             </DockPanel>
         </Border>
     </Border>
