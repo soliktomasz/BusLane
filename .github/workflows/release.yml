@@ -30,7 +30,7 @@ jobs:
         run: |
           BUILD_OUTPUT=$(dotnet build -c Release -r linux-x64 --no-restore 2>&1)
           echo "$BUILD_OUTPUT"
-          VERSION=$(echo "$BUILD_OUTPUT" | grep -oP "MinVer: Calculated version \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" || echo "0.0.0")
+          VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
@@ -122,7 +122,7 @@ jobs:
         run: |
           BUILD_OUTPUT=$(dotnet build -c Release -r ${{ matrix.runtime }} --no-restore 2>&1)
           echo "$BUILD_OUTPUT"
-          VERSION=$(echo "$BUILD_OUTPUT" | grep -oP "MinVer: Calculated version \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" || echo "0.0.0")
+          VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
