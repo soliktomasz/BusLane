@@ -171,11 +171,11 @@ BusLane takes security seriously and implements multiple layers of protection fo
 
 ### Key Security Features
 
-- **🔐 AES-256 Encryption** - All saved connection strings are encrypted using AES-256-CBC with machine-specific keys
-- **🔑 Secure Token Storage** - Azure authentication tokens are stored in your system's secure credential store (Keychain on macOS, Credential Manager on Windows)
-- **🛡️ No Hardcoded Secrets** - Zero API keys, passwords, or credentials in the source code
-- **👁️ Password Masking** - Connection strings are displayed with bullet characters in the UI
-- **📁 Local Storage Only** - Encrypted credentials are stored locally in your user AppData folder, never transmitted
+- ** AES-256 Encryption** - All saved connection strings are encrypted using AES-256-CBC with machine-specific keys
+- ** Secure Token Storage** - Azure authentication tokens are stored in your system's secure credential store (Keychain on macOS, Credential Manager on Windows)
+- ** No Hardcoded Secrets** - Zero API keys, passwords, or credentials in the source code
+- ** Password Masking** - Connection strings are displayed with bullet characters in the UI
+- ** Local Storage Only** - Encrypted credentials are stored locally in your user AppData folder, never transmitted
 
 ### Connection String Security
 
