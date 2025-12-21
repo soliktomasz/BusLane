@@ -164,6 +164,19 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -R artifacts
 
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/**/*.tar.gz
+          artifacts/**/*.zip
+          artifacts/**/*.dmg
+        body_path: release_notes.md
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
@@ -188,17 +201,3 @@ jobs:
         
         echo "Generated release notes:"
         cat release_notes.md
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          artifacts/**/*.tar.gz
-          artifacts/**/*.zip
-          artifacts/**/*.dmg
-        body_path: release_notes.md
-        draft: false
-        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
