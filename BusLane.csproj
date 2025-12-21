@@ -9,10 +9,10 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     
     <!-- Version Information -->
-    <Version>0.5.2.1</Version>
-    <AssemblyVersion>0.5.2.1</AssemblyVersion>
-    <FileVersion>0.5.2.1</FileVersion>
-    <InformationalVersion>0.5.2.1</InformationalVersion>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerMinimumMajorMinor>0.5</MinVerMinimumMajorMinor>
+    <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+    <MinVerVerbosity>normal</MinVerVerbosity>
     
     <!-- Application Metadata -->
     <Product>Bus Lane</Product>
