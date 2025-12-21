@@ -121,6 +121,9 @@ jobs:
         
         # Create PkgInfo file
         echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
+        
+        # Ad-hoc code sign the app bundle (allows running after removing quarantine)
+        codesign --force --deep --sign - "${APP_BUNDLE}"
 
     - name: Create DMG installer
       run: |

@@ -55,6 +55,23 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 
 ## Installation
 
+### Download Pre-built Releases
+
+Download the latest release from the [Releases](https://github.com/yourusername/BusLane/releases) page.
+
+#### macOS Installation Note
+
+Since the app is not signed with an Apple Developer certificate, macOS Gatekeeper may show a warning that the app "is damaged and can't be opened." To fix this:
+
+1. Open Terminal
+2. Run the following command (adjust the path if needed):
+   ```bash
+   xattr -cr "/Applications/Bus Lane.app"
+   ```
+3. Try opening the app again
+
+Alternatively, you can right-click the app and select "Open" to bypass the warning.
+
 ### Build from Source
 
 1. Clone the repository:
