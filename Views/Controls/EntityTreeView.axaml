@@ -40,6 +40,18 @@
                             </Grid>
                         </Border>
                         
+                        <!-- Loading indicator for queues -->
+                        <Border IsVisible="{Binding IsLoading}" 
+                                Margin="4,8,0,8" 
+                                Padding="12,8" 
+                                Background="{DynamicResource SurfaceSubtle}" 
+                                CornerRadius="6">
+                            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" Width="60" Height="4" />
+                                <TextBlock Text="Loading queues..." FontSize="12" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        
                         <ListBox ItemsSource="{Binding Queues}" 
                                  Margin="4,0,0,0"
                                  Classes="entity-list"
@@ -150,6 +162,18 @@
                             </Grid>
                         </Border>
                         
+                        <!-- Loading indicator for topics -->
+                        <Border IsVisible="{Binding IsLoading}" 
+                                Margin="4,8,0,8" 
+                                Padding="12,8" 
+                                Background="{DynamicResource SurfaceSubtle}" 
+                                CornerRadius="6">
+                            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" Width="60" Height="4" />
+                                <TextBlock Text="Loading topics..." FontSize="12" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        
                         <ListBox ItemsSource="{Binding Topics}" 
                                  Margin="4,0,0,0"
                                  Classes="entity-list"
@@ -213,8 +237,20 @@
                                             </Button>
                                         </Expander.Header>
                                         <!-- Topic Subscriptions -->
-                                        <ListBox ItemsSource="{Binding Subscriptions}"
-                                                 Margin="20,8,0,4"
+                                        <StackPanel>
+                                            <!-- Loading indicator for subscriptions -->
+                                            <Border IsVisible="{Binding IsLoadingSubscriptions}" 
+                                                    Margin="20,8,0,8" 
+                                                    Padding="12,8" 
+                                                    Background="{DynamicResource SurfaceSubtle}" 
+                                                    CornerRadius="6">
+                                                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                                    <ProgressBar IsIndeterminate="True" Width="50" Height="3" />
+                                                    <TextBlock Text="Loading subscriptions..." FontSize="11" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <ListBox ItemsSource="{Binding Subscriptions}"
+                                                     Margin="20,8,0,4"
                                                  Classes="entity-list"
                                                  Background="Transparent"
                                                  BorderThickness="0"
@@ -292,6 +328,7 @@
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
+                                    </StackPanel>
                                     </Expander>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>

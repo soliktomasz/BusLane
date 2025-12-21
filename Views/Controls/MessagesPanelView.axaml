@@ -53,7 +53,21 @@
                         SelectedIndex="{Binding SelectedMessageTabIndex}">
                 
                 <TabItem Header="Active Messages">
-                    <ListBox ItemsSource="{Binding Messages}"
+                    <!-- Loading indicator for messages -->
+                    <TabItem.Content>
+                        <Grid>
+                            <Border IsVisible="{Binding IsLoadingMessages}" 
+                                    VerticalAlignment="Top"
+                                    Margin="16,16,16,0" 
+                                    Padding="16,12" 
+                                    Background="{DynamicResource SurfaceSubtle}" 
+                                    CornerRadius="8">
+                                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                                    <ProgressBar IsIndeterminate="True" Width="80" Height="4" />
+                                    <TextBlock Text="Loading messages..." FontSize="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <ListBox ItemsSource="{Binding Messages}"
                              SelectedItem="{Binding SelectedMessage}"
                              Background="Transparent"
                              Padding="8"
@@ -108,10 +122,26 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+                        </Grid>
+                    </TabItem.Content>
                 </TabItem>
                 
                 <TabItem Header="Dead Letter">
-                    <ListBox ItemsSource="{Binding Messages}"
+                    <!-- Loading indicator for dead letter messages -->
+                    <TabItem.Content>
+                        <Grid>
+                            <Border IsVisible="{Binding IsLoadingMessages}" 
+                                    VerticalAlignment="Top"
+                                    Margin="16,16,16,0" 
+                                    Padding="16,12" 
+                                    Background="{DynamicResource SurfaceSubtle}" 
+                                    CornerRadius="8">
+                                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                                    <ProgressBar IsIndeterminate="True" Width="80" Height="4" />
+                                    <TextBlock Text="Loading messages..." FontSize="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <ListBox ItemsSource="{Binding Messages}"
                              SelectedItem="{Binding SelectedMessage}"
                              Background="Transparent"
                              Padding="8"
@@ -174,6 +204,8 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+                        </Grid>
+                    </TabItem.Content>
                 </TabItem>
             </TabControl>
         </Grid>

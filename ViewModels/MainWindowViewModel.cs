@@ -25,6 +25,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
     private bool _isAuthenticated;
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _isLoadingMessages;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _selectedSubscriptionId;
     [ObservableProperty] private AzureSubscription? _selectedAzureSubscription;
@@ -495,7 +496,7 @@ public partial class MainWindowViewModel : ViewModelBase
         
         if (entityName == null) return;
         
-        IsLoading = true;
+        IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
         
         try
@@ -529,7 +530,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         finally
         {
-            IsLoading = false;
+            IsLoadingMessages = false;
         }
     }
 
@@ -929,7 +930,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (entityName == null) return;
 
-        IsLoading = true;
+        IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
 
         try
@@ -959,7 +960,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         finally
         {
-            IsLoading = false;
+            IsLoadingMessages = false;
         }
     }
 
