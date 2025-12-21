@@ -57,7 +57,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 
 ### Download Pre-built Releases
 
-Download the latest release from the [Releases](https://github.com/yourusername/BusLane/releases) page.
+Download the latest release from the [Releases](https://github.com/soliktomasz/BusLane/releases) page.
 
 #### macOS Installation Note
 
