@@ -22,10 +22,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore and Build
-        run: |
-          dotnet restore
-          dotnet build -c Release --no-restore
+      - name: Restore dependencies
+        run: dotnet restore -r linux-x64
+
+      - name: Build
+        run: dotnet build -c Release -r linux-x64 --no-restore
 
       - name: Publish
         run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish --no-build
@@ -55,10 +56,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore and Build
-        run: |
-          dotnet restore
-          dotnet build -c Release --no-restore
+      - name: Restore dependencies
+        run: dotnet restore -r win-x64
+
+      - name: Build
+        run: dotnet build -c Release -r win-x64 --no-restore
 
       - name: Publish
         run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish --no-build
@@ -96,10 +98,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore and Build
-        run: |
-          dotnet restore
-          dotnet build -c Release --no-restore
+      - name: Restore dependencies for runtime
+        run: dotnet restore -r ${{ matrix.runtime }}
+
+      - name: Build
+        run: dotnet build -c Release -r ${{ matrix.runtime }} --no-restore
 
       - name: Publish
         run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish --no-build
