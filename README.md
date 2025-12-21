@@ -165,6 +165,38 @@ BusLane/
 | CommunityToolkit.Mvvm | 8.4.0 | MVVM toolkit with source generators |
 | Microsoft.Extensions.DependencyInjection | 10.0.1 | Dependency injection |
 
+## Security
+
+BusLane takes security seriously and implements multiple layers of protection for your sensitive data.
+
+### Key Security Features
+
+- **🔐 AES-256 Encryption** - All saved connection strings are encrypted using AES-256-CBC with machine-specific keys
+- **🔑 Secure Token Storage** - Azure authentication tokens are stored in your system's secure credential store (Keychain on macOS, Credential Manager on Windows)
+- **🛡️ No Hardcoded Secrets** - Zero API keys, passwords, or credentials in the source code
+- **👁️ Password Masking** - Connection strings are displayed with bullet characters in the UI
+- **📁 Local Storage Only** - Encrypted credentials are stored locally in your user AppData folder, never transmitted
+
+### Connection String Security
+
+When you save a connection string:
+1. It's encrypted using AES-256-CBC with a machine-specific key
+2. Stored in `%APPDATA%/BusLane/connections.json` (Windows) or `~/.config/BusLane/connections.json` (macOS/Linux)
+3. Cannot be decrypted on a different machine
+4. Protected from unauthorized access
+
+### Best Practices
+
+- ✅ **Use Azure Authentication** when possible instead of connection strings
+- ✅ **Enable MFA** on your Azure account
+- ✅ **Rotate keys regularly** if using connection strings
+- ✅ **Use least privilege** - only grant necessary RBAC permissions
+- ✅ **Keep BusLane updated** to get the latest security patches
+- ❌ **Never share** your connection strings or commit them to source control
+- ❌ **Don't use saved connections** on shared or public computers
+
+For detailed security information and vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
