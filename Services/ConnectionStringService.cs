@@ -6,6 +6,10 @@ namespace BusLane.Services;
 
 public class ConnectionStringService : IConnectionStringService
 {
+    private const int MaxSessionsToCheck = 10;
+    private const int PurgeBatchSize = 100;
+    private static readonly TimeSpan PurgeReceiveTimeout = TimeSpan.FromSeconds(5);
+
     public async Task<IEnumerable<QueueInfo>> GetQueuesFromConnectionAsync(string connectionString, CancellationToken ct = default)
     {
         var adminClient = new ServiceBusAdministrationClient(connectionString);
@@ -14,18 +18,7 @@ public class ConnectionStringService : IConnectionStringService
         await foreach (var queue in adminClient.GetQueuesAsync(ct))
         {
             var properties = await adminClient.GetQueueRuntimePropertiesAsync(queue.Name, ct);
-            queues.Add(new QueueInfo(
-                queue.Name,
-                properties.Value.TotalMessageCount,
-                properties.Value.ActiveMessageCount,
-                properties.Value.DeadLetterMessageCount,
-                properties.Value.ScheduledMessageCount,
-                properties.Value.SizeInBytes,
-                properties.Value.AccessedAt,
-                queue.RequiresSession,
-                queue.DefaultMessageTimeToLive,
-                queue.LockDuration
-            ));
+            queues.Add(MapToQueueInfo(queue, properties.Value));
         }
 
         return queues;
@@ -39,18 +32,7 @@ public class ConnectionStringService : IConnectionStringService
             var queue = await adminClient.GetQueueAsync(queueName, ct);
             var properties = await adminClient.GetQueueRuntimePropertiesAsync(queueName, ct);
 
-            return new QueueInfo(
-                queue.Value.Name,
-                properties.Value.TotalMessageCount,
-                properties.Value.ActiveMessageCount,
-                properties.Value.DeadLetterMessageCount,
-                properties.Value.ScheduledMessageCount,
-                properties.Value.SizeInBytes,
-                properties.Value.AccessedAt,
-                queue.Value.RequiresSession,
-                queue.Value.DefaultMessageTimeToLive,
-                queue.Value.LockDuration
-            );
+            return MapToQueueInfo(queue.Value, properties.Value);
         }
         catch
         {
@@ -66,13 +48,7 @@ public class ConnectionStringService : IConnectionStringService
         await foreach (var topic in adminClient.GetTopicsAsync(ct))
         {
             var properties = await adminClient.GetTopicRuntimePropertiesAsync(topic.Name, ct);
-            topics.Add(new TopicInfo(
-                topic.Name,
-                properties.Value.SizeInBytes,
-                properties.Value.SubscriptionCount,
-                properties.Value.AccessedAt,
-                topic.DefaultMessageTimeToLive
-            ));
+            topics.Add(MapToTopicInfo(topic, properties.Value));
         }
 
         return topics;
@@ -86,13 +62,7 @@ public class ConnectionStringService : IConnectionStringService
             var topic = await adminClient.GetTopicAsync(topicName, ct);
             var properties = await adminClient.GetTopicRuntimePropertiesAsync(topicName, ct);
 
-            return new TopicInfo(
-                topic.Value.Name,
-                properties.Value.SizeInBytes,
-                properties.Value.SubscriptionCount,
-                properties.Value.AccessedAt,
-                topic.Value.DefaultMessageTimeToLive
-            );
+            return MapToTopicInfo(topic.Value, properties.Value);
         }
         catch
         {
@@ -130,34 +100,13 @@ public class ConnectionStringService : IConnectionStringService
             var queueNames = new List<string>();
             var topicNames = new List<string>();
 
-            // Get all queues
             await foreach (var queue in adminClient.GetQueuesAsync(ct))
-            {
                 queueNames.Add(queue.Name);
-            }
 
-            // Get all topics
             await foreach (var topic in adminClient.GetTopicsAsync(ct))
-            {
                 topicNames.Add(topic.Name);
-            }
 
-            // Extract namespace name from connection string
-            string? namespaceName = null;
-            var parts = connectionString.Split(';');
-            foreach (var part in parts)
-            {
-                if (part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase))
-                {
-                    var endpoint = part.Substring("Endpoint=sb://".Length);
-                    var dotIndex = endpoint.IndexOf('.');
-                    if (dotIndex > 0)
-                    {
-                        namespaceName = endpoint.Substring(0, dotIndex);
-                    }
-                    break;
-                }
-            }
+            var namespaceName = ExtractNamespaceFromConnectionString(connectionString);
 
             return new NamespaceInfo(
                 namespaceName,
@@ -184,115 +133,11 @@ public class ConnectionStringService : IConnectionStringService
     {
         await using var client = new ServiceBusClient(connectionString);
 
-        IReadOnlyList<ServiceBusReceivedMessage> messages;
+        var messages = requiresSession
+            ? await PeekSessionMessagesAsync(client, entityName, subscription, count, deadLetter, ct)
+            : await PeekStandardMessagesAsync(client, entityName, subscription, count, deadLetter, ct);
 
-        if (requiresSession)
-        {
-            var allMessages = new List<ServiceBusReceivedMessage>();
-            var sessionsChecked = new HashSet<string>();
-            var maxSessions = 10;
-
-            try
-            {
-                while (allMessages.Count < count && sessionsChecked.Count < maxSessions)
-                {
-                    try
-                    {
-                        ServiceBusSessionReceiver sessionReceiver;
-                        var sessionOptions = new ServiceBusSessionReceiverOptions
-                        {
-                            ReceiveMode = ServiceBusReceiveMode.PeekLock
-                        };
-
-                        if (subscription != null)
-                        {
-                            if (deadLetter)
-                            {
-                                var dlqPath = $"{entityName}/Subscriptions/{subscription}/$DeadLetterQueue";
-                                sessionReceiver = await client.AcceptNextSessionAsync(dlqPath, sessionOptions, ct);
-                            }
-                            else
-                            {
-                                sessionReceiver = await client.AcceptNextSessionAsync(entityName, subscription, sessionOptions, ct);
-                            }
-                        }
-                        else
-                        {
-                            if (deadLetter)
-                            {
-                                var dlqPath = $"{entityName}/$DeadLetterQueue";
-                                sessionReceiver = await client.AcceptNextSessionAsync(dlqPath, sessionOptions, ct);
-                            }
-                            else
-                            {
-                                sessionReceiver = await client.AcceptNextSessionAsync(entityName, sessionOptions, ct);
-                            }
-                        }
-
-                        if (sessionsChecked.Contains(sessionReceiver.SessionId))
-                        {
-                            await sessionReceiver.DisposeAsync();
-                            break;
-                        }
-
-                        sessionsChecked.Add(sessionReceiver.SessionId);
-
-                        var sessionMessages = await sessionReceiver.PeekMessagesAsync(count - allMessages.Count, cancellationToken: ct);
-                        allMessages.AddRange(sessionMessages);
-
-                        await sessionReceiver.DisposeAsync();
-                    }
-                    catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
-                    {
-                        break;
-                    }
-                }
-            }
-            catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
-            {
-                // No sessions available
-            }
-
-            messages = allMessages;
-        }
-        else
-        {
-            // Use the proper overload for subscriptions vs queues with proper disposal
-            await using ServiceBusReceiver receiver = subscription != null
-                ? (deadLetter 
-                    ? client.CreateReceiver(entityName, subscription, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
-                    : client.CreateReceiver(entityName, subscription))
-                : (deadLetter 
-                    ? client.CreateReceiver(entityName, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
-                    : client.CreateReceiver(entityName));
-
-            messages = await receiver.PeekMessagesAsync(count, cancellationToken: ct);
-        }
-
-        return messages.Select(m => new MessageInfo(
-            m.MessageId,
-            m.CorrelationId,
-            m.ContentType,
-            m.Body.ToString(),
-            m.EnqueuedTime,
-            m.ScheduledEnqueueTime == default ? null : m.ScheduledEnqueueTime,
-            m.SequenceNumber,
-            m.DeliveryCount,
-            m.SessionId,
-            m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
-            m.Subject,
-            m.To,
-            m.ReplyTo,
-            m.ReplyToSessionId,
-            m.PartitionKey,
-            m.TimeToLive,
-            m.ExpiresAt,
-            m.LockToken,
-            m.LockedUntil,
-            m.DeadLetterSource,
-            m.DeadLetterReason,
-            m.DeadLetterErrorDescription
-        ));
+        return messages.Select(MapToMessageInfo);
     }
 
     public async Task SendMessageAsync(
@@ -317,35 +162,8 @@ public class ConnectionStringService : IConnectionStringService
         await using var sender = client.CreateSender(entityName);
 
         var msg = new ServiceBusMessage(body);
-
-        if (!string.IsNullOrWhiteSpace(contentType))
-            msg.ContentType = contentType;
-        if (!string.IsNullOrWhiteSpace(correlationId))
-            msg.CorrelationId = correlationId;
-        if (!string.IsNullOrWhiteSpace(messageId))
-            msg.MessageId = messageId;
-        if (!string.IsNullOrWhiteSpace(sessionId))
-            msg.SessionId = sessionId;
-        if (!string.IsNullOrWhiteSpace(subject))
-            msg.Subject = subject;
-        if (!string.IsNullOrWhiteSpace(to))
-            msg.To = to;
-        if (!string.IsNullOrWhiteSpace(replyTo))
-            msg.ReplyTo = replyTo;
-        if (!string.IsNullOrWhiteSpace(replyToSessionId))
-            msg.ReplyToSessionId = replyToSessionId;
-        if (!string.IsNullOrWhiteSpace(partitionKey))
-            msg.PartitionKey = partitionKey;
-        if (timeToLive.HasValue)
-            msg.TimeToLive = timeToLive.Value;
-        if (scheduledEnqueueTime.HasValue)
-            msg.ScheduledEnqueueTime = scheduledEnqueueTime.Value;
-
-        if (properties != null)
-        {
-            foreach (var (key, value) in properties)
-                msg.ApplicationProperties[key] = value;
-        }
+        ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
+            subject, to, replyTo, replyToSessionId, partitionKey, timeToLive, scheduledEnqueueTime, properties);
 
         await sender.SendMessageAsync(msg, ct);
     }
@@ -361,19 +179,17 @@ public class ConnectionStringService : IConnectionStringService
 
         var options = new ServiceBusReceiverOptions
         {
-            ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete
+            ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete,
+            SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
         };
 
-        if (deadLetter)
-            options.SubQueue = SubQueue.DeadLetter;
-
-        await using ServiceBusReceiver receiver = subscription != null
+        await using var receiver = subscription != null
             ? client.CreateReceiver(entityName, subscription, options)
             : client.CreateReceiver(entityName, options);
 
         while (!ct.IsCancellationRequested)
         {
-            var msgs = await receiver.ReceiveMessagesAsync(100, TimeSpan.FromSeconds(5), ct);
+            var msgs = await receiver.ReceiveMessagesAsync(PurgeBatchSize, PurgeReceiveTimeout, ct);
             if (msgs.Count == 0) break;
         }
     }
@@ -384,46 +200,20 @@ public class ConnectionStringService : IConnectionStringService
     {
         try
         {
-            // Parse connection string to extract endpoint
-            string? endpoint = null;
-            string? entityPath = null;
-
-            var parts = connectionString.Split(';');
-            foreach (var part in parts)
-            {
-                if (part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase))
-                {
-                    endpoint = part.Substring("Endpoint=sb://".Length).TrimEnd('/');
-                }
-                else if (part.StartsWith("EntityPath=", StringComparison.OrdinalIgnoreCase))
-                {
-                    entityPath = part.Substring("EntityPath=".Length);
-                }
-            }
+            var (endpoint, entityPath) = ParseConnectionString(connectionString);
 
             if (endpoint == null)
-            {
                 return (false, null, null, "Invalid connection string format: missing endpoint");
-            }
 
-            // Try to connect and validate
             await using var client = new ServiceBusClient(connectionString);
-            
-            // If EntityPath is specified, it's a queue/topic-specific connection string
-            if (!string.IsNullOrEmpty(entityPath))
-            {
-                return (true, entityPath, endpoint, null);
-            }
 
-            // Otherwise, it's a namespace-level connection string
-            // Try to list entities to validate it works
+            if (!string.IsNullOrEmpty(entityPath))
+                return (true, entityPath, endpoint, null);
+
+            // Namespace-level connection string - validate by listing entities
             var adminClient = new ServiceBusAdministrationClient(connectionString);
-            
-            // Just check if we can connect - this will throw if connection string is invalid
             await foreach (var _ in adminClient.GetQueuesAsync(ct))
-            {
-                break; // We just need to verify we can connect
-            }
+                break;
 
             return (true, null, endpoint, null);
         }
@@ -432,5 +222,198 @@ public class ConnectionStringService : IConnectionStringService
             return (false, null, null, ex.Message);
         }
     }
+
+    #region Private Methods
+
+    private static QueueInfo MapToQueueInfo(QueueProperties queue, QueueRuntimeProperties properties) => new(
+        queue.Name,
+        properties.TotalMessageCount,
+        properties.ActiveMessageCount,
+        properties.DeadLetterMessageCount,
+        properties.ScheduledMessageCount,
+        properties.SizeInBytes,
+        properties.AccessedAt,
+        queue.RequiresSession,
+        queue.DefaultMessageTimeToLive,
+        queue.LockDuration
+    );
+
+    private static TopicInfo MapToTopicInfo(TopicProperties topic, TopicRuntimeProperties properties) => new(
+        topic.Name,
+        properties.SizeInBytes,
+        properties.SubscriptionCount,
+        properties.AccessedAt,
+        topic.DefaultMessageTimeToLive
+    );
+
+    private static MessageInfo MapToMessageInfo(ServiceBusReceivedMessage m) => new(
+        m.MessageId,
+        m.CorrelationId,
+        m.ContentType,
+        m.Body.ToString(),
+        m.EnqueuedTime,
+        m.ScheduledEnqueueTime == default ? null : m.ScheduledEnqueueTime,
+        m.SequenceNumber,
+        m.DeliveryCount,
+        m.SessionId,
+        m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
+        m.Subject,
+        m.To,
+        m.ReplyTo,
+        m.ReplyToSessionId,
+        m.PartitionKey,
+        m.TimeToLive,
+        m.ExpiresAt,
+        m.LockToken,
+        m.LockedUntil,
+        m.DeadLetterSource,
+        m.DeadLetterReason,
+        m.DeadLetterErrorDescription
+    );
+
+    private static void ApplyMessageProperties(
+        ServiceBusMessage msg,
+        string? contentType,
+        string? correlationId,
+        string? messageId,
+        string? sessionId,
+        string? subject,
+        string? to,
+        string? replyTo,
+        string? replyToSessionId,
+        string? partitionKey,
+        TimeSpan? timeToLive,
+        DateTimeOffset? scheduledEnqueueTime,
+        IDictionary<string, object>? properties)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType)) msg.ContentType = contentType;
+        if (!string.IsNullOrWhiteSpace(correlationId)) msg.CorrelationId = correlationId;
+        if (!string.IsNullOrWhiteSpace(messageId)) msg.MessageId = messageId;
+        if (!string.IsNullOrWhiteSpace(sessionId)) msg.SessionId = sessionId;
+        if (!string.IsNullOrWhiteSpace(subject)) msg.Subject = subject;
+        if (!string.IsNullOrWhiteSpace(to)) msg.To = to;
+        if (!string.IsNullOrWhiteSpace(replyTo)) msg.ReplyTo = replyTo;
+        if (!string.IsNullOrWhiteSpace(replyToSessionId)) msg.ReplyToSessionId = replyToSessionId;
+        if (!string.IsNullOrWhiteSpace(partitionKey)) msg.PartitionKey = partitionKey;
+        if (timeToLive.HasValue) msg.TimeToLive = timeToLive.Value;
+        if (scheduledEnqueueTime.HasValue) msg.ScheduledEnqueueTime = scheduledEnqueueTime.Value;
+
+        if (properties == null) return;
+        foreach (var (key, value) in properties)
+            msg.ApplicationProperties[key] = value;
+    }
+
+    private static string? ExtractNamespaceFromConnectionString(string connectionString)
+    {
+        var parts = connectionString.Split(';');
+        foreach (var part in parts)
+        {
+            if (!part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase)) 
+                continue;
+            
+            var endpoint = part["Endpoint=sb://".Length..];
+            var dotIndex = endpoint.IndexOf('.');
+            return dotIndex > 0 ? endpoint[..dotIndex] : null;
+        }
+        return null;
+    }
+
+    private static (string? Endpoint, string? EntityPath) ParseConnectionString(string connectionString)
+    {
+        string? endpoint = null;
+        string? entityPath = null;
+
+        foreach (var part in connectionString.Split(';'))
+        {
+            if (part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase))
+                endpoint = part["Endpoint=sb://".Length..].TrimEnd('/');
+            else if (part.StartsWith("EntityPath=", StringComparison.OrdinalIgnoreCase))
+                entityPath = part["EntityPath=".Length..];
+        }
+
+        return (endpoint, entityPath);
+    }
+
+    private static async Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekStandardMessagesAsync(
+        ServiceBusClient client, string entityName, string? subscription,
+        int count, bool deadLetter, CancellationToken ct)
+    {
+        await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter);
+        return await receiver.PeekMessagesAsync(count, cancellationToken: ct);
+    }
+
+    private static ServiceBusReceiver CreateReceiver(
+        ServiceBusClient client, string entityName, string? subscription, bool deadLetter)
+    {
+        var options = deadLetter ? new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter } : null;
+
+        return subscription != null
+            ? (options != null ? client.CreateReceiver(entityName, subscription, options) : client.CreateReceiver(entityName, subscription))
+            : (options != null ? client.CreateReceiver(entityName, options) : client.CreateReceiver(entityName));
+    }
+
+    private static async Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekSessionMessagesAsync(
+        ServiceBusClient client, string entityName, string? subscription,
+        int count, bool deadLetter, CancellationToken ct)
+    {
+        var allMessages = new List<ServiceBusReceivedMessage>();
+        var sessionsChecked = new HashSet<string>();
+
+        try
+        {
+            while (allMessages.Count < count && sessionsChecked.Count < MaxSessionsToCheck)
+            {
+                try
+                {
+                    var sessionReceiver = await AcceptNextSessionReceiverAsync(
+                        client, entityName, subscription, deadLetter, ct);
+
+                    if (sessionsChecked.Contains(sessionReceiver.SessionId))
+                    {
+                        await sessionReceiver.DisposeAsync();
+                        break;
+                    }
+
+                    sessionsChecked.Add(sessionReceiver.SessionId);
+
+                    var remaining = count - allMessages.Count;
+                    var sessionMessages = await sessionReceiver.PeekMessagesAsync(remaining, cancellationToken: ct);
+                    allMessages.AddRange(sessionMessages);
+
+                    await sessionReceiver.DisposeAsync();
+                }
+                catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
+                {
+                    break;
+                }
+            }
+        }
+        catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
+        {
+            // No sessions available at all
+        }
+
+        return allMessages;
+    }
+
+    private static async Task<ServiceBusSessionReceiver> AcceptNextSessionReceiverAsync(
+        ServiceBusClient client, string entityName, string? subscription,
+        bool deadLetter, CancellationToken ct)
+    {
+        var sessionOptions = new ServiceBusSessionReceiverOptions { ReceiveMode = ServiceBusReceiveMode.PeekLock };
+
+        if (subscription != null)
+        {
+            return deadLetter
+                ? await client.AcceptNextSessionAsync($"{entityName}/Subscriptions/{subscription}/$DeadLetterQueue", sessionOptions, ct)
+                : await client.AcceptNextSessionAsync(entityName, subscription, sessionOptions, ct);
+        }
+
+        return deadLetter
+            ? await client.AcceptNextSessionAsync($"{entityName}/$DeadLetterQueue", sessionOptions, ct)
+            : await client.AcceptNextSessionAsync(entityName, sessionOptions, ct);
+    }
+
+    #endregion
 }
 
