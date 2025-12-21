@@ -20,6 +20,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IConnectionStringService _connectionStringService;
     private readonly IVersionService _versionService;
+    private readonly ILiveStreamService _liveStreamService;
+    private readonly IMetricsService _metricsService;
+    private readonly IAlertService _alertService;
 
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
@@ -67,6 +70,15 @@ public partial class MainWindowViewModel : ViewModelBase
     
     // Auto-refresh timer
     private System.Timers.Timer? _autoRefreshTimer;
+    
+    // Live Stream, Charts, and Alerts properties
+    [ObservableProperty] private bool _showLiveStream;
+    [ObservableProperty] private bool _showCharts;
+    [ObservableProperty] private bool _showAlerts;
+    [ObservableProperty] private LiveStreamViewModel? _liveStreamViewModel;
+    [ObservableProperty] private ChartsViewModel? _chartsViewModel;
+    [ObservableProperty] private AlertsViewModel? _alertsViewModel;
+    [ObservableProperty] private int _activeAlertCount;
     
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
@@ -196,14 +208,25 @@ public partial class MainWindowViewModel : ViewModelBase
         IServiceBusService serviceBus,
         IConnectionStorageService connectionStorage,
         IConnectionStringService connectionStringService,
-        IVersionService versionService)
+        IVersionService versionService,
+        ILiveStreamService liveStreamService,
+        IMetricsService metricsService,
+        IAlertService alertService)
     {
         _auth = auth;
         _serviceBus = serviceBus;
         _connectionStorage = connectionStorage;
         _connectionStringService = connectionStringService;
         _versionService = versionService;
+        _liveStreamService = liveStreamService;
+        _metricsService = metricsService;
+        _alertService = alertService;
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
+        
+        // Subscribe to alert events
+        _alertService.AlertTriggered += OnAlertTriggered;
+        _alertService.AlertsChanged += OnAlertsChanged;
+        ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
         
         // Subscribe to collection changes to notify visibility properties
         Queues.CollectionChanged += (_, _) => 
@@ -222,6 +245,24 @@ public partial class MainWindowViewModel : ViewModelBase
         
         // Initialize auto-refresh timer
         InitializeAutoRefreshTimer();
+    }
+    
+    private void OnAlertTriggered(object? sender, Models.AlertEvent alert)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
+            StatusMessage = $"Alert: {alert.Rule.Name} - {alert.EntityName}";
+            ShowStatusPopup = true;
+        });
+    }
+    
+    private void OnAlertsChanged(object? sender, EventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
+        });
     }
     
     private void InitializeAutoRefreshTimer()
@@ -269,6 +310,87 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(EnableMessagePreview));
         UpdateAutoRefreshTimer();
     }
+    
+    #region Live Stream, Charts, and Alerts Commands
+    
+    [RelayCommand]
+    private void OpenLiveStream()
+    {
+        LiveStreamViewModel = new LiveStreamViewModel(_liveStreamService);
+        ShowLiveStream = true;
+        ShowCharts = false;
+        ShowAlerts = false;
+    }
+    
+    [RelayCommand]
+    private void CloseLiveStream()
+    {
+        ShowLiveStream = false;
+        _ = LiveStreamViewModel?.DisposeAsync();
+        LiveStreamViewModel = null;
+    }
+    
+    [RelayCommand]
+    private void OpenCharts()
+    {
+        ChartsViewModel = new ChartsViewModel(_metricsService);
+        // Record current metrics for charts
+        ChartsViewModel.RecordCurrentMetrics(Queues, TopicSubscriptions);
+        ChartsViewModel.UpdateEntityDistribution(Queues, TopicSubscriptions);
+        ChartsViewModel.UpdateComparisonChart(Queues, TopicSubscriptions);
+        ShowCharts = true;
+        ShowLiveStream = false;
+        ShowAlerts = false;
+    }
+    
+    [RelayCommand]
+    private void CloseCharts()
+    {
+        ShowCharts = false;
+        ChartsViewModel = null;
+    }
+    
+    [RelayCommand]
+    private void OpenAlerts()
+    {
+        AlertsViewModel = new AlertsViewModel(_alertService, () => ShowAlerts = false);
+        ShowAlerts = true;
+        ShowLiveStream = false;
+        ShowCharts = false;
+    }
+    
+    [RelayCommand]
+    private void CloseAlerts()
+    {
+        ShowAlerts = false;
+        AlertsViewModel = null;
+    }
+    
+    [RelayCommand]
+    private async Task StartLiveStreamForSelectedEntity()
+    {
+        if (LiveStreamViewModel == null) return;
+        
+        var endpoint = SelectedNamespace?.Endpoint ?? ActiveConnection?.Endpoint;
+        if (string.IsNullOrEmpty(endpoint)) return;
+        
+        if (SelectedQueue != null)
+        {
+            await LiveStreamViewModel.StartQueueAsync(endpoint, SelectedQueue.Name);
+        }
+        else if (SelectedSubscription != null && SelectedTopic != null)
+        {
+            await LiveStreamViewModel.StartSubscriptionAsync(endpoint, SelectedTopic.Name, SelectedSubscription.Name);
+        }
+    }
+    
+    [RelayCommand]
+    private async Task EvaluateAlerts()
+    {
+        await _alertService.EvaluateAlertsAsync(Queues, TopicSubscriptions);
+    }
+    
+    #endregion
 
     public async Task InitializeAsync()
     {

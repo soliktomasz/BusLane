@@ -29,11 +29,21 @@ class Program
         services.AddSingleton<IServiceBusService, ServiceBusService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
         services.AddSingleton<IConnectionStringService, ConnectionStringService>();
+        
+        // New services for Live Stream, Charts, and Alerts
+        services.AddSingleton<ILiveStreamService, LiveStreamService>();
+        services.AddSingleton<IMetricsService, MetricsService>();
+        services.AddSingleton<IAlertService, AlertService>();
+        
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<NamespaceViewModel>();
         services.AddTransient<QueueViewModel>();
         services.AddTransient<MessageViewModel>();
+        
+        // New ViewModels for Live Stream, Charts, and Alerts
+        services.AddTransient<LiveStreamViewModel>();
+        services.AddTransient<ChartsViewModel>();
     }
 
     public static AppBuilder BuildAvaloniaApp()

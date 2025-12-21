@@ -90,6 +90,38 @@
                 </Grid>
             </Grid>
             
+            <!-- Live Stream Panel (overlay when active) -->
+            <Border Grid.Row="0" Grid.RowSpan="2" 
+                    IsVisible="{Binding ShowLiveStream}"
+                    Background="{DynamicResource AppBackground}">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Margin="0,0,0,16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Live Message Stream" Classes="title"/>
+                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close" 
+                                    Command="{Binding CloseLiveStreamCommand}"/>
+                        </Grid>
+                    </Border>
+                    <controls:LiveStreamView Grid.Row="1" DataContext="{Binding LiveStreamViewModel}"/>
+                </Grid>
+            </Border>
+            
+            <!-- Charts Panel (overlay when active) -->
+            <Border Grid.Row="0" Grid.RowSpan="2" 
+                    IsVisible="{Binding ShowCharts}"
+                    Background="{DynamicResource AppBackground}">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Margin="0,0,0,16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Metrics &amp; Charts" Classes="title"/>
+                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close" 
+                                    Command="{Binding CloseChartsCommand}"/>
+                        </Grid>
+                    </Border>
+                    <controls:ChartsView Grid.Row="1" DataContext="{Binding ChartsViewModel}"/>
+                </Grid>
+            </Border>
+            
             <!-- Status Bar -->
             <Border Grid.Row="2" Margin="0,12,0,0">
                 <Grid ColumnDefinitions="Auto,*">
@@ -123,6 +155,19 @@
         <dialogs:ConnectionLibraryDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="2"/>
+        
+        <!-- Alerts Dialog (modal overlay) -->
+        <Border Grid.Column="0" Grid.ColumnSpan="2"
+                IsVisible="{Binding ShowAlerts}"
+                Background="{DynamicResource ModalOverlay}">
+            <Border Background="{DynamicResource CardBackground}" 
+                    CornerRadius="12" 
+                    MaxWidth="900" MaxHeight="700"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <dialogs:AlertsDialog DataContext="{Binding AlertsViewModel}"/>
+            </Border>
+        </Border>
     </Grid>
 </Window>
 
