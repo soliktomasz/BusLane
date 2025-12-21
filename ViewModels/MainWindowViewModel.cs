@@ -1032,6 +1032,48 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
     
+    [RelayCommand]
+    private async Task LoadTopicSubscriptionsAsync(TopicInfo topic)
+    {
+        if (topic == null || topic.SubscriptionsLoaded || topic.IsLoadingSubscriptions) return;
+        
+        topic.IsLoadingSubscriptions = true;
+        
+        try
+        {
+            IEnumerable<SubscriptionInfo> subs;
+            
+            if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+            {
+                subs = await _connectionStringService.GetTopicSubscriptionsAsync(
+                    ActiveConnection.ConnectionString, topic.Name);
+            }
+            else if (CurrentMode == ConnectionMode.AzureAccount && SelectedNamespace != null)
+            {
+                subs = await _serviceBus.GetSubscriptionsAsync(SelectedNamespace.Id, topic.Name);
+            }
+            else
+            {
+                return;
+            }
+            
+            topic.Subscriptions.Clear();
+            foreach (var sub in subs)
+            {
+                topic.Subscriptions.Add(sub);
+            }
+            topic.SubscriptionsLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading subscriptions: {ex.Message}";
+        }
+        finally
+        {
+            topic.IsLoadingSubscriptions = false;
+        }
+    }
+    
     #region Confirmation Dialog
     
     private void ShowConfirmation(string title, string message, string confirmText, Func<Task> action)

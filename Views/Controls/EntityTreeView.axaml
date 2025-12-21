@@ -163,7 +163,7 @@
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:TopicInfo">
-                                    <Expander Margin="0,2" IsExpanded="False">
+                                    <Expander Margin="0,2" IsExpanded="False" Expanding="OnTopicExpanderExpanding">
                                         <Expander.Header>
                                             <Button Classes="subtle"
                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectTopicForConnectionCommand}"
@@ -213,13 +213,12 @@
                                             </Button>
                                         </Expander.Header>
                                         <!-- Topic Subscriptions -->
-                                        <ListBox ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).TopicSubscriptions}"
+                                        <ListBox ItemsSource="{Binding Subscriptions}"
                                                  Margin="20,8,0,4"
                                                  Classes="entity-list"
                                                  Background="Transparent"
                                                  BorderThickness="0"
-                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                 IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                             <ListBox.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <VirtualizingStackPanel/>
