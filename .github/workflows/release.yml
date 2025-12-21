@@ -25,15 +25,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore -r linux-x64
 
-      - name: Build
-        run: dotnet build -c Release -r linux-x64 --no-restore
-
-      - name: Get version
+      - name: Build and extract version
         id: version
         run: |
-          VERSION=$(dotnet msbuild BusLane.csproj -getProperty:Version -p:Configuration=Release)
+          BUILD_OUTPUT=$(dotnet build -c Release -r linux-x64 --no-restore 2>&1)
+          echo "$BUILD_OUTPUT"
+          VERSION=$(echo "$BUILD_OUTPUT" | grep -oP "MinVer: Calculated version \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" || echo "0.0.0")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
+          echo "Extracted version: $VERSION"
 
       - name: Publish
         run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish --no-build
@@ -66,15 +65,18 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore -r win-x64
 
-      - name: Build
-        run: dotnet build -c Release -r win-x64 --no-restore
-
-      - name: Get version
+      - name: Build and extract version
         id: version
         run: |
-          $VERSION = dotnet msbuild BusLane.csproj -getProperty:Version -p:Configuration=Release
+          $BUILD_OUTPUT = dotnet build -c Release -r win-x64 --no-restore 2>&1 | Out-String
+          Write-Output $BUILD_OUTPUT
+          if ($BUILD_OUTPUT -match "MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?)") {
+            $VERSION = $matches[1]
+          } else {
+            $VERSION = "0.0.0"
+          }
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
-          echo "Building version: $VERSION"
+          Write-Output "Extracted version: $VERSION"
 
       - name: Publish
         run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish --no-build
@@ -115,15 +117,14 @@ jobs:
       - name: Restore dependencies for runtime
         run: dotnet restore -r ${{ matrix.runtime }}
 
-      - name: Build
-        run: dotnet build -c Release -r ${{ matrix.runtime }} --no-restore
-
-      - name: Get version
+      - name: Build and extract version
         id: version
         run: |
-          VERSION=$(dotnet msbuild BusLane.csproj -getProperty:Version -p:Configuration=Release)
+          BUILD_OUTPUT=$(dotnet build -c Release -r ${{ matrix.runtime }} --no-restore 2>&1)
+          echo "$BUILD_OUTPUT"
+          VERSION=$(echo "$BUILD_OUTPUT" | grep -oP "MinVer: Calculated version \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" || echo "0.0.0")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
+          echo "Extracted version: $VERSION"
 
       - name: Publish
         run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish --no-build
