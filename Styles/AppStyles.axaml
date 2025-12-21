@@ -65,28 +65,28 @@
     <!-- Buttons - Fluent 2 -->
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource AccentBrandHover}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrandHover}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
     
     <Style Selector="Button.primary:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource AccentBrandPressed}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrandPressed}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
     
     <Style Selector="Button.secondary">
-        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="12,8"/>
@@ -99,12 +99,12 @@
     
     <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
     </Style>
     
     <Style Selector="Button.secondary:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
     </Style>
     
     <Style Selector="Button.subtle">
@@ -126,18 +126,18 @@
     
     <Style Selector="Button.danger">
         <Setter Property="Background" Value="{DynamicResource TextDanger}"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource TextDanger}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     
     <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#A32014"/>
-        <Setter Property="BorderBrush" Value="#A32014"/>
+        <Setter Property="Background" Value="#FCA5A5"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
     
     <Style Selector="Button.danger-outline">
@@ -151,8 +151,8 @@
     </Style>
     
     <Style Selector="Button.danger-outline:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource TextDanger}"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
     </Style>
     
     <Style Selector="Button.danger-subtle">
@@ -246,6 +246,7 @@
     <Style Selector="TabItem:selected">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Background" Value="Transparent"/>
     </Style>
     
     <!-- Input Controls - Fluent 2 -->
@@ -257,6 +258,8 @@
         <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
         <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrand}"/>
     </Style>
     
     <Style Selector="TextBox:focus">
@@ -265,7 +268,7 @@
     </Style>
     
     <Style Selector="TextBox:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
     </Style>
     
     <Style Selector="ComboBox">
@@ -279,7 +282,11 @@
     </Style>
     
     <Style Selector="ComboBox:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    
+    <Style Selector="ComboBox:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
     </Style>
     
     <!-- Toggle/Pill Button - Fluent 2 style -->
@@ -296,6 +303,7 @@
     
     <Style Selector="ToggleButton.pill:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
     </Style>
     
     <Style Selector="ToggleButton.pill:checked /template/ ContentPresenter">
@@ -311,7 +319,7 @@
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 2 4 0 #0F000000"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #20000000"/>
     </Style>
     
     <Style Selector="Border.card-elevated">
@@ -320,7 +328,7 @@
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 8 16 0 #1A000000"/>
+        <Setter Property="BoxShadow" Value="0 4 16 0 #30000000"/>
     </Style>
     
     <!-- Navigation Pane / Sidebar - Fluent 2 -->
@@ -335,37 +343,73 @@
     <Style Selector="Border.badge">
         <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.badge TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     
     <Style Selector="Border.badge-warning">
         <Setter Property="Background" Value="{DynamicResource TextWarning}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.badge-warning TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     
     <Style Selector="Border.badge-danger">
         <Setter Property="Background" Value="{DynamicResource TextDanger}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.badge-danger TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     
     <Style Selector="Border.badge-success">
         <Setter Property="Background" Value="{DynamicResource TextSuccess}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.badge-success TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     
     <Style Selector="Border.badge-muted">
-        <Setter Property="Background" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="Background" Value="{DynamicResource BorderStrong}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+    
+    <Style Selector="Border.badge-muted TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="FontSize" Value="11"/>
     </Style>
     
     <Style Selector="Border.badge-info">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="6,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+    
+    <Style Selector="Border.badge-info TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
     </Style>
 
     <!-- Separator - Fluent 2 -->
@@ -508,24 +552,36 @@
     </Style>
     
     <Style Selector="Border.entity-icon-queue">
-        <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+        <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="36"/>
         <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    
+    <Style Selector="Border.entity-icon-queue TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
     </Style>
     
     <Style Selector="Border.entity-icon-topic">
-        <Setter Property="Background" Value="{DynamicResource SurfaceSuccess}"/>
+        <Setter Property="Background" Value="{DynamicResource TextSuccess}"/>
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="36"/>
         <Setter Property="CornerRadius" Value="6"/>
     </Style>
     
+    <Style Selector="Border.entity-icon-topic TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+    </Style>
+    
     <Style Selector="Border.entity-icon-subscription">
-        <Setter Property="Background" Value="{DynamicResource SurfaceWarning}"/>
+        <Setter Property="Background" Value="{DynamicResource TextWarning}"/>
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="36"/>
         <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    
+    <Style Selector="Border.entity-icon-subscription TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
     </Style>
     
     <!-- Section Header - Fluent 2 -->
@@ -542,24 +598,44 @@
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="6,3"/>
     </Style>
+    <!-- Message Counter Styles -->
+    <Style Selector="Border.counter-active">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+    
+    <Style Selector="Border.counter-active TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
     
     <Style Selector="Border.counter-dead">
-        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+        <Setter Property="Background" Value="{DynamicResource TextDanger}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="6,3"/>
     </Style>
     
+    <Style Selector="Border.counter-dead TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    
+
     <Style Selector="Border.counter-scheduled">
-        <Setter Property="Background" Value="{DynamicResource SurfaceWarning}"/>
+        <Setter Property="Background" Value="{DynamicResource TextWarning}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="6,3"/>
     </Style>
     
-    <!-- Divider line for sections -->
-    <Style Selector="Border.section-divider">
-        <Setter Property="Height" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource BorderMuted}"/>
-        <Setter Property="Margin" Value="0,8"/>
+    <Style Selector="Border.counter-scheduled TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     
     <!-- Empty state -->
