@@ -104,6 +104,11 @@
                              Background="Transparent"
                              Padding="8"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </ListBox.Styles>
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <VirtualizingStackPanel/>
@@ -115,7 +120,7 @@
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Left"
+                                            HorizontalContentAlignment="Stretch"
                                             Padding="12,10"
                                             Margin="0,2">
                                         <Button.ContextMenu>
@@ -196,6 +201,11 @@
                              Background="Transparent"
                              Padding="8"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </ListBox.Styles>
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <VirtualizingStackPanel/>
@@ -207,7 +217,7 @@
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Left"
+                                            HorizontalContentAlignment="Stretch"
                                             Padding="12,10"
                                             Margin="0,2">
                                         <Button.ContextMenu>
