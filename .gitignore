@@ -155,7 +155,6 @@ connections.json
 *.env.*
 .env.local
 .env.*.local
-appsettings.Development.json
 appsettings.*.json
 secrets.json
 *.key
