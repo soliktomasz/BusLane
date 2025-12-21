@@ -8,7 +8,8 @@ namespace BusLane.Services;
 
 public class LiveStreamService : ILiveStreamService
 {
-    private readonly Subject<LiveStreamMessage> _messageSubject = new();
+    private Subject<LiveStreamMessage> _messageSubject = new();
+    private readonly object _subjectLock = new();
     private ServiceBusClient? _client;
     private ServiceBusProcessor? _processor;
     private ServiceBusReceiver? _peekReceiver;
@@ -21,12 +22,41 @@ public class LiveStreamService : ILiveStreamService
     private string? _currentTopicName;
     private bool _isPeekMode = true;
 
-    public IObservable<LiveStreamMessage> Messages => _messageSubject.AsObservable();
+    public IObservable<LiveStreamMessage> Messages
+    {
+        get
+        {
+            lock (_subjectLock)
+            {
+                return _messageSubject.AsObservable();
+            }
+        }
+    }
     
     public bool IsStreaming => _isStreaming;
 
     public event EventHandler<bool>? StreamingStatusChanged;
     public event EventHandler<Exception>? StreamError;
+    
+    private void EmitMessage(LiveStreamMessage message)
+    {
+        lock (_subjectLock)
+        {
+            if (!_disposed)
+            {
+                try
+                {
+                    _messageSubject.OnNext(message);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Subject was disposed, recreate it
+                    _messageSubject = new Subject<LiveStreamMessage>();
+                    _messageSubject.OnNext(message);
+                }
+            }
+        }
+    }
 
     public async Task StartQueueStreamAsync(string endpoint, string queueName, bool peekOnly = true, CancellationToken ct = default)
     {
@@ -135,7 +165,7 @@ public class LiveStreamService : ILiveStreamService
                                 msg.ApplicationProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                             );
                             
-                            _messageSubject.OnNext(liveMessage);
+                            EmitMessage(liveMessage);
                         }
                     }
                     
@@ -186,7 +216,7 @@ public class LiveStreamService : ILiveStreamService
                 msg.ApplicationProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
             
-            _messageSubject.OnNext(liveMessage);
+            EmitMessage(liveMessage);
             
             // Abandon message so it can be received again (we're just monitoring)
             await args.AbandonMessageAsync(args.Message);
@@ -244,7 +274,12 @@ public class LiveStreamService : ILiveStreamService
         _disposed = true;
 
         await StopStreamAsync();
-        _messageSubject.Dispose();
+        
+        lock (_subjectLock)
+        {
+            _messageSubject.OnCompleted();
+            _messageSubject.Dispose();
+        }
         
         GC.SuppressFinalize(this);
     }
