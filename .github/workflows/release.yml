@@ -3,16 +3,16 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: "Version number (e.g., 0.3.4)"
+        description: 'Version number (e.g., 0.3.4)'
         required: true
         type: string
 
 env:
-  DOTNET_VERSION: "10.0.x"
+  DOTNET_VERSION: '10.0.x'
 
 jobs:
   build-linux:
@@ -21,21 +21,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for MinVer to work properly
+          fetch-depth: 0  # Required for MinVer to work properly
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Display version
-        run: dotnet build -t:DisplayVersion
-
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Build and display version
+        run: |
+          dotnet build -c Release --no-restore
+          echo "Build version information:"
+          dotnet msbuild -getProperty:Version
+          dotnet msbuild -getProperty:AssemblyVersion
+          dotnet msbuild -getProperty:InformationalVersion
+
       - name: Publish
-        run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish
+        run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish --no-build
 
       - name: Create archive
         run: |
@@ -55,21 +60,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for MinVer
+          fetch-depth: 0  # Required for MinVer
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Display version
-        run: dotnet build -t:DisplayVersion
-
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Build and display version
+        run: |
+          dotnet build -c Release --no-restore
+          echo "Build version information:"
+          dotnet msbuild -getProperty:Version
+          dotnet msbuild -getProperty:AssemblyVersion
+          dotnet msbuild -getProperty:InformationalVersion
+
       - name: Publish
-        run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish
+        run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish --no-build
 
       - name: Create archive
         run: |
@@ -90,53 +100,58 @@ jobs:
             arch: x64
           - runtime: osx-arm64
             arch: arm64
-
+    
     runs-on: macos-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for MinVer
+          fetch-depth: 0  # Required for MinVer
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Display version
-        run: dotnet build -t:DisplayVersion
-
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Build and display version
+        run: |
+          dotnet build -c Release --no-restore
+          echo "Build version information:"
+          dotnet msbuild -getProperty:Version
+          dotnet msbuild -getProperty:AssemblyVersion
+          dotnet msbuild -getProperty:InformationalVersion
+
       - name: Publish
-        run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish
+        run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish --no-build
 
       - name: Create macOS App Bundle
         run: |
           APP_NAME="Bus Lane"
           APP_BUNDLE="${APP_NAME}.app"
-
+          
           # Create app bundle structure
           mkdir -p "${APP_BUNDLE}/Contents/MacOS"
           mkdir -p "${APP_BUNDLE}/Contents/Resources"
-
+          
           # Copy published files to MacOS folder
           cp -R ./publish/* "${APP_BUNDLE}/Contents/MacOS/"
-
+          
           # Copy Info.plist
           cp Info.plist "${APP_BUNDLE}/Contents/"
-
+          
           # Copy icon
           cp Assets/icon.icns "${APP_BUNDLE}/Contents/Resources/icon.icns"
-
+          
           # Make the main executable executable
           chmod +x "${APP_BUNDLE}/Contents/MacOS/BusLane"
-
+          
           # Create PkgInfo file
           echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
-
+          
           # Ad-hoc code sign the app bundle
           codesign --force --deep --sign - "${APP_BUNDLE}"
 
@@ -144,14 +159,14 @@ jobs:
         run: |
           APP_NAME="Bus Lane"
           DMG_NAME="BusLane-osx-${{ matrix.arch }}"
-
+          
           # Create a temporary directory for DMG contents
           mkdir -p dmg_contents
           cp -R "${APP_NAME}.app" dmg_contents/
-
+          
           # Create a symbolic link to Applications folder
           ln -s /Applications dmg_contents/Applications
-
+          
           # Create the DMG
           hdiutil create -volname "${APP_NAME}" -srcfolder dmg_contents -ov -format UDZO "${DMG_NAME}.dmg"
 
@@ -166,7 +181,7 @@ jobs:
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-
+    
     permissions:
       contents: write
 
@@ -202,14 +217,14 @@ jobs:
         run: |
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
+          
           if [ -z "$PREVIOUS_TAG" ]; then
             COMMITS=$(git log --pretty=format:"- %s" --no-merges)
           else
             COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
-
+          
           echo "$COMMITS" > release_notes.md
-
+          
           echo "Generated release notes:"
           cat release_notes.md
