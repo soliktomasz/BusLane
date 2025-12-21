@@ -34,8 +34,15 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
-      - name: Publish
-        run: dotnet publish -c Release -r linux-x64 --self-contained -o ./publish --no-build
+      - name: Publish self-contained
+        run: |
+          dotnet publish -c Release -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:EnableCompressionInSingleFile=true \
+            -o ./publish \
+            --no-build
 
       - name: Create archive
         run: |
@@ -78,8 +85,15 @@ jobs:
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           Write-Output "Extracted version: $VERSION"
 
-      - name: Publish
-        run: dotnet publish -c Release -r win-x64 --self-contained -o ./publish --no-build
+      - name: Publish self-contained
+        run: |
+          dotnet publish -c Release -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -o ./publish `
+            --no-build
 
       - name: Create archive
         run: |
@@ -126,8 +140,15 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
-      - name: Publish
-        run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained -o ./publish --no-build
+      - name: Publish self-contained
+        run: |
+          dotnet publish -c Release -r ${{ matrix.runtime }} \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:EnableCompressionInSingleFile=true \
+            -o ./publish \
+            --no-build
 
       - name: Create macOS App Bundle
         run: |
@@ -208,7 +229,20 @@ jobs:
             COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
           
-          echo "$COMMITS" > release_notes.md
+          # Add note about self-contained deployment
+          echo "## What's Changed" > release_notes.md
+          echo "" >> release_notes.md
+          echo "✅ **Self-contained builds** - No .NET runtime installation required!" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Changes" >> release_notes.md
+          echo "$COMMITS" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Download" >> release_notes.md
+          echo "- **macOS ARM64** (Apple Silicon M1/M2/M3): \`BusLane-*-osx-arm64.dmg\`" >> release_notes.md
+          echo "- **macOS x64** (Intel): \`BusLane-*-osx-x64.dmg\`" >> release_notes.md
+          echo "- **Windows**: \`BusLane-*-win-x64.zip\`" >> release_notes.md
+          echo "- **Linux**: \`BusLane-*-linux-x64.tar.gz\`" >> release_notes.md
+          
           cat release_notes.md
 
       - name: Create Release
