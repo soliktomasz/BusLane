@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -102,4 +103,32 @@ public class EntitySelectionBackgroundConverter : IMultiValueConverter
         return Brushes.Transparent;
     }
 }
+
+/// <summary>
+/// Converter for environment tab selection using RadioButtons.
+/// Converts between ConnectionEnvironment enum and boolean for RadioButton IsChecked binding.
+/// </summary>
+public class EnvironmentTabConverter : IValueConverter
+{
+    public static readonly EnvironmentTabConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null)
+            return false;
+        
+        return value.Equals(parameter);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool isChecked && isChecked && parameter != null)
+        {
+            return parameter;
+        }
+        
+        return BindingOperations.DoNothing;
+    }
+}
+
 
