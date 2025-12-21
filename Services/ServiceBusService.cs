@@ -7,6 +7,9 @@ namespace BusLane.Services;
 public class ServiceBusService : IServiceBusService
 {
     private readonly IAzureAuthService _auth;
+    private const int MaxSessionsToCheck = 10;
+    private const int PurgeBatchSize = 100;
+    private static readonly TimeSpan PurgeReceiveTimeout = TimeSpan.FromSeconds(5);
 
     public ServiceBusService(IAzureAuthService auth) => _auth = auth;
 
@@ -118,161 +121,33 @@ public class ServiceBusService : IServiceBusService
     }
 
     public async Task<IEnumerable<MessageInfo>> PeekMessagesAsync(
-        string endpoint, string queueOrTopic, string? subscription, 
+        string endpoint, string queueOrTopic, string? subscription,
         int count, bool deadLetter, bool requiresSession = false, CancellationToken ct = default)
     {
-        if (_auth.Credential == null) 
-            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
-        
-        // Ensure endpoint is in the correct format (fully qualified namespace)
-        var fullyQualifiedNamespace = endpoint
-            .Replace("sb://", "")
-            .Replace("https://", "")
-            .TrimEnd('/');
-        
-        // Ensure the namespace has the correct suffix
-        if (!fullyQualifiedNamespace.Contains("."))
-        {
-            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
-        }
+        EnsureAuthenticated();
+        queueOrTopic = NormalizeEntityPath(queueOrTopic);
 
-        if (queueOrTopic.Contains('~'))
-        {
-            queueOrTopic = queueOrTopic.Replace('~', '/');
-        }        
-        
-        await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
-        
-        IReadOnlyList<ServiceBusReceivedMessage> messages;
-        
-        if (requiresSession)
-        {
-            // For session-enabled entities, we need to accept sessions to peek messages
-            var allMessages = new List<ServiceBusReceivedMessage>();
-            var sessionsChecked = new HashSet<string>();
-            var maxSessions = 10; // Limit the number of sessions to check
-            
-            try
-            {
-                while (allMessages.Count < count && sessionsChecked.Count < maxSessions)
-                {
-                    try
-                    {
-                        ServiceBusSessionReceiver sessionReceiver;
-                        var sessionOptions = new ServiceBusSessionReceiverOptions
-                        {
-                            ReceiveMode = ServiceBusReceiveMode.PeekLock
-                        };
-                        
-                        // Use the proper overload for subscriptions vs queues
-                        if (subscription != null)
-                        {
-                            // For topic subscriptions, use the dedicated overload
-                            if (deadLetter)
-                            {
-                                // For dead letter on subscription, we need to use the path format
-                                var dlqPath = $"{queueOrTopic}/Subscriptions/{subscription}/$DeadLetterQueue";
-                                sessionReceiver = await client.AcceptNextSessionAsync(dlqPath, sessionOptions, ct);
-                            }
-                            else
-                            {
-                                // Use the proper SDK overload for subscriptions
-                                sessionReceiver = await client.AcceptNextSessionAsync(queueOrTopic, subscription, sessionOptions, ct);
-                            }
-                        }
-                        else
-                        {
-                            // For queues
-                            if (deadLetter)
-                            {
-                                var dlqPath = $"{queueOrTopic}/$DeadLetterQueue";
-                                sessionReceiver = await client.AcceptNextSessionAsync(dlqPath, sessionOptions, ct);
-                            }
-                            else
-                            {
-                                sessionReceiver = await client.AcceptNextSessionAsync(queueOrTopic, sessionOptions, ct);
-                            }
-                        }
-                        
-                        if (sessionsChecked.Contains(sessionReceiver.SessionId))
-                        {
-                            await sessionReceiver.DisposeAsync();
-                            break;
-                        }
-                        
-                        sessionsChecked.Add(sessionReceiver.SessionId);
-                        
-                        var sessionMessages = await sessionReceiver.PeekMessagesAsync(count - allMessages.Count, cancellationToken: ct);
-                        allMessages.AddRange(sessionMessages);
-                        
-                        await sessionReceiver.DisposeAsync();
-                    }
-                    catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
-                    {
-                        // No more sessions available
-                        break;
-                    }
-                }
-            }
-            catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
-            {
-                // No sessions available at all
-            }
-            
-            messages = allMessages;
-        }
-        else
-        {
-            // Use the proper overload for subscriptions vs queues
-            await using ServiceBusReceiver receiver = subscription != null
-                ? (deadLetter 
-                    ? client.CreateReceiver(queueOrTopic, subscription, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
-                    : client.CreateReceiver(queueOrTopic, subscription))
-                : (deadLetter 
-                    ? client.CreateReceiver(queueOrTopic, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter })
-                    : client.CreateReceiver(queueOrTopic));
-            
-            messages = await receiver.PeekMessagesAsync(count, cancellationToken: ct);
-        }
-        
-        return messages.Select(m => new MessageInfo(
-            m.MessageId,
-            m.CorrelationId,
-            m.ContentType,
-            m.Body.ToString(),
-            m.EnqueuedTime,
-            m.ScheduledEnqueueTime == default ? null : m.ScheduledEnqueueTime,
-            m.SequenceNumber,
-            m.DeliveryCount,
-            m.SessionId,
-            m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
-            m.Subject,
-            m.To,
-            m.ReplyTo,
-            m.ReplyToSessionId,
-            m.PartitionKey,
-            m.TimeToLive,
-            m.ExpiresAt,
-            m.LockToken,
-            m.LockedUntil,
-            m.DeadLetterSource,
-            m.DeadLetterReason,
-            m.DeadLetterErrorDescription
-        ));
+        await using var client = CreateClient(endpoint);
+
+        var messages = requiresSession
+            ? await PeekSessionMessagesAsync(client, queueOrTopic, subscription, count, deadLetter, ct)
+            : await PeekStandardMessagesAsync(client, queueOrTopic, subscription, count, deadLetter, ct);
+
+        return messages.Select(MapToMessageInfo);
     }
 
-    public async Task SendMessageAsync(
-        string endpoint, string queueOrTopic, string body, 
+    public Task SendMessageAsync(
+        string endpoint, string queueOrTopic, string body,
         IDictionary<string, object>? properties, CancellationToken ct = default)
     {
-        await SendMessageAsync(endpoint, queueOrTopic, body, properties, 
+        return SendMessageAsync(endpoint, queueOrTopic, body, properties,
             null, null, null, null, null, null, null, null, null, null, null, ct);
     }
 
     public async Task SendMessageAsync(
-        string endpoint, 
-        string queueOrTopic, 
-        string body, 
+        string endpoint,
+        string queueOrTopic,
+        string body,
         IDictionary<string, object>? properties,
         string? contentType,
         string? correlationId,
@@ -287,126 +162,224 @@ public class ServiceBusService : IServiceBusService
         DateTimeOffset? scheduledEnqueueTime,
         CancellationToken ct = default)
     {
-        if (_auth.Credential == null) 
-            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
-        
-        // Ensure endpoint is in the correct format (fully qualified namespace)
-        var fullyQualifiedNamespace = endpoint
-            .Replace("sb://", "")
-            .Replace("https://", "")
-            .TrimEnd('/');
-        
-        // Ensure the namespace has the correct suffix
-        if (!fullyQualifiedNamespace.Contains("."))
-        {
-            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
-        }
-        
-        await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
+        EnsureAuthenticated();
+
+        await using var client = CreateClient(endpoint);
         await using var sender = client.CreateSender(queueOrTopic);
-        
+
         var msg = new ServiceBusMessage(body);
-        
-        if (!string.IsNullOrWhiteSpace(contentType))
-            msg.ContentType = contentType;
-        if (!string.IsNullOrWhiteSpace(correlationId))
-            msg.CorrelationId = correlationId;
-        if (!string.IsNullOrWhiteSpace(messageId))
-            msg.MessageId = messageId;
-        if (!string.IsNullOrWhiteSpace(sessionId))
-            msg.SessionId = sessionId;
-        if (!string.IsNullOrWhiteSpace(subject))
-            msg.Subject = subject;
-        if (!string.IsNullOrWhiteSpace(to))
-            msg.To = to;
-        if (!string.IsNullOrWhiteSpace(replyTo))
-            msg.ReplyTo = replyTo;
-        if (!string.IsNullOrWhiteSpace(replyToSessionId))
-            msg.ReplyToSessionId = replyToSessionId;
-        if (!string.IsNullOrWhiteSpace(partitionKey))
-            msg.PartitionKey = partitionKey;
-        if (timeToLive.HasValue)
-            msg.TimeToLive = timeToLive.Value;
-        if (scheduledEnqueueTime.HasValue)
-            msg.ScheduledEnqueueTime = scheduledEnqueueTime.Value;
-        
-        if (properties != null)
-        {
-            foreach (var (key, value) in properties)
-                msg.ApplicationProperties[key] = value;
-        }
-        
+        ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
+            subject, to, replyTo, replyToSessionId, partitionKey, timeToLive, scheduledEnqueueTime, properties);
+
         await sender.SendMessageAsync(msg, ct);
     }
 
     public async Task DeleteMessageAsync(
-        string endpoint, string queueOrTopic, string? subscription, 
+        string endpoint, string queueOrTopic, string? subscription,
         long sequenceNumber, CancellationToken ct = default)
     {
-        if (_auth.Credential == null) 
-            throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
-        
-        // Ensure endpoint is in the correct format (fully qualified namespace)
-        var fullyQualifiedNamespace = endpoint
-            .Replace("sb://", "")
-            .Replace("https://", "")
-            .TrimEnd('/');
-        
-        // Ensure the namespace has the correct suffix
-        if (!fullyQualifiedNamespace.Contains("."))
-        {
-            fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
-        }
-        
-        await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
-        
+        EnsureAuthenticated();
+
+        await using var client = CreateClient(endpoint);
+
         var receiverOptions = new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.PeekLock };
         await using var receiver = subscription != null
             ? client.CreateReceiver(queueOrTopic, subscription, receiverOptions)
             : client.CreateReceiver(queueOrTopic, receiverOptions);
-        
+
         var msg = await receiver.ReceiveDeferredMessageAsync(sequenceNumber, ct);
         if (msg != null)
             await receiver.CompleteMessageAsync(msg, ct);
     }
 
     public async Task PurgeMessagesAsync(
-        string endpoint, string queueOrTopic, string? subscription, 
+        string endpoint, string queueOrTopic, string? subscription,
         bool deadLetter, CancellationToken ct = default)
     {
-        if (_auth.Credential == null) 
+        EnsureAuthenticated();
+
+        await using var client = CreateClient(endpoint);
+
+        var options = new ServiceBusReceiverOptions
+        {
+            ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete,
+            SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
+        };
+
+        await using var receiver = subscription != null
+            ? client.CreateReceiver(queueOrTopic, subscription, options)
+            : client.CreateReceiver(queueOrTopic, options);
+
+        while (!ct.IsCancellationRequested)
+        {
+            var msgs = await receiver.ReceiveMessagesAsync(PurgeBatchSize, PurgeReceiveTimeout, ct);
+            if (msgs.Count == 0) break;
+        }
+    }
+
+    #region Private Methods
+
+    private void EnsureAuthenticated()
+    {
+        if (_auth.Credential == null)
             throw new InvalidOperationException("Not authenticated. Please sign in to Azure first.");
-        
-        // Ensure endpoint is in the correct format (fully qualified namespace)
+    }
+
+    private static string NormalizeEndpoint(string endpoint)
+    {
         var fullyQualifiedNamespace = endpoint
             .Replace("sb://", "")
             .Replace("https://", "")
             .TrimEnd('/');
-        
-        // Ensure the namespace has the correct suffix
-        if (!fullyQualifiedNamespace.Contains("."))
-        {
+
+        if (!fullyQualifiedNamespace.Contains('.'))
             fullyQualifiedNamespace = $"{fullyQualifiedNamespace}.servicebus.windows.net";
-        }
-        
-        await using var client = new ServiceBusClient(fullyQualifiedNamespace, _auth.Credential);
-        
-        var options = new ServiceBusReceiverOptions
-        {
-            ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete
-        };
-        
-        if (deadLetter)
-            options.SubQueue = SubQueue.DeadLetter;
-        
-        await using var receiver = subscription != null
-            ? client.CreateReceiver(queueOrTopic, subscription, options)
-            : client.CreateReceiver(queueOrTopic, options);
-        
-        while (!ct.IsCancellationRequested)
-        {
-            var msgs = await receiver.ReceiveMessagesAsync(100, TimeSpan.FromSeconds(5), ct);
-            if (msgs.Count == 0) break;
-        }
+
+        return fullyQualifiedNamespace;
     }
+
+    private static string NormalizeEntityPath(string queueOrTopic) =>
+        queueOrTopic.Contains('~') ? queueOrTopic.Replace('~', '/') : queueOrTopic;
+
+    private ServiceBusClient CreateClient(string endpoint) =>
+        new(NormalizeEndpoint(endpoint), _auth.Credential);
+
+    private static MessageInfo MapToMessageInfo(ServiceBusReceivedMessage m) => new(
+        m.MessageId,
+        m.CorrelationId,
+        m.ContentType,
+        m.Body.ToString(),
+        m.EnqueuedTime,
+        m.ScheduledEnqueueTime == default ? null : m.ScheduledEnqueueTime,
+        m.SequenceNumber,
+        m.DeliveryCount,
+        m.SessionId,
+        m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
+        m.Subject,
+        m.To,
+        m.ReplyTo,
+        m.ReplyToSessionId,
+        m.PartitionKey,
+        m.TimeToLive,
+        m.ExpiresAt,
+        m.LockToken,
+        m.LockedUntil,
+        m.DeadLetterSource,
+        m.DeadLetterReason,
+        m.DeadLetterErrorDescription
+    );
+
+    private static void ApplyMessageProperties(
+        ServiceBusMessage msg,
+        string? contentType,
+        string? correlationId,
+        string? messageId,
+        string? sessionId,
+        string? subject,
+        string? to,
+        string? replyTo,
+        string? replyToSessionId,
+        string? partitionKey,
+        TimeSpan? timeToLive,
+        DateTimeOffset? scheduledEnqueueTime,
+        IDictionary<string, object>? properties)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType)) msg.ContentType = contentType;
+        if (!string.IsNullOrWhiteSpace(correlationId)) msg.CorrelationId = correlationId;
+        if (!string.IsNullOrWhiteSpace(messageId)) msg.MessageId = messageId;
+        if (!string.IsNullOrWhiteSpace(sessionId)) msg.SessionId = sessionId;
+        if (!string.IsNullOrWhiteSpace(subject)) msg.Subject = subject;
+        if (!string.IsNullOrWhiteSpace(to)) msg.To = to;
+        if (!string.IsNullOrWhiteSpace(replyTo)) msg.ReplyTo = replyTo;
+        if (!string.IsNullOrWhiteSpace(replyToSessionId)) msg.ReplyToSessionId = replyToSessionId;
+        if (!string.IsNullOrWhiteSpace(partitionKey)) msg.PartitionKey = partitionKey;
+        if (timeToLive.HasValue) msg.TimeToLive = timeToLive.Value;
+        if (scheduledEnqueueTime.HasValue) msg.ScheduledEnqueueTime = scheduledEnqueueTime.Value;
+
+        if (properties == null) return;
+        foreach (var (key, value) in properties)
+            msg.ApplicationProperties[key] = value;
+    }
+
+    private static async Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekStandardMessagesAsync(
+        ServiceBusClient client, string queueOrTopic, string? subscription,
+        int count, bool deadLetter, CancellationToken ct)
+    {
+        await using var receiver = CreateReceiver(client, queueOrTopic, subscription, deadLetter);
+        return await receiver.PeekMessagesAsync(count, cancellationToken: ct);
+    }
+
+    private static ServiceBusReceiver CreateReceiver(
+        ServiceBusClient client, string queueOrTopic, string? subscription, bool deadLetter)
+    {
+        var options = deadLetter ? new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter } : null;
+
+        return subscription != null
+            ? (options != null ? client.CreateReceiver(queueOrTopic, subscription, options) : client.CreateReceiver(queueOrTopic, subscription))
+            : (options != null ? client.CreateReceiver(queueOrTopic, options) : client.CreateReceiver(queueOrTopic));
+    }
+
+    private static async Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekSessionMessagesAsync(
+        ServiceBusClient client, string queueOrTopic, string? subscription,
+        int count, bool deadLetter, CancellationToken ct)
+    {
+        var allMessages = new List<ServiceBusReceivedMessage>();
+        var sessionsChecked = new HashSet<string>();
+
+        try
+        {
+            while (allMessages.Count < count && sessionsChecked.Count < MaxSessionsToCheck)
+            {
+                try
+                {
+                    var sessionReceiver = await AcceptNextSessionReceiverAsync(
+                        client, queueOrTopic, subscription, deadLetter, ct);
+
+                    if (sessionsChecked.Contains(sessionReceiver.SessionId))
+                    {
+                        await sessionReceiver.DisposeAsync();
+                        break;
+                    }
+
+                    sessionsChecked.Add(sessionReceiver.SessionId);
+
+                    var remaining = count - allMessages.Count;
+                    var sessionMessages = await sessionReceiver.PeekMessagesAsync(remaining, cancellationToken: ct);
+                    allMessages.AddRange(sessionMessages);
+
+                    await sessionReceiver.DisposeAsync();
+                }
+                catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
+                {
+                    break; // No more sessions available
+                }
+            }
+        }
+        catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
+        {
+            // No sessions available at all - return empty list
+        }
+
+        return allMessages;
+    }
+
+    private static async Task<ServiceBusSessionReceiver> AcceptNextSessionReceiverAsync(
+        ServiceBusClient client, string queueOrTopic, string? subscription,
+        bool deadLetter, CancellationToken ct)
+    {
+        var sessionOptions = new ServiceBusSessionReceiverOptions { ReceiveMode = ServiceBusReceiveMode.PeekLock };
+
+        if (subscription != null)
+        {
+            return deadLetter
+                ? await client.AcceptNextSessionAsync($"{queueOrTopic}/Subscriptions/{subscription}/$DeadLetterQueue", sessionOptions, ct)
+                : await client.AcceptNextSessionAsync(queueOrTopic, subscription, sessionOptions, ct);
+        }
+
+        return deadLetter
+            ? await client.AcceptNextSessionAsync($"{queueOrTopic}/$DeadLetterQueue", sessionOptions, ct)
+            : await client.AcceptNextSessionAsync(queueOrTopic, sessionOptions, ct);
+    }
+
+    #endregion
 }
