@@ -11,6 +11,7 @@ internal record StoredConnection(
     ConnectionType Type,
     string? EntityName,
     DateTimeOffset CreatedAt,
-    bool IsFavorite = false
+    bool IsFavorite = false,
+    ConnectionEnvironment Environment = ConnectionEnvironment.None
 );
 

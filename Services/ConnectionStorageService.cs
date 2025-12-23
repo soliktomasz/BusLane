@@ -12,7 +12,7 @@ public class ConnectionStorageService : IConnectionStorageService
     public ConnectionStorageService(IEncryptionService encryptionService)
     {
         _encryptionService = encryptionService;
-        
+
         var appDataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "BusLane"
@@ -30,11 +30,11 @@ public class ConnectionStorageService : IConnectionStorageService
     public async Task SaveConnectionAsync(SavedConnection connection)
     {
         await LoadConnectionsAsync();
-        
+
         // Remove existing connection with same ID if exists
         _connections.RemoveAll(c => c.Id == connection.Id);
         _connections.Add(connection);
-        
+
         await PersistConnectionsAsync();
     }
 
@@ -69,15 +69,15 @@ public class ConnectionStorageService : IConnectionStorageService
         {
             var json = await File.ReadAllTextAsync(_storageFilePath);
             var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, GetJsonOptions()) ?? [];
-            
+
             _connections = storedConnections
                 .Select(stored =>
                 {
                     // Decrypt the connection string
                     // The decryption handles both encrypted and legacy unencrypted strings
-                    var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString) 
+                    var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString)
                                           ?? stored.EncryptedConnectionString;
-                    
+
                     return new SavedConnection(
                         stored.Id,
                         stored.Name,
@@ -85,7 +85,8 @@ public class ConnectionStorageService : IConnectionStorageService
                         stored.Type,
                         stored.EntityName,
                         stored.CreatedAt,
-                        stored.IsFavorite
+                        stored.IsFavorite,
+                        stored.Environment
                     );
                 })
                 .ToList();
@@ -116,10 +117,11 @@ public class ConnectionStorageService : IConnectionStorageService
                 conn.Type,
                 conn.EntityName,
                 conn.CreatedAt,
-                conn.IsFavorite
+                conn.IsFavorite,
+                conn.Environment
             ))
             .ToList();
-        
+
         var json = JsonSerializer.Serialize(storedConnections, GetJsonOptions());
         await File.WriteAllTextAsync(_storageFilePath, json);
     }
