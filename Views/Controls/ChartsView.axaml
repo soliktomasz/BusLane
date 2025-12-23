@@ -4,14 +4,14 @@
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              x:Class="BusLane.Views.Controls.ChartsView"
              x:DataType="vm:ChartsViewModel">
-    
+
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header -->
             <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" Text="Metrics &amp; Charts" Classes="heading" VerticalAlignment="Center"/>
-                    
+
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
                         <!-- Time range selector -->
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -20,20 +20,20 @@
                                       SelectedItem="{Binding SelectedTimeRange}"
                                       MinWidth="120"/>
                         </StackPanel>
-                        
+
                         <CheckBox Content="Aggregated" IsChecked="{Binding ShowAggregated}" VerticalAlignment="Center"/>
-                        
-                        <Button Classes="subtle small" Content="↻ Refresh" 
+
+                        <Button Classes="subtle small" Content="↻ Refresh"
                                 Command="{Binding RefreshChartsCommand}"
                                 Padding="8,6"/>
                     </StackPanel>
                 </Grid>
             </Border>
-            
+
             <!-- Charts Grid -->
             <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <Grid RowDefinitions="Auto,Auto,Auto" Margin="16">
-                    
+
                     <!-- Message Count Over Time -->
                     <Border Grid.Row="0" Classes="card" Padding="16" Margin="0,0,0,16">
                         <Grid RowDefinitions="Auto,300">
@@ -46,7 +46,7 @@
                                                 TooltipPosition="Top"/>
                         </Grid>
                     </Border>
-                    
+
                     <!-- Dead Letter Count Over Time -->
                     <Border Grid.Row="1" Classes="card" Padding="16" Margin="0,0,0,16">
                         <Grid RowDefinitions="Auto,300">
@@ -59,7 +59,7 @@
                                                 TooltipPosition="Top"/>
                         </Grid>
                     </Border>
-                    
+
                     <!-- Distribution and Comparison Charts -->
                     <Grid Grid.Row="2" ColumnDefinitions="*,*">
                         <!-- Entity Distribution Pie Chart -->
@@ -72,7 +72,7 @@
                                               TooltipPosition="Center"/>
                             </Grid>
                         </Border>
-                        
+
                         <!-- Comparison Bar Chart -->
                         <Border Grid.Column="1" Classes="card" Padding="16" Margin="8,0,0,0">
                             <Grid RowDefinitions="Auto,300">
