@@ -50,7 +50,7 @@ jobs:
           tar -czvf ../BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: BusLane-${{ steps.version.outputs.version }}-linux-x64
           path: BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz
@@ -100,7 +100,7 @@ jobs:
           Compress-Archive -Path ./publish/* -DestinationPath ./BusLane-${{ steps.version.outputs.version }}-win-x64.zip
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: BusLane-${{ steps.version.outputs.version }}-win-x64
           path: BusLane-${{ steps.version.outputs.version }}-win-x64.zip
@@ -193,7 +193,7 @@ jobs:
           hdiutil create -volname "${APP_NAME}" -srcfolder dmg_contents -ov -format UDZO "${DMG_NAME}.dmg"
 
       - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}
           path: BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}.dmg
