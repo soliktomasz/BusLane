@@ -10,11 +10,11 @@
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen">
-    
+
     <Grid ColumnDefinitions="Auto,*">
         <!-- Navigation Pane (Fluent 2 Sidebar) -->
         <controls:NavigationSidebar Grid.Column="0"/>
-        
+
         <!-- Main Content -->
         <Grid Grid.Column="1" Margin="24,20">
             <Grid.RowDefinitions>
@@ -22,44 +22,44 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
+
             <!-- Welcome / Not Connected -->
-            <controls:WelcomeView Grid.Row="1" 
-                                  VerticalAlignment="Center" 
+            <controls:WelcomeView Grid.Row="1"
+                                  VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
-            
+
             <!-- Content when namespace selected (Azure mode) -->
-            <Grid Grid.Row="0" Grid.RowSpan="2" 
+            <Grid Grid.Row="0" Grid.RowSpan="2"
                   IsVisible="{Binding SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
                   RowDefinitions="Auto,*">
-                
+
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="{Binding SelectedNamespace.Name}" Classes="title"/>
                         <TextBlock Text="{Binding SelectedNamespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Button Classes="secondary small" Content="Refresh" 
+                    <Button Classes="secondary small" Content="Refresh"
                             Command="{Binding RefreshCommand}"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"/>
                 </Grid>
-                
+
                 <!-- Main content grid -->
                 <Grid Grid.Row="1" ColumnDefinitions="1.2*,1.8*">
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="0" Margin="0,0,12,0"/>
-                    
+
                     <!-- Messages Panel -->
                     <controls:MessagesPanelView Grid.Column="1" Margin="12,0,0,0"/>
                 </Grid>
             </Grid>
-            
+
             <!-- Content when connected via connection string -->
-            <Grid Grid.Row="0" Grid.RowSpan="2" 
+            <Grid Grid.Row="0" Grid.RowSpan="2"
                   IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
                   RowDefinitions="Auto,*">
-                
+
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
@@ -74,62 +74,68 @@
                                        IsVisible="{Binding ActiveConnection.IsNamespaceLevel}"/>
                         </StackPanel>
                     </StackPanel>
-                    <Button Classes="secondary small" Content="Refresh" 
+                    <Button Classes="secondary small" Content="Refresh"
                             Command="{Binding RefreshConnectionCommand}"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"/>
                 </Grid>
-                
+
                 <!-- Main content for connection string mode -->
                 <Grid Grid.Row="1" ColumnDefinitions="1.2*,1.8*">
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="0" Margin="0,0,12,0"/>
-                    
+
                     <!-- Messages Panel (reusing same structure as Azure mode) -->
                     <controls:MessagesPanelView Grid.Column="1" Margin="12,0,0,0"/>
                 </Grid>
             </Grid>
-            
+
             <!-- Live Stream Panel (overlay when active) -->
-            <Border Grid.Row="0" Grid.RowSpan="2" 
+            <Border Grid.Row="0" Grid.RowSpan="2"
                     IsVisible="{Binding ShowLiveStream}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
                     <Border Grid.Row="0" Margin="0,0,0,16">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0" Text="Live Message Stream" Classes="title"/>
-                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close" 
+                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close"
                                     Command="{Binding CloseLiveStreamCommand}"/>
                         </Grid>
                     </Border>
                     <controls:LiveStreamView Grid.Row="1" DataContext="{Binding LiveStreamViewModel}"/>
                 </Grid>
             </Border>
-            
+
             <!-- Charts Panel (overlay when active) -->
-            <Border Grid.Row="0" Grid.RowSpan="2" 
-                    IsVisible="{Binding ShowCharts}"
+            <Border Grid.Row="0" Grid.RowSpan="2"
+                    IsVisible="{Binding ChartsViewModel, Converter={x:Static ObjectConverters.IsNotNull}}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
                     <Border Grid.Row="0" Margin="0,0,0,16">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0" Text="Metrics &amp; Charts" Classes="title"/>
-                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close" 
+                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close"
                                     Command="{Binding CloseChartsCommand}"/>
                         </Grid>
                     </Border>
-                    <controls:ChartsView Grid.Row="1" DataContext="{Binding ChartsViewModel}"/>
+                    <ContentControl Grid.Row="1" Content="{Binding ChartsViewModel}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate DataType="vm:ChartsViewModel">
+                                <controls:ChartsView />
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
                 </Grid>
             </Border>
-            
+
             <!-- Status Bar -->
             <Border Grid.Row="2" Margin="0,12,0,0">
                 <Grid ColumnDefinitions="Auto,*">
-                    <ProgressBar Grid.Column="0" 
-                                 IsIndeterminate="True" 
+                    <ProgressBar Grid.Column="0"
+                                 IsIndeterminate="True"
                                  IsVisible="{Binding IsLoading}"
                                  Width="100" Height="3"/>
-                    <Button Grid.Column="1" 
+                    <Button Grid.Column="1"
                             Classes="subtle"
                             Command="{Binding ToggleStatusPopupCommand}"
                             HorizontalAlignment="Left"
@@ -137,7 +143,7 @@
                             Padding="8,4"
                             Cursor="Hand"
                             ToolTip.Tip="Click to see full message">
-                        <TextBlock Text="{Binding StatusMessage}" 
+                        <TextBlock Text="{Binding StatusMessage}"
                                    Classes="caption"
                                    TextTrimming="CharacterEllipsis"
                                    MaxWidth="400"/>
@@ -145,7 +151,7 @@
                 </Grid>
             </Border>
         </Grid>
-        
+
         <!-- Modal Dialogs -->
         <dialogs:StatusPopupDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:MessageDetailDialog Grid.Column="0" Grid.ColumnSpan="2"/>
@@ -155,13 +161,13 @@
         <dialogs:ConnectionLibraryDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        
+
         <!-- Alerts Dialog (modal overlay) -->
         <Border Grid.Column="0" Grid.ColumnSpan="2"
                 IsVisible="{Binding ShowAlerts}"
                 Background="{DynamicResource ModalOverlay}">
-            <Border Background="{DynamicResource CardBackground}" 
-                    CornerRadius="12" 
+            <Border Background="{DynamicResource CardBackground}"
+                    CornerRadius="12"
                     MaxWidth="900" MaxHeight="700"
                     VerticalAlignment="Center" HorizontalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
