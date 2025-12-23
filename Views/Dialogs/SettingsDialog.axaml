@@ -3,11 +3,11 @@
              xmlns:vm="using:BusLane.ViewModels"
              x:Class="BusLane.Views.Dialogs.SettingsDialog"
              x:DataType="vm:MainWindowViewModel">
-    
+
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowSettings}">
-        <Border Classes="modal" 
-                VerticalAlignment="Center" 
+        <Border Classes="modal"
+                VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 MinWidth="500"
                 MaxWidth="600">
@@ -15,94 +15,92 @@
                 <!-- Header -->
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,20">
                     <TextBlock Text="Settings" Classes="heading"/>
-                    <Button Classes="icon" 
+                    <Button Classes="icon"
                             HorizontalAlignment="Right"
                             Command="{Binding SettingsViewModel.CancelCommand}">
                         <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
                     </Button>
                 </Grid>
-                
+
+                <!-- Action Buttons - Always visible at bottom -->
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button Classes="secondary small"
+                            Content="Reset to Defaults"
+                            Command="{Binding SettingsViewModel.ResetToDefaultsCommand}"/>
+                    <Button Classes="secondary small"
+                            Content="Cancel"
+                            Command="{Binding SettingsViewModel.CancelCommand}"/>
+                    <Button Classes="primary small"
+                            Content="Save Settings"
+                            Command="{Binding SettingsViewModel.SaveSettingsCommand}"/>
+                </StackPanel>
+
                 <ScrollViewer>
                     <StackPanel Spacing="24">
                         <!-- Confirmation Settings -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="Confirmations" FontWeight="SemiBold" FontSize="14"/>
-                            
+
                             <CheckBox IsChecked="{Binding SettingsViewModel.ConfirmBeforeDelete}"
                                       Content="Confirm before deleting messages"/>
-                            
+
                             <CheckBox IsChecked="{Binding SettingsViewModel.ConfirmBeforePurge}"
                                       Content="Confirm before purging queues"/>
                         </StackPanel>
-                        
+
                         <Separator/>
-                        
+
                         <!-- Message Settings -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="Messages" FontWeight="SemiBold" FontSize="14"/>
-                            
+
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
                                 <TextBlock Text="Default message count to load" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1" 
+                                <ComboBox Grid.Column="1"
                                           ItemsSource="{Binding SettingsViewModel.AvailableMessageCounts}"
                                           SelectedItem="{Binding SettingsViewModel.DefaultMessageCount}"
                                           Width="100"/>
                             </Grid>
-                            
+
                             <CheckBox IsChecked="{Binding SettingsViewModel.EnableMessagePreview}"
                                       Content="Enable message body preview in list"/>
                         </StackPanel>
-                        
+
                         <Separator/>
-                        
+
                         <!-- Auto Refresh Settings -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="Auto Refresh" FontWeight="SemiBold" FontSize="14"/>
-                            
+
                             <CheckBox IsChecked="{Binding SettingsViewModel.AutoRefreshMessages}"
                                       Content="Auto-refresh message list"/>
-                            
+
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto"
                                   IsEnabled="{Binding SettingsViewModel.AutoRefreshMessages}">
                                 <TextBlock Text="Refresh interval (seconds)" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1" 
+                                <ComboBox Grid.Column="1"
                                           ItemsSource="{Binding SettingsViewModel.AvailableRefreshIntervals}"
                                           SelectedItem="{Binding SettingsViewModel.AutoRefreshIntervalSeconds}"
                                           Width="100"/>
                             </Grid>
                         </StackPanel>
-                        
+
                         <Separator/>
-                        
+
                         <!-- Display Settings -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="Display" FontWeight="SemiBold" FontSize="14"/>
-                            
+
                             <CheckBox IsChecked="{Binding SettingsViewModel.ShowDeadLetterBadges}"
                                       Content="Show dead letter count badges"/>
-                            
+
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
                                 <TextBlock Text="Theme" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1" 
+                                <ComboBox Grid.Column="1"
                                           ItemsSource="{Binding SettingsViewModel.AvailableThemes}"
                                           SelectedItem="{Binding SettingsViewModel.Theme}"
                                           Width="120"/>
                             </Grid>
-                        </StackPanel>
-                        
-                        <Separator/>
-                        
-                        <!-- Action Buttons -->
-                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,8,0,0">
-                            <Button Classes="secondary small" 
-                                    Content="Reset to Defaults" 
-                                    Command="{Binding SettingsViewModel.ResetToDefaultsCommand}"/>
-                            <Button Classes="secondary small" 
-                                    Content="Cancel" 
-                                    Command="{Binding SettingsViewModel.CancelCommand}"/>
-                            <Button Classes="primary small" 
-                                    Content="Save Settings" 
-                                    Command="{Binding SettingsViewModel.SaveSettingsCommand}"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
