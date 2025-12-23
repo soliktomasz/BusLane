@@ -23,9 +23,22 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     [ObservableProperty] private SavedConnection? _selectedConnection;
     [ObservableProperty] private SavedConnection? _editingConnection;
     [ObservableProperty] private string? _detectedInfo;
+    [ObservableProperty] private ConnectionEnvironment _newConnectionEnvironment = ConnectionEnvironment.None;
+    [ObservableProperty] private ConnectionEnvironment _selectedEnvironmentTab = ConnectionEnvironment.None;
+    [ObservableProperty] private bool _isCheckingConnection;
+    [ObservableProperty] private string? _checkConnectionResult;
+    [ObservableProperty] private bool _checkConnectionSuccess;
 
 
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
+    public ObservableCollection<SavedConnection> FilteredConnections { get; } = [];
+    public IReadOnlyList<ConnectionEnvironment> AvailableEnvironments { get; } = 
+    [
+        ConnectionEnvironment.None,
+        ConnectionEnvironment.Development,
+        ConnectionEnvironment.Test,
+        ConnectionEnvironment.Production
+    ];
 
     public ConnectionLibraryViewModel(
         IConnectionStorageService connectionStorage,
@@ -49,6 +62,25 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         {
             SavedConnections.Add(conn);
         }
+        UpdateFilteredConnections();
+    }
+    
+    partial void OnSelectedEnvironmentTabChanged(ConnectionEnvironment value)
+    {
+        UpdateFilteredConnections();
+    }
+    
+    private void UpdateFilteredConnections()
+    {
+        FilteredConnections.Clear();
+        var filtered = SelectedEnvironmentTab == ConnectionEnvironment.None
+            ? SavedConnections
+            : SavedConnections.Where(c => c.Environment == SelectedEnvironmentTab);
+            
+        foreach (var conn in filtered)
+        {
+            FilteredConnections.Add(conn);
+        }
     }
 
     [RelayCommand]
@@ -59,8 +91,10 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         EditingConnection = null;
         NewConnectionName = "";
         NewConnectionString = "";
+        NewConnectionEnvironment = ConnectionEnvironment.None;
         ValidationMessage = null;
         DetectedInfo = null;
+        CheckConnectionResult = null;
     }
 
     [RelayCommand]
@@ -71,8 +105,10 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         EditingConnection = connection;
         NewConnectionName = connection.Name;
         NewConnectionString = connection.ConnectionString;
+        NewConnectionEnvironment = connection.Environment;
         ValidationMessage = null;
         DetectedInfo = null;
+        CheckConnectionResult = null;
     }
 
     [RelayCommand]
@@ -83,6 +119,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         EditingConnection = null;
         ValidationMessage = null;
         DetectedInfo = null;
+        CheckConnectionResult = null;
+        NewConnectionEnvironment = ConnectionEnvironment.None;
     }
 
     [RelayCommand]
@@ -132,7 +170,9 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                     ConnectionString: NewConnectionString,
                     Type: ConnectionType.Namespace,
                     EntityName: null,
-                    CreatedAt: EditingConnection.CreatedAt
+                    CreatedAt: EditingConnection.CreatedAt,
+                    IsFavorite: EditingConnection.IsFavorite,
+                    Environment: NewConnectionEnvironment
                 );
                 
                 await _connectionStorage.SaveConnectionAsync(connection);
@@ -141,6 +181,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 {
                     SavedConnections[index] = connection;
                 }
+                UpdateFilteredConnections();
                 _onStatusUpdate($"Connection '{NewConnectionName}' updated successfully");
             }
             else
@@ -152,11 +193,13 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                     ConnectionString: NewConnectionString,
                     Type: ConnectionType.Namespace,
                     EntityName: null,
-                    CreatedAt: DateTimeOffset.UtcNow
+                    CreatedAt: DateTimeOffset.UtcNow,
+                    Environment: NewConnectionEnvironment
                 );
 
                 await _connectionStorage.SaveConnectionAsync(connection);
                 SavedConnections.Insert(0, connection);
+                UpdateFilteredConnections();
                 _onStatusUpdate($"Connection '{NewConnectionName}' saved successfully");
             }
 
@@ -165,6 +208,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             EditingConnection = null;
             ValidationMessage = null;
             DetectedInfo = null;
+            CheckConnectionResult = null;
+            NewConnectionEnvironment = ConnectionEnvironment.None;
             
             // Automatically connect to the newly added/edited connection
             _onConnectionSelected(connection);
@@ -180,10 +225,61 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task CheckConnectionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewConnectionString))
+        {
+            CheckConnectionResult = "Please enter a connection string first";
+            CheckConnectionSuccess = false;
+            return;
+        }
+
+        IsCheckingConnection = true;
+        CheckConnectionResult = null;
+        DetectedInfo = null;
+
+        try
+        {
+            var (isValid, _, endpoint, errorMessage) = 
+                await _connectionStringService.ValidateConnectionStringAsync(NewConnectionString);
+
+            if (!isValid)
+            {
+                CheckConnectionResult = $"Connection failed: {errorMessage}";
+                CheckConnectionSuccess = false;
+                return;
+            }
+
+            // Try to get namespace info
+            var info = await _connectionStringService.GetNamespaceInfoAsync(NewConnectionString);
+            if (info != null)
+            {
+                CheckConnectionResult = $"Connection successful! Found {info.QueueCount} queue(s), {info.TopicCount} topic(s)";
+                DetectedInfo = $"Endpoint: {endpoint}";
+            }
+            else
+            {
+                CheckConnectionResult = "Connection successful!";
+            }
+            CheckConnectionSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            CheckConnectionResult = $"Connection failed: {ex.Message}";
+            CheckConnectionSuccess = false;
+        }
+        finally
+        {
+            IsCheckingConnection = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task DeleteConnectionAsync(SavedConnection connection)
     {
         await _connectionStorage.DeleteConnectionAsync(connection.Id);
         SavedConnections.Remove(connection);
+        UpdateFilteredConnections();
         _onStatusUpdate($"Connection '{connection.Name}' deleted");
     }
 
@@ -192,6 +288,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     {
         await _connectionStorage.ClearAllConnectionsAsync();
         SavedConnections.Clear();
+        UpdateFilteredConnections();
         _onStatusUpdate("All connections cleared");
     }
 
@@ -213,6 +310,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         {
             SavedConnections[index] = updatedConnection;
         }
+        UpdateFilteredConnections();
         
         if (_onFavoritesChanged != null)
         {

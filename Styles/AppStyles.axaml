@@ -434,6 +434,59 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="FontSize" Value="11"/>
     </Style>
+    
+    <!-- Environment Badge styles -->
+    <Style Selector="Border.badge-env">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+    
+    <Style Selector="Border.badge-env TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="FontSize" Value="10"/>
+    </Style>
+    
+    <!-- Tab Button RadioButton Style - Fluent 2 -->
+    <Style Selector="RadioButton.tab-button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Regular"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        BorderThickness="0,0,0,2"
+                        BorderBrush="Transparent"
+                        x:Name="PART_Border">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-button:checked">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    
+    <Style Selector="RadioButton.tab-button:checked /template/ Border#PART_Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+    </Style>
 
     <!-- Separator - Fluent 2 -->
     <Style Selector="Separator">

@@ -7,6 +7,14 @@ public enum ConnectionType
     Namespace // Full namespace connection - can discover all queues/topics
 }
 
+public enum ConnectionEnvironment
+{
+    None,
+    Development,
+    Test,
+    Production
+}
+
 public record SavedConnection(
     string Id,
     string Name,
@@ -14,7 +22,8 @@ public record SavedConnection(
     ConnectionType Type,
     string? EntityName, // Null for namespace-level connections
     DateTimeOffset CreatedAt,
-    bool IsFavorite = false
+    bool IsFavorite = false,
+    ConnectionEnvironment Environment = ConnectionEnvironment.None
 )
 {
     // Extract namespace endpoint from connection string
@@ -49,5 +58,17 @@ public record SavedConnection(
         ConnectionType.Namespace => "Namespace",
         _ => "Unknown"
     };
+    
+    // Get display name for the environment
+    public string EnvironmentDisplayName => Environment switch
+    {
+        ConnectionEnvironment.Development => "DEV",
+        ConnectionEnvironment.Test => "TEST",
+        ConnectionEnvironment.Production => "PROD",
+        _ => ""
+    };
+    
+    // Check if environment is set
+    public bool HasEnvironment => Environment != ConnectionEnvironment.None;
 }
 

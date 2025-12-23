@@ -2,8 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
+             xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Dialogs.ConnectionLibraryDialog"
              x:DataType="vm:MainWindowViewModel">
+    
+    <UserControl.Resources>
+        <converters:EnvironmentTabConverter x:Key="EnvironmentTabConverter"/>
+    </UserControl.Resources>
     
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowConnectionLibrary}">
@@ -33,6 +38,38 @@
                     </StackPanel>
                 </Grid>
                 
+                <!-- Environment Tabs -->
+                <Border DockPanel.Dock="Top" 
+                        IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"
+                        Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <RadioButton GroupName="EnvironmentTabs" 
+                                     Content="All" 
+                                     Classes="tab-button"
+                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                         Converter={StaticResource EnvironmentTabConverter}, 
+                                         ConverterParameter={x:Static models:ConnectionEnvironment.None}}"/>
+                        <RadioButton GroupName="EnvironmentTabs" 
+                                     Content="DEV" 
+                                     Classes="tab-button"
+                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                         Converter={StaticResource EnvironmentTabConverter}, 
+                                         ConverterParameter={x:Static models:ConnectionEnvironment.Development}}"/>
+                        <RadioButton GroupName="EnvironmentTabs" 
+                                     Content="TEST" 
+                                     Classes="tab-button"
+                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                         Converter={StaticResource EnvironmentTabConverter}, 
+                                         ConverterParameter={x:Static models:ConnectionEnvironment.Test}}"/>
+                        <RadioButton GroupName="EnvironmentTabs" 
+                                     Content="PROD" 
+                                     Classes="tab-button"
+                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                         Converter={StaticResource EnvironmentTabConverter}, 
+                                         ConverterParameter={x:Static models:ConnectionEnvironment.Production}}"/>
+                    </StackPanel>
+                </Border>
+                
                 <!-- Add/Edit Connection Form (shown when adding or editing) -->
                 <Border DockPanel.Dock="Top" 
                         IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}"
@@ -47,27 +84,81 @@
                                        IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
                         </Panel>
                         
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Connection Name" Classes="caption"/>
-                            <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionName}" 
-                                     Watermark="e.g., Production Service Bus"/>
-                        </StackPanel>
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
+                            <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,12,0">
+                                <TextBlock Text="Connection Name" Classes="caption"/>
+                                <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionName}" 
+                                         Watermark="e.g., Production Service Bus"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4" Width="120">
+                                <TextBlock Text="Environment" Classes="caption"/>
+                                <ComboBox SelectedItem="{Binding ConnectionLibraryViewModel.NewConnectionEnvironment}"
+                                          ItemsSource="{Binding ConnectionLibraryViewModel.AvailableEnvironments}"
+                                          HorizontalAlignment="Stretch">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
                         
                         <StackPanel Spacing="4">
                             <TextBlock Text="Connection String" Classes="caption"/>
-                            <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionString}" 
-                                     Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
-                                     PasswordChar="●"
-                                     TextWrapping="Wrap"
-                                     AcceptsReturn="False"
-                                     MaxHeight="100"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0" 
+                                         Text="{Binding ConnectionLibraryViewModel.NewConnectionString}" 
+                                         Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
+                                         PasswordChar="●"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="False"
+                                         MaxHeight="100"
+                                         Margin="0,0,8,0"/>
+                                <Button Grid.Column="1" 
+                                        Classes="secondary small"
+                                        ToolTip.Tip="Test connection"
+                                        Command="{Binding ConnectionLibraryViewModel.CheckConnectionCommand}"
+                                        IsEnabled="{Binding ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"
+                                        VerticalAlignment="Top">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <PathIcon Data="{StaticResource IconTestConnection}" Width="14" Height="14"/>
+                                        <TextBlock Text="Test" IsVisible="{Binding ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"/>
+                                        <TextBlock Text="Testing..." IsVisible="{Binding ConnectionLibraryViewModel.IsCheckingConnection}"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
                         </StackPanel>
                         
-                        <!-- Detected info for namespace connections -->
+                        <!-- Check Connection Result -->
                         <Border Classes="surface-success" Padding="8"
-                                IsVisible="{Binding ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Text="{Binding ConnectionLibraryViewModel.DetectedInfo}" 
-                                       Foreground="{DynamicResource TextSuccess}"/>
+                                IsVisible="{Binding ConnectionLibraryViewModel.CheckConnectionSuccess, FallbackValue=False}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="{StaticResource IconCheck}" Width="16" Height="16" Foreground="{DynamicResource TextSuccess}"/>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding ConnectionLibraryViewModel.CheckConnectionResult}" 
+                                               Foreground="{DynamicResource TextSuccess}"/>
+                                    <TextBlock Text="{Binding ConnectionLibraryViewModel.DetectedInfo}" 
+                                               Foreground="{DynamicResource TextSuccess}"
+                                               FontSize="11"
+                                               IsVisible="{Binding ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                        <Border Classes="surface-danger" Padding="8">
+                            <Border.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="ConnectionLibraryViewModel.CheckConnectionResult" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                    <Binding Path="ConnectionLibraryViewModel.CheckConnectionSuccess" Converter="{x:Static BoolConverters.Not}"/>
+                                </MultiBinding>
+                            </Border.IsVisible>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="{StaticResource IconWarning}" Width="16" Height="16" Foreground="{DynamicResource TextDanger}"/>
+                                <TextBlock Text="{Binding ConnectionLibraryViewModel.CheckConnectionResult}" 
+                                           Foreground="{DynamicResource TextDanger}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
                         </Border>
                         
                         <TextBlock Text="{Binding ConnectionLibraryViewModel.ValidationMessage}" 
@@ -99,9 +190,9 @@
                                Classes="caption" 
                                HorizontalAlignment="Center"
                                Margin="0,40"
-                               IsVisible="{Binding !ConnectionLibraryViewModel.SavedConnections.Count, FallbackValue=True}"/>
+                               IsVisible="{Binding !ConnectionLibraryViewModel.FilteredConnections.Count, FallbackValue=True}"/>
                 </StackPanel>
-                <ListBox ItemsSource="{Binding ConnectionLibraryViewModel.SavedConnections}"
+                <ListBox ItemsSource="{Binding ConnectionLibraryViewModel.FilteredConnections}"
                          Classes="entity-list"
                          Background="Transparent"
                          BorderThickness="0"
@@ -134,6 +225,9 @@
                                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
                                                     <Border Classes="badge-info" Padding="6,2">
                                                         <TextBlock Text="{Binding TypeDisplayName}" FontSize="11" Foreground="{DynamicResource AccentBrand}"/>
+                                                    </Border>
+                                                    <Border Classes="badge-env" Padding="6,2" IsVisible="{Binding HasEnvironment}">
+                                                        <TextBlock Text="{Binding EnvironmentDisplayName}" FontSize="11" FontWeight="SemiBold"/>
                                                     </Border>
                                                     <TextBlock Text="{Binding EntityName}" Classes="caption" FontSize="12" VerticalAlignment="Center"
                                                                IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
