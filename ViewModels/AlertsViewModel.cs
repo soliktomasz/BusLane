@@ -9,11 +9,13 @@ namespace BusLane.ViewModels;
 public partial class AlertsViewModel : ViewModelBase
 {
     private readonly IAlertService _alertService;
+    private readonly INotificationService _notificationService;
     private readonly Action _onClose;
 
     [ObservableProperty] private bool _isAddingRule;
     [ObservableProperty] private bool _isEditingRule;
     [ObservableProperty] private AlertRule? _editingRule;
+    [ObservableProperty] private bool _systemNotificationsEnabled;
 
     // New/Edit rule form
     [ObservableProperty] private string _ruleName = "";
@@ -32,14 +34,21 @@ public partial class AlertsViewModel : ViewModelBase
     public int UnacknowledgedCount => ActiveAlerts.Count(a => !a.IsAcknowledged);
     public bool HasAlerts => ActiveAlerts.Count > 0;
 
-    public AlertsViewModel(IAlertService alertService, Action onClose)
+    public AlertsViewModel(IAlertService alertService, INotificationService notificationService, Action onClose)
     {
         _alertService = alertService;
+        _notificationService = notificationService;
         _onClose = onClose;
+        _systemNotificationsEnabled = _notificationService.IsEnabled;
         _alertService.AlertsChanged += OnAlertsChanged;
         _alertService.AlertTriggered += OnAlertTriggered;
 
         LoadData();
+    }
+
+    partial void OnSystemNotificationsEnabledChanged(bool value)
+    {
+        _notificationService.IsEnabled = value;
     }
 
     private void LoadData()
@@ -67,6 +76,7 @@ public partial class AlertsViewModel : ViewModelBase
 
     private void OnAlertTriggered(object? sender, AlertEvent alert)
     {
+
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             ActiveAlerts.Insert(0, alert);

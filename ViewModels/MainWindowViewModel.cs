@@ -23,6 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ILiveStreamService _liveStreamService;
     private readonly IMetricsService _metricsService;
     private readonly IAlertService _alertService;
+    private readonly INotificationService _notificationService;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
@@ -211,7 +212,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IVersionService versionService,
         ILiveStreamService liveStreamService,
         IMetricsService metricsService,
-        IAlertService alertService)
+        IAlertService alertService,
+        INotificationService notificationService)
     {
         _auth = auth;
         _serviceBus = serviceBus;
@@ -221,6 +223,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _liveStreamService = liveStreamService;
         _metricsService = metricsService;
         _alertService = alertService;
+        _notificationService = notificationService;
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
 
         // Subscribe to alert events
@@ -249,6 +252,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void OnAlertTriggered(object? sender, Models.AlertEvent alert)
     {
+        // Show system notification
+        _notificationService.ShowAlertNotification(alert);
+
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
@@ -353,7 +359,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAlerts()
     {
-        AlertsViewModel = new AlertsViewModel(_alertService, () => ShowAlerts = false);
+        AlertsViewModel = new AlertsViewModel(_alertService, _notificationService, () => ShowAlerts = false);
         ShowAlerts = true;
         ShowLiveStream = false;
         ShowCharts = false;
