@@ -4,7 +4,7 @@
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Controls.MessagesPanelView"
              x:DataType="vm:MainWindowViewModel">
-    
+
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
@@ -15,7 +15,7 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
                             <!-- Send Message Button (compact, inline) -->
-                            <Button Classes="primary small" 
+                            <Button Classes="primary small"
                                     Content="+ Send"
                                     Command="{Binding OpenSendMessagePopupCommand}"
                                     Padding="12,6"
@@ -29,36 +29,36 @@
                             </Button>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                            <Button Classes="subtle small" 
+                            <Button Classes="subtle small"
                                     Content="{Binding SortButtonText}"
                                     Command="{Binding ToggleSortOrderCommand}"
                                     ToolTip.Tip="Toggle sort order"
                                     Padding="8,6"/>
-                            <Button Classes="subtle small" 
-                                    Content="↻ Refresh" 
+                            <Button Classes="subtle small"
+                                    Content="↻ Refresh"
                                     Command="{Binding LoadMessagesCommand}"
                                     Padding="8,6"/>
                             <Border Width="1" Background="{DynamicResource BorderDefault}" Margin="4,4"/>
-                            <Button Classes="danger-subtle small" 
-                                    Content="Purge" 
+                            <Button Classes="danger-subtle small"
+                                    Content="Purge"
                                     Command="{Binding PurgeMessagesCommand}"
                                     Padding="8,6"/>
                         </StackPanel>
                     </Grid>
-                    
+
                     <!-- Search Row -->
-                    <Border Grid.Row="1" 
-                            Background="{DynamicResource SurfaceSubtle}" 
-                            CornerRadius="6" 
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource SurfaceSubtle}"
+                            CornerRadius="6"
                             Padding="8,6">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <PathIcon Grid.Column="0" 
-                                      Data="{StaticResource IconSearch}" 
-                                      Width="14" Height="14" 
+                            <PathIcon Grid.Column="0"
+                                      Data="{StaticResource IconSearch}"
+                                      Width="14" Height="14"
                                       Foreground="{DynamicResource MutedForeground}"
                                       Margin="4,0,8,0"
                                       VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="1" 
+                            <TextBox Grid.Column="1"
                                      Text="{Binding MessageSearchText, Mode=TwoWay}"
                                      Watermark="Search by message ID, body, correlation ID, subject..."
                                      Background="Transparent"
@@ -67,7 +67,7 @@
                                      FontSize="13"
                                      VerticalAlignment="Center"
                                      VerticalContentAlignment="Center"/>
-                            <Button Grid.Column="2" 
+                            <Button Grid.Column="2"
                                     Classes="subtle small"
                                     Command="{Binding ClearMessageSearchCommand}"
                                     IsVisible="{Binding MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -79,20 +79,20 @@
                     </Border>
                 </Grid>
             </Border>
-            
+
             <!-- Tab Content Area -->
-            <TabControl Grid.Row="1" 
+            <TabControl Grid.Row="1"
                         SelectedIndex="{Binding SelectedMessageTabIndex}">
-                
+
                 <TabItem Header="Active Messages">
                     <!-- Loading indicator for messages -->
                     <TabItem.Content>
                         <Grid>
-                            <Border IsVisible="{Binding IsLoadingMessages}" 
+                            <Border IsVisible="{Binding IsLoadingMessages}"
                                     VerticalAlignment="Top"
-                                    Margin="16,16,16,0" 
-                                    Padding="16,12" 
-                                    Background="{DynamicResource SurfaceSubtle}" 
+                                    Margin="16,16,16,0"
+                                    Padding="16,12"
+                                    Background="{DynamicResource SurfaceSubtle}"
                                     CornerRadius="8">
                                 <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
                                     <ProgressBar IsIndeterminate="True" Width="80" Height="4" />
@@ -125,14 +125,14 @@
                                             Margin="0,2">
                                         <Button.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="Resend" 
+                                                <MenuItem Header="Resend"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Header="Clone" 
+                                                <MenuItem Header="Clone"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
@@ -143,19 +143,19 @@
                                         </Button.ContextMenu>
                                         <StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" 
-                                                           Text="{Binding MessageId}" 
-                                                           FontWeight="SemiBold" 
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding MessageId}"
+                                                           FontWeight="SemiBold"
                                                            FontSize="12"
                                                            TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="1" 
-                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
-                                                           Classes="caption" 
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                                           Classes="caption"
                                                            FontSize="10"
                                                            Foreground="{DynamicResource MutedForeground}"/>
                                             </Grid>
-                                            <TextBlock Text="{Binding Body}" 
-                                                       Classes="caption" 
+                                            <TextBlock Text="{Binding BodyPreview}"
+                                                       Classes="caption"
                                                        FontSize="11"
                                                        TextTrimming="CharacterEllipsis"
                                                        MaxLines="2"
@@ -164,11 +164,11 @@
                                                        IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnableMessagePreview}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
-                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
+                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}"
                                                                Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                                 <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
-                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}" 
+                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}"
                                                                Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                             </StackPanel>
@@ -180,16 +180,16 @@
                         </Grid>
                     </TabItem.Content>
                 </TabItem>
-                
+
                 <TabItem Header="Dead Letter">
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
                         <Grid>
-                            <Border IsVisible="{Binding IsLoadingMessages}" 
+                            <Border IsVisible="{Binding IsLoadingMessages}"
                                     VerticalAlignment="Top"
-                                    Margin="16,16,16,0" 
-                                    Padding="16,12" 
-                                    Background="{DynamicResource SurfaceSubtle}" 
+                                    Margin="16,16,16,0"
+                                    Padding="16,12"
+                                    Background="{DynamicResource SurfaceSubtle}"
                                     CornerRadius="8">
                                 <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
                                     <ProgressBar IsIndeterminate="True" Width="80" Height="4" />
@@ -222,14 +222,14 @@
                                             Margin="0,2">
                                         <Button.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="Resend" 
+                                                <MenuItem Header="Resend"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Header="Clone" 
+                                                <MenuItem Header="Clone"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
@@ -240,27 +240,27 @@
                                         </Button.ContextMenu>
                                         <StackPanel>
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" 
-                                                           Text="{Binding MessageId}" 
-                                                           FontWeight="SemiBold" 
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding MessageId}"
+                                                           FontWeight="SemiBold"
                                                            FontSize="12"
                                                            TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="1" 
-                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
-                                                           Classes="caption" 
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                                           Classes="caption"
                                                            FontSize="10"
                                                            Foreground="{DynamicResource MutedForeground}"/>
                                             </Grid>
                                             <!-- Dead Letter Reason -->
                                             <Border Background="{DynamicResource SurfaceDanger}" Padding="8,4" Margin="0,6,0,0" CornerRadius="4"
                                                     IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                <TextBlock Text="{Binding DeadLetterReason}" 
-                                                           Foreground="{DynamicResource TextDanger}" 
+                                                <TextBlock Text="{Binding DeadLetterReason}"
+                                                           Foreground="{DynamicResource TextDanger}"
                                                            FontSize="11"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </Border>
-                                            <TextBlock Text="{Binding Body}" 
-                                                       Classes="caption" 
+                                            <TextBlock Text="{Binding BodyPreview}"
+                                                       Classes="caption"
                                                        FontSize="11"
                                                        TextTrimming="CharacterEllipsis"
                                                        MaxLines="2"
@@ -269,11 +269,11 @@
                                                        IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnableMessagePreview}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
-                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}" 
+                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}"
                                                                Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                                 <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
-                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}" 
+                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}"
                                                                Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
                                                 </Border>
                                             </StackPanel>

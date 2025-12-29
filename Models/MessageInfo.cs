@@ -25,4 +25,15 @@ public record MessageInfo(
     string? DeadLetterSource = null,
     string? DeadLetterReason = null,
     string? DeadLetterErrorDescription = null
-);
+)
+{
+    // Pre-computed truncated body preview for efficient list rendering
+    // Limit to ~200 chars to avoid performance issues with large message bodies
+    private const int MaxPreviewLength = 200;
+
+    public string BodyPreview { get; } = string.IsNullOrEmpty(Body)
+        ? string.Empty
+        : Body.Length <= MaxPreviewLength
+            ? Body.ReplaceLineEndings(" ")
+            : Body[..MaxPreviewLength].ReplaceLineEndings(" ") + "…";
+}
