@@ -218,7 +218,7 @@
                                 <DataTemplate DataType="models:AlertRule">
                                     <Border Padding="12" Margin="0,2" CornerRadius="6"
                                             Background="{DynamicResource SurfaceSubtle}"
-                                            Opacity="{Binding IsEnabled, Converter={StaticResource BoolToOpacityConverter}}">
+                                            Opacity="{Binding !IsEnabled, Converter={StaticResource BoolToOpacityConverter}}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
                                             <!-- Enable toggle -->
                                             <ToggleSwitch Grid.Column="0"
