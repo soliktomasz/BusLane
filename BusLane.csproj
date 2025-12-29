@@ -35,7 +35,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
 
     <!-- MinVer for automatic versioning from Git tags -->
-    <PackageReference Include="MinVer" Version="6.0.0">
+    <PackageReference Include="MinVer" Version="6.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
