@@ -25,7 +25,7 @@ public class AlertService : IAlertService
     public AlertService()
     {
         LoadRules();
-        
+
         // Add default rules if none exist
         if (_rules.Count == 0)
         {
@@ -43,7 +43,7 @@ public class AlertService : IAlertService
             10,
             true
         ));
-        
+
         _rules.Add(new AlertRule(
             Guid.NewGuid().ToString(),
             "Dead Letter Critical",
@@ -52,7 +52,7 @@ public class AlertService : IAlertService
             100,
             true
         ));
-        
+
         _rules.Add(new AlertRule(
             Guid.NewGuid().ToString(),
             "High Message Count",
@@ -61,7 +61,7 @@ public class AlertService : IAlertService
             1000,
             false
         ));
-        
+
         SaveRules();
     }
 
@@ -232,11 +232,11 @@ public class AlertService : IAlertService
         {
             var alert = _activeAlerts[index];
             _activeAlerts[index] = alert with { IsAcknowledged = true };
-            
+
             // Remove from triggered keys so it can trigger again later
             var key = GetAlertKey(alert);
             _triggeredAlertKeys.Remove(key);
-            
+
             AlertsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -244,6 +244,22 @@ public class AlertService : IAlertService
     public void ClearAcknowledgedAlerts()
     {
         _activeAlerts.RemoveAll(a => a.IsAcknowledged);
+        AlertsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void TestRule(AlertRule rule)
+    {
+        var testAlert = new AlertEvent(
+            Guid.NewGuid().ToString(),
+            rule,
+            "[Test Entity]",
+            "Test",
+            rule.Threshold,
+            DateTimeOffset.UtcNow
+        );
+
+        _activeAlerts.Add(testAlert);
+        AlertTriggered?.Invoke(this, testAlert);
         AlertsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -285,7 +301,7 @@ public class AlertService : IAlertService
             {
                 var json = File.ReadAllText(AlertRulesPath);
                 var data = JsonSerializer.Deserialize<List<AlertRuleData>>(json);
-                
+
                 if (data != null)
                 {
                     _rules.Clear();

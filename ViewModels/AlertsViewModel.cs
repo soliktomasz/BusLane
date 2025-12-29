@@ -14,7 +14,7 @@ public partial class AlertsViewModel : ViewModelBase
     [ObservableProperty] private bool _isAddingRule;
     [ObservableProperty] private bool _isEditingRule;
     [ObservableProperty] private AlertRule? _editingRule;
-    
+
     // New/Edit rule form
     [ObservableProperty] private string _ruleName = "";
     [ObservableProperty] private AlertType _selectedAlertType = AlertType.DeadLetterThreshold;
@@ -25,7 +25,7 @@ public partial class AlertsViewModel : ViewModelBase
 
     public ObservableCollection<AlertRule> Rules { get; } = [];
     public ObservableCollection<AlertEvent> ActiveAlerts { get; } = [];
-    
+
     public AlertType[] AvailableAlertTypes { get; } = Enum.GetValues<AlertType>();
     public AlertSeverity[] AvailableSeverities { get; } = Enum.GetValues<AlertSeverity>();
 
@@ -38,7 +38,7 @@ public partial class AlertsViewModel : ViewModelBase
         _onClose = onClose;
         _alertService.AlertsChanged += OnAlertsChanged;
         _alertService.AlertTriggered += OnAlertTriggered;
-        
+
         LoadData();
     }
 
@@ -55,7 +55,7 @@ public partial class AlertsViewModel : ViewModelBase
         {
             ActiveAlerts.Add(alert);
         }
-        
+
         OnPropertyChanged(nameof(UnacknowledgedCount));
         OnPropertyChanged(nameof(HasAlerts));
     }
@@ -93,7 +93,7 @@ public partial class AlertsViewModel : ViewModelBase
         Threshold = rule.Threshold;
         EntityPattern = rule.EntityPattern ?? "";
         RuleEnabled = rule.IsEnabled;
-        
+
         IsAddingRule = false;
         IsEditingRule = true;
     }
@@ -148,6 +148,12 @@ public partial class AlertsViewModel : ViewModelBase
     {
         _alertService.SetRuleEnabled(rule.Id, !rule.IsEnabled);
         LoadData();
+    }
+
+    [RelayCommand]
+    private void TestRule(AlertRule rule)
+    {
+        _alertService.TestRule(rule);
     }
 
     [RelayCommand]
