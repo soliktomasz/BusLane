@@ -7,6 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BusLane;
 
+using Services.Auth;
+using Services.Infrastructure;
+using Services.Monitoring;
+using Services.ServiceBus;
+using Services.Storage;
+
 class Program
 {
     public static IServiceProvider? Services { get; private set; }
@@ -17,7 +23,7 @@ class Program
         var services = new ServiceCollection();
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
-        
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
@@ -29,11 +35,22 @@ class Program
         services.AddSingleton<IServiceBusService, ServiceBusService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
         services.AddSingleton<IConnectionStringService, ConnectionStringService>();
+
+        // New services for Live Stream, Charts, and Alerts
+        services.AddSingleton<ILiveStreamService, LiveStreamService>();
+        services.AddSingleton<IMetricsService, MetricsService>();
+        services.AddSingleton<IAlertService, AlertService>();
+        services.AddSingleton<INotificationService, NotificationService>();
+
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<NamespaceViewModel>();
         services.AddTransient<QueueViewModel>();
         services.AddTransient<MessageViewModel>();
+
+        // New ViewModels for Live Stream, Charts, and Alerts
+        services.AddTransient<LiveStreamViewModel>();
+        services.AddTransient<ChartsViewModel>();
     }
 
     public static AppBuilder BuildAvaloniaApp()

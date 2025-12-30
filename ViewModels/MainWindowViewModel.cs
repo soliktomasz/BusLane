@@ -6,6 +6,12 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.Auth;
+using Services.Infrastructure;
+using Services.Monitoring;
+using Services.ServiceBus;
+using Services.Storage;
+
 public enum ConnectionMode
 {
     None,
@@ -20,8 +26,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IConnectionStringService _connectionStringService;
     private readonly IVersionService _versionService;
+    private readonly ILiveStreamService _liveStreamService;
+    private readonly IMetricsService _metricsService;
+    private readonly IAlertService _alertService;
+    private readonly INotificationService _notificationService;
 
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
     private bool _isAuthenticated;
     [ObservableProperty] private bool _isLoading;
@@ -34,7 +44,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private QueueInfo? _selectedQueue;
     [ObservableProperty] private TopicInfo? _selectedTopic;
     [ObservableProperty] private SubscriptionInfo? _selectedSubscription;
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FormattedMessageBody))]
     [NotifyPropertyChangedFor(nameof(IsMessageBodyJson))]
     [NotifyPropertyChangedFor(nameof(FormattedApplicationProperties))]
@@ -45,29 +55,38 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _showStatusPopup;
     [ObservableProperty] private bool _showSendMessagePopup;
     [ObservableProperty] private SendMessageViewModel? _sendMessageViewModel;
-    
+
     // Connection mode properties
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
     private ConnectionMode _currentMode = ConnectionMode.None;
     [ObservableProperty] private bool _showConnectionLibrary;
     [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
     [ObservableProperty] private SavedConnection? _activeConnection;
-    
+
     // Settings properties
     [ObservableProperty] private bool _showSettings;
     [ObservableProperty] private SettingsViewModel? _settingsViewModel;
-    
+
     // Confirmation dialog properties
     [ObservableProperty] private bool _showConfirmDialog;
     [ObservableProperty] private string _confirmDialogTitle = "";
     [ObservableProperty] private string _confirmDialogMessage = "";
     [ObservableProperty] private string _confirmDialogConfirmText = "Confirm";
     private Func<Task>? _confirmDialogAction;
-    
+
     // Auto-refresh timer
     private System.Timers.Timer? _autoRefreshTimer;
-    
+
+    // Live Stream, Charts, and Alerts properties
+    [ObservableProperty] private bool _showLiveStream;
+    [ObservableProperty] private bool _showCharts;
+    [ObservableProperty] private bool _showAlerts;
+    [ObservableProperty] private LiveStreamViewModel? _liveStreamViewModel;
+    [ObservableProperty] private ChartsViewModel? _chartsViewModel;
+    [ObservableProperty] private AlertsViewModel? _alertsViewModel;
+    [ObservableProperty] private int _activeAlertCount;
+
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
@@ -76,65 +95,65 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<MessageInfo> Messages { get; } = [];
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
     public ObservableCollection<SavedConnection> FavoriteConnections { get; } = [];
-    
+
     // Computed properties for visibility bindings (Count doesn't notify on collection changes)
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
     public bool HasFavoriteConnections => FavoriteConnections.Count > 0;
-    
+
     // Show Azure sections only when authenticated AND in Azure account mode (not using saved connection)
     public bool ShowAzureSections => IsAuthenticated && CurrentMode == ConnectionMode.AzureAccount;
-    
+
     // Total dead letter count across all queues and topic subscriptions
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
-    
+
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => Preferences.ShowDeadLetterBadges;
     public bool EnableMessagePreview => Preferences.EnableMessagePreview;
-    
+
     // Sorting properties
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SortButtonText))]
     private bool _sortDescending = true; // Default: newest first
-    
+
     public string SortButtonText => SortDescending ? "↓ Newest" : "↑ Oldest";
-    
+
     // Search properties
-    [ObservableProperty] 
+    [ObservableProperty]
     private string _messageSearchText = "";
-    
+
     partial void OnMessageSearchTextChanged(string value)
     {
         ApplyMessageFilter();
     }
-    
+
     public ObservableCollection<MessageInfo> FilteredMessages { get; } = [];
-    
+
     private void ApplyMessageFilter()
     {
         FilteredMessages.Clear();
-        
+
         var filtered = string.IsNullOrWhiteSpace(MessageSearchText)
             ? Messages
-            : Messages.Where(m => 
+            : Messages.Where(m =>
                 (m.MessageId?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (m.Body?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (m.CorrelationId?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (m.Subject?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (m.DeadLetterReason?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 m.SequenceNumber.ToString().Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase));
-        
+
         foreach (var msg in filtered)
             FilteredMessages.Add(msg);
     }
-    
+
     [RelayCommand]
     private void ClearMessageSearch()
     {
         MessageSearchText = "";
     }
-    
+
     // Computed properties for message body formatting
     public bool IsMessageBodyJson
     {
@@ -146,18 +165,18 @@ public partial class MainWindowViewModel : ViewModelBase
                    (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
         }
     }
-    
+
     public string? FormattedMessageBody
     {
         get
         {
             if (SelectedMessage?.Body == null) return null;
             if (!IsMessageBodyJson) return SelectedMessage.Body;
-            
+
             try
             {
                 var jsonDoc = System.Text.Json.JsonDocument.Parse(SelectedMessage.Body);
-                return System.Text.Json.JsonSerializer.Serialize(jsonDoc.RootElement, 
+                return System.Text.Json.JsonSerializer.Serialize(jsonDoc.RootElement,
                     new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
             catch
@@ -166,17 +185,17 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
     }
-    
+
     public string? FormattedApplicationProperties
     {
         get
         {
-            if (SelectedMessage?.Properties == null || SelectedMessage.Properties.Count == 0) 
+            if (SelectedMessage?.Properties == null || SelectedMessage.Properties.Count == 0)
                 return null;
-            
+
             try
             {
-                return System.Text.Json.JsonSerializer.Serialize(SelectedMessage.Properties, 
+                return System.Text.Json.JsonSerializer.Serialize(SelectedMessage.Properties,
                     new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
             catch
@@ -185,45 +204,79 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
     }
-    
+
     /// <summary>
     /// Gets the application version for display in the UI.
     /// </summary>
     public string AppVersion => _versionService.DisplayVersion;
 
     public MainWindowViewModel(
-        IAzureAuthService auth, 
+        IAzureAuthService auth,
         IServiceBusService serviceBus,
         IConnectionStorageService connectionStorage,
         IConnectionStringService connectionStringService,
-        IVersionService versionService)
+        IVersionService versionService,
+        ILiveStreamService liveStreamService,
+        IMetricsService metricsService,
+        IAlertService alertService,
+        INotificationService notificationService)
     {
         _auth = auth;
         _serviceBus = serviceBus;
         _connectionStorage = connectionStorage;
         _connectionStringService = connectionStringService;
         _versionService = versionService;
+        _liveStreamService = liveStreamService;
+        _metricsService = metricsService;
+        _alertService = alertService;
+        _notificationService = notificationService;
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
-        
+
+        // Subscribe to alert events
+        _alertService.AlertTriggered += OnAlertTriggered;
+        _alertService.AlertsChanged += OnAlertsChanged;
+        ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
+
         // Subscribe to collection changes to notify visibility properties
-        Queues.CollectionChanged += (_, _) => 
+        Queues.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(HasQueues));
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
         Topics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTopics));
-        TopicSubscriptions.CollectionChanged += (_, _) => 
+        TopicSubscriptions.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
         FavoriteConnections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFavoriteConnections));
-        
+
         // Initialize auto-refresh timer
         InitializeAutoRefreshTimer();
     }
-    
+
+    private void OnAlertTriggered(object? sender, Models.AlertEvent alert)
+    {
+        // Show system notification
+        _notificationService.ShowAlertNotification(alert);
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
+            StatusMessage = $"Alert: {alert.Rule.Name} - {alert.EntityName}";
+            ShowStatusPopup = true;
+        });
+    }
+
+    private void OnAlertsChanged(object? sender, EventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
+        });
+    }
+
     private void InitializeAutoRefreshTimer()
     {
         _autoRefreshTimer = new System.Timers.Timer();
@@ -239,7 +292,7 @@ public partial class MainWindowViewModel : ViewModelBase
         };
         UpdateAutoRefreshTimer();
     }
-    
+
     /// <summary>
     /// Updates the auto-refresh timer based on current preferences.
     /// Call this after settings are saved.
@@ -247,7 +300,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public void UpdateAutoRefreshTimer()
     {
         if (_autoRefreshTimer == null) return;
-        
+
         if (Preferences.AutoRefreshMessages)
         {
             _autoRefreshTimer.Interval = Preferences.AutoRefreshIntervalSeconds * 1000;
@@ -258,7 +311,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _autoRefreshTimer.Stop();
         }
     }
-    
+
     /// <summary>
     /// Notifies that settings-driven properties have changed.
     /// Call this after settings are saved.
@@ -270,17 +323,107 @@ public partial class MainWindowViewModel : ViewModelBase
         UpdateAutoRefreshTimer();
     }
 
+    #region Live Stream, Charts, and Alerts Commands
+
+    [RelayCommand]
+    private async Task OpenLiveStream()
+    {
+        LiveStreamViewModel = new LiveStreamViewModel(_liveStreamService);
+
+        // Pass available entities to the LiveStreamViewModel
+        var endpoint = SelectedNamespace?.Endpoint ?? ActiveConnection?.Endpoint;
+        LiveStreamViewModel.SetAvailableEntities(endpoint, Queues, Topics);
+
+        ShowLiveStream = true;
+        ShowCharts = false;
+        ShowAlerts = false;
+
+        // Automatically start streaming for the currently selected entity
+        await StartLiveStreamForSelectedEntity();
+    }
+
+    [RelayCommand]
+    private void CloseLiveStream()
+    {
+        ShowLiveStream = false;
+        _ = LiveStreamViewModel?.DisposeAsync();
+        LiveStreamViewModel = null;
+    }
+
+    [RelayCommand]
+    private void OpenCharts()
+    {
+        ChartsViewModel = new ChartsViewModel(_metricsService);
+        // Record current metrics for charts
+        ChartsViewModel.RecordCurrentMetrics(Queues, TopicSubscriptions);
+        ChartsViewModel.UpdateEntityDistribution(Queues, TopicSubscriptions);
+        ChartsViewModel.UpdateComparisonChart(Queues, TopicSubscriptions);
+        ShowCharts = true;
+        ShowLiveStream = false;
+        ShowAlerts = false;
+    }
+
+    [RelayCommand]
+    private void CloseCharts()
+    {
+        ChartsViewModel = null;
+        ShowCharts = false;
+    }
+
+    [RelayCommand]
+    private void OpenAlerts()
+    {
+        AlertsViewModel = new AlertsViewModel(_alertService, _notificationService, () => ShowAlerts = false);
+        ShowAlerts = true;
+        ShowLiveStream = false;
+        ShowCharts = false;
+    }
+
+    [RelayCommand]
+    private void CloseAlerts()
+    {
+        ShowAlerts = false;
+        AlertsViewModel = null;
+    }
+
+    [RelayCommand]
+    private async Task StartLiveStreamForSelectedEntity()
+    {
+        if (LiveStreamViewModel == null) return;
+
+        var endpoint = SelectedNamespace?.Endpoint ?? ActiveConnection?.Endpoint;
+        if (string.IsNullOrEmpty(endpoint)) return;
+
+        if (SelectedQueue != null)
+        {
+            await LiveStreamViewModel.StartQueueAsync(endpoint, SelectedQueue.Name);
+        }
+        else if (SelectedSubscription != null)
+        {
+            // Use the subscription's TopicName property directly instead of relying on SelectedTopic
+            await LiveStreamViewModel.StartSubscriptionAsync(endpoint, SelectedSubscription.TopicName, SelectedSubscription.Name);
+        }
+    }
+
+    [RelayCommand]
+    private async Task EvaluateAlerts()
+    {
+        await _alertService.EvaluateAlertsAsync(Queues, TopicSubscriptions);
+    }
+
+    #endregion
+
     public async Task InitializeAsync()
     {
         IsLoading = true;
         StatusMessage = "Loading saved connections...";
-        
+
         try
         {
             // Load saved connections first
             await LoadSavedConnectionsAsync();
-            
-            StatusMessage = SavedConnections.Count > 0 
+
+            StatusMessage = SavedConnections.Count > 0
                 ? "Select a saved connection or sign in with Azure"
                 : "Add a connection or sign in with Azure to get started";
         }
@@ -315,7 +458,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsLoading = true;
         StatusMessage = "Signing in to Azure...";
-        
+
         try
         {
             if (await _auth.LoginAsync())
@@ -367,7 +510,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Subscriptions.Clear();
         foreach (var sub in await _serviceBus.GetSubscriptionsAsync())
             Subscriptions.Add(sub);
-        
+
         if (Subscriptions.Count > 0)
             SelectedAzureSubscription = Subscriptions[0];
     }
@@ -395,7 +538,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsLoading = true;
         StatusMessage = "Loading namespaces...";
-        
+
         try
         {
             Namespaces.Clear();
@@ -419,7 +562,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedNamespace = ns;
         IsLoading = true;
         StatusMessage = $"Loading {ns.Name}...";
-        
+
         try
         {
             Queues.Clear();
@@ -430,13 +573,13 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedTopic = null;
             SelectedSubscription = null;
             SelectedMessage = null;
-            
+
             foreach (var q in await _serviceBus.GetQueuesAsync(ns.Id))
                 Queues.Add(q);
-            
+
             foreach (var t in await _serviceBus.GetTopicsAsync(ns.Id))
                 Topics.Add(t);
-            
+
             StatusMessage = $"{Queues.Count} queue(s), {Topics.Count} topic(s)";
         }
         catch (Exception ex)
@@ -464,22 +607,22 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SelectTopicAsync(TopicInfo topic)
     {
         if (SelectedNamespace == null) return;
-        
+
         SelectedTopic = topic;
         SelectedQueue = null;
         SelectedSubscription = null;
         SelectedEntity = topic;
         Messages.Clear();
         TopicSubscriptions.Clear();
-        
+
         IsLoading = true;
         StatusMessage = $"Loading subscriptions for {topic.Name}...";
-        
+
         try
         {
             foreach (var sub in await _serviceBus.GetSubscriptionsAsync(SelectedNamespace.Id, topic.Name))
                 TopicSubscriptions.Add(sub);
-            
+
             StatusMessage = $"{TopicSubscriptions.Count} subscription(s)";
         }
         catch (Exception ex)
@@ -510,13 +653,13 @@ public partial class MainWindowViewModel : ViewModelBase
             await LoadMessagesForConnectionAsync();
             return;
         }
-        
+
         if (SelectedNamespace == null) return;
-        
+
         string? entityName = null;
         string? subscription = null;
         bool requiresSession = false;
-        
+
         if (SelectedQueue != null)
         {
             entityName = SelectedQueue.Name;
@@ -528,28 +671,28 @@ public partial class MainWindowViewModel : ViewModelBase
             subscription = SelectedSubscription.Name;
             requiresSession = SelectedSubscription.RequiresSession;
         }
-        
+
         if (entityName == null) return;
-        
+
         IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
         MessageSearchText = ""; // Clear search when loading new messages
-        
+
         try
         {
             Messages.Clear();
             var msgs = await _serviceBus.PeekMessagesAsync(
                 SelectedNamespace.Endpoint, entityName, subscription, Preferences.DefaultMessageCount, ShowDeadLetter, requiresSession
             );
-            
+
             // Apply sorting
-            var sortedMsgs = SortDescending 
+            var sortedMsgs = SortDescending
                 ? msgs.OrderByDescending(m => m.EnqueuedTime)
                 : msgs.OrderBy(m => m.EnqueuedTime);
-            
+
             foreach (var m in sortedMsgs)
                 Messages.Add(m);
-            
+
             ApplyMessageFilter(); // Apply filter after loading
             StatusMessage = $"{Messages.Count} message(s)";
         }
@@ -577,7 +720,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
         if (entityName == null) return;
-        
+
         if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
         {
             // Connection string mode
@@ -604,7 +747,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             return;
         }
-        
+
         ShowSendMessagePopup = true;
     }
 
@@ -627,7 +770,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         string? entityName = null;
         string? subscription = null;
-        
+
         if (SelectedQueue != null)
         {
             entityName = SelectedQueue.Name;
@@ -637,9 +780,9 @@ public partial class MainWindowViewModel : ViewModelBase
             entityName = SelectedSubscription.TopicName;
             subscription = SelectedSubscription.Name;
         }
-        
+
         if (entityName == null) return;
-        
+
         // Check if confirmation is required
         if (Preferences.ConfirmBeforePurge)
         {
@@ -657,12 +800,12 @@ public partial class MainWindowViewModel : ViewModelBase
             await ExecutePurgeAsync(entityName, subscription);
         }
     }
-    
+
     private async Task ExecutePurgeAsync(string entityName, string? subscription)
     {
         IsLoading = true;
         StatusMessage = "Purging messages...";
-        
+
         try
         {
             if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
@@ -681,7 +824,7 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 return;
             }
-            
+
             StatusMessage = "Purge complete";
             await LoadMessagesAsync();
         }
@@ -828,16 +971,16 @@ public partial class MainWindowViewModel : ViewModelBase
         // Pre-populate with message data
         SendMessageViewModel!.PopulateFromMessage(msg);
         ShowSendMessagePopup = true;
-        
+
         // Clear selected message to close the detail dialog
         SelectedMessage = null;
     }
-    
+
     [RelayCommand]
     private async Task CopyMessageBodyAsync()
     {
         if (FormattedMessageBody == null) return;
-        
+
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
             var clipboard = desktop.MainWindow?.Clipboard;
@@ -847,22 +990,22 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
     }
-    
+
     [RelayCommand]
     private void ToggleSortOrder()
     {
         SortDescending = !SortDescending;
         ApplySorting();
     }
-    
+
     private void ApplySorting()
     {
         if (Messages.Count == 0) return;
-        
-        var sorted = SortDescending 
+
+        var sorted = SortDescending
             ? Messages.OrderByDescending(m => m.EnqueuedTime).ToList()
             : Messages.OrderBy(m => m.EnqueuedTime).ToList();
-        
+
         Messages.Clear();
         foreach (var m in sorted)
             Messages.Add(m);
@@ -964,26 +1107,26 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 // Namespace-level connection - load all queues and topics
                 StatusMessage = "Loading queues and topics...";
-                
+
                 var queues = await _connectionStringService.GetQueuesFromConnectionAsync(connection.ConnectionString);
                 foreach (var queue in queues)
                 {
                     Queues.Add(queue);
                 }
-                
+
                 var topics = await _connectionStringService.GetTopicsFromConnectionAsync(connection.ConnectionString);
                 foreach (var topic in topics)
                 {
                     Topics.Add(topic);
                 }
-                
+
                 StatusMessage = $"Connected to {connection.Name} - {Queues.Count} queue(s), {Topics.Count} topic(s)";
             }
             else if (connection.Type == ConnectionType.Queue)
             {
                 var queueInfo = await _connectionStringService.GetQueueInfoAsync(
                     connection.ConnectionString, connection.EntityName!);
-                
+
                 if (queueInfo != null)
                 {
                     Queues.Add(queueInfo);
@@ -1000,13 +1143,13 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 var topicInfo = await _connectionStringService.GetTopicInfoAsync(
                     connection.ConnectionString, connection.EntityName!);
-                
+
                 if (topicInfo != null)
                 {
                     Topics.Add(topicInfo);
                     SelectedTopic = topicInfo;
                     SelectedEntity = topicInfo;
-                    
+
                     // Load subscriptions for the topic
                     var subs = await _connectionStringService.GetTopicSubscriptionsAsync(
                         connection.ConnectionString, connection.EntityName!);
@@ -1014,7 +1157,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     {
                         TopicSubscriptions.Add(sub);
                     }
-                    
+
                     StatusMessage = $"Connected to {connection.Name}";
                 }
                 else
@@ -1092,7 +1235,7 @@ public partial class MainWindowViewModel : ViewModelBase
             );
 
             // Apply sorting
-            var sortedMsgs = SortDescending 
+            var sortedMsgs = SortDescending
                 ? msgs.OrderByDescending(m => m.EnqueuedTime)
                 : msgs.OrderBy(m => m.EnqueuedTime);
 
@@ -1120,7 +1263,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SelectSubscriptionForConnectionAsync(SubscriptionInfo sub)
     {
         if (CurrentMode != ConnectionMode.ConnectionString) return;
-        
+
         SelectedSubscription = sub;
         SelectedQueue = null;
         SelectedEntity = sub;
@@ -1131,7 +1274,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SelectQueueForConnectionAsync(QueueInfo queue)
     {
         if (CurrentMode != ConnectionMode.ConnectionString || ActiveConnection == null) return;
-        
+
         SelectedQueue = queue;
         SelectedTopic = null;
         SelectedSubscription = null;
@@ -1144,17 +1287,17 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SelectTopicForConnectionAsync(TopicInfo topic)
     {
         if (CurrentMode != ConnectionMode.ConnectionString || ActiveConnection == null) return;
-        
+
         SelectedTopic = topic;
         SelectedQueue = null;
         SelectedSubscription = null;
         SelectedEntity = topic;
         Messages.Clear();
         TopicSubscriptions.Clear();
-        
+
         IsLoading = true;
         StatusMessage = $"Loading subscriptions for {topic.Name}...";
-        
+
         try
         {
             var subs = await _connectionStringService.GetTopicSubscriptionsAsync(
@@ -1163,7 +1306,7 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 TopicSubscriptions.Add(sub);
             }
-            
+
             StatusMessage = $"{TopicSubscriptions.Count} subscription(s)";
         }
         catch (Exception ex)
@@ -1184,18 +1327,18 @@ public partial class MainWindowViewModel : ViewModelBase
             await ConnectToSavedConnectionAsync(ActiveConnection);
         }
     }
-    
+
     [RelayCommand]
     private async Task LoadTopicSubscriptionsAsync(TopicInfo topic)
     {
         if (topic == null || topic.SubscriptionsLoaded || topic.IsLoadingSubscriptions) return;
-        
+
         topic.IsLoadingSubscriptions = true;
-        
+
         try
         {
             IEnumerable<SubscriptionInfo> subs;
-            
+
             if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
             {
                 subs = await _connectionStringService.GetTopicSubscriptionsAsync(
@@ -1209,7 +1352,7 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 return;
             }
-            
+
             topic.Subscriptions.Clear();
             foreach (var sub in subs)
             {
@@ -1226,9 +1369,9 @@ public partial class MainWindowViewModel : ViewModelBase
             topic.IsLoadingSubscriptions = false;
         }
     }
-    
+
     #region Confirmation Dialog
-    
+
     private void ShowConfirmation(string title, string message, string confirmText, Func<Task> action)
     {
         ConfirmDialogTitle = title;
@@ -1237,7 +1380,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _confirmDialogAction = action;
         ShowConfirmDialog = true;
     }
-    
+
     [RelayCommand]
     private async Task ExecuteConfirmDialogAsync()
     {
@@ -1248,13 +1391,13 @@ public partial class MainWindowViewModel : ViewModelBase
             _confirmDialogAction = null;
         }
     }
-    
+
     [RelayCommand]
     private void CancelConfirmDialog()
     {
         ShowConfirmDialog = false;
         _confirmDialogAction = null;
     }
-    
+
     #endregion
 }

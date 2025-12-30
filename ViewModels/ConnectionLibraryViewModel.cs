@@ -6,6 +6,9 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.ServiceBus;
+using Services.Storage;
+
 public partial class ConnectionLibraryViewModel : ViewModelBase
 {
     private readonly IConnectionStorageService _connectionStorage;
@@ -32,7 +35,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
     public ObservableCollection<SavedConnection> FilteredConnections { get; } = [];
-    public IReadOnlyList<ConnectionEnvironment> AvailableEnvironments { get; } = 
+    public IReadOnlyList<ConnectionEnvironment> AvailableEnvironments { get; } =
     [
         ConnectionEnvironment.None,
         ConnectionEnvironment.Development,
@@ -64,19 +67,19 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         }
         UpdateFilteredConnections();
     }
-    
+
     partial void OnSelectedEnvironmentTabChanged(ConnectionEnvironment value)
     {
         UpdateFilteredConnections();
     }
-    
+
     private void UpdateFilteredConnections()
     {
         FilteredConnections.Clear();
         var filtered = SelectedEnvironmentTab == ConnectionEnvironment.None
             ? SavedConnections
             : SavedConnections.Where(c => c.Environment == SelectedEnvironmentTab);
-            
+
         foreach (var conn in filtered)
         {
             FilteredConnections.Add(conn);
@@ -144,7 +147,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
         try
         {
-            var (isValid, _, _, errorMessage) = 
+            var (isValid, _, _, errorMessage) =
                 await _connectionStringService.ValidateConnectionStringAsync(NewConnectionString);
 
             if (!isValid)
@@ -174,7 +177,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                     IsFavorite: EditingConnection.IsFavorite,
                     Environment: NewConnectionEnvironment
                 );
-                
+
                 await _connectionStorage.SaveConnectionAsync(connection);
                 var index = SavedConnections.IndexOf(EditingConnection);
                 if (index >= 0)
@@ -210,7 +213,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             DetectedInfo = null;
             CheckConnectionResult = null;
             NewConnectionEnvironment = ConnectionEnvironment.None;
-            
+
             // Automatically connect to the newly added/edited connection
             _onConnectionSelected(connection);
         }
@@ -240,7 +243,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
         try
         {
-            var (isValid, _, endpoint, errorMessage) = 
+            var (isValid, _, endpoint, errorMessage) =
                 await _connectionStringService.ValidateConnectionStringAsync(NewConnectionString);
 
             if (!isValid)
@@ -304,21 +307,21 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     {
         var updatedConnection = connection with { IsFavorite = !connection.IsFavorite };
         await _connectionStorage.SaveConnectionAsync(updatedConnection);
-        
+
         var index = SavedConnections.IndexOf(connection);
         if (index >= 0)
         {
             SavedConnections[index] = updatedConnection;
         }
         UpdateFilteredConnections();
-        
+
         if (_onFavoritesChanged != null)
         {
             await _onFavoritesChanged();
         }
-        
-        _onStatusUpdate(updatedConnection.IsFavorite 
-            ? $"'{connection.Name}' added to favorites" 
+
+        _onStatusUpdate(updatedConnection.IsFavorite
+            ? $"'{connection.Name}' added to favorites"
             : $"'{connection.Name}' removed from favorites");
     }
 }

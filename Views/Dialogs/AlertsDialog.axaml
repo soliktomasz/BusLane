@@ -1,0 +1,291 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Dialogs.AlertsDialog"
+             x:DataType="vm:AlertsViewModel"
+             Width="800" Height="600">
+
+    <Border Classes="card" Padding="0">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header -->
+            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="20">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="Alerts Configuration" Classes="title"/>
+                        <TextBlock Text="Configure alert rules and view active alerts" Classes="caption"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Classes="subtle" Command="{Binding CloseCommand}" Padding="8">
+                        <PathIcon Data="{StaticResource IconClose}" Width="16" Height="16"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <TabControl Grid.Row="1" Margin="20">
+                <!-- Active Alerts Tab -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Active Alerts" VerticalAlignment="Center"/>
+                            <Border Background="{DynamicResource DangerBackground}" CornerRadius="10" Padding="6,2"
+                                    IsVisible="{Binding HasAlerts}" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding UnacknowledgedCount}" FontSize="11" Foreground="White"/>
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Actions -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                            <Button Classes="subtle small" Content="Acknowledge All"
+                                    Command="{Binding AcknowledgeAllAlertsCommand}"
+                                    IsEnabled="{Binding HasAlerts}"/>
+                            <Button Classes="subtle small" Content="Clear Acknowledged"
+                                    Command="{Binding ClearAcknowledgedAlertsCommand}"/>
+                        </StackPanel>
+
+                        <!-- Alerts List -->
+                        <ListBox Grid.Row="1" ItemsSource="{Binding ActiveAlerts}" Padding="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="models:AlertEvent">
+                                    <Border Padding="12" Margin="0,2" CornerRadius="6"
+                                            Background="{DynamicResource SurfaceSubtle}"
+                                            Opacity="{Binding IsAcknowledged, Converter={StaticResource BoolToOpacityConverter}}">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- Severity indicator -->
+                                            <Border Grid.Column="0" Width="4" CornerRadius="2" Margin="0,0,12,0"
+                                                    Background="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
+
+                                            <!-- Alert details -->
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding Rule.Name}" FontWeight="SemiBold"/>
+                                                    <Border CornerRadius="4" Padding="6,2"
+                                                            Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
+                                                        <TextBlock Text="{Binding Rule.Severity}" FontSize="11"
+                                                                   Foreground="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock FontSize="13" Foreground="{DynamicResource SubtleForeground}">
+                                                    <Run Text="{Binding EntityType}"/>
+                                                    <Run Text=": "/>
+                                                    <Run Text="{Binding EntityName}" FontWeight="SemiBold"/>
+                                                </TextBlock>
+                                                <TextBlock FontSize="12" Foreground="{DynamicResource MutedForeground}">
+                                                    <Run Text="Current value:"/>
+                                                    <Run Text="{Binding CurrentValue, StringFormat='{}{0:N0}'}"/>
+                                                    <Run Text=" (threshold:"/>
+                                                    <Run Text="{Binding Rule.Threshold, StringFormat='{}{0:N0}'}"/>
+                                                    <Run Text=")"/>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding TriggeredAt, StringFormat='{}Triggered: {0:g}'}"
+                                                           FontSize="11" Foreground="{DynamicResource MutedForeground}"/>
+                                            </StackPanel>
+
+                                            <!-- Actions -->
+                                            <Button Grid.Column="2" Classes="subtle small" Content="Acknowledge"
+                                                    Command="{Binding $parent[ListBox].((vm:AlertsViewModel)DataContext).AcknowledgeAlertCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    IsVisible="{Binding !IsAcknowledged}"
+                                                    VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+
+                            <!-- Empty state -->
+                            <ListBox.Styles>
+                                <Style Selector="ListBox:empty">
+                                    <Setter Property="Template">
+                                        <ControlTemplate>
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                                <PathIcon Data="{StaticResource IconCheckCircle}" Width="48" Height="48"
+                                                          Foreground="{DynamicResource SuccessForeground}"/>
+                                                <TextBlock Text="No active alerts" FontSize="14"
+                                                           Foreground="{DynamicResource SubtleForeground}"/>
+                                            </StackPanel>
+                                        </ControlTemplate>
+                                    </Setter>
+                                </Style>
+                            </ListBox.Styles>
+                        </ListBox>
+                    </Grid>
+                </TabItem>
+
+                <!-- Alert Rules Tab -->
+                <TabItem Header="Alert Rules">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Add Rule Button -->
+                        <Button Grid.Row="0" Classes="primary" Content="+ Add Rule"
+                                Command="{Binding ShowAddRuleCommand}"
+                                Margin="0,0,0,12"
+                                IsVisible="{Binding !IsAddingRule}"
+                                HorizontalAlignment="Left"/>
+
+                        <!-- Add/Edit Rule Form -->
+                        <Border Grid.Row="0" Classes="card" Padding="16" Margin="0,0,0,12"
+                                IsVisible="{Binding IsAddingRule}">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" RowSpacing="12" ColumnSpacing="16">
+                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="New Alert Rule" FontWeight="SemiBold" FontSize="14"/>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Rule Name" FontSize="12"/>
+                                    <TextBox Text="{Binding RuleName}" Watermark="Enter rule name..."/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Alert Type" FontSize="12"/>
+                                    <ComboBox ItemsSource="{Binding AvailableAlertTypes}"
+                                              SelectedItem="{Binding SelectedAlertType}"
+                                              HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Severity" FontSize="12"/>
+                                    <ComboBox ItemsSource="{Binding AvailableSeverities}"
+                                              SelectedItem="{Binding SelectedSeverity}"
+                                              HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Threshold" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding Threshold}" Minimum="1" FormatString="N0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Spacing="4">
+                                    <TextBlock Text="Entity Pattern (optional, regex supported)" FontSize="12"/>
+                                    <TextBox Text="{Binding EntityPattern}" Watermark="e.g., orders-.* or leave empty for all entities"/>
+                                </StackPanel>
+
+                                <CheckBox Grid.Row="4" Grid.ColumnSpan="2" Content="Enable this rule" IsChecked="{Binding RuleEnabled}"/>
+
+                                <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <Button Classes="subtle" Content="Cancel" Command="{Binding CancelEditCommand}"/>
+                                    <Button Classes="primary" Content="Save Rule" Command="{Binding SaveRuleCommand}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Edit Rule Form (similar structure) -->
+                        <Border Grid.Row="0" Classes="card" Padding="16" Margin="0,0,0,12"
+                                IsVisible="{Binding IsEditingRule}">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" RowSpacing="12" ColumnSpacing="16">
+                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Edit Alert Rule" FontWeight="SemiBold" FontSize="14"/>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Rule Name" FontSize="12"/>
+                                    <TextBox Text="{Binding RuleName}" Watermark="Enter rule name..."/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Alert Type" FontSize="12"/>
+                                    <ComboBox ItemsSource="{Binding AvailableAlertTypes}"
+                                              SelectedItem="{Binding SelectedAlertType}"
+                                              HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Severity" FontSize="12"/>
+                                    <ComboBox ItemsSource="{Binding AvailableSeverities}"
+                                              SelectedItem="{Binding SelectedSeverity}"
+                                              HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Threshold" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding Threshold}" Minimum="1" FormatString="N0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Spacing="4">
+                                    <TextBlock Text="Entity Pattern (optional, regex supported)" FontSize="12"/>
+                                    <TextBox Text="{Binding EntityPattern}" Watermark="e.g., orders-.* or leave empty for all entities"/>
+                                </StackPanel>
+
+                                <CheckBox Grid.Row="4" Grid.ColumnSpan="2" Content="Enable this rule" IsChecked="{Binding RuleEnabled}"/>
+
+                                <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <Button Classes="subtle" Content="Cancel" Command="{Binding CancelEditCommand}"/>
+                                    <Button Classes="primary" Content="Save Changes" Command="{Binding SaveRuleCommand}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Rules List -->
+                        <ListBox Grid.Row="1" ItemsSource="{Binding Rules}" Padding="0"
+                                 IsVisible="{Binding !IsAddingRule}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="models:AlertRule">
+                                    <Border Padding="12" Margin="0,2" CornerRadius="6"
+                                            Background="{DynamicResource SurfaceSubtle}"
+                                            Opacity="{Binding !IsEnabled, Converter={StaticResource BoolToOpacityConverter}}">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- Enable toggle -->
+                                            <ToggleSwitch Grid.Column="0"
+                                                          IsChecked="{Binding IsEnabled}"
+                                                          Margin="0,0,12,0"
+                                                          OnContent="" OffContent=""/>
+
+                                            <!-- Rule details -->
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                    <Border CornerRadius="4" Padding="6,2"
+                                                            Background="{Binding Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
+                                                        <TextBlock Text="{Binding Severity}" FontSize="11"
+                                                                   Foreground="{Binding Severity, Converter={StaticResource SeverityToColorConverter}}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock FontSize="13" Foreground="{DynamicResource SubtleForeground}">
+                                                    <Run Text="{Binding Type}"/>
+                                                    <Run Text=" ≥ "/>
+                                                    <Run Text="{Binding Threshold, StringFormat='{}{0:N0}'}"/>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding EntityPattern, StringFormat='{}Pattern: {0}'}"
+                                                           FontSize="11" Foreground="{DynamicResource MutedForeground}"
+                                                           IsVisible="{Binding EntityPattern, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                            </StackPanel>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <Button Classes="subtle small" ToolTip.Tip="Test"
+                                                        Command="{Binding $parent[ListBox].((vm:AlertsViewModel)DataContext).TestRuleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{StaticResource IconStream}" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Classes="subtle small" ToolTip.Tip="Edit"
+                                                        Command="{Binding $parent[ListBox].((vm:AlertsViewModel)DataContext).ShowEditRuleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Classes="danger-subtle small" ToolTip.Tip="Delete"
+                                                        Command="{Binding $parent[ListBox].((vm:AlertsViewModel)DataContext).DeleteRuleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{StaticResource IconDelete}" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <!-- Footer -->
+            <Border Grid.Row="2" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0" Padding="20">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <ToggleSwitch IsChecked="{Binding SystemNotificationsEnabled}"
+                                      OnContent="" OffContent=""
+                                      VerticalAlignment="Center"/>
+                        <TextBlock Text="System Notifications" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Classes="subtle" Content="Close" Command="{Binding CloseCommand}"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
+

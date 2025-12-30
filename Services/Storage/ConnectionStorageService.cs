@@ -1,7 +1,8 @@
+namespace BusLane.Services.Storage;
+
 using System.Text.Json;
 using BusLane.Models;
-
-namespace BusLane.Services;
+using Infrastructure;
 
 public class ConnectionStorageService : IConnectionStorageService
 {

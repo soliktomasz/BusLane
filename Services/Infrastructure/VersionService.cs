@@ -1,6 +1,6 @@
-using System.Reflection;
+namespace BusLane.Services.Infrastructure;
 
-namespace BusLane.Services;
+using System.Reflection;
 
 /// <summary>
 /// Implementation of IVersionService that reads version information from the assembly metadata.
