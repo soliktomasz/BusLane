@@ -320,12 +320,20 @@ public partial class MainWindowViewModel : ViewModelBase
     #region Live Stream, Charts, and Alerts Commands
 
     [RelayCommand]
-    private void OpenLiveStream()
+    private async Task OpenLiveStream()
     {
         LiveStreamViewModel = new LiveStreamViewModel(_liveStreamService);
+
+        // Pass available entities to the LiveStreamViewModel
+        var endpoint = SelectedNamespace?.Endpoint ?? ActiveConnection?.Endpoint;
+        LiveStreamViewModel.SetAvailableEntities(endpoint, Queues, Topics);
+
         ShowLiveStream = true;
         ShowCharts = false;
         ShowAlerts = false;
+
+        // Automatically start streaming for the currently selected entity
+        await StartLiveStreamForSelectedEntity();
     }
 
     [RelayCommand]
@@ -384,9 +392,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             await LiveStreamViewModel.StartQueueAsync(endpoint, SelectedQueue.Name);
         }
-        else if (SelectedSubscription != null && SelectedTopic != null)
+        else if (SelectedSubscription != null)
         {
-            await LiveStreamViewModel.StartSubscriptionAsync(endpoint, SelectedTopic.Name, SelectedSubscription.Name);
+            // Use the subscription's TopicName property directly instead of relying on SelectedTopic
+            await LiveStreamViewModel.StartSubscriptionAsync(endpoint, SelectedSubscription.TopicName, SelectedSubscription.Name);
         }
     }
 

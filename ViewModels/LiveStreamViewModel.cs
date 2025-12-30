@@ -24,15 +24,24 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty] private bool _autoScroll = true;
     [ObservableProperty] private string _filterText = "";
 
+    // Entity selection properties
+    [ObservableProperty] private string? _endpoint;
+    [ObservableProperty] private object? _selectedStreamEntity;
+    [ObservableProperty] private bool _hasEntities;
+
     public ObservableCollection<LiveStreamMessage> Messages { get; } = [];
     public ObservableCollection<LiveStreamMessage> FilteredMessages { get; } = [];
+
+    // Available entities for streaming
+    public ObservableCollection<QueueInfo> AvailableQueues { get; } = [];
+    public ObservableCollection<TopicInfo> AvailableTopics { get; } = [];
 
     public LiveStreamViewModel(ILiveStreamService liveStreamService)
     {
         _liveStreamService = liveStreamService;
         _liveStreamService.StreamingStatusChanged += OnStreamingStatusChanged;
         _liveStreamService.StreamError += OnStreamError;
-        
+
         // Subscribe to message stream
         _messageSubscription = _liveStreamService.Messages
             .ObserveOn(System.Reactive.Concurrency.Scheduler.Default)
@@ -63,13 +72,13 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         {
             Messages.Insert(0, message);
             MessageCount = Messages.Count;
-            
+
             // Limit messages in memory
             while (Messages.Count > MaxMessages)
             {
                 Messages.RemoveAt(Messages.Count - 1);
             }
-            
+
             // Apply filter
             if (MatchesFilter(message))
             {
@@ -117,7 +126,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             IsConnecting = true;
             CurrentEntityName = args.queueName;
             CurrentEntityType = "Queue";
-            
+
             await _liveStreamService.StartQueueStreamAsync(args.endpoint, args.queueName, IsPeekMode);
         }
         catch (Exception ex)
@@ -136,7 +145,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             IsConnecting = true;
             CurrentEntityName = $"{args.topicName}/{args.subscriptionName}";
             CurrentEntityType = "Subscription";
-            
+
             await _liveStreamService.StartSubscriptionStreamAsync(args.endpoint, args.topicName, args.subscriptionName, IsPeekMode);
         }
         catch (Exception ex)
@@ -145,7 +154,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             IsConnecting = false;
         }
     }
-    
+
     /// <summary>
     /// Start streaming from a queue - public helper method
     /// </summary>
@@ -153,7 +162,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     {
         return StartQueueStreamAsync((endpoint, queueName));
     }
-    
+
     /// <summary>
     /// Start streaming from a subscription - public helper method
     /// </summary>
@@ -184,17 +193,55 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         FilterText = "";
     }
 
+    /// <summary>
+    /// Initialize available entities for streaming selection
+    /// </summary>
+    public void SetAvailableEntities(string? endpoint, IEnumerable<QueueInfo> queues, IEnumerable<TopicInfo> topics)
+    {
+        Endpoint = endpoint;
+
+        AvailableQueues.Clear();
+        foreach (var queue in queues)
+        {
+            AvailableQueues.Add(queue);
+        }
+
+        AvailableTopics.Clear();
+        foreach (var topic in topics)
+        {
+            AvailableTopics.Add(topic);
+        }
+
+        HasEntities = AvailableQueues.Count > 0 || AvailableTopics.Count > 0;
+    }
+
+    [RelayCommand]
+    private async Task StartStreamForSelectedEntity()
+    {
+        if (string.IsNullOrEmpty(Endpoint) || SelectedStreamEntity == null)
+            return;
+
+        switch (SelectedStreamEntity)
+        {
+            case QueueInfo queue:
+                await StartQueueAsync(Endpoint, queue.Name);
+                break;
+            case SubscriptionInfo subscription:
+                await StartSubscriptionAsync(Endpoint, subscription.TopicName, subscription.Name);
+                break;
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         _messageSubscription?.Dispose();
         _messageSubscription = null;
         _liveStreamService.StreamingStatusChanged -= OnStreamingStatusChanged;
         _liveStreamService.StreamError -= OnStreamError;
-        
+
         // Only stop the stream, don't dispose the singleton service
         await _liveStreamService.StopStreamAsync();
-        
+
         GC.SuppressFinalize(this);
     }
 }
-
