@@ -7,6 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BusLane;
 
+using Services.Auth;
+using Services.Infrastructure;
+using Services.Monitoring;
+using Services.ServiceBus;
+using Services.Storage;
+
 class Program
 {
     public static IServiceProvider? Services { get; private set; }

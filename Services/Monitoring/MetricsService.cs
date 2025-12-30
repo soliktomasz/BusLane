@@ -1,7 +1,7 @@
+namespace BusLane.Services.Monitoring;
+
 using System.Collections.Concurrent;
 using BusLane.Models;
-
-namespace BusLane.Services;
 
 public class MetricsService : IMetricsService
 {

@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.ServiceBus;
+
 public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 {
     private readonly ILiveStreamService _liveStreamService;

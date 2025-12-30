@@ -1,8 +1,8 @@
+namespace BusLane.Services.Monitoring;
+
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using BusLane.Models;
-
-namespace BusLane.Services;
 
 public class AlertService : IAlertService
 {

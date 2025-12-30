@@ -1,20 +1,20 @@
+namespace BusLane.Services.Auth;
+
 using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
-
-namespace BusLane.Services;
 
 public class AzureAuthService : IAzureAuthService
 {
     private InteractiveBrowserCredential? _credential;
     private ArmClient? _armClient;
     private readonly TokenCachePersistenceOptions _cacheOptions;
-    
+
     public bool IsAuthenticated { get; private set; }
     public string? UserName { get; private set; }
     public TokenCredential? Credential => _credential;
     public ArmClient? ArmClient => _armClient;
-    
+
     public event EventHandler<bool>? AuthenticationChanged;
 
     public AzureAuthService()
@@ -44,19 +44,19 @@ public class AzureAuthService : IAzureAuthService
         {
             var options = CreateCredentialOptions();
             _credential = new InteractiveBrowserCredential(options);
-            
+
             // Try to get a token silently (will use cached token if available)
             var context = new TokenRequestContext(
                 new[] { "https://management.azure.com/.default" }
             );
-            
+
             // Use GetTokenAsync - if there's a valid cached token, it won't prompt
             var token = await _credential.GetTokenAsync(context, ct);
-            
+
             _armClient = new ArmClient(_credential);
             IsAuthenticated = true;
             UserName = "Azure User";
-            
+
             AuthenticationChanged?.Invoke(this, true);
             return true;
         }
@@ -77,17 +77,17 @@ public class AzureAuthService : IAzureAuthService
         {
             var options = CreateCredentialOptions();
             _credential = new InteractiveBrowserCredential(options);
-            
+
             // Force authentication by requesting a token
             var context = new TokenRequestContext(
                 new[] { "https://management.azure.com/.default" }
             );
             _ = await _credential.GetTokenAsync(context, ct);
-            
+
             _armClient = new ArmClient(_credential);
             IsAuthenticated = true;
             UserName = "Azure User";
-            
+
             AuthenticationChanged?.Invoke(this, true);
             return true;
         }

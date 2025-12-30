@@ -1,6 +1,6 @@
-using BusLane.Models;
+namespace BusLane.Services.Storage;
 
-namespace BusLane.Services;
+using BusLane.Models;
 
 public interface IConnectionStorageService
 {

@@ -1,8 +1,9 @@
+namespace BusLane.Services.ServiceBus;
+
 using Azure.Messaging.ServiceBus;
 using Azure.ResourceManager.ServiceBus;
 using BusLane.Models;
-
-namespace BusLane.Services;
+using BusLane.Services.Auth;
 
 public class ServiceBusService : IServiceBusService
 {

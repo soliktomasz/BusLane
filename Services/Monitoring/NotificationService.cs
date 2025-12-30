@@ -1,9 +1,9 @@
+namespace BusLane.Services.Monitoring;
+
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using BusLane.Models;
-
-namespace BusLane.Services;
 
 public class NotificationService : INotificationService
 {

@@ -1,7 +1,7 @@
+namespace BusLane.Services.Infrastructure;
+
 using System.Security.Cryptography;
 using System.Text;
-
-namespace BusLane.Services;
 
 /// <summary>
 /// Provides AES-256 encryption for sensitive data with a machine-specific key.

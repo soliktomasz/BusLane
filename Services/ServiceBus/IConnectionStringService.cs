@@ -1,6 +1,6 @@
-using BusLane.Models;
+namespace BusLane.Services.ServiceBus;
 
-namespace BusLane.Services;
+using BusLane.Models;
 
 /// <summary>
 /// Information about a Service Bus namespace

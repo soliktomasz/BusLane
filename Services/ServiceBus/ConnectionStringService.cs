@@ -1,8 +1,8 @@
+namespace BusLane.Services.ServiceBus;
+
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using BusLane.Models;
-
-namespace BusLane.Services;
 
 public class ConnectionStringService : IConnectionStringService
 {
@@ -308,9 +308,9 @@ public class ConnectionStringService : IConnectionStringService
         var parts = connectionString.Split(';');
         foreach (var part in parts)
         {
-            if (!part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase)) 
+            if (!part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase))
                 continue;
-            
+
             var endpoint = part["Endpoint=sb://".Length..];
             var dotIndex = endpoint.IndexOf('.');
             return dotIndex > 0 ? endpoint[..dotIndex] : null;

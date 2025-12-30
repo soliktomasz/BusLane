@@ -1,4 +1,4 @@
-namespace BusLane.Services;
+namespace BusLane.Services.Infrastructure;
 
 /// <summary>
 /// Service for encrypting and decrypting sensitive data.

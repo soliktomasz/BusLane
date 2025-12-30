@@ -1,6 +1,6 @@
-using BusLane.Models;
+namespace BusLane.Services.ServiceBus;
 
-namespace BusLane.Services;
+using BusLane.Models;
 
 public interface IServiceBusService
 {

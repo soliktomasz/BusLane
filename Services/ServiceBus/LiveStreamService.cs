@@ -1,10 +1,10 @@
+namespace BusLane.Services.ServiceBus;
+
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using BusLane.Models;
-
-namespace BusLane.Services;
 
 public class LiveStreamService : ILiveStreamService
 {

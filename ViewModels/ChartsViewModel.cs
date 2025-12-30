@@ -11,10 +11,12 @@ using SkiaSharp;
 
 namespace BusLane.ViewModels;
 
+using Services.Monitoring;
+
 public partial class ChartsViewModel : ViewModelBase
 {
     private readonly IMetricsService _metricsService;
-    
+
     [ObservableProperty] private string _selectedTimeRange = "1 Hour";
     [ObservableProperty] private string? _selectedEntityName;
     [ObservableProperty] private bool _showAggregated = true;
@@ -48,7 +50,7 @@ public partial class ChartsViewModel : ViewModelBase
         MessageCountXAxes = [new Axis
         {
             Name = "Time",
-            Labeler = value => 
+            Labeler = value =>
             {
                 try
                 {
@@ -75,7 +77,7 @@ public partial class ChartsViewModel : ViewModelBase
         DeadLetterXAxes = [new Axis
         {
             Name = "Time",
-            Labeler = value => 
+            Labeler = value =>
             {
                 try
                 {
@@ -195,7 +197,7 @@ public partial class ChartsViewModel : ViewModelBase
     private void UpdateMessageCountChart(TimeSpan duration)
     {
         IEnumerable<MetricDataPoint> metrics;
-        
+
         if (ShowAggregated || string.IsNullOrEmpty(SelectedEntityName))
         {
             metrics = _metricsService.GetAggregatedMetrics("ActiveMessageCount", duration);
@@ -206,7 +208,7 @@ public partial class ChartsViewModel : ViewModelBase
         }
 
         var points = metrics
-            .GroupBy(m => new DateTime(m.Timestamp.Year, m.Timestamp.Month, m.Timestamp.Day, 
+            .GroupBy(m => new DateTime(m.Timestamp.Year, m.Timestamp.Month, m.Timestamp.Day,
                 m.Timestamp.Hour, m.Timestamp.Minute / 5 * 5, 0)) // Group by 5-minute intervals
             .Select(g => new DateTimePoint(g.Key, g.Sum(m => m.Value)))
             .OrderBy(p => p.DateTime)
@@ -226,7 +228,7 @@ public partial class ChartsViewModel : ViewModelBase
     private void UpdateDeadLetterChart(TimeSpan duration)
     {
         IEnumerable<MetricDataPoint> metrics;
-        
+
         if (ShowAggregated || string.IsNullOrEmpty(SelectedEntityName))
         {
             metrics = _metricsService.GetAggregatedMetrics("DeadLetterCount", duration);
@@ -237,7 +239,7 @@ public partial class ChartsViewModel : ViewModelBase
         }
 
         var points = metrics
-            .GroupBy(m => new DateTime(m.Timestamp.Year, m.Timestamp.Month, m.Timestamp.Day, 
+            .GroupBy(m => new DateTime(m.Timestamp.Year, m.Timestamp.Month, m.Timestamp.Day,
                 m.Timestamp.Hour, m.Timestamp.Minute / 5 * 5, 0))
             .Select(g => new DateTimePoint(g.Key, g.Sum(m => m.Value)))
             .OrderBy(p => p.DateTime)
@@ -259,7 +261,7 @@ public partial class ChartsViewModel : ViewModelBase
         EntityDistributionSeries.Clear();
 
         var data = new List<(string Name, double Value)>();
-        
+
         foreach (var queue in queues.OrderByDescending(q => q.ActiveMessageCount).Take(10))
         {
             data.Add((queue.Name, queue.ActiveMessageCount));

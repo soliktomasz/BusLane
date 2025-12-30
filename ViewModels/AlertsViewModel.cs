@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.Monitoring;
+
 public partial class AlertsViewModel : ViewModelBase
 {
     private readonly IAlertService _alertService;

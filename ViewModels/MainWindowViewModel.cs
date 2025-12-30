@@ -6,6 +6,12 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.Auth;
+using Services.Infrastructure;
+using Services.Monitoring;
+using Services.ServiceBus;
+using Services.Storage;
+
 public enum ConnectionMode
 {
     None,

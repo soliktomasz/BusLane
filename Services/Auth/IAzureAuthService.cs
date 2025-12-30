@@ -1,7 +1,7 @@
+namespace BusLane.Services.Auth;
+
 using Azure.Core;
 using Azure.ResourceManager;
-
-namespace BusLane.Services;
 
 public interface IAzureAuthService
 {

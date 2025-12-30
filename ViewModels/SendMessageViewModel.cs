@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.ServiceBus;
+
 public partial class SendMessageViewModel : ViewModelBase
 {
     private readonly IServiceBusService? _serviceBus;
@@ -16,7 +18,7 @@ public partial class SendMessageViewModel : ViewModelBase
     private readonly string? _connectionString;
     private readonly Action _onClose;
     private readonly Action<string> _onStatusUpdate;
-    
+
     private static readonly string SavedMessagesPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "BusLane",
@@ -41,16 +43,16 @@ public partial class SendMessageViewModel : ViewModelBase
     [ObservableProperty] private bool _showSaveDialog;
     [ObservableProperty] private bool _showLoadDialog;
     [ObservableProperty] private SavedMessage? _selectedSavedMessage;
-    
+
     public ObservableCollection<CustomProperty> CustomProperties { get; } = new();
     public ObservableCollection<SavedMessage> SavedMessages { get; } = new();
-    
+
     public string EntityName => _entityName;
 
     // Constructor for Azure account mode
     public SendMessageViewModel(
-        IServiceBusService serviceBus, 
-        string endpoint, 
+        IServiceBusService serviceBus,
+        string endpoint,
         string entityName,
         Action onClose,
         Action<string> onStatusUpdate)
@@ -62,14 +64,14 @@ public partial class SendMessageViewModel : ViewModelBase
         _connectionString = null;
         _onClose = onClose;
         _onStatusUpdate = onStatusUpdate;
-        
+
         LoadSavedMessages();
     }
 
     // Constructor for connection string mode
     public SendMessageViewModel(
-        IConnectionStringService connectionStringService, 
-        string connectionString, 
+        IConnectionStringService connectionStringService,
+        string connectionString,
         string entityName,
         Action onClose,
         Action<string> onStatusUpdate)
@@ -81,7 +83,7 @@ public partial class SendMessageViewModel : ViewModelBase
         _connectionString = connectionString;
         _onClose = onClose;
         _onStatusUpdate = onStatusUpdate;
-        
+
         LoadSavedMessages();
     }
 
@@ -271,13 +273,13 @@ public partial class SendMessageViewModel : ViewModelBase
         PartitionKey = message.PartitionKey;
         TimeToLiveText = message.TimeToLive?.ToString();
         ScheduledEnqueueTimeText = message.ScheduledEnqueueTime?.ToString("O");
-        
+
         CustomProperties.Clear();
         foreach (var prop in message.CustomProperties)
         {
             CustomProperties.Add(new CustomProperty { Key = prop.Key, Value = prop.Value });
         }
-        
+
         ShowLoadDialog = false;
         _onStatusUpdate($"Loaded message '{message.Name}'");
     }
@@ -306,7 +308,7 @@ public partial class SendMessageViewModel : ViewModelBase
         PartitionKey = message.PartitionKey;
         TimeToLiveText = message.TimeToLive?.ToString();
         ScheduledEnqueueTimeText = null; // Don't copy scheduled time
-        
+
         CustomProperties.Clear();
         foreach (var prop in message.Properties)
         {
@@ -336,7 +338,7 @@ public partial class SendMessageViewModel : ViewModelBase
     private void LoadSavedMessages()
     {
         SavedMessages.Clear();
-        
+
         try
         {
             if (File.Exists(SavedMessagesPath))
