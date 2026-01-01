@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
-using BusLane.Services;
+using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;

@@ -1,39 +1,50 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace BusLane.Models;
 
-public class TopicInfo : INotifyPropertyChanged
+/// <summary>
+/// Represents an Azure Service Bus topic with its properties.
+/// Uses CommunityToolkit.Mvvm for observable properties.
+/// </summary>
+public partial class TopicInfo : ObservableObject
 {
-    private bool _subscriptionsLoaded;
-    private bool _isLoadingSubscriptions;
-    
     public string Name { get; init; } = string.Empty;
     public long SizeInBytes { get; init; }
     public int SubscriptionCount { get; init; }
     public DateTimeOffset? AccessedAt { get; init; }
     public TimeSpan DefaultMessageTtl { get; init; }
-    
-    // Collection of subscriptions for this topic (loaded on demand)
+
+    /// <summary>
+    /// Collection of subscriptions for this topic (loaded on demand).
+    /// </summary>
     public ObservableCollection<SubscriptionInfo> Subscriptions { get; } = [];
-    
-    // Track if subscriptions have been loaded
-    public bool SubscriptionsLoaded
-    {
-        get => _subscriptionsLoaded;
-        set => SetField(ref _subscriptionsLoaded, value);
-    }
-    
-    // For loading state
-    public bool IsLoadingSubscriptions
-    {
-        get => _isLoadingSubscriptions;
-        set => SetField(ref _isLoadingSubscriptions, value);
-    }
+
+    /// <summary>
+    /// Indicates whether subscriptions have been loaded.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayStatus))]
+    private bool _subscriptionsLoaded;
+
+    /// <summary>
+    /// Indicates whether subscriptions are currently being loaded.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayStatus))]
+    private bool _isLoadingSubscriptions;
+
+    /// <summary>
+    /// Display status text based on loading state.
+    /// </summary>
+    public string DisplayStatus => IsLoadingSubscriptions
+        ? "Loading..."
+        : SubscriptionsLoaded
+            ? $"{Subscriptions.Count} subscription(s)"
+            : "Click to expand";
 
     public TopicInfo() { }
-    
+
     public TopicInfo(string name, long sizeInBytes, int subscriptionCount, DateTimeOffset? accessedAt, TimeSpan defaultMessageTtl)
     {
         Name = name;
@@ -41,20 +52,5 @@ public class TopicInfo : INotifyPropertyChanged
         SubscriptionCount = subscriptionCount;
         AccessedAt = accessedAt;
         DefaultMessageTtl = defaultMessageTtl;
-    }
-    
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
     }
 }

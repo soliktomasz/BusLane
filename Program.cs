@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.ReactiveUI;
-using System;
-using BusLane.Services;
+using BusLane.Services.Abstractions;
 using BusLane.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,26 +28,35 @@ class Program
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        // Infrastructure services
         services.AddSingleton<IVersionService, VersionService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
+        services.AddSingleton<IPreferencesService, PreferencesService>();
+        services.AddSingleton<IDialogService, DialogService>();
+        
+        // Auth services
         services.AddSingleton<IAzureAuthService, AzureAuthService>();
+        
+        // Service Bus services
         services.AddSingleton<IServiceBusService, ServiceBusService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
         services.AddSingleton<IConnectionStringService, ConnectionStringService>();
 
-        // New services for Live Stream, Charts, and Alerts
+        // Monitoring services for Live Stream, Charts, and Alerts
         services.AddSingleton<ILiveStreamService, LiveStreamService>();
         services.AddSingleton<IMetricsService, MetricsService>();
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<INotificationService, NotificationService>();
 
+        // ViewModels
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<NamespaceViewModel>();
         services.AddTransient<QueueViewModel>();
         services.AddTransient<MessageViewModel>();
+        services.AddTransient<TopicViewModel>();
 
-        // New ViewModels for Live Stream, Charts, and Alerts
+        // ViewModels for Live Stream, Charts, and Alerts
         services.AddTransient<LiveStreamViewModel>();
         services.AddTransient<ChartsViewModel>();
     }

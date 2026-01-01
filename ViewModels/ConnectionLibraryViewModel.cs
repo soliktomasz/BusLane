@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
-using BusLane.Services;
+using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -167,16 +167,17 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             if (IsEditingConnection && EditingConnection != null)
             {
                 // Update existing connection
-                connection = new SavedConnection(
-                    Id: EditingConnection.Id,
-                    Name: NewConnectionName,
-                    ConnectionString: NewConnectionString,
-                    Type: ConnectionType.Namespace,
-                    EntityName: null,
-                    CreatedAt: EditingConnection.CreatedAt,
-                    IsFavorite: EditingConnection.IsFavorite,
-                    Environment: NewConnectionEnvironment
-                );
+                connection = new SavedConnection
+                {
+                    Id = EditingConnection.Id,
+                    Name = NewConnectionName,
+                    ConnectionString = NewConnectionString,
+                    Type = ConnectionType.Namespace,
+                    EntityName = null,
+                    CreatedAt = EditingConnection.CreatedAt,
+                    IsFavorite = EditingConnection.IsFavorite,
+                    Environment = NewConnectionEnvironment
+                };
 
                 await _connectionStorage.SaveConnectionAsync(connection);
                 var index = SavedConnections.IndexOf(EditingConnection);
@@ -190,15 +191,16 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             else
             {
                 // Create new connection
-                connection = new SavedConnection(
-                    Id: Guid.NewGuid().ToString(),
-                    Name: NewConnectionName,
-                    ConnectionString: NewConnectionString,
-                    Type: ConnectionType.Namespace,
-                    EntityName: null,
-                    CreatedAt: DateTimeOffset.UtcNow,
-                    Environment: NewConnectionEnvironment
-                );
+                connection = new SavedConnection
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = NewConnectionName,
+                    ConnectionString = NewConnectionString,
+                    Type = ConnectionType.Namespace,
+                    EntityName = null,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    Environment = NewConnectionEnvironment
+                };
 
                 await _connectionStorage.SaveConnectionAsync(connection);
                 SavedConnections.Insert(0, connection);

@@ -1,5 +1,10 @@
+using BusLane.Models.Entities;
+
 namespace BusLane.Models;
 
+/// <summary>
+/// Represents an Azure Service Bus queue with its properties and metrics.
+/// </summary>
 public record QueueInfo(
     string Name,
     long MessageCount,
@@ -11,4 +16,4 @@ public record QueueInfo(
     bool RequiresSession,
     TimeSpan DefaultMessageTtl,
     TimeSpan LockDuration
-);
+) : IMessageEntity;

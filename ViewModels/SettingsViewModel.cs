@@ -1,4 +1,6 @@
 using Avalonia.Threading;
+using BusLane.Services.Abstractions;
+using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -8,6 +10,7 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private readonly Action _onClose;
     private readonly MainWindowViewModel? _mainViewModel;
+    private readonly IPreferencesService? _preferencesService;
     private string _originalTheme = "Light";
     private bool _isLoading;
 
@@ -32,6 +35,18 @@ public partial class SettingsViewModel : ViewModelBase
         _originalTheme = Theme;
     }
 
+    public SettingsViewModel(
+        Action onClose, 
+        MainWindowViewModel? mainViewModel,
+        IPreferencesService preferencesService)
+    {
+        _onClose = onClose;
+        _mainViewModel = mainViewModel;
+        _preferencesService = preferencesService;
+        LoadSettings();
+        _originalTheme = Theme;
+    }
+
     partial void OnThemeChanged(string value)
     {
         // Skip theme preview during initial load
@@ -47,18 +62,31 @@ public partial class SettingsViewModel : ViewModelBase
         try
         {
             _isLoading = true;
-            
-            // Load settings from preferences/storage
-            ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
-            ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
-            AutoRefreshMessages = Preferences.AutoRefreshMessages;
-            AutoRefreshIntervalSeconds = Preferences.AutoRefreshIntervalSeconds;
-            DefaultMessageCount = Preferences.DefaultMessageCount;
-            ShowDeadLetterBadges = Preferences.ShowDeadLetterBadges;
-            EnableMessagePreview = Preferences.EnableMessagePreview;
-            
-            // Use the generated property instead of the field
-            Theme = Preferences.Theme;
+
+            if (_preferencesService != null)
+            {
+                // Use injected service
+                ConfirmBeforeDelete = _preferencesService.ConfirmBeforeDelete;
+                ConfirmBeforePurge = _preferencesService.ConfirmBeforePurge;
+                AutoRefreshMessages = _preferencesService.AutoRefreshMessages;
+                AutoRefreshIntervalSeconds = _preferencesService.AutoRefreshIntervalSeconds;
+                DefaultMessageCount = _preferencesService.DefaultMessageCount;
+                ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
+                EnableMessagePreview = _preferencesService.EnableMessagePreview;
+                Theme = _preferencesService.Theme;
+            }
+            else
+            {
+                // Fallback to static Preferences for backwards compatibility
+                ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
+                ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
+                AutoRefreshMessages = Preferences.AutoRefreshMessages;
+                AutoRefreshIntervalSeconds = Preferences.AutoRefreshIntervalSeconds;
+                DefaultMessageCount = Preferences.DefaultMessageCount;
+                ShowDeadLetterBadges = Preferences.ShowDeadLetterBadges;
+                EnableMessagePreview = Preferences.EnableMessagePreview;
+                Theme = Preferences.Theme;
+            }
         }
         finally
         {
@@ -71,17 +99,33 @@ public partial class SettingsViewModel : ViewModelBase
     {
         // Store the theme we want to keep
         var themeToApply = Theme;
-        
-        // Save settings to preferences/storage
-        Preferences.ConfirmBeforeDelete = ConfirmBeforeDelete;
-        Preferences.ConfirmBeforePurge = ConfirmBeforePurge;
-        Preferences.AutoRefreshMessages = AutoRefreshMessages;
-        Preferences.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
-        Preferences.DefaultMessageCount = DefaultMessageCount;
-        Preferences.ShowDeadLetterBadges = ShowDeadLetterBadges;
-        Preferences.EnableMessagePreview = EnableMessagePreview;
-        Preferences.Theme = themeToApply;
-        Preferences.Save();
+
+        if (_preferencesService != null)
+        {
+            // Use injected service
+            _preferencesService.ConfirmBeforeDelete = ConfirmBeforeDelete;
+            _preferencesService.ConfirmBeforePurge = ConfirmBeforePurge;
+            _preferencesService.AutoRefreshMessages = AutoRefreshMessages;
+            _preferencesService.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
+            _preferencesService.DefaultMessageCount = DefaultMessageCount;
+            _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
+            _preferencesService.EnableMessagePreview = EnableMessagePreview;
+            _preferencesService.Theme = themeToApply;
+            _preferencesService.Save();
+        }
+        else
+        {
+            // Fallback to static Preferences
+            Preferences.ConfirmBeforeDelete = ConfirmBeforeDelete;
+            Preferences.ConfirmBeforePurge = ConfirmBeforePurge;
+            Preferences.AutoRefreshMessages = AutoRefreshMessages;
+            Preferences.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
+            Preferences.DefaultMessageCount = DefaultMessageCount;
+            Preferences.ShowDeadLetterBadges = ShowDeadLetterBadges;
+            Preferences.EnableMessagePreview = EnableMessagePreview;
+            Preferences.Theme = themeToApply;
+            Preferences.Save();
+        }
         
         // Close the dialog
         _onClose();

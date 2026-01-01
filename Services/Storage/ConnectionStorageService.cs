@@ -79,16 +79,17 @@ public class ConnectionStorageService : IConnectionStorageService
                     var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString)
                                           ?? stored.EncryptedConnectionString;
 
-                    return new SavedConnection(
-                        stored.Id,
-                        stored.Name,
-                        connectionString,
-                        stored.Type,
-                        stored.EntityName,
-                        stored.CreatedAt,
-                        stored.IsFavorite,
-                        stored.Environment
-                    );
+                    return new SavedConnection
+                    {
+                        Id = stored.Id,
+                        Name = stored.Name,
+                        ConnectionString = connectionString,
+                        Type = stored.Type,
+                        EntityName = stored.EntityName,
+                        CreatedAt = stored.CreatedAt,
+                        IsFavorite = stored.IsFavorite,
+                        Environment = stored.Environment
+                    };
                 })
                 .ToList();
         }
