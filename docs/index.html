@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BusLane - Azure Service Bus Manager</title>
+    <meta name="description" content="A modern, cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10">
+    <meta name="keywords" content="Azure, Service Bus, .NET, Avalonia, Queue Management, Message Broker">
+    <meta name="author" content="Tomasz Solik">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="BusLane - Azure Service Bus Manager">
+    <meta property="og:description" content="A modern, cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10">
+    <meta property="og:image" content="https://soliktomasz.github.io/BusLane/assets/og-image.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/soliktomasz/BusLane/main/Assets/icon.png" sizes="any">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0078D4;
+            --primary-dark: #005a9e;
+            --primary-light: #4da3e8;
+            --accent: #FF8C00;
+            --accent-light: #FFA940;
+            --bg-dark: #0f1419;
+            --bg-card: #1a1f26;
+            --bg-card-hover: #242b34;
+            --text-primary: #ffffff;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border: #30363d;
+            --success: #3fb950;
+            --gradient-primary: linear-gradient(135deg, #0078D4 0%, #00BCF2 100%);
+            --gradient-accent: linear-gradient(135deg, #FF8C00 0%, #FFB347 100%);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 20, 25, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        
+        .nav-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+        
+        .nav-cta {
+            background: var(--gradient-primary);
+            color: white !important;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 120, 212, 0.4);
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 120, 212, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 140, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 188, 242, 0.05) 0%, transparent 70%);
+            z-index: 0;
+        }
+        
+        .hero-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(48, 54, 61, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(48, 54, 61, 0.3) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+            z-index: 0;
+        }
+        
+        .hero-content {
+            max-width: 900px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 120, 212, 0.1);
+            border: 1px solid rgba(0, 120, 212, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--primary-light);
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .hero-badge i {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.6s ease-out 0.1s backwards;
+        }
+        
+        .hero h1 .gradient {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero h1 .accent {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            animation: fadeInUp 0.6s ease-out 0.2s backwards;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease-out 0.3s backwards;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 120, 212, 0.5);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+        
+        .btn i {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Tech Badges */
+        .tech-badges {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+            animation: fadeInUp 0.6s ease-out 0.4s backwards;
+        }
+        
+        .tech-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .tech-badge img {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            position: relative;
+        }
+        
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .section-label {
+            display: inline-block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+        
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(0, 120, 212, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-light);
+        }
+        
+        .feature-icon i {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+        
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        /* Platforms Section */
+        .platforms {
+            padding: 6rem 2rem;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 120, 212, 0.03) 50%, transparent 100%);
+        }
+        
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .platform-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.3s;
+        }
+        
+        .platform-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+        
+        .platform-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+        }
+        
+        .platform-icon i {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .platform-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .platform-card p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        /* Installation Section */
+        .installation {
+            padding: 6rem 2rem;
+        }
+        
+        .install-tabs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .install-tab {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .install-tab:hover {
+            background: var(--bg-card-hover);
+        }
+        
+        .install-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .install-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .install-panel {
+            display: none;
+        }
+        
+        .install-panel.active {
+            display: block;
+        }
+        
+        .code-block {
+            background: #161b22;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .code-header span {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .copy-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+        
+        .copy-btn i {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .code-content {
+            padding: 1.25rem;
+            overflow-x: auto;
+        }
+        
+        .code-content code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            color: #c9d1d9;
+        }
+        
+        .code-content .comment {
+            color: #8b949e;
+        }
+        
+        .code-content .keyword {
+            color: #ff7b72;
+        }
+        
+        .code-content .string {
+            color: #a5d6ff;
+        }
+        
+        /* Security Section */
+        .security {
+            padding: 6rem 2rem;
+            background: linear-gradient(180deg, transparent 0%, rgba(63, 185, 80, 0.03) 50%, transparent 100%);
+        }
+        
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .security-card {
+            display: flex;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        
+        .security-card .icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background: rgba(63, 185, 80, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success);
+        }
+        
+        .security-card .icon i {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .security-card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .security-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        /* CTA Section */
+        .cta {
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+        
+        .cta-card {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem;
+            background: var(--gradient-primary);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        
+        .cta-card h2 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .cta-card p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        
+        .cta-buttons .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .cta-buttons .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+            color: white;
+        }
+        
+        .cta-buttons .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Footer */
+        footer {
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        
+        .footer-logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        
+        .footer-social a:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+        
+        .footer-social i {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .platforms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-card {
+                padding: 2.5rem 1.5rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <img src="assets/icon.png" onerror="this.src='https://raw.githubusercontent.com/soliktomasz/BusLane/main/Assets/icon.png'" alt="BusLane">
+                <span>BusLane</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#platforms">Platforms</a>
+                <a href="#installation">Installation</a>
+                <a href="#security">Security</a>
+                <a href="https://github.com/soliktomasz/BusLane/releases" class="nav-cta">Download</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i data-lucide="sparkles"></i>
+                <span>Version 0.6.0 — Now with Live Charts</span>
+            </div>
+            <h1>
+                Manage <span class="gradient">Azure Service Bus</span>
+                <br>with <span class="accent">Elegance</span>
+            </h1>
+            <p>
+                A modern, cross-platform tool for browsing queues, topics, and messages. 
+                Built with Avalonia UI and .NET 10 for a native experience on every platform.
+            </p>
+            <div class="hero-buttons">
+                <a href="https://github.com/soliktomasz/BusLane/releases" class="btn btn-primary">
+                    <i data-lucide="download"></i>
+                    Download Now
+                </a>
+                <a href="https://github.com/soliktomasz/BusLane" class="btn btn-secondary">
+                    <i data-lucide="github"></i>
+                    View on GitHub
+                </a>
+            </div>
+            <div class="tech-badges">
+                <span class="tech-badge">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#512BD4"><path d="M24 8.77h-2.468v7.565h-1.425V8.77h-2.462V7.53H24zm-6.852 7.565h-4.821V7.53h4.63v1.24h-3.205v2.494h2.953v1.234h-2.953v2.604h3.396zm-6.708 0H8.882L4.78 9.863a2.896 2.896 0 0 1-.258-.51h-.036c.032.189.048.592.048 1.21v5.772H3.157V7.53h1.659l3.965 6.32c.167.261.275.442.323.54h.024c-.04-.233-.06-.629-.06-1.185V7.529h1.372zm-8.703-.693a.868.868 0 0 1-.644.26.868.868 0 0 1-.644-.26.893.893 0 0 1-.256-.653c0-.26.085-.48.256-.658a.868.868 0 0 1 .644-.26c.249 0 .464.087.644.26a.893.893 0 0 1 .256.658.893.893 0 0 1-.256.653z"/></svg>
+                    .NET 10
+                </span>
+                <span class="tech-badge">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#8B44AC"><circle cx="12" cy="12" r="10" fill="none" stroke="#8B44AC" stroke-width="2"/><path d="M12 6v6l4 2" fill="none" stroke="#8B44AC" stroke-width="2" stroke-linecap="round"/></svg>
+                    Avalonia UI
+                </span>
+                <span class="tech-badge">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#0078D4"><path d="M5.483 21.3H24L14.025 4.013l-3.038 8.347 5.836 6.938L5.483 21.3zM13.049 2.7L6.617 4.682 0 21.3h5.483l7.566-18.6z" fill="#0078D4"/></svg>
+                    Azure Identity
+                </span>
+                <span class="tech-badge">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 0L2 4v8c0 5.55 4.26 10.74 10 12 5.74-1.26 10-6.45 10-12V4L12 0zm0 2.18l8 3.12v6.7c0 4.5-3.4 8.7-8 9.82-4.6-1.12-8-5.32-8-9.82V5.3l8-3.12z" fill="#3fb950"/><path d="M10 14.2l-2.6-2.6L6 13l4 4 8-8-1.4-1.4L10 14.2z" fill="#3fb950"/></svg>
+                    AES-256 Encryption
+                </span>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-label">Features</span>
+                <h2 class="section-title">Everything You Need</h2>
+                <p class="section-subtitle">
+                    A comprehensive toolkit for managing Azure Service Bus resources with ease and efficiency.
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="key-round"></i>
+                    </div>
+                    <h3>Flexible Authentication</h3>
+                    <p>Sign in with Azure Identity or use connection strings. Save multiple connections for quick access.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="folder-tree"></i>
+                    </div>
+                    <h3>Namespace Explorer</h3>
+                    <p>Browse subscriptions, namespaces, queues, and topics with an intuitive tree view interface.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="mail"></i>
+                    </div>
+                    <h3>Message Management</h3>
+                    <p>Peek, send, and manage messages with full control over body, headers, and custom properties.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="archive-x"></i>
+                    </div>
+                    <h3>Dead Letter Queue</h3>
+                    <p>View and manage dead-lettered messages. Understand why messages failed processing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="bookmark"></i>
+                    </div>
+                    <h3>Message Templates</h3>
+                    <p>Save and load message templates for repeated testing and debugging scenarios.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="activity"></i>
+                    </div>
+                    <h3>Live Monitoring</h3>
+                    <p>Real-time charts and metrics for queue depths, message rates, and performance insights.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Platforms Section -->
+    <section class="platforms" id="platforms">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-label">Cross-Platform</span>
+                <h2 class="section-title">Works Everywhere</h2>
+                <p class="section-subtitle">
+                    Native experience on macOS, Windows, and Linux with a single codebase.
+                </p>
+            </div>
+            <div class="platforms-grid">
+                <div class="platform-card">
+                    <div class="platform-icon">
+                        <i data-lucide="apple"></i>
+                    </div>
+                    <h3>macOS</h3>
+                    <p>Intel & Apple Silicon</p>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-icon">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+                    </div>
+                    <h3>Windows</h3>
+                    <p>x64 & ARM64</p>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-icon">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.468v.02c.002.134.017.267.051.399.009.054.022.106.04.156a.807.807 0 00-.098.064.939.939 0 01-.208-.086c-.103-.066-.138-.197-.193-.333a1.56 1.56 0 01-.054-.666 1.552 1.552 0 01.166-.725c.108-.2.248-.4.438-.533.19-.136.373-.198.585-.198zm-2.004 1.227c.243.098.484.229.725.426l.004.003c.25.194.442.427.61.668.118-.022.232-.034.34-.034.106 0 .204.01.292.037.238-.333.49-.65.85-.942.193-.159.394-.256.6-.343.086.292.141.56.154.892l.001.003c.005.323-.026.658-.092 1.001a2.5 2.5 0 01-.181.522 2.048 2.048 0 01-1.183 1.053c-.312.102-.645.148-1.004.148-.355 0-.694-.043-1.016-.158-.306-.109-.593-.27-.848-.516a2.034 2.034 0 01-.374-.477 2.443 2.443 0 01-.258-.73 3.618 3.618 0 01-.045-1.143c.02-.132.046-.258.08-.384.256.078.532.195.835.37z"/></svg>
+                    </div>
+                    <h3>Linux</h3>
+                    <p>x64 & ARM64</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Installation Section -->
+    <section class="installation" id="installation">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-label">Get Started</span>
+                <h2 class="section-title">Installation</h2>
+                <p class="section-subtitle">
+                    Download a pre-built release or build from source.
+                </p>
+            </div>
+            <div class="install-tabs">
+                <button class="install-tab active" data-tab="download">Download</button>
+                <button class="install-tab" data-tab="build">Build from Source</button>
+            </div>
+            <div class="install-content">
+                <div class="install-panel active" id="download">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Download Latest Release</span>
+                            <a href="https://github.com/soliktomasz/BusLane/releases" class="copy-btn">
+                                <i data-lucide="external-link"></i>
+                                GitHub Releases
+                            </a>
+                        </div>
+                        <div class="code-content">
+                            <code>
+<span class="comment"># macOS users: Remove quarantine attribute</span>
+xattr -cr "/Applications/Bus Lane.app"
+
+<span class="comment"># Then open the app normally</span>
+                            </code>
+                        </div>
+                    </div>
+                </div>
+                <div class="install-panel" id="build">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" onclick="copyCode()">
+                                <i data-lucide="copy"></i>
+                                Copy
+                            </button>
+                        </div>
+                        <div class="code-content">
+                            <code>
+<span class="comment"># Clone the repository</span>
+<span class="keyword">git</span> clone https://github.com/soliktomasz/BusLane.git
+<span class="keyword">cd</span> BusLane
+
+<span class="comment"># Build and run</span>
+<span class="keyword">dotnet</span> build
+<span class="keyword">dotnet</span> run
+
+<span class="comment"># Or publish self-contained</span>
+<span class="keyword">dotnet</span> publish -c Release -r osx-arm64 --self-contained
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Security Section -->
+    <section class="security" id="security">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-label">Security First</span>
+                <h2 class="section-title">Your Data is Protected</h2>
+                <p class="section-subtitle">
+                    BusLane implements multiple layers of protection for your sensitive connection data.
+                </p>
+            </div>
+            <div class="security-grid">
+                <div class="security-card">
+                    <div class="icon">
+                        <i data-lucide="lock"></i>
+                    </div>
+                    <div>
+                        <h4>AES-256 Encryption</h4>
+                        <p>Connection strings are encrypted with machine-specific keys</p>
+                    </div>
+                </div>
+                <div class="security-card">
+                    <div class="icon">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <div>
+                        <h4>Secure Token Storage</h4>
+                        <p>Azure tokens stored in system Keychain/Credential Manager</p>
+                    </div>
+                </div>
+                <div class="security-card">
+                    <div class="icon">
+                        <i data-lucide="eye-off"></i>
+                    </div>
+                    <div>
+                        <h4>Password Masking</h4>
+                        <p>Connection strings displayed with bullet characters in UI</p>
+                    </div>
+                </div>
+                <div class="security-card">
+                    <div class="icon">
+                        <i data-lucide="hard-drive"></i>
+                    </div>
+                    <div>
+                        <h4>Local Storage Only</h4>
+                        <p>Credentials never leave your machine or transmit externally</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="section-container">
+            <div class="cta-card">
+                <h2>Ready to streamline your Service Bus workflow?</h2>
+                <p>Download BusLane today and experience modern Azure Service Bus management.</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/soliktomasz/BusLane/releases" class="btn btn-primary">
+                        <i data-lucide="download"></i>
+                        Download for Free
+                    </a>
+                    <a href="https://www.buymeacoffee.com/tomaszsolik" class="btn btn-secondary">
+                        <i data-lucide="coffee"></i>
+                        Buy Me a Coffee
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <a href="#" class="footer-logo">
+                <img src="assets/icon.png" onerror="this.src='https://raw.githubusercontent.com/soliktomasz/BusLane/main/Assets/icon.png'" alt="BusLane">
+                <span>BusLane</span>
+            </a>
+            <div class="footer-links">
+                <a href="https://github.com/soliktomasz/BusLane">GitHub</a>
+                <a href="https://github.com/soliktomasz/BusLane/releases">Releases</a>
+                <a href="https://github.com/soliktomasz/BusLane/blob/main/LICENSE">License</a>
+                <a href="https://github.com/soliktomasz/BusLane/blob/main/SECURITY.md">Security</a>
+            </div>
+            <div class="footer-social">
+                <a href="https://github.com/soliktomasz/BusLane" aria-label="GitHub">
+                    <i data-lucide="github"></i>
+                </a>
+                <a href="https://www.buymeacoffee.com/tomaszsolik" aria-label="Buy Me a Coffee">
+                    <i data-lucide="coffee"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Tab functionality
+        document.querySelectorAll('.install-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and panels
+                document.querySelectorAll('.install-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.install-panel').forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding panel
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Copy code functionality
+        function copyCode() {
+            const code = document.querySelector('#build .code-content code').innerText;
+            navigator.clipboard.writeText(code.replace(/^#.*$/gm, '').trim());
+            
+            const btn = document.querySelector('#build .copy-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check"></i> Copied!';
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }, 2000);
+        }
+        
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
