@@ -131,4 +131,31 @@ public class EnvironmentTabConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Converter for checking if a message is in the SelectedMessages collection.
+/// This is a multi-value converter that takes:
+/// - values[0]: The message to check
+/// - values[1]: The SelectedMessages collection
+/// - values[2]: (optional) SelectionVersion - not used but forces re-evaluation when changed
+/// </summary>
+public class MessageSelectionConverter : IMultiValueConverter
+{
+    public static readonly MessageSelectionConverter Instance = new();
+
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+            return false;
+
+        var message = values[0];
+        var selectedMessages = values[1] as System.Collections.IList;
+
+        if (message == null || selectedMessages == null)
+            return false;
+
+        // values[2] is SelectionVersion - we don't use it but its presence forces re-evaluation
+        return selectedMessages.Contains(message);
+    }
+}
+
 

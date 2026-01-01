@@ -89,14 +89,40 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private AlertsViewModel? _alertsViewModel;
     [ObservableProperty] private int _activeAlertCount;
 
+    // Multi-select support for bulk operations
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedMessages))]
+    [NotifyPropertyChangedFor(nameof(SelectedMessagesCount))]
+    [NotifyPropertyChangedFor(nameof(CanResubmitDeadLetters))]
+    private bool _isMultiSelectMode;
+
+    // Selection version counter to force UI refresh when selection changes
+    [ObservableProperty]
+    private int _selectionVersion;
+
+    partial void OnIsMultiSelectModeChanged(bool value)
+    {
+        if (!value)
+        {
+            SelectedMessages.Clear();
+            SelectionVersion++;
+        }
+    }
+
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
     public ObservableCollection<TopicInfo> Topics { get; } = [];
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
     public ObservableCollection<MessageInfo> Messages { get; } = [];
+    public ObservableCollection<MessageInfo> SelectedMessages { get; } = [];
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
     public ObservableCollection<SavedConnection> FavoriteConnections { get; } = [];
+
+    // Multi-select computed properties
+    public bool HasSelectedMessages => SelectedMessages.Count > 0;
+    public int SelectedMessagesCount => SelectedMessages.Count;
+    public bool CanResubmitDeadLetters => HasSelectedMessages && ShowDeadLetter;
 
     // Computed properties for visibility bindings (Count doesn't notify on collection changes)
     public bool HasQueues => Queues.Count > 0;
@@ -255,6 +281,12 @@ public partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasDeadLetters));
         };
         FavoriteConnections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFavoriteConnections));
+        SelectedMessages.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasSelectedMessages));
+            OnPropertyChanged(nameof(SelectedMessagesCount));
+            OnPropertyChanged(nameof(CanResubmitDeadLetters));
+        };
 
         // Initialize auto-refresh timer
         InitializeAutoRefreshTimer();
@@ -514,6 +546,8 @@ public partial class MainWindowViewModel : ViewModelBase
         Topics.Clear();
         TopicSubscriptions.Clear();
         Messages.Clear();
+        SelectedMessages.Clear();
+        IsMultiSelectMode = false;
         SelectedNamespace = null;
         SelectedEntity = null;
         SelectedQueue = null;
@@ -701,6 +735,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
         MessageSearchText = ""; // Clear search when loading new messages
+        SelectedMessages.Clear(); // Clear multi-select when loading new messages
 
         try
         {
@@ -1093,6 +1128,259 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    #region Bulk Operations
+
+    [RelayCommand]
+    private void ToggleMultiSelectMode()
+    {
+        IsMultiSelectMode = !IsMultiSelectMode;
+        if (!IsMultiSelectMode)
+        {
+            SelectedMessages.Clear();
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleMessageSelection(MessageInfo message)
+    {
+        if (SelectedMessages.Contains(message))
+        {
+            SelectedMessages.Remove(message);
+        }
+        else
+        {
+            SelectedMessages.Add(message);
+        }
+        SelectionVersion++;
+    }
+
+    [RelayCommand]
+    private void SelectAllMessages()
+    {
+        SelectedMessages.Clear();
+        foreach (var msg in FilteredMessages)
+        {
+            SelectedMessages.Add(msg);
+        }
+        SelectionVersion++;
+    }
+
+    [RelayCommand]
+    private void DeselectAllMessages()
+    {
+        SelectedMessages.Clear();
+        SelectionVersion++;
+    }
+
+    [RelayCommand]
+    private async Task BulkResendMessagesAsync()
+    {
+        if (!HasSelectedMessages) return;
+
+        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        if (entityName == null) return;
+
+        var count = SelectedMessagesCount;
+        
+        if (Preferences.ConfirmBeforePurge) // Reusing this preference for destructive operations
+        {
+            ShowConfirmation(
+                "Confirm Bulk Resend",
+                $"Are you sure you want to resend {count} message(s) to '{entityName}'?",
+                "Resend",
+                async () => await ExecuteBulkResendAsync(entityName)
+            );
+        }
+        else
+        {
+            await ExecuteBulkResendAsync(entityName);
+        }
+    }
+
+    private async Task ExecuteBulkResendAsync(string entityName)
+    {
+        IsLoading = true;
+        var count = SelectedMessagesCount;
+        StatusMessage = $"Resending {count} message(s)...";
+
+        try
+        {
+            var messagesToResend = SelectedMessages.ToList();
+            int sentCount;
+
+            if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+            {
+                sentCount = await _connectionStringService.ResendMessagesAsync(
+                    ActiveConnection.ConnectionString, entityName, messagesToResend);
+            }
+            else if (SelectedNamespace != null)
+            {
+                sentCount = await _serviceBus.ResendMessagesAsync(
+                    SelectedNamespace.Endpoint, entityName, messagesToResend);
+            }
+            else
+            {
+                return;
+            }
+
+            StatusMessage = $"Successfully resent {sentCount} of {count} message(s)";
+            SelectedMessages.Clear();
+            await LoadMessagesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error resending messages: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task BulkDeleteMessagesAsync()
+    {
+        if (!HasSelectedMessages) return;
+
+        string? entityName = null;
+        string? subscription = null;
+
+        if (SelectedQueue != null)
+        {
+            entityName = SelectedQueue.Name;
+        }
+        else if (SelectedSubscription != null)
+        {
+            entityName = SelectedSubscription.TopicName;
+            subscription = SelectedSubscription.Name;
+        }
+
+        if (entityName == null) return;
+
+        var count = SelectedMessagesCount;
+        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
+
+        ShowConfirmation(
+            "Confirm Bulk Delete",
+            $"Are you sure you want to delete {count} message(s) from '{targetName}'? This action cannot be undone.",
+            "Delete",
+            async () => await ExecuteBulkDeleteAsync(entityName, subscription)
+        );
+    }
+
+    private async Task ExecuteBulkDeleteAsync(string entityName, string? subscription)
+    {
+        IsLoading = true;
+        var count = SelectedMessagesCount;
+        StatusMessage = $"Deleting {count} message(s)...";
+
+        try
+        {
+            var sequenceNumbers = SelectedMessages.Select(m => m.SequenceNumber).ToList();
+            int deletedCount;
+
+            if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+            {
+                deletedCount = await _connectionStringService.DeleteMessagesAsync(
+                    ActiveConnection.ConnectionString, entityName, subscription, sequenceNumbers);
+            }
+            else if (SelectedNamespace != null)
+            {
+                deletedCount = await _serviceBus.DeleteMessagesAsync(
+                    SelectedNamespace.Endpoint, entityName, subscription, sequenceNumbers);
+            }
+            else
+            {
+                return;
+            }
+
+            StatusMessage = $"Successfully deleted {deletedCount} of {count} message(s)";
+            SelectedMessages.Clear();
+            await LoadMessagesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error deleting messages: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ResubmitDeadLetterMessagesAsync()
+    {
+        if (!HasSelectedMessages || !ShowDeadLetter) return;
+
+        string? entityName = null;
+        string? subscription = null;
+
+        if (SelectedQueue != null)
+        {
+            entityName = SelectedQueue.Name;
+        }
+        else if (SelectedSubscription != null)
+        {
+            entityName = SelectedSubscription.TopicName;
+            subscription = SelectedSubscription.Name;
+        }
+
+        if (entityName == null) return;
+
+        var count = SelectedMessagesCount;
+        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
+
+        ShowConfirmation(
+            "Confirm Resubmit Dead Letters",
+            $"Are you sure you want to resubmit {count} message(s) from the dead letter queue back to '{targetName}'?",
+            "Resubmit",
+            async () => await ExecuteResubmitDeadLettersAsync(entityName, subscription)
+        );
+    }
+
+    private async Task ExecuteResubmitDeadLettersAsync(string entityName, string? subscription)
+    {
+        IsLoading = true;
+        var count = SelectedMessagesCount;
+        StatusMessage = $"Resubmitting {count} dead letter message(s)...";
+
+        try
+        {
+            var messagesToResubmit = SelectedMessages.ToList();
+            int resubmittedCount;
+
+            if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
+            {
+                resubmittedCount = await _connectionStringService.ResubmitDeadLetterMessagesAsync(
+                    ActiveConnection.ConnectionString, entityName, subscription, messagesToResubmit);
+            }
+            else if (SelectedNamespace != null)
+            {
+                resubmittedCount = await _serviceBus.ResubmitDeadLetterMessagesAsync(
+                    SelectedNamespace.Endpoint, entityName, subscription, messagesToResubmit);
+            }
+            else
+            {
+                return;
+            }
+
+            StatusMessage = $"Successfully resubmitted {resubmittedCount} of {count} message(s)";
+            SelectedMessages.Clear();
+            await LoadMessagesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error resubmitting messages: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    #endregion
+
     [RelayCommand]
     private void ToggleSortOrder()
     {
@@ -1297,11 +1585,13 @@ public partial class MainWindowViewModel : ViewModelBase
         Topics.Clear();
         TopicSubscriptions.Clear();
         Messages.Clear();
+        SelectedMessages.Clear();
         SelectedQueue = null;
         SelectedTopic = null;
         SelectedSubscription = null;
         SelectedMessage = null;
         SelectedEntity = null;
+        IsMultiSelectMode = false;
         await LoadSavedConnectionsAsync();
         StatusMessage = "Disconnected";
     }
@@ -1331,6 +1621,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsLoadingMessages = true;
         StatusMessage = "Loading messages...";
         MessageSearchText = ""; // Clear search when loading new messages
+        SelectedMessages.Clear(); // Clear multi-select when loading new messages
 
         try
         {

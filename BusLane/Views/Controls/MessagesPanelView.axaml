@@ -2,14 +2,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
+             xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.MessagesPanelView"
              x:DataType="vm:MainWindowViewModel">
+
+    <UserControl.Resources>
+        <converters:MessageSelectionConverter x:Key="MessageSelectionConverter"/>
+    </UserControl.Resources>
 
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
             <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16,16,16,12">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
                     <!-- Title and Actions Row -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
@@ -29,6 +34,16 @@
                             </Button>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                            <!-- Multi-select toggle button -->
+                            <ToggleButton Classes="subtle small"
+                                          IsChecked="{Binding IsMultiSelectMode, Mode=TwoWay}"
+                                          ToolTip.Tip="Toggle multi-select mode"
+                                          Padding="8,6">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12"/>
+                                    <TextBlock Text="Select"/>
+                                </StackPanel>
+                            </ToggleButton>
                             <Button Classes="subtle small"
                                     Content="{Binding SortButtonText}"
                                     Command="{Binding ToggleSortOrderCommand}"
@@ -46,8 +61,62 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Search Row -->
+                    <!-- Bulk Actions Bar (visible when messages are selected) -->
                     <Border Grid.Row="1"
+                            Background="{DynamicResource SurfaceAccent}"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            IsVisible="{Binding HasSelectedMessages}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="{Binding SelectedMessagesCount, StringFormat='{}{0} selected'}"
+                                           FontWeight="SemiBold"
+                                           FontSize="13"
+                                           VerticalAlignment="Center"/>
+                                <Button Classes="subtle small"
+                                        Content="Select All"
+                                        Command="{Binding SelectAllMessagesCommand}"
+                                        Padding="8,4"/>
+                                <Button Classes="subtle small"
+                                        Content="Deselect All"
+                                        Command="{Binding DeselectAllMessagesCommand}"
+                                        Padding="8,4"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                <Button Classes="primary small"
+                                        Command="{Binding BulkResendMessagesCommand}"
+                                        Padding="12,6"
+                                        ToolTip.Tip="Resend selected messages">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <PathIcon Data="{StaticResource IconSend}" Width="12" Height="12"/>
+                                        <TextBlock Text="Resend"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="warning small"
+                                        Command="{Binding ResubmitDeadLetterMessagesCommand}"
+                                        IsVisible="{Binding ShowDeadLetter}"
+                                        Padding="12,6"
+                                        ToolTip.Tip="Resubmit selected messages from dead letter queue">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <PathIcon Data="{StaticResource IconRefresh}" Width="12" Height="12"/>
+                                        <TextBlock Text="Resubmit"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="danger small"
+                                        Command="{Binding BulkDeleteMessagesCommand}"
+                                        Padding="12,6"
+                                        ToolTip.Tip="Delete selected messages">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
+                                        <TextBlock Text="Delete"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Search Row -->
+                    <Border Grid.Row="2"
                             Background="{DynamicResource SurfaceSubtle}"
                             CornerRadius="6"
                             Padding="8,6">
@@ -116,7 +185,24 @@
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:MessageInfo">
-                                    <Button Classes="subtle"
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <!-- Checkbox for multi-select mode -->
+                                        <CheckBox Grid.Column="0"
+                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsMultiSelectMode}"
+                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleMessageSelectionCommand}"
+                                                  CommandParameter="{Binding}"
+                                                  Margin="0,0,8,0"
+                                                  VerticalAlignment="Center">
+                                            <CheckBox.IsChecked>
+                                                <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
+                                                    <Binding Path="."/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedMessages"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectionVersion"/>
+                                                </MultiBinding>
+                                            </CheckBox.IsChecked>
+                                        </CheckBox>
+                                    <Button Grid.Column="1"
+                                            Classes="subtle"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
@@ -174,6 +260,7 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </Button>
+                                    </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -213,7 +300,24 @@
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:MessageInfo">
-                                    <Button Classes="subtle"
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <!-- Checkbox for multi-select mode -->
+                                        <CheckBox Grid.Column="0"
+                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsMultiSelectMode}"
+                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleMessageSelectionCommand}"
+                                                  CommandParameter="{Binding}"
+                                                  Margin="0,0,8,0"
+                                                  VerticalAlignment="Center">
+                                            <CheckBox.IsChecked>
+                                                <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
+                                                    <Binding Path="."/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedMessages"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectionVersion"/>
+                                                </MultiBinding>
+                                            </CheckBox.IsChecked>
+                                        </CheckBox>
+                                    <Button Grid.Column="1"
+                                            Classes="subtle"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
@@ -279,6 +383,7 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </Button>
+                                    </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
