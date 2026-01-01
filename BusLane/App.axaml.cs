@@ -2,9 +2,11 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using BusLane.Services.Abstractions;
 using BusLane.ViewModels;
 using BusLane.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +16,11 @@ namespace BusLane;
 public partial class App : Application
 {
     public static App? Instance { get; private set; }
+    
+    /// <summary>
+    /// Gets the main window (used for file dialogs).
+    /// </summary>
+    public static Window? MainWindow { get; private set; }
     
     public override void Initialize()
     {
@@ -28,7 +35,14 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var vm = Program.Services!.GetRequiredService<MainWindowViewModel>();
-            desktop.MainWindow = new MainWindow { DataContext = vm, Title = "Bus Lane"};
+            var mainWindow = new MainWindow { DataContext = vm };
+            MainWindow = mainWindow;
+            
+            // Set up file dialog service now that we have the window
+            var fileDialogService = new FileDialogService(() => MainWindow);
+            vm.SetFileDialogService(fileDialogService);
+            
+            desktop.MainWindow = mainWindow;
         }
         base.OnFrameworkInitializationCompleted();
     }

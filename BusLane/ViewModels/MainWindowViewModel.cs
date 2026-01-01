@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.ViewModels;
 
+using Services.Abstractions;
 using Services.Auth;
 using Services.Infrastructure;
 using Services.Monitoring;
@@ -30,6 +31,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IMetricsService _metricsService;
     private readonly IAlertService _alertService;
     private readonly INotificationService _notificationService;
+    private IFileDialogService? _fileDialogService;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
@@ -219,7 +221,8 @@ public partial class MainWindowViewModel : ViewModelBase
         ILiveStreamService liveStreamService,
         IMetricsService metricsService,
         IAlertService alertService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
         _serviceBus = serviceBus;
@@ -230,6 +233,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _metricsService = metricsService;
         _alertService = alertService;
         _notificationService = notificationService;
+        _fileDialogService = fileDialogService;
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
 
         // Subscribe to alert events
@@ -254,6 +258,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Initialize auto-refresh timer
         InitializeAutoRefreshTimer();
+    }
+
+    /// <summary>
+    /// Sets the file dialog service. Called after the main window is created.
+    /// </summary>
+    public void SetFileDialogService(IFileDialogService fileDialogService)
+    {
+        _fileDialogService = fileDialogService;
     }
 
     private void OnAlertTriggered(object? sender, Models.AlertEvent alert)
@@ -729,7 +741,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 ActiveConnection.ConnectionString,
                 entityName,
                 CloseSendMessagePopup,
-                msg => StatusMessage = msg
+                msg => StatusMessage = msg,
+                _fileDialogService
             );
         }
         else if (SelectedNamespace != null)
@@ -740,7 +753,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 SelectedNamespace.Endpoint,
                 entityName,
                 CloseSendMessagePopup,
-                msg => StatusMessage = msg
+                msg => StatusMessage = msg,
+                _fileDialogService
             );
         }
         else
@@ -950,7 +964,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 ActiveConnection.ConnectionString,
                 entityName,
                 CloseSendMessagePopup,
-                status => StatusMessage = status
+                status => StatusMessage = status,
+                _fileDialogService
             );
         }
         else if (SelectedNamespace != null)
@@ -960,7 +975,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 SelectedNamespace.Endpoint,
                 entityName,
                 CloseSendMessagePopup,
-                status => StatusMessage = status
+                status => StatusMessage = status,
+                _fileDialogService
             );
         }
         else
@@ -974,6 +990,80 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Clear selected message to close the detail dialog
         SelectedMessage = null;
+    }
+
+    /// <summary>
+    /// File type filter for JSON files.
+    /// </summary>
+    private static readonly Avalonia.Platform.Storage.FilePickerFileType JsonFileType = new("JSON Files")
+    {
+        Patterns = new[] { "*.json" },
+        MimeTypes = new[] { "application/json" }
+    };
+
+    [RelayCommand]
+    private async Task ExportMessageAsync(MessageInfo? message = null)
+    {
+        var msg = message ?? SelectedMessage;
+        if (msg == null) return;
+
+        if (_fileDialogService == null)
+        {
+            StatusMessage = "File dialog service not available";
+            return;
+        }
+
+        try
+        {
+            var safeName = string.Join("_", (msg.MessageId ?? "message").Split(Path.GetInvalidFileNameChars()));
+            var defaultFileName = $"Message_{safeName}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var filePath = await _fileDialogService.SaveFileAsync(
+                "Export Message",
+                defaultFileName,
+                new[] { JsonFileType });
+
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            // Convert MessageInfo to a SavedMessage-compatible format for export
+            var exportMessage = new Models.SavedMessage
+            {
+                Name = $"Exported: {msg.MessageId}",
+                Body = msg.Body,
+                ContentType = msg.ContentType,
+                CorrelationId = msg.CorrelationId,
+                MessageId = msg.MessageId,
+                SessionId = msg.SessionId,
+                Subject = msg.Subject,
+                To = msg.To,
+                ReplyTo = msg.ReplyTo,
+                ReplyToSessionId = msg.ReplyToSessionId,
+                PartitionKey = msg.PartitionKey,
+                TimeToLive = msg.TimeToLive,
+                ScheduledEnqueueTime = msg.ScheduledEnqueueTime,
+                CustomProperties = msg.Properties?.ToDictionary(
+                    p => p.Key,
+                    p => p.Value?.ToString() ?? "") ?? new Dictionary<string, string>(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var exportContainer = new Models.MessageExportContainer
+            {
+                Description = $"Exported message from {SelectedQueue?.Name ?? SelectedSubscription?.Name}",
+                Messages = new List<Models.SavedMessage> { exportMessage }
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(exportContainer, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await File.WriteAllTextAsync(filePath, json);
+            StatusMessage = $"Exported message to {Path.GetFileName(filePath)}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to export message: {ex.Message}";
+        }
     }
 
     [RelayCommand]

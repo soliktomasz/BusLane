@@ -51,6 +51,14 @@
                                     HorizontalAlignment="Right" 
                                     VerticalAlignment="Center"
                                     Spacing="4">
+                            <Button Classes="toolbar" 
+                                    ToolTip.Tip="Import message from JSON file"
+                                    Command="{Binding SendMessageViewModel.ImportMessagesCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="📥" FontSize="14"/>
+                                    <TextBlock Text="Import" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             <Button Classes="toolbar" ToolTip.Tip="Load saved template">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <TextBlock Text="📂" FontSize="14"/>

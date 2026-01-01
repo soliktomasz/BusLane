@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using Avalonia.Platform.Storage;
 using BusLane.Models;
+using BusLane.Services.Abstractions;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,6 +15,7 @@ public partial class SendMessageViewModel : ViewModelBase
 {
     private readonly IServiceBusService? _serviceBus;
     private readonly IConnectionStringService? _connectionStringService;
+    private readonly IFileDialogService? _fileDialogService;
     private readonly string _endpoint;
     private readonly string _entityName;
     private readonly string? _connectionString;
@@ -55,10 +58,12 @@ public partial class SendMessageViewModel : ViewModelBase
         string endpoint,
         string entityName,
         Action onClose,
-        Action<string> onStatusUpdate)
+        Action<string> onStatusUpdate,
+        IFileDialogService? fileDialogService = null)
     {
         _serviceBus = serviceBus;
         _connectionStringService = null;
+        _fileDialogService = fileDialogService;
         _endpoint = endpoint;
         _entityName = entityName;
         _connectionString = null;
@@ -74,10 +79,12 @@ public partial class SendMessageViewModel : ViewModelBase
         string connectionString,
         string entityName,
         Action onClose,
-        Action<string> onStatusUpdate)
+        Action<string> onStatusUpdate,
+        IFileDialogService? fileDialogService = null)
     {
         _serviceBus = null;
         _connectionStringService = connectionStringService;
+        _fileDialogService = fileDialogService;
         _endpoint = "";
         _entityName = entityName;
         _connectionString = connectionString;
@@ -289,6 +296,198 @@ public partial class SendMessageViewModel : ViewModelBase
     {
         SavedMessages.Remove(message);
         PersistSavedMessages();
+    }
+
+    /// <summary>
+    /// File type filter for JSON files.
+    /// </summary>
+    private static readonly FilePickerFileType JsonFileType = new("JSON Files")
+    {
+        Patterns = new[] { "*.json" },
+        MimeTypes = new[] { "application/json" }
+    };
+
+    /// <summary>
+    /// Exports all saved messages to a JSON file.
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportMessagesAsync()
+    {
+        if (_fileDialogService == null)
+        {
+            ErrorMessage = "File dialog service not available";
+            return;
+        }
+
+        if (SavedMessages.Count == 0)
+        {
+            ErrorMessage = "No saved messages to export";
+            return;
+        }
+
+        try
+        {
+            var defaultFileName = $"BusLane_Messages_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var filePath = await _fileDialogService.SaveFileAsync(
+                "Export Messages",
+                defaultFileName,
+                new[] { JsonFileType });
+
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            var exportContainer = new MessageExportContainer
+            {
+                Description = $"Exported from BusLane on {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                Messages = SavedMessages.ToList()
+            };
+
+            var json = JsonSerializer.Serialize(exportContainer, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await File.WriteAllTextAsync(filePath, json);
+            _onStatusUpdate($"Exported {SavedMessages.Count} message(s) to {Path.GetFileName(filePath)}");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to export: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Exports a single saved message to a JSON file.
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportSingleMessageAsync(SavedMessage message)
+    {
+        if (_fileDialogService == null)
+        {
+            ErrorMessage = "File dialog service not available";
+            return;
+        }
+
+        try
+        {
+            var safeName = string.Join("_", message.Name.Split(Path.GetInvalidFileNameChars()));
+            var defaultFileName = $"{safeName}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var filePath = await _fileDialogService.SaveFileAsync(
+                "Export Message",
+                defaultFileName,
+                new[] { JsonFileType });
+
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            var exportContainer = new MessageExportContainer
+            {
+                Description = $"Single message export: {message.Name}",
+                Messages = new List<SavedMessage> { message }
+            };
+
+            var json = JsonSerializer.Serialize(exportContainer, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await File.WriteAllTextAsync(filePath, json);
+            _onStatusUpdate($"Exported message '{message.Name}' to {Path.GetFileName(filePath)}");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to export: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Imports messages from a JSON file and loads the first one into the form.
+    /// </summary>
+    [RelayCommand]
+    private async Task ImportMessagesAsync()
+    {
+        if (_fileDialogService == null)
+        {
+            ErrorMessage = "File dialog service not available";
+            return;
+        }
+
+        try
+        {
+            var filePath = await _fileDialogService.OpenFileAsync(
+                "Import Messages",
+                new[] { JsonFileType });
+
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            var json = await File.ReadAllTextAsync(filePath);
+            
+            // Try to parse as MessageExportContainer first
+            var importedMessages = new List<SavedMessage>();
+            try
+            {
+                var container = JsonSerializer.Deserialize<MessageExportContainer>(json);
+                if (container?.Messages != null)
+                {
+                    foreach (var msg in container.Messages)
+                    {
+                        // Generate new ID to avoid duplicates
+                        msg.Id = Guid.NewGuid().ToString();
+                        msg.CreatedAt = DateTime.UtcNow;
+                        importedMessages.Add(msg);
+                    }
+                }
+            }
+            catch
+            {
+                // Fall back to trying to parse as a list of SavedMessage (legacy format)
+                try
+                {
+                    var messages = JsonSerializer.Deserialize<List<SavedMessage>>(json);
+                    if (messages != null)
+                    {
+                        foreach (var msg in messages)
+                        {
+                            msg.Id = Guid.NewGuid().ToString();
+                            msg.CreatedAt = DateTime.UtcNow;
+                            importedMessages.Add(msg);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Try parsing as single SavedMessage
+                    var singleMsg = JsonSerializer.Deserialize<SavedMessage>(json);
+                    if (singleMsg != null)
+                    {
+                        singleMsg.Id = Guid.NewGuid().ToString();
+                        singleMsg.CreatedAt = DateTime.UtcNow;
+                        importedMessages.Add(singleMsg);
+                    }
+                }
+            }
+
+            if (importedMessages.Count > 0)
+            {
+                // Add all imported messages to SavedMessages collection
+                foreach (var msg in importedMessages)
+                {
+                    SavedMessages.Add(msg);
+                }
+                PersistSavedMessages();
+                
+                // Load the first imported message into the form
+                LoadMessage(importedMessages[0]);
+                
+                _onStatusUpdate($"Imported and loaded message from {Path.GetFileName(filePath)}");
+            }
+            else
+            {
+                ErrorMessage = "No valid messages found in the file";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to import: {ex.Message}";
+        }
     }
 
     /// <summary>

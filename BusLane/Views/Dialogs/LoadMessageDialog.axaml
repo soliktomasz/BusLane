@@ -21,27 +21,45 @@
                         CornerRadius="12,12,0,0"
                         BorderBrush="{DynamicResource BorderMuted}"
                         BorderThickness="0,0,0,1">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Border Background="{DynamicResource SurfaceBrand}" 
-                                    CornerRadius="8" 
-                                    Width="40" Height="40">
-                                <TextBlock Text="📂" 
-                                           FontSize="18" 
-                                           HorizontalAlignment="Center" 
-                                           VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Load Template" Classes="heading"/>
-                                <TextBlock Text="Select a saved message template" Classes="caption"/>
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Border Background="{DynamicResource SurfaceBrand}" 
+                                        CornerRadius="8" 
+                                        Width="40" Height="40">
+                                    <TextBlock Text="📂" 
+                                               FontSize="18" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Load Template" Classes="heading"/>
+                                    <TextBlock Text="Select a saved message template" Classes="caption"/>
+                                </StackPanel>
                             </StackPanel>
+                            <Button Classes="icon" 
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding SendMessageViewModel.HideLoadCommand}">
+                                <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                            </Button>
+                        </Grid>
+                        <!-- Import/Export buttons row -->
+                        <StackPanel Grid.Row="1" 
+                                    Orientation="Horizontal" 
+                                    Spacing="8" 
+                                    Margin="0,12,0,0"
+                                    HorizontalAlignment="Left">
+                            <Button Classes="secondary small" 
+                                    Content="📥 Import"
+                                    ToolTip.Tip="Import messages from JSON file"
+                                    Command="{Binding SendMessageViewModel.ImportMessagesCommand}"/>
+                            <Button Classes="secondary small" 
+                                    Content="📤 Export All"
+                                    ToolTip.Tip="Export all saved messages to JSON file"
+                                    Command="{Binding SendMessageViewModel.ExportMessagesCommand}"
+                                    IsEnabled="{Binding SendMessageViewModel.SavedMessages.Count}"/>
                         </StackPanel>
-                        <Button Classes="icon" 
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Command="{Binding SendMessageViewModel.HideLoadCommand}">
-                            <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
-                        </Button>
                     </Grid>
                 </Border>
                 
@@ -104,6 +122,12 @@
                                                         Padding="14,6"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
                                                         CommandParameter="{Binding}"/>
+                                                <Button Classes="icon" 
+                                                        ToolTip.Tip="Export message"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.ExportSingleMessageCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="📤" FontSize="12"/>
+                                                </Button>
                                                 <Button Classes="icon" 
                                                         ToolTip.Tip="Delete template"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
