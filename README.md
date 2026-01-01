@@ -9,6 +9,16 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-tomaszsolik-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=000000)](https://www.buymeacoffee.com/tomaszsolik)
 
+<p align="center">
+  <a href="https://soliktomasz.github.io/BusLane/">Website</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#features">Features</a> •
+  <a href="ROADMAP.md">Roadmap</a> •
+  <a href="#contributing">Contributing</a>
+</p>
+
+---
+
 ## Features
 
 ### Connection Options
@@ -202,6 +212,17 @@ When you save a connection string:
 
 For detailed security information and vulnerability reporting, see [SECURITY.md](SECURITY.md).
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features and future development.
+
+Highlights for upcoming releases:
+- 🔍 Message search and filtering
+- 📦 Bulk message operations
+- ⌨️ Keyboard shortcuts
+- 📊 Historical metrics
+- 🔄 Auto-update functionality
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -211,6 +232,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+Check the [ROADMAP.md](ROADMAP.md) for ideas on what to contribute.
 
 ## License
 
