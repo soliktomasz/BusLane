@@ -137,6 +137,7 @@ public class AlertService : IAlertService
         }
 
         // Add new alerts and trigger events
+        var triggeredAlerts = new List<AlertEvent>();
         foreach (var alert in newAlerts)
         {
             var key = GetAlertKey(alert);
@@ -144,16 +145,17 @@ public class AlertService : IAlertService
             {
                 _triggeredAlertKeys.Add(key);
                 _activeAlerts.Add(alert);
+                triggeredAlerts.Add(alert);
                 AlertTriggered?.Invoke(this, alert);
             }
         }
 
-        if (newAlerts.Count > 0)
+        if (triggeredAlerts.Count > 0)
         {
             AlertsChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        return Task.FromResult<IEnumerable<AlertEvent>>(newAlerts);
+        return Task.FromResult<IEnumerable<AlertEvent>>(triggeredAlerts);
     }
 
     private AlertEvent? EvaluateRule(AlertRule rule, string entityName, string entityType, QueueInfo queue)
