@@ -162,11 +162,11 @@ jobs:
           # Copy published files to MacOS folder
           cp -R ./publish/* "${APP_BUNDLE}/Contents/MacOS/"
           
-          # Copy Info.plist
-          cp Info.plist "${APP_BUNDLE}/Contents/"
+          # Copy Info.plist (from BusLane project folder)
+          cp BusLane/Info.plist "${APP_BUNDLE}/Contents/"
           
-          # Copy icon
-          cp Assets/icon.icns "${APP_BUNDLE}/Contents/Resources/icon.icns"
+          # Copy icon (from BusLane/Assets folder)
+          cp BusLane/Assets/icon.icns "${APP_BUNDLE}/Contents/Resources/icon.icns"
           
           # Make the main executable executable
           chmod +x "${APP_BUNDLE}/Contents/MacOS/BusLane"
