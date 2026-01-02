@@ -61,12 +61,12 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Bulk Actions Bar (visible when messages are selected) -->
+                    <!-- Bulk Actions Bar (visible when multi-select mode is active) -->
                     <Border Grid.Row="1"
                             Background="{DynamicResource SurfaceAccent}"
                             CornerRadius="6"
                             Padding="12,8"
-                            IsVisible="{Binding HasSelectedMessages}">
+                            IsVisible="{Binding IsMultiSelectMode}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                 <TextBlock Text="{Binding SelectedMessagesCount, StringFormat='{}{0} selected'}"
