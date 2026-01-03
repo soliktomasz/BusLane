@@ -301,6 +301,12 @@ public partial class MainWindowViewModel : ViewModelBase
                     await LoadMessagesAsync();
                 });
             }
+
+            // Always evaluate alerts when auto-refresh is enabled and we have queues/subscriptions loaded
+            if (Queues.Count > 0 || TopicSubscriptions.Count > 0)
+            {
+                await _alertService.EvaluateAlertsAsync(Queues, TopicSubscriptions);
+            }
         };
         UpdateAutoRefreshTimer();
     }
@@ -593,6 +599,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 Topics.Add(t);
 
             StatusMessage = $"{Queues.Count} queue(s), {Topics.Count} topic(s)";
+
+            // Evaluate alerts after loading queues and topics
+            await _alertService.EvaluateAlertsAsync(Queues, TopicSubscriptions);
         }
         catch (Exception ex)
         {
@@ -636,6 +645,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 TopicSubscriptions.Add(sub);
 
             StatusMessage = $"{TopicSubscriptions.Count} subscription(s)";
+
+            // Evaluate alerts after loading subscriptions
+            await _alertService.EvaluateAlertsAsync(Queues, TopicSubscriptions);
         }
         catch (Exception ex)
         {
@@ -1260,6 +1272,9 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 StatusMessage = $"Connected to {connection.Name}";
             }
+
+            // Evaluate alerts after loading queues and subscriptions
+            await _alertService.EvaluateAlertsAsync(Queues, TopicSubscriptions);
         }
         catch (Exception ex)
         {
