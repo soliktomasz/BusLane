@@ -6,35 +6,17 @@ This document outlines the planned features and improvements for BusLane. Items 
 
 ---
 
-## ✅ Completed (v0.6.0)
+## ✅ Completed (v0.7.0)
 
-- [x] Azure Authentication (Azure Identity)
-- [x] Connection String Support
-- [x] Connection Library with encrypted storage
-- [x] Namespace Explorer (subscriptions, namespaces, queues, topics)
-- [x] Message Peek and Send
-- [x] Dead Letter Queue viewing
-- [x] Custom properties and system properties
-- [x] Message scheduling (ScheduledEnqueueTime)
-- [x] Save & Load message templates
-- [x] Session-enabled queues support
-- [x] Purge messages
-- [x] Live Charts for metrics
-- [x] Session persistence
-- [x] Cross-platform support (macOS, Windows, Linux)
+- [x] **Message Search & Filter** — Search messages by content, properties, or metadata
+- [x] **Bulk Operations** — Select multiple messages for delete/move operations
+- [x] **Export Messages** — Export messages to JSON/XML files
+- [x] **Import Messages** — Send messages from JSON/XML files
+- [x] **Resend from DLQ** — Resend dead-letter messages to original queue
 
 ---
 
 ## 📅 Planned
-
-### v0.7.0 — Enhanced Message Management
-
-- [x] **Message Search & Filter** — Search messages by content, properties, or metadata
-- [ ] **Bulk Operations** — Select multiple messages for delete/move operations
-- [ ] **Export Messages** — Export messages to JSON/XML files
-- [ ] **Import Messages** — Send messages from JSON/XML files
-- [x] **Resend from DLQ** — Resend dead-letter messages to original queue
-- [ ] **Message Diff** — Compare two messages side-by-side
 
 ### v0.8.0 — Developer Experience
 
@@ -117,8 +99,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 | Priority | Impact | Effort | Items |
 |----------|--------|--------|-------|
-| 🔴 High | High | Low | Message search, Recent connections, Keyboard shortcuts |
-| 🟠 Medium | High | Medium | Export/Import messages, Bulk operations, Syntax highlighting |
+| 🔴 High | High | Low | Recent connections, Keyboard shortcuts |
+| 🟠 Medium | High | Medium | Syntax highlighting, JSON formatter, Code generation |
 | 🟡 Medium | Medium | Medium | Historical metrics, Custom dashboards, Auto-update |
 | 🟢 Low | Medium | High | Additional Azure services, AI features |
 
@@ -130,6 +112,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.7.0 | 2026 | Enhanced Message Management, Search & Filter, Bulk Operations, Export/Import |
 | v0.6.0 | 2025 | Live Charts, Alert system |
 | v0.5.x | 2025 | Connection library, Message templates |
 | v0.4.x | 2024 | Session support, DLQ improvements |
