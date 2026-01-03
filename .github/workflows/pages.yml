@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'BusLane/docs/**'
+      - 'docs/**'
       - 'BusLane/Assets/icon.png'
   workflow_dispatch:
 
