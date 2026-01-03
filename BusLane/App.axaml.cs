@@ -35,7 +35,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var vm = Program.Services!.GetRequiredService<MainWindowViewModel>();
-            var mainWindow = new MainWindow { DataContext = vm };
+            var mainWindow = new MainWindow { DataContext = vm, Title = "Bus Lane" };
             MainWindow = mainWindow;
             
             // Set up file dialog service now that we have the window
