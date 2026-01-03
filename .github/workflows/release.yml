@@ -43,8 +43,7 @@ jobs:
             -p:EnableCompressionInSingleFile=true \
             -p:UseAppHost=true \
             -p:PublishReadyToRun=true \
-            -o ./publish \
-            --no-build
+            -o ./publish
 
       - name: Create archive
         run: |
@@ -96,8 +95,7 @@ jobs:
             -p:EnableCompressionInSingleFile=true `
             -p:UseAppHost=true `
             -p:PublishReadyToRun=true `
-            -o ./publish `
-            --no-build
+            -o ./publish
 
       - name: Create archive
         run: |
@@ -152,9 +150,7 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -p:EnableCompressionInSingleFile=true \
             -p:UseAppHost=true \
-            -p:PublishReadyToRun=true \
-            -o ./publish \
-            --no-build
+            -o ./publish
 
       - name: Create macOS App Bundle
         run: |
