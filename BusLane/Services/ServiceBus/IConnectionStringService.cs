@@ -67,7 +67,8 @@ public interface IConnectionStringService
         string connectionString, 
         string entityName, 
         string? subscription, 
-        IEnumerable<long> sequenceNumbers, 
+        IEnumerable<long> sequenceNumbers,
+        bool deadLetter = false,
         CancellationToken ct = default);
 
     /// <summary>

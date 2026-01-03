@@ -43,7 +43,7 @@ public interface IServiceBusService
     /// <summary>
     /// Deletes multiple messages in bulk by their sequence numbers.
     /// </summary>
-    Task<int> DeleteMessagesAsync(string endpoint, string queueOrTopic, string? subscription, IEnumerable<long> sequenceNumbers, CancellationToken ct = default);
+    Task<int> DeleteMessagesAsync(string endpoint, string queueOrTopic, string? subscription, IEnumerable<long> sequenceNumbers, bool deadLetter = false, CancellationToken ct = default);
 
     /// <summary>
     /// Resends multiple messages in bulk to the specified entity.

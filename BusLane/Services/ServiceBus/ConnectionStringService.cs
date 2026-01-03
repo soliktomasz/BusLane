@@ -199,34 +199,68 @@ public class ConnectionStringService : IConnectionStringService
         string entityName,
         string? subscription,
         IEnumerable<long> sequenceNumbers,
+        bool deadLetter = false,
         CancellationToken ct = default)
     {
         await using var client = new ServiceBusClient(connectionString);
 
-        var receiverOptions = new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.PeekLock };
+        var receiverOptions = new ServiceBusReceiverOptions 
+        { 
+            ReceiveMode = ServiceBusReceiveMode.PeekLock,
+            SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
+        };
         await using var receiver = subscription != null
             ? client.CreateReceiver(entityName, subscription, receiverOptions)
             : client.CreateReceiver(entityName, receiverOptions);
 
         var deletedCount = 0;
-        var sequenceList = sequenceNumbers.ToList();
+        var sequenceSet = sequenceNumbers.ToHashSet();
+        var consecutiveEmptyBatches = 0;
+        const int maxEmptyBatches = 3;
 
-        foreach (var sequenceNumber in sequenceList)
+        // Receive messages in batches and complete those matching the sequence numbers
+        while (sequenceSet.Count > 0 && consecutiveEmptyBatches < maxEmptyBatches && !ct.IsCancellationRequested)
         {
-            if (ct.IsCancellationRequested) break;
+            var messages = await receiver.ReceiveMessagesAsync(
+                100, 
+                TimeSpan.FromSeconds(5), 
+                ct);
 
-            try
+            if (messages.Count == 0)
             {
-                var msg = await receiver.ReceiveDeferredMessageAsync(sequenceNumber, ct);
-                if (msg != null)
-                {
-                    await receiver.CompleteMessageAsync(msg, ct);
-                    deletedCount++;
-                }
+                consecutiveEmptyBatches++;
+                continue;
             }
-            catch (ServiceBusException)
+
+            consecutiveEmptyBatches = 0;
+
+            foreach (var msg in messages)
             {
-                // Message might not be found or already processed, continue with others
+                if (sequenceSet.Contains(msg.SequenceNumber))
+                {
+                    try
+                    {
+                        await receiver.CompleteMessageAsync(msg, ct);
+                        sequenceSet.Remove(msg.SequenceNumber);
+                        deletedCount++;
+                    }
+                    catch (ServiceBusException)
+                    {
+                        // Message might already be processed, continue
+                    }
+                }
+                else
+                {
+                    // Release messages that we don't want to delete
+                    try
+                    {
+                        await receiver.AbandonMessageAsync(msg, cancellationToken: ct);
+                    }
+                    catch (ServiceBusException)
+                    {
+                        // Ignore abandon errors
+                    }
+                }
             }
         }
 

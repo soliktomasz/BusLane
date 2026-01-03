@@ -1282,12 +1282,12 @@ public partial class MainWindowViewModel : ViewModelBase
             if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
             {
                 deletedCount = await _connectionStringService.DeleteMessagesAsync(
-                    ActiveConnection.ConnectionString, entityName, subscription, sequenceNumbers);
+                    ActiveConnection.ConnectionString, entityName, subscription, sequenceNumbers, ShowDeadLetter);
             }
             else if (SelectedNamespace != null)
             {
                 deletedCount = await _serviceBus.DeleteMessagesAsync(
-                    SelectedNamespace.Endpoint, entityName, subscription, sequenceNumbers);
+                    SelectedNamespace.Endpoint, entityName, subscription, sequenceNumbers, ShowDeadLetter);
             }
             else
             {
