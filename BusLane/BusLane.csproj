@@ -7,6 +7,14 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    
+    <!-- Self-contained deployment -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <UseAppHost>true</UseAppHost>
+    <PublishReadyToRun>true</PublishReadyToRun>
 
     <!-- MinVer Configuration -->
     <MinVerTagPrefix>v</MinVerTagPrefix>

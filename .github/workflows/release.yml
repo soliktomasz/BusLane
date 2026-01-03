@@ -41,6 +41,8 @@ jobs:
             -p:PublishSingleFile=true \
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -p:EnableCompressionInSingleFile=true \
+            -p:UseAppHost=true \
+            -p:PublishReadyToRun=true \
             -o ./publish \
             --no-build
 
@@ -92,6 +94,8 @@ jobs:
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:EnableCompressionInSingleFile=true `
+            -p:UseAppHost=true `
+            -p:PublishReadyToRun=true `
             -o ./publish `
             --no-build
 
@@ -147,6 +151,8 @@ jobs:
             -p:PublishSingleFile=true \
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -p:EnableCompressionInSingleFile=true \
+            -p:UseAppHost=true \
+            -p:PublishReadyToRun=true \
             -o ./publish \
             --no-build
 
@@ -162,6 +168,11 @@ jobs:
           # Copy published files to MacOS folder
           cp -R ./publish/* "${APP_BUNDLE}/Contents/MacOS/"
           
+          # Remove runtime config files that might cause the app to look for .NET SDK
+          # For single-file self-contained apps, these are embedded and external files should be removed
+          rm -f "${APP_BUNDLE}/Contents/MacOS/"*.runtimeconfig.json 2>/dev/null || true
+          rm -f "${APP_BUNDLE}/Contents/MacOS/"*.deps.json 2>/dev/null || true
+          
           # Copy Info.plist (from BusLane project folder)
           cp BusLane/Info.plist "${APP_BUNDLE}/Contents/"
           
@@ -173,6 +184,9 @@ jobs:
           
           # Create PkgInfo file
           echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
+          
+          # Remove extended attributes that might cause Gatekeeper issues
+          xattr -cr "${APP_BUNDLE}"
           
           # Ad-hoc code sign the app bundle
           codesign --force --deep --sign - "${APP_BUNDLE}"
