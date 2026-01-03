@@ -30,7 +30,7 @@ jobs:
       - name: Copy assets
         run: |
           mkdir -p docs/assets
-          cp Assets/icon.png docs/assets/icon.png
+          cp BusLane/Assets/icon.png docs/assets/icon.png
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
