@@ -28,7 +28,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var vm = Program.Services!.GetRequiredService<MainWindowViewModel>();
-            desktop.MainWindow = new MainWindow { DataContext = vm };
+            desktop.MainWindow = new MainWindow { DataContext = vm, Title = "Bus Lane"};
         }
         base.OnFrameworkInitializationCompleted();
     }

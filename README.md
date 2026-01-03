@@ -5,7 +5,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)
 ![Avalonia UI](https://img.shields.io/badge/Avalonia-11.3-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Version](https://img.shields.io/badge/Version-0.6.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-0.6.3-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-tomaszsolik-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=000000)](https://www.buymeacoffee.com/tomaszsolik)
 
@@ -35,6 +35,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 
 ### Messaging Features
 - **Message Peek** - Preview messages without consuming them
+- **Message Search & Filter** - Search messages by content, ID, correlation ID, subject, or sequence number
 - **Send Messages** - Send new messages with full control over:
   - Message body and content type
   - Custom properties (key-value pairs)
@@ -44,8 +45,20 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
   - Partition keys and reply-to settings
 - **Save & Load Messages** - Save message templates for reuse
 - **Dead Letter Queue** - View and manage dead-lettered messages
+- **Resend from DLQ** - Resend dead-letter messages back to the original queue
 - **Purge Messages** - Bulk delete messages from queues or subscriptions
 - **Message Details** - View complete message details including headers and properties
+
+### Live Monitoring
+- **Live Message Streaming** - Real-time message stream viewer with peek mode
+- **Live Charts** - Visual metrics with line charts, pie charts, and bar charts for:
+  - Message counts over time
+  - Dead letter counts over time
+  - Entity distribution
+  - Queue/Subscription comparison
+- **Configurable Time Ranges** - View metrics for 15 minutes, 1 hour, 6 hours, or 24 hours
+- **Alert System** - Create custom alert rules with configurable thresholds and severity levels
+- **System Notifications** - Get desktop notifications when alerts are triggered
 
 ### User Experience
 - **Session Persistence** - Automatically restores your previous session
@@ -141,6 +154,8 @@ BusLane follows the MVVM (Model-View-ViewModel) pattern:
 ```
 BusLane/
 ├── Models/          # Data models
+│   ├── AlertRule.cs              # Alert rule configuration
+│   ├── LiveStreamMessage.cs      # Live stream message model
 │   ├── QueueInfo.cs              # Queue metadata
 │   ├── TopicInfo.cs              # Topic metadata
 │   ├── SubscriptionInfo.cs       # Subscription metadata
@@ -148,18 +163,33 @@ BusLane/
 │   ├── SavedConnection.cs        # Stored connection strings
 │   └── SavedMessage.cs           # Message templates
 ├── Services/        # Azure integration services
-│   ├── IAzureAuthService.cs      # Authentication interface
-│   ├── AzureAuthService.cs       # Azure Identity implementation
-│   ├── IServiceBusService.cs     # Service Bus operations interface
-│   ├── ServiceBusService.cs      # Service Bus implementation
-│   ├── IConnectionStringService.cs   # Connection string operations
-│   ├── ConnectionStringService.cs    # Connection string implementation
-│   ├── IConnectionStorageService.cs  # Connection storage interface
-│   └── ConnectionStorageService.cs   # Local connection storage
+│   ├── Abstractions/             # Service interfaces
+│   ├── Auth/                     # Azure authentication
+│   ├── Infrastructure/           # Core infrastructure services
+│   ├── Monitoring/               # Metrics, alerts, and notifications
+│   │   ├── IAlertService.cs      # Alert management interface
+│   │   ├── AlertService.cs       # Alert rule and event handling
+│   │   ├── IMetricsService.cs    # Metrics collection interface
+│   │   ├── MetricsService.cs     # Metrics recording and history
+│   │   ├── INotificationService.cs   # Desktop notifications interface
+│   │   └── NotificationService.cs    # System notification handling
+│   ├── ServiceBus/               # Service Bus operations
+│   │   ├── IServiceBusService.cs     # Service Bus operations interface
+│   │   ├── ServiceBusService.cs      # Service Bus implementation
+│   │   ├── ILiveStreamService.cs     # Live streaming interface
+│   │   └── LiveStreamService.cs      # Real-time message streaming
+│   └── Storage/                  # Local storage services
 ├── ViewModels/      # MVVM ViewModels with CommunityToolkit.Mvvm
+│   ├── AlertsViewModel.cs        # Alert management
+│   ├── ChartsViewModel.cs        # Live charts and metrics
+│   ├── LiveStreamViewModel.cs    # Message streaming
+│   └── ...                       # Other view models
 ├── Views/           # Avalonia XAML views
 │   ├── Controls/    # Reusable UI components
-│   └── Dialogs/     # Modal dialogs (Send, Save, Settings, etc.)
+│   │   ├── ChartsView.axaml      # Live charts component
+│   │   ├── LiveStreamView.axaml  # Message streaming component
+│   │   └── ...                   # Other controls
+│   └── Dialogs/     # Modal dialogs (Send, Save, Settings, Alerts, etc.)
 ├── Converters/      # Value converters for data binding
 └── Styles/          # Application styles and themes
 ```
@@ -170,15 +200,17 @@ BusLane/
 |---------|---------|---------|
 | Avalonia | 11.3.10 | Cross-platform UI framework |
 | Avalonia.Desktop | 11.3.10 | Desktop platform support |
-| Avalonia.Themes.Fluent | 11.1.0 | Fluent design theme |
-| Avalonia.Fonts.Inter | 11.1.0 | Inter font family |
-| Avalonia.ReactiveUI | 11.1.0 | ReactiveUI integration |
+| Avalonia.Themes.Fluent | 11.3.10 | Fluent design theme |
+| Avalonia.Fonts.Inter | 11.3.10 | Inter font family |
+| Avalonia.ReactiveUI | 11.3.8 | ReactiveUI integration |
 | Azure.Identity | 1.17.1 | Azure authentication |
 | Azure.ResourceManager | 1.13.2 | Azure Resource Manager SDK |
 | Azure.ResourceManager.ServiceBus | 1.1.0 | Service Bus management |
 | Azure.Messaging.ServiceBus | 7.20.1 | Service Bus messaging |
 | CommunityToolkit.Mvvm | 8.4.0 | MVVM toolkit with source generators |
 | Microsoft.Extensions.DependencyInjection | 10.0.1 | Dependency injection |
+| LiveChartsCore.SkiaSharpView.Avalonia | 2.0.0-rc5.4 | Live charts and metrics visualization |
+| System.Reactive | 6.0.1 | Reactive extensions for live streaming |
 
 ## Security
 
@@ -217,10 +249,11 @@ For detailed security information and vulnerability reporting, see [SECURITY.md]
 See [ROADMAP.md](ROADMAP.md) for planned features and future development.
 
 Highlights for upcoming releases:
-- 🔍 Message search and filtering
 - 📦 Bulk message operations
+- 📤 Export/Import messages to JSON/XML
 - ⌨️ Keyboard shortcuts
-- 📊 Historical metrics
+- 🎨 Syntax highlighting for JSON/XML
+- 📊 Historical metrics and custom dashboards
 - 🔄 Auto-update functionality
 
 ## Contributing
