@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
-using Avalonia.Styling;
 
 namespace BusLane.Converters;
 

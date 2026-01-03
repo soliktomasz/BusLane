@@ -777,7 +777,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSendMessagePopup()
     {
-        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        // For queues, send directly to the queue
+        // For topics/subscriptions, always send to the topic (messages go to topics, not directly to subscriptions)
+        string? entityName = SelectedQueue?.Name 
+            ?? SelectedSubscription?.TopicName 
+            ?? SelectedTopic?.Name;
         if (entityName == null) return;
 
         if (CurrentMode == ConnectionMode.ConnectionString && ActiveConnection != null)
@@ -930,7 +934,11 @@ public partial class MainWindowViewModel : ViewModelBase
         var msg = message ?? SelectedMessage;
         if (msg == null) return;
 
-        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        // For queues, send directly to the queue
+        // For topics/subscriptions, always send to the topic
+        string? entityName = SelectedQueue?.Name 
+            ?? SelectedSubscription?.TopicName 
+            ?? SelectedTopic?.Name;
         if (entityName == null) return;
 
         IsLoading = true;
@@ -1000,7 +1008,11 @@ public partial class MainWindowViewModel : ViewModelBase
         var msg = message ?? SelectedMessage;
         if (msg == null) return;
 
-        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        // For queues, send directly to the queue
+        // For topics/subscriptions, always send to the topic
+        string? entityName = SelectedQueue?.Name 
+            ?? SelectedSubscription?.TopicName 
+            ?? SelectedTopic?.Name;
         if (entityName == null) return;
 
         // Create the SendMessageViewModel and pre-populate with the message data
@@ -1177,7 +1189,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (!HasSelectedMessages) return;
 
-        string? entityName = SelectedQueue?.Name ?? SelectedTopic?.Name;
+        // For queues, send directly to the queue
+        // For topics/subscriptions, always send to the topic
+        string? entityName = SelectedQueue?.Name 
+            ?? SelectedSubscription?.TopicName 
+            ?? SelectedTopic?.Name;
         if (entityName == null) return;
 
         var count = SelectedMessagesCount;
