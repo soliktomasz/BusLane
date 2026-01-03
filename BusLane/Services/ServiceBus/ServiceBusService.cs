@@ -218,6 +218,203 @@ public class ServiceBusService : IServiceBusService
         }
     }
 
+    public async Task<int> DeleteMessagesAsync(
+        string endpoint, string queueOrTopic, string? subscription,
+        IEnumerable<long> sequenceNumbers, bool deadLetter = false, CancellationToken ct = default)
+    {
+        EnsureAuthenticated();
+
+        await using var client = CreateClient(endpoint);
+
+        var receiverOptions = new ServiceBusReceiverOptions 
+        { 
+            ReceiveMode = ServiceBusReceiveMode.PeekLock,
+            SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
+        };
+        await using var receiver = subscription != null
+            ? client.CreateReceiver(queueOrTopic, subscription, receiverOptions)
+            : client.CreateReceiver(queueOrTopic, receiverOptions);
+
+        var deletedCount = 0;
+        var sequenceSet = sequenceNumbers.ToHashSet();
+        var consecutiveEmptyBatches = 0;
+        const int maxEmptyBatches = 3;
+
+        // Receive messages in batches and complete those matching the sequence numbers
+        while (sequenceSet.Count > 0 && consecutiveEmptyBatches < maxEmptyBatches && !ct.IsCancellationRequested)
+        {
+            var messages = await receiver.ReceiveMessagesAsync(
+                100, 
+                TimeSpan.FromSeconds(5), 
+                ct);
+
+            if (messages.Count == 0)
+            {
+                consecutiveEmptyBatches++;
+                continue;
+            }
+
+            consecutiveEmptyBatches = 0;
+
+            foreach (var msg in messages)
+            {
+                if (sequenceSet.Contains(msg.SequenceNumber))
+                {
+                    try
+                    {
+                        await receiver.CompleteMessageAsync(msg, ct);
+                        sequenceSet.Remove(msg.SequenceNumber);
+                        deletedCount++;
+                    }
+                    catch (ServiceBusException)
+                    {
+                        // Message might already be processed, continue
+                    }
+                }
+                else
+                {
+                    // Release messages that we don't want to delete
+                    try
+                    {
+                        await receiver.AbandonMessageAsync(msg, cancellationToken: ct);
+                    }
+                    catch (ServiceBusException)
+                    {
+                        // Ignore abandon errors
+                    }
+                }
+            }
+        }
+
+        return deletedCount;
+    }
+
+    public async Task<int> ResendMessagesAsync(
+        string endpoint, string queueOrTopic,
+        IEnumerable<MessageInfo> messages, CancellationToken ct = default)
+    {
+        EnsureAuthenticated();
+
+        await using var client = CreateClient(endpoint);
+        await using var sender = client.CreateSender(queueOrTopic);
+
+        var sentCount = 0;
+        var messageList = messages.ToList();
+
+        // Send messages in batches for better performance
+        const int batchSize = 50;
+        for (var i = 0; i < messageList.Count; i += batchSize)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            var batch = messageList.Skip(i).Take(batchSize).ToList();
+            var serviceBusMessages = new List<ServiceBusMessage>();
+
+            foreach (var msg in batch)
+            {
+                var sbMsg = new ServiceBusMessage(msg.Body);
+                ApplyMessageProperties(sbMsg, msg.ContentType, msg.CorrelationId, null, msg.SessionId,
+                    msg.Subject, msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey,
+                    msg.TimeToLive, null, msg.Properties);
+                serviceBusMessages.Add(sbMsg);
+            }
+
+            try
+            {
+                await sender.SendMessagesAsync(serviceBusMessages, ct);
+                sentCount += batch.Count;
+            }
+            catch (ServiceBusException)
+            {
+                // If batch send fails, try sending individually
+                foreach (var sbMsg in serviceBusMessages)
+                {
+                    if (ct.IsCancellationRequested) break;
+                    try
+                    {
+                        await sender.SendMessageAsync(sbMsg, ct);
+                        sentCount++;
+                    }
+                    catch (ServiceBusException)
+                    {
+                        // Individual message failed, continue with others
+                    }
+                }
+            }
+        }
+
+        return sentCount;
+    }
+
+    public async Task<int> ResubmitDeadLetterMessagesAsync(
+        string endpoint, string queueOrTopic, string? subscription,
+        IEnumerable<MessageInfo> messages, CancellationToken ct = default)
+    {
+        EnsureAuthenticated();
+
+        await using var client = CreateClient(endpoint);
+
+        // Create receiver for dead letter queue to complete messages
+        var receiverOptions = new ServiceBusReceiverOptions
+        {
+            ReceiveMode = ServiceBusReceiveMode.PeekLock,
+            SubQueue = SubQueue.DeadLetter
+        };
+        await using var deadLetterReceiver = subscription != null
+            ? client.CreateReceiver(queueOrTopic, subscription, receiverOptions)
+            : client.CreateReceiver(queueOrTopic, receiverOptions);
+
+        // Create sender to send messages back to main queue
+        var targetEntity = subscription != null ? $"{queueOrTopic}/Subscriptions/{subscription}" : queueOrTopic;
+        await using var sender = client.CreateSender(queueOrTopic);
+
+        var resubmittedCount = 0;
+        var messageList = messages.ToList();
+
+        foreach (var msg in messageList)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            try
+            {
+                // Receive the deferred message from DLQ
+                var dlqMsg = await deadLetterReceiver.ReceiveDeferredMessageAsync(msg.SequenceNumber, ct);
+                if (dlqMsg == null) continue;
+
+                // Create new message without dead letter properties
+                var newMsg = new ServiceBusMessage(dlqMsg.Body)
+                {
+                    ContentType = dlqMsg.ContentType,
+                    CorrelationId = dlqMsg.CorrelationId,
+                    Subject = dlqMsg.Subject,
+                    To = dlqMsg.To,
+                    ReplyTo = dlqMsg.ReplyTo,
+                    ReplyToSessionId = dlqMsg.ReplyToSessionId,
+                    SessionId = dlqMsg.SessionId,
+                    PartitionKey = dlqMsg.PartitionKey
+                };
+
+                // Copy application properties
+                foreach (var prop in dlqMsg.ApplicationProperties)
+                    newMsg.ApplicationProperties[prop.Key] = prop.Value;
+
+                // Send to main queue
+                await sender.SendMessageAsync(newMsg, ct);
+
+                // Complete (remove) from dead letter queue
+                await deadLetterReceiver.CompleteMessageAsync(dlqMsg, ct);
+
+                resubmittedCount++;
+            }
+            catch (ServiceBusException)
+            {
+                // Message might not be found or already processed, continue with others
+            }
+        }
+
+        return resubmittedCount;
+    }
+
     #region Private Methods
 
     private void EnsureAuthenticated()

@@ -172,6 +172,27 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
     </Style>
     
+    <!-- Warning Button Styles -->
+    <Style Selector="Button.warning">
+        <Setter Property="Background" Value="#F59E0B"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.warning:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#D97706"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    
+    <Style Selector="Button.warning:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#B45309"/>
+    </Style>
+    
     <Style Selector="Button.small">
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontSize" Value="12"/>

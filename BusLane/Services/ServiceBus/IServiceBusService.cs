@@ -39,4 +39,19 @@ public interface IServiceBusService
     Task DeleteMessageAsync(string endpoint, string queueOrTopic, string? subscription, long sequenceNumber, CancellationToken ct = default);
 
     Task PurgeMessagesAsync(string endpoint, string queueOrTopic, string? subscription, bool deadLetter, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes multiple messages in bulk by their sequence numbers.
+    /// </summary>
+    Task<int> DeleteMessagesAsync(string endpoint, string queueOrTopic, string? subscription, IEnumerable<long> sequenceNumbers, bool deadLetter = false, CancellationToken ct = default);
+
+    /// <summary>
+    /// Resends multiple messages in bulk to the specified entity.
+    /// </summary>
+    Task<int> ResendMessagesAsync(string endpoint, string queueOrTopic, IEnumerable<MessageInfo> messages, CancellationToken ct = default);
+
+    /// <summary>
+    /// Moves messages from dead letter queue back to the main queue by resending them.
+    /// </summary>
+    Task<int> ResubmitDeadLetterMessagesAsync(string endpoint, string queueOrTopic, string? subscription, IEnumerable<MessageInfo> messages, CancellationToken ct = default);
 }

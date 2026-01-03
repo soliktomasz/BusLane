@@ -61,6 +61,36 @@ public interface IConnectionStringService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Deletes multiple messages in bulk by their sequence numbers.
+    /// </summary>
+    Task<int> DeleteMessagesAsync(
+        string connectionString, 
+        string entityName, 
+        string? subscription, 
+        IEnumerable<long> sequenceNumbers,
+        bool deadLetter = false,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Resends multiple messages in bulk to the specified entity.
+    /// </summary>
+    Task<int> ResendMessagesAsync(
+        string connectionString, 
+        string entityName, 
+        IEnumerable<MessageInfo> messages, 
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Moves messages from dead letter queue back to the main queue by resending them.
+    /// </summary>
+    Task<int> ResubmitDeadLetterMessagesAsync(
+        string connectionString, 
+        string entityName, 
+        string? subscription, 
+        IEnumerable<MessageInfo> messages, 
+        CancellationToken ct = default);
+
+    /// <summary>
     /// Validates a connection string and returns connection details
     /// </summary>
     Task<(bool IsValid, string? EntityName, string? Endpoint, string? ErrorMessage)> ValidateConnectionStringAsync(
