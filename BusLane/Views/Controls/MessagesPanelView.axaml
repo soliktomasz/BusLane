@@ -93,7 +93,7 @@
                                     </StackPanel>
                                 </Button>
                                 <Button Classes="warning small"
-                                        Command="{Binding ResubmitDeadLetterMessagesCommand}"
+                                        Command="{Binding ResubmitDeadLetterMessagesAsyncCommand}"
                                         IsVisible="{Binding ShowDeadLetter}"
                                         Padding="12,6"
                                         ToolTip.Tip="Resubmit selected messages from dead letter queue">
@@ -103,7 +103,7 @@
                                     </StackPanel>
                                 </Button>
                                 <Button Classes="danger small"
-                                        Command="{Binding BulkDeleteMessagesCommand}"
+                                        Command="{Binding BulkDeleteMessagesAsyncCommand}"
                                         Padding="12,6"
                                         ToolTip.Tip="Delete selected messages">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
