@@ -62,8 +62,11 @@ public partial class MainWindowViewModel : ViewModelBase
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
-    // Note: Forwarded properties kept for XAML binding compatibility
-    // Could be removed if XAML bindings are updated to use sub-ViewModel paths
+    #region Forwarded Properties (XAML Binding Compatibility)
+    // These properties forward to sub-ViewModels for simplified XAML bindings.
+    // Alternative: Update XAML to use paths like "Connection.IsAuthenticated"
+    
+    // Connection properties
     public bool IsAuthenticated => Connection.IsAuthenticated;
     public ConnectionMode CurrentMode => Connection.CurrentMode;
     public bool ShowAzureSections => Connection.ShowAzureSections;
@@ -74,6 +77,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowConnectionLibrary => Connection.ShowConnectionLibrary;
     public ConnectionLibraryViewModel? ConnectionLibraryViewModel => Connection.ConnectionLibraryViewModel;
 
+    // Navigation properties
     public ObservableCollection<AzureSubscription> Subscriptions => Navigation.Subscriptions;
     public ObservableCollection<ServiceBusNamespace> Namespaces => Navigation.Namespaces;
     public ObservableCollection<QueueInfo> Queues => Navigation.Queues;
@@ -86,16 +90,13 @@ public partial class MainWindowViewModel : ViewModelBase
     public object? SelectedEntity => Navigation.SelectedEntity;
     public AzureSubscription? SelectedAzureSubscription => Navigation.SelectedAzureSubscription;
     public bool ShowDeadLetter => Navigation.ShowDeadLetter;
-    public int SelectedMessageTabIndex
-    {
-        get => Navigation.SelectedMessageTabIndex;
-        set => Navigation.SelectedMessageTabIndex = value;
-    }
+    public int SelectedMessageTabIndex { get => Navigation.SelectedMessageTabIndex; set => Navigation.SelectedMessageTabIndex = value; }
     public bool HasQueues => Navigation.HasQueues;
     public bool HasTopics => Navigation.HasTopics;
     public long TotalDeadLetterCount => Navigation.TotalDeadLetterCount;
     public bool HasDeadLetters => Navigation.HasDeadLetters;
 
+    // Message operations properties
     public ObservableCollection<MessageInfo> Messages => MessageOps.Messages;
     public ObservableCollection<MessageInfo> FilteredMessages => MessageOps.FilteredMessages;
     public ObservableCollection<MessageInfo> SelectedMessages => MessageOps.SelectedMessages;
@@ -108,15 +109,12 @@ public partial class MainWindowViewModel : ViewModelBase
     public int SelectionVersion => MessageOps.SelectionVersion;
     public bool SortDescending => MessageOps.SortDescending;
     public string SortButtonText => MessageOps.SortButtonText;
-    public string MessageSearchText
-    {
-        get => MessageOps.MessageSearchText;
-        set => MessageOps.MessageSearchText = value;
-    }
+    public string MessageSearchText { get => MessageOps.MessageSearchText; set => MessageOps.MessageSearchText = value; }
     public bool IsMessageBodyJson => MessageOps.IsMessageBodyJson;
     public string? FormattedMessageBody => MessageOps.FormattedMessageBody;
     public string? FormattedApplicationProperties => MessageOps.FormattedApplicationProperties;
 
+    // Feature panels properties
     public bool ShowLiveStream => FeaturePanels.ShowLiveStream;
     public bool ShowCharts => FeaturePanels.ShowCharts;
     public bool ShowAlerts => FeaturePanels.ShowAlerts;
@@ -124,6 +122,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public ChartsViewModel? ChartsViewModel => FeaturePanels.ChartsViewModel;
     public AlertsViewModel? AlertsViewModel => FeaturePanels.AlertsViewModel;
     public int ActiveAlertCount => FeaturePanels.ActiveAlertCount;
+    
+    #endregion
 
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => Preferences.ShowDeadLetterBadges;
@@ -221,43 +221,76 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void SetupPropertyForwarding()
     {
-        // Forward property changes from sub-ViewModels to this ViewModel
-        // This enables XAML bindings to work with simplified property paths
-        
-        Connection.PropertyChanged += (_, e) => ForwardPropertyChange(e.PropertyName, nameof(Connection));
-        Navigation.PropertyChanged += (_, e) =>
-        {
-            ForwardPropertyChange(e.PropertyName, nameof(Navigation));
-            // Trigger dependent actions
-            if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
-                _ = LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id);
-            else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
-                _ = MessageOps.LoadMessagesAsync();
-        };
-        MessageOps.PropertyChanged += (_, e) => ForwardPropertyChange(e.PropertyName, nameof(MessageOps));
-        FeaturePanels.PropertyChanged += (_, e) => ForwardPropertyChange(e.PropertyName, nameof(FeaturePanels));
+        // Use PropertyForwarder for clean, declarative property change forwarding
+        this.CreateForwarder(OnPropertyChanged)
+            .Forward(Connection, ConnectionForwardedProperties)
+            .ForwardWithHandlers(Navigation, NavigationForwardedProperties, new Dictionary<string, Action>
+            {
+                [nameof(Navigation.SelectedAzureSubscription)] = () => _ = LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id),
+                [nameof(Navigation.ShowDeadLetter)] = () => _ = MessageOps.LoadMessagesAsync()
+            })
+            .Forward(MessageOps, MessageOpsForwardedProperties)
+            .Forward(FeaturePanels, FeaturePanelsForwardedProperties);
     }
 
-    // Maps sub-ViewModel properties to forwarded properties
-    private static readonly Dictionary<string, string[]> PropertyMappings = new()
-    {
-        [nameof(Connection)] = ["IsAuthenticated", "CurrentMode", "ShowAzureSections", "ActiveConnection", 
-            "HasFavoriteConnections", "ShowConnectionLibrary", "ConnectionLibraryViewModel"],
-        [nameof(Navigation)] = ["SelectedNamespace", "SelectedQueue", "SelectedTopic", "SelectedSubscription",
-            "SelectedEntity", "SelectedAzureSubscription", "ShowDeadLetter", "SelectedMessageTabIndex",
-            "HasQueues", "HasTopics", "TotalDeadLetterCount", "HasDeadLetters"],
-        [nameof(MessageOps)] = ["SelectedMessage", "IsLoadingMessages", "IsMultiSelectMode", "HasSelectedMessages",
-            "SelectedMessagesCount", "CanResubmitDeadLetters", "SelectionVersion", "SortDescending", "SortButtonText",
-            "MessageSearchText", "IsMessageBodyJson", "FormattedMessageBody", "FormattedApplicationProperties"],
-        [nameof(FeaturePanels)] = ["ShowLiveStream", "ShowCharts", "ShowAlerts", "LiveStreamViewModel",
-            "ChartsViewModel", "AlertsViewModel", "ActiveAlertCount"]
-    };
+    #region Property Forwarding Configuration
+    
+    private static readonly string[] ConnectionForwardedProperties =
+    [
+        nameof(ConnectionViewModel.IsAuthenticated),
+        nameof(ConnectionViewModel.CurrentMode),
+        nameof(ConnectionViewModel.ShowAzureSections),
+        nameof(ConnectionViewModel.ActiveConnection),
+        nameof(ConnectionViewModel.HasFavoriteConnections),
+        nameof(ConnectionViewModel.ShowConnectionLibrary),
+        nameof(ConnectionViewModel.ConnectionLibraryViewModel)
+    ];
 
-    private void ForwardPropertyChange(string? propertyName, string source)
-    {
-        if (propertyName != null && PropertyMappings.TryGetValue(source, out var props) && props.Contains(propertyName))
-            OnPropertyChanged(propertyName);
-    }
+    private static readonly string[] NavigationForwardedProperties =
+    [
+        nameof(NavigationState.SelectedNamespace),
+        nameof(NavigationState.SelectedQueue),
+        nameof(NavigationState.SelectedTopic),
+        nameof(NavigationState.SelectedSubscription),
+        nameof(NavigationState.SelectedEntity),
+        nameof(NavigationState.SelectedAzureSubscription),
+        nameof(NavigationState.ShowDeadLetter),
+        nameof(NavigationState.SelectedMessageTabIndex),
+        nameof(NavigationState.HasQueues),
+        nameof(NavigationState.HasTopics),
+        nameof(NavigationState.TotalDeadLetterCount),
+        nameof(NavigationState.HasDeadLetters)
+    ];
+
+    private static readonly string[] MessageOpsForwardedProperties =
+    [
+        nameof(MessageOperationsViewModel.SelectedMessage),
+        nameof(MessageOperationsViewModel.IsLoadingMessages),
+        nameof(MessageOperationsViewModel.IsMultiSelectMode),
+        nameof(MessageOperationsViewModel.HasSelectedMessages),
+        nameof(MessageOperationsViewModel.SelectedMessagesCount),
+        nameof(MessageOperationsViewModel.CanResubmitDeadLetters),
+        nameof(MessageOperationsViewModel.SelectionVersion),
+        nameof(MessageOperationsViewModel.SortDescending),
+        nameof(MessageOperationsViewModel.SortButtonText),
+        nameof(MessageOperationsViewModel.MessageSearchText),
+        nameof(MessageOperationsViewModel.IsMessageBodyJson),
+        nameof(MessageOperationsViewModel.FormattedMessageBody),
+        nameof(MessageOperationsViewModel.FormattedApplicationProperties)
+    ];
+
+    private static readonly string[] FeaturePanelsForwardedProperties =
+    [
+        nameof(FeaturePanelsViewModel.ShowLiveStream),
+        nameof(FeaturePanelsViewModel.ShowCharts),
+        nameof(FeaturePanelsViewModel.ShowAlerts),
+        nameof(FeaturePanelsViewModel.LiveStreamViewModel),
+        nameof(FeaturePanelsViewModel.ChartsViewModel),
+        nameof(FeaturePanelsViewModel.AlertsViewModel),
+        nameof(FeaturePanelsViewModel.ActiveAlertCount)
+    ];
+
+    #endregion
 
     public void SetFileDialogService(IFileDialogService fileDialogService) => _fileDialogService = fileDialogService;
 

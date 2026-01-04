@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace BusLane.ViewModels;
@@ -16,6 +17,8 @@ public class TopicViewModel : ObservableObject
     /// </summary>
     public TopicInfo Info { get; }
 
+    #region Forwarded Properties
+    
     // Expose TopicInfo properties for convenience
     public string Name => Info.Name;
     public long SizeInBytes => Info.SizeInBytes;
@@ -38,20 +41,27 @@ public class TopicViewModel : ObservableObject
     }
 
     public string DisplayStatus => Info.DisplayStatus;
+    
+    #endregion
+
+    private static readonly string[] ForwardedProperties =
+    [
+        nameof(TopicInfo.SubscriptionsLoaded),
+        nameof(TopicInfo.IsLoadingSubscriptions),
+        nameof(TopicInfo.DisplayStatus)
+    ];
 
     public TopicViewModel(TopicInfo info)
     {
         Info = info ?? throw new ArgumentNullException(nameof(info));
         
-        // Forward property changes from Info to this ViewModel
-        Info.PropertyChanged += (_, e) =>
-        {
-            OnPropertyChanged(e.PropertyName);
-            if (e.PropertyName is nameof(TopicInfo.SubscriptionsLoaded) or nameof(TopicInfo.IsLoadingSubscriptions))
+        // Forward property changes from Info to this ViewModel using PropertyForwarder
+        this.CreateForwarder(OnPropertyChanged)
+            .ForwardWithHandlers(Info, ForwardedProperties, new Dictionary<string, Action>
             {
-                OnPropertyChanged(nameof(DisplayStatus));
-            }
-        };
+                [nameof(TopicInfo.SubscriptionsLoaded)] = () => OnPropertyChanged(nameof(DisplayStatus)),
+                [nameof(TopicInfo.IsLoadingSubscriptions)] = () => OnPropertyChanged(nameof(DisplayStatus))
+            });
     }
 
     /// <summary>
