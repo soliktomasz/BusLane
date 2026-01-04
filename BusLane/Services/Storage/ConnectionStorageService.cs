@@ -69,8 +69,16 @@ public class ConnectionStorageService : IConnectionStorageService
                 {
                     // Decrypt the connection string
                     // The decryption handles both encrypted and legacy unencrypted strings
-                    var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString)
-                                          ?? stored.EncryptedConnectionString;
+                    var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString);
+                    
+                    // If decryption returns null, the encrypted data is corrupted or 
+                    // was encrypted with a different key (e.g., from a different machine)
+                    if (connectionString == null)
+                    {
+                        Console.WriteLine($"Warning: Failed to decrypt connection '{stored.Name}' (ID: {stored.Id}). " +
+                                          "The connection may have been encrypted with a different key.");
+                        return null;
+                    }
 
                     return new SavedConnection
                     {
@@ -84,6 +92,8 @@ public class ConnectionStorageService : IConnectionStorageService
                         Environment = stored.Environment
                     };
                 })
+                .Where(conn => conn != null)
+                .Cast<SavedConnection>()
                 .ToList();
         }
         catch

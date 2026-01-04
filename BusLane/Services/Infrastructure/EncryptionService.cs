@@ -33,6 +33,7 @@ public class EncryptionService : IEncryptionService
     private static byte[] DeriveMasterKey()
     {
         // Combine multiple entropy sources for the master key
+        // IMPORTANT: Only use stable values that don't change between runs/debug sessions
         var entropyBuilder = new StringBuilder();
         
         // Machine name
@@ -47,8 +48,9 @@ public class EncryptionService : IEncryptionService
         // User profile path (different per user)
         entropyBuilder.Append(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         
-        // Additional entropy from OS version
-        entropyBuilder.Append(Environment.OSVersion.VersionString);
+        // Note: We intentionally do NOT use Environment.OSVersion.VersionString 
+        // because it can change between OS updates or debug sessions, causing
+        // previously encrypted data to become undecryptable.
         
         var entropy = entropyBuilder.ToString();
         var entropyBytes = Encoding.UTF8.GetBytes(entropy);
