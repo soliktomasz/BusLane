@@ -42,8 +42,9 @@ public partial class AlertsViewModel : ViewModelBase
         _notificationService = notificationService;
         _onClose = onClose;
         _systemNotificationsEnabled = _notificationService.IsEnabled;
+        
+        // Single event handler - AlertsChanged covers all cases including new alerts
         _alertService.AlertsChanged += OnAlertsChanged;
-        _alertService.AlertTriggered += OnAlertTriggered;
 
         LoadData();
     }
@@ -76,16 +77,6 @@ public partial class AlertsViewModel : ViewModelBase
         Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
     }
 
-    private void OnAlertTriggered(object? sender, AlertEvent alert)
-    {
-
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            ActiveAlerts.Insert(0, alert);
-            OnPropertyChanged(nameof(UnacknowledgedCount));
-            OnPropertyChanged(nameof(HasAlerts));
-        });
-    }
 
     [RelayCommand]
     private void ShowAddRule()

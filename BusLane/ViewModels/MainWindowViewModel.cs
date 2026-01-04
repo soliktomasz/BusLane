@@ -62,7 +62,8 @@ public partial class MainWindowViewModel : ViewModelBase
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
-    // Forward properties from composed components for XAML binding convenience
+    // Note: Forwarded properties kept for XAML binding compatibility
+    // Could be removed if XAML bindings are updated to use sub-ViewModel paths
     public bool IsAuthenticated => Connection.IsAuthenticated;
     public ConnectionMode CurrentMode => Connection.CurrentMode;
     public bool ShowAzureSections => Connection.ShowAzureSections;
@@ -130,6 +131,42 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public string AppVersion => _versionService.DisplayVersion;
 
+    /// <summary>
+    /// Executes a service operation using either connection string or Azure account mode.
+    /// Eliminates duplicated if/else blocks throughout the codebase.
+    /// </summary>
+    private async Task<T?> ExecuteServiceOperationAsync<T>(
+        Func<IConnectionStringService, string, Task<T>> connectionStringOp,
+        Func<IServiceBusService, string, Task<T>> azureOp)
+    {
+        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
+        {
+            return await connectionStringOp(_connectionStringService, Connection.ActiveConnection.ConnectionString);
+        }
+        if (Navigation.SelectedNamespace != null)
+        {
+            return await azureOp(_serviceBus, Navigation.SelectedNamespace.Endpoint);
+        }
+        return default;
+    }
+
+    /// <summary>
+    /// Executes a service operation without return value.
+    /// </summary>
+    private async Task ExecuteServiceOperationAsync(
+        Func<IConnectionStringService, string, Task> connectionStringOp,
+        Func<IServiceBusService, string, Task> azureOp)
+    {
+        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
+        {
+            await connectionStringOp(_connectionStringService, Connection.ActiveConnection.ConnectionString);
+        }
+        else if (Navigation.SelectedNamespace != null)
+        {
+            await azureOp(_serviceBus, Navigation.SelectedNamespace.Endpoint);
+        }
+    }
+
     public MainWindowViewModel(
         IAzureAuthService auth,
         IServiceBusService serviceBus,
@@ -184,152 +221,42 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void SetupPropertyForwarding()
     {
-        Connection.PropertyChanged += (_, e) =>
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(Connection.IsAuthenticated):
-                    OnPropertyChanged(nameof(IsAuthenticated));
-                    break;
-                case nameof(Connection.CurrentMode):
-                    OnPropertyChanged(nameof(CurrentMode));
-                    break;
-                case nameof(Connection.ShowAzureSections):
-                    OnPropertyChanged(nameof(ShowAzureSections));
-                    break;
-                case nameof(Connection.ActiveConnection):
-                    OnPropertyChanged(nameof(ActiveConnection));
-                    break;
-                case nameof(Connection.HasFavoriteConnections):
-                    OnPropertyChanged(nameof(HasFavoriteConnections));
-                    break;
-                case nameof(Connection.ShowConnectionLibrary):
-                    OnPropertyChanged(nameof(ShowConnectionLibrary));
-                    break;
-                case nameof(Connection.ConnectionLibraryViewModel):
-                    OnPropertyChanged(nameof(ConnectionLibraryViewModel));
-                    break;
-            }
-        };
-
+        // Forward property changes from sub-ViewModels to this ViewModel
+        // This enables XAML bindings to work with simplified property paths
+        
+        Connection.PropertyChanged += (_, e) => ForwardPropertyChange(e.PropertyName, nameof(Connection));
         Navigation.PropertyChanged += (_, e) =>
         {
-            switch (e.PropertyName)
-            {
-                case nameof(Navigation.SelectedNamespace):
-                    OnPropertyChanged(nameof(SelectedNamespace));
-                    break;
-                case nameof(Navigation.SelectedQueue):
-                    OnPropertyChanged(nameof(SelectedQueue));
-                    break;
-                case nameof(Navigation.SelectedTopic):
-                    OnPropertyChanged(nameof(SelectedTopic));
-                    break;
-                case nameof(Navigation.SelectedSubscription):
-                    OnPropertyChanged(nameof(SelectedSubscription));
-                    break;
-                case nameof(Navigation.SelectedEntity):
-                    OnPropertyChanged(nameof(SelectedEntity));
-                    break;
-                case nameof(Navigation.SelectedAzureSubscription):
-                    OnPropertyChanged(nameof(SelectedAzureSubscription));
-                    _ = LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id);
-                    break;
-                case nameof(Navigation.ShowDeadLetter):
-                    OnPropertyChanged(nameof(ShowDeadLetter));
-                    _ = MessageOps.LoadMessagesAsync();
-                    break;
-                case nameof(Navigation.SelectedMessageTabIndex):
-                    OnPropertyChanged(nameof(SelectedMessageTabIndex));
-                    break;
-                case nameof(Navigation.HasQueues):
-                    OnPropertyChanged(nameof(HasQueues));
-                    break;
-                case nameof(Navigation.HasTopics):
-                    OnPropertyChanged(nameof(HasTopics));
-                    break;
-                case nameof(Navigation.TotalDeadLetterCount):
-                    OnPropertyChanged(nameof(TotalDeadLetterCount));
-                    break;
-                case nameof(Navigation.HasDeadLetters):
-                    OnPropertyChanged(nameof(HasDeadLetters));
-                    break;
-            }
+            ForwardPropertyChange(e.PropertyName, nameof(Navigation));
+            // Trigger dependent actions
+            if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
+                _ = LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id);
+            else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
+                _ = MessageOps.LoadMessagesAsync();
         };
+        MessageOps.PropertyChanged += (_, e) => ForwardPropertyChange(e.PropertyName, nameof(MessageOps));
+        FeaturePanels.PropertyChanged += (_, e) => ForwardPropertyChange(e.PropertyName, nameof(FeaturePanels));
+    }
 
-        MessageOps.PropertyChanged += (_, e) =>
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(MessageOps.SelectedMessage):
-                    OnPropertyChanged(nameof(SelectedMessage));
-                    break;
-                case nameof(MessageOps.IsLoadingMessages):
-                    OnPropertyChanged(nameof(IsLoadingMessages));
-                    break;
-                case nameof(MessageOps.IsMultiSelectMode):
-                    OnPropertyChanged(nameof(IsMultiSelectMode));
-                    break;
-                case nameof(MessageOps.HasSelectedMessages):
-                    OnPropertyChanged(nameof(HasSelectedMessages));
-                    break;
-                case nameof(MessageOps.SelectedMessagesCount):
-                    OnPropertyChanged(nameof(SelectedMessagesCount));
-                    break;
-                case nameof(MessageOps.CanResubmitDeadLetters):
-                    OnPropertyChanged(nameof(CanResubmitDeadLetters));
-                    break;
-                case nameof(MessageOps.SelectionVersion):
-                    OnPropertyChanged(nameof(SelectionVersion));
-                    break;
-                case nameof(MessageOps.SortDescending):
-                    OnPropertyChanged(nameof(SortDescending));
-                    break;
-                case nameof(MessageOps.SortButtonText):
-                    OnPropertyChanged(nameof(SortButtonText));
-                    break;
-                case nameof(MessageOps.MessageSearchText):
-                    OnPropertyChanged(nameof(MessageSearchText));
-                    break;
-                case nameof(MessageOps.IsMessageBodyJson):
-                    OnPropertyChanged(nameof(IsMessageBodyJson));
-                    break;
-                case nameof(MessageOps.FormattedMessageBody):
-                    OnPropertyChanged(nameof(FormattedMessageBody));
-                    break;
-                case nameof(MessageOps.FormattedApplicationProperties):
-                    OnPropertyChanged(nameof(FormattedApplicationProperties));
-                    break;
-            }
-        };
+    // Maps sub-ViewModel properties to forwarded properties
+    private static readonly Dictionary<string, string[]> PropertyMappings = new()
+    {
+        [nameof(Connection)] = ["IsAuthenticated", "CurrentMode", "ShowAzureSections", "ActiveConnection", 
+            "HasFavoriteConnections", "ShowConnectionLibrary", "ConnectionLibraryViewModel"],
+        [nameof(Navigation)] = ["SelectedNamespace", "SelectedQueue", "SelectedTopic", "SelectedSubscription",
+            "SelectedEntity", "SelectedAzureSubscription", "ShowDeadLetter", "SelectedMessageTabIndex",
+            "HasQueues", "HasTopics", "TotalDeadLetterCount", "HasDeadLetters"],
+        [nameof(MessageOps)] = ["SelectedMessage", "IsLoadingMessages", "IsMultiSelectMode", "HasSelectedMessages",
+            "SelectedMessagesCount", "CanResubmitDeadLetters", "SelectionVersion", "SortDescending", "SortButtonText",
+            "MessageSearchText", "IsMessageBodyJson", "FormattedMessageBody", "FormattedApplicationProperties"],
+        [nameof(FeaturePanels)] = ["ShowLiveStream", "ShowCharts", "ShowAlerts", "LiveStreamViewModel",
+            "ChartsViewModel", "AlertsViewModel", "ActiveAlertCount"]
+    };
 
-        FeaturePanels.PropertyChanged += (_, e) =>
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(FeaturePanels.ShowLiveStream):
-                    OnPropertyChanged(nameof(ShowLiveStream));
-                    break;
-                case nameof(FeaturePanels.ShowCharts):
-                    OnPropertyChanged(nameof(ShowCharts));
-                    break;
-                case nameof(FeaturePanels.ShowAlerts):
-                    OnPropertyChanged(nameof(ShowAlerts));
-                    break;
-                case nameof(FeaturePanels.LiveStreamViewModel):
-                    OnPropertyChanged(nameof(LiveStreamViewModel));
-                    break;
-                case nameof(FeaturePanels.ChartsViewModel):
-                    OnPropertyChanged(nameof(ChartsViewModel));
-                    break;
-                case nameof(FeaturePanels.AlertsViewModel):
-                    OnPropertyChanged(nameof(AlertsViewModel));
-                    break;
-                case nameof(FeaturePanels.ActiveAlertCount):
-                    OnPropertyChanged(nameof(ActiveAlertCount));
-                    break;
-            }
-        };
+    private void ForwardPropertyChange(string? propertyName, string source)
+    {
+        if (propertyName != null && PropertyMappings.TryGetValue(source, out var props) && props.Contains(propertyName))
+            OnPropertyChanged(propertyName);
     }
 
     public void SetFileDialogService(IFileDialogService fileDialogService) => _fileDialogService = fileDialogService;
@@ -764,20 +691,15 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var properties = msg.Properties.ToDictionary(p => p.Key, p => p.Value);
 
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                await _connectionStringService.SendMessageAsync(
-                    Connection.ActiveConnection.ConnectionString, entityName, msg.Body, properties,
+            await ExecuteServiceOperationAsync(
+                async (svc, connStr) => await svc.SendMessageAsync(
+                    connStr, entityName, msg.Body, properties,
                     msg.ContentType, msg.CorrelationId, null, msg.SessionId, msg.Subject,
-                    msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null);
-            }
-            else if (Navigation.SelectedNamespace != null)
-            {
-                await _serviceBus.SendMessageAsync(
-                    Navigation.SelectedNamespace.Endpoint, entityName, msg.Body, properties,
+                    msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null),
+                async (svc, endpoint) => await svc.SendMessageAsync(
+                    endpoint, entityName, msg.Body, properties,
                     msg.ContentType, msg.CorrelationId, null, msg.SessionId, msg.Subject,
-                    msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null);
-            }
+                    msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null));
 
             StatusMessage = "Message resent successfully";
             await MessageOps.LoadMessagesAsync();
@@ -929,16 +851,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                await _connectionStringService.PurgeMessagesAsync(
-                    Connection.ActiveConnection.ConnectionString, entityName, subscription, Navigation.ShowDeadLetter);
-            }
-            else if (Navigation.SelectedNamespace != null)
-            {
-                await _serviceBus.PurgeMessagesAsync(
-                    Navigation.SelectedNamespace.Endpoint, entityName, subscription, Navigation.ShowDeadLetter);
-            }
+            await ExecuteServiceOperationAsync(
+                async (svc, connStr) => await svc.PurgeMessagesAsync(connStr, entityName, subscription, Navigation.ShowDeadLetter),
+                async (svc, endpoint) => await svc.PurgeMessagesAsync(endpoint, entityName, subscription, Navigation.ShowDeadLetter));
 
             StatusMessage = "Purge complete";
             await MessageOps.LoadMessagesAsync();
@@ -986,22 +901,10 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var messagesToResend = MessageOps.SelectedMessages.ToList();
-            int sentCount;
 
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                sentCount = await _connectionStringService.ResendMessagesAsync(
-                    Connection.ActiveConnection.ConnectionString, entityName, messagesToResend);
-            }
-            else if (Navigation.SelectedNamespace != null)
-            {
-                sentCount = await _serviceBus.ResendMessagesAsync(
-                    Navigation.SelectedNamespace.Endpoint, entityName, messagesToResend);
-            }
-            else
-            {
-                return;
-            }
+            var sentCount = await ExecuteServiceOperationAsync(
+                async (svc, connStr) => await svc.ResendMessagesAsync(connStr, entityName, messagesToResend),
+                async (svc, endpoint) => await svc.ResendMessagesAsync(endpoint, entityName, messagesToResend));
 
             StatusMessage = $"Successfully resent {sentCount} of {count} message(s)";
             MessageOps.SelectedMessages.Clear();
@@ -1045,22 +948,10 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var sequenceNumbers = MessageOps.SelectedMessages.Select(m => m.SequenceNumber).ToList();
-            int deletedCount;
 
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                deletedCount = await _connectionStringService.DeleteMessagesAsync(
-                    Connection.ActiveConnection.ConnectionString, entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter);
-            }
-            else if (Navigation.SelectedNamespace != null)
-            {
-                deletedCount = await _serviceBus.DeleteMessagesAsync(
-                    Navigation.SelectedNamespace.Endpoint, entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter);
-            }
-            else
-            {
-                return;
-            }
+            var deletedCount = await ExecuteServiceOperationAsync(
+                async (svc, connStr) => await svc.DeleteMessagesAsync(connStr, entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter),
+                async (svc, endpoint) => await svc.DeleteMessagesAsync(endpoint, entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter));
 
             StatusMessage = $"Successfully deleted {deletedCount} of {count} message(s)";
             MessageOps.SelectedMessages.Clear();
@@ -1104,22 +995,10 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var messagesToResubmit = MessageOps.SelectedMessages.ToList();
-            int resubmittedCount;
 
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                resubmittedCount = await _connectionStringService.ResubmitDeadLetterMessagesAsync(
-                    Connection.ActiveConnection.ConnectionString, entityName, subscription, messagesToResubmit);
-            }
-            else if (Navigation.SelectedNamespace != null)
-            {
-                resubmittedCount = await _serviceBus.ResubmitDeadLetterMessagesAsync(
-                    Navigation.SelectedNamespace.Endpoint, entityName, subscription, messagesToResubmit);
-            }
-            else
-            {
-                return;
-            }
+            var resubmittedCount = await ExecuteServiceOperationAsync(
+                async (svc, connStr) => await svc.ResubmitDeadLetterMessagesAsync(connStr, entityName, subscription, messagesToResubmit),
+                async (svc, endpoint) => await svc.ResubmitDeadLetterMessagesAsync(endpoint, entityName, subscription, messagesToResubmit));
 
             StatusMessage = $"Successfully resubmitted {resubmittedCount} of {count} message(s)";
             MessageOps.SelectedMessages.Clear();

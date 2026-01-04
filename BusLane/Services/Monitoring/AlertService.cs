@@ -21,44 +21,7 @@ public class AlertService : IAlertService
     public AlertService()
     {
         LoadRules();
-
-        // Add default rules if none exist
-        if (_rules.Count == 0)
-        {
-            AddDefaultRules();
-        }
-    }
-
-    private void AddDefaultRules()
-    {
-        _rules.Add(new AlertRule(
-            Guid.NewGuid().ToString(),
-            "Dead Letter Warning",
-            AlertType.DeadLetterThreshold,
-            AlertSeverity.Warning,
-            10,
-            true
-        ));
-
-        _rules.Add(new AlertRule(
-            Guid.NewGuid().ToString(),
-            "Dead Letter Critical",
-            AlertType.DeadLetterThreshold,
-            AlertSeverity.Critical,
-            100,
-            true
-        ));
-
-        _rules.Add(new AlertRule(
-            Guid.NewGuid().ToString(),
-            "High Message Count",
-            AlertType.MessageCountThreshold,
-            AlertSeverity.Warning,
-            1000,
-            false
-        ));
-
-        SaveRules();
+        // No default rules - let users create their own when needed (YAGNI principle)
     }
 
     public void AddRule(AlertRule rule)
