@@ -11,7 +11,7 @@
     </UserControl.Resources>
     
     <Border Classes="modal-overlay"
-            IsVisible="{Binding ShowConnectionLibrary}">
+            IsVisible="{Binding Connection.ShowConnectionLibrary}">
         <Border Classes="modal" 
                 VerticalAlignment="Center" 
                 HorizontalAlignment="Center"
@@ -25,12 +25,12 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                         <Button Classes="secondary small" 
                                 Content="Clear All"
-                                Command="{Binding ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
-                                IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
+                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                         <Button Classes="primary small" 
                                 Content="+ Add Connection"
-                                Command="{Binding ConnectionLibraryViewModel.StartAddConnectionCommand}"
-                                IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}"
+                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                         <Button Classes="icon" 
                                 Command="{Binding CloseConnectionLibraryCommand}">
                             <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
@@ -40,31 +40,31 @@
                 
                 <!-- Environment Tabs -->
                 <Border DockPanel.Dock="Top" 
-                        IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"
+                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"
                         Margin="0,0,0,12">
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <RadioButton GroupName="EnvironmentTabs" 
                                      Content="All" 
                                      Classes="tab-button"
-                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab, 
                                          Converter={StaticResource EnvironmentTabConverter}, 
                                          ConverterParameter={x:Static models:ConnectionEnvironment.None}}"/>
                         <RadioButton GroupName="EnvironmentTabs" 
                                      Content="DEV" 
                                      Classes="tab-button"
-                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab, 
                                          Converter={StaticResource EnvironmentTabConverter}, 
                                          ConverterParameter={x:Static models:ConnectionEnvironment.Development}}"/>
                         <RadioButton GroupName="EnvironmentTabs" 
                                      Content="TEST" 
                                      Classes="tab-button"
-                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab, 
                                          Converter={StaticResource EnvironmentTabConverter}, 
                                          ConverterParameter={x:Static models:ConnectionEnvironment.Test}}"/>
                         <RadioButton GroupName="EnvironmentTabs" 
                                      Content="PROD" 
                                      Classes="tab-button"
-                                     IsChecked="{Binding ConnectionLibraryViewModel.SelectedEnvironmentTab, 
+                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab, 
                                          Converter={StaticResource EnvironmentTabConverter}, 
                                          ConverterParameter={x:Static models:ConnectionEnvironment.Production}}"/>
                     </StackPanel>
@@ -72,28 +72,28 @@
                 
                 <!-- Add/Edit Connection Form (shown when adding or editing) -->
                 <Border DockPanel.Dock="Top" 
-                        IsVisible="{Binding ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}"
+                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}"
                         Classes="surface-subtle" 
                         Padding="16" 
                         Margin="0,0,0,16">
                     <StackPanel Spacing="12">
                         <Panel>
                             <TextBlock Text="Add New Connection" FontWeight="SemiBold" FontSize="14"
-                                       IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                             <TextBlock Text="Edit Connection" FontWeight="SemiBold" FontSize="14"
-                                       IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
                         </Panel>
                         
                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
                             <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,12,0">
                                 <TextBlock Text="Connection Name" Classes="caption"/>
-                                <TextBox Text="{Binding ConnectionLibraryViewModel.NewConnectionName}" 
+                                <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionName}" 
                                          Watermark="e.g., Production Service Bus"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="4" Width="120">
                                 <TextBlock Text="Environment" Classes="caption"/>
-                                <ComboBox SelectedItem="{Binding ConnectionLibraryViewModel.NewConnectionEnvironment}"
-                                          ItemsSource="{Binding ConnectionLibraryViewModel.AvailableEnvironments}"
+                                <ComboBox SelectedItem="{Binding Connection.ConnectionLibraryViewModel.NewConnectionEnvironment}"
+                                          ItemsSource="{Binding Connection.ConnectionLibraryViewModel.AvailableEnvironments}"
                                           HorizontalAlignment="Stretch">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
@@ -108,7 +108,7 @@
                             <TextBlock Text="Connection String" Classes="caption"/>
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBox Grid.Column="0" 
-                                         Text="{Binding ConnectionLibraryViewModel.NewConnectionString}" 
+                                         Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionString}" 
                                          Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
                                          PasswordChar="●"
                                          TextWrapping="Wrap"
@@ -118,13 +118,13 @@
                                 <Button Grid.Column="1" 
                                         Classes="secondary small"
                                         ToolTip.Tip="Test connection"
-                                        Command="{Binding ConnectionLibraryViewModel.CheckConnectionCommand}"
-                                        IsEnabled="{Binding ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"
+                                        Command="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionCommand}"
+                                        IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"
                                         VerticalAlignment="Top">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <PathIcon Data="{StaticResource IconTestConnection}" Width="14" Height="14"/>
-                                        <TextBlock Text="Test" IsVisible="{Binding ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"/>
-                                        <TextBlock Text="Testing..." IsVisible="{Binding ConnectionLibraryViewModel.IsCheckingConnection}"/>
+                                        <TextBlock Text="Test" IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"/>
+                                        <TextBlock Text="Testing..." IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection}"/>
                                     </StackPanel>
                                 </Button>
                             </Grid>
@@ -132,16 +132,16 @@
                         
                         <!-- Check Connection Result -->
                         <Border Classes="surface-success" Padding="8"
-                                IsVisible="{Binding ConnectionLibraryViewModel.CheckConnectionSuccess, FallbackValue=False}">
+                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionSuccess, FallbackValue=False}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="{StaticResource IconCheck}" Width="16" Height="16" Foreground="{DynamicResource TextSuccess}"/>
                                 <StackPanel>
-                                    <TextBlock Text="{Binding ConnectionLibraryViewModel.CheckConnectionResult}" 
+                                    <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}" 
                                                Foreground="{DynamicResource TextSuccess}"/>
-                                    <TextBlock Text="{Binding ConnectionLibraryViewModel.DetectedInfo}" 
+                                    <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.DetectedInfo}" 
                                                Foreground="{DynamicResource TextSuccess}"
                                                FontSize="11"
-                                               IsVisible="{Binding ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -149,37 +149,37 @@
                         <Border Classes="surface-danger" Padding="8">
                             <Border.IsVisible>
                                 <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                    <Binding Path="ConnectionLibraryViewModel.CheckConnectionResult" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
-                                    <Binding Path="ConnectionLibraryViewModel.CheckConnectionSuccess" Converter="{x:Static BoolConverters.Not}"/>
+                                    <Binding Path="Connection.ConnectionLibraryViewModel.CheckConnectionResult" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                    <Binding Path="Connection.ConnectionLibraryViewModel.CheckConnectionSuccess" Converter="{x:Static BoolConverters.Not}"/>
                                 </MultiBinding>
                             </Border.IsVisible>
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="{StaticResource IconWarning}" Width="16" Height="16" Foreground="{DynamicResource TextDanger}"/>
-                                <TextBlock Text="{Binding ConnectionLibraryViewModel.CheckConnectionResult}" 
+                                <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}" 
                                            Foreground="{DynamicResource TextDanger}"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         
-                        <TextBlock Text="{Binding ConnectionLibraryViewModel.ValidationMessage}" 
+                        <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.ValidationMessage}" 
                                    Foreground="{DynamicResource TextDanger}"
-                                   IsVisible="{Binding ConnectionLibraryViewModel.ValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   IsVisible="{Binding Connection.ConnectionLibraryViewModel.ValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                    TextWrapping="Wrap"/>
                         
                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                             <Button Classes="secondary small" 
                                     Content="Cancel" 
-                                    Command="{Binding ConnectionLibraryViewModel.CancelAddConnectionCommand}"/>
+                                    Command="{Binding Connection.ConnectionLibraryViewModel.CancelAddConnectionCommand}"/>
                             <Button Classes="primary small" 
                                     Content="Save Connection" 
-                                    Command="{Binding ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
-                                    IsEnabled="{Binding ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
-                                    IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                    Command="{Binding Connection.ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                    IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
+                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                             <Button Classes="primary small" 
                                     Content="Update Connection" 
-                                    Command="{Binding ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
-                                    IsEnabled="{Binding ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
-                                    IsVisible="{Binding ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                                    Command="{Binding Connection.ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                    IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}"
+                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -190,9 +190,9 @@
                                Classes="caption" 
                                HorizontalAlignment="Center"
                                Margin="0,40"
-                               IsVisible="{Binding !ConnectionLibraryViewModel.FilteredConnections.Count, FallbackValue=True}"/>
+                               IsVisible="{Binding !Connection.ConnectionLibraryViewModel.FilteredConnections.Count, FallbackValue=True}"/>
                 </StackPanel>
-                <ListBox ItemsSource="{Binding ConnectionLibraryViewModel.FilteredConnections}"
+                <ListBox ItemsSource="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections}"
                          Classes="entity-list"
                          Background="Transparent"
                          BorderThickness="0"
@@ -243,7 +243,7 @@
                                                         VerticalAlignment="Center">
                                                 <Button Classes="icon" 
                                                         ToolTip.Tip="{Binding IsFavorite, Converter={x:Static BoolConverters.Not}, ConverterParameter='Add to favorites', FallbackValue='Add to favorites'}"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.ToggleFavoriteCommand}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.ToggleFavoriteCommand}"
                                                         CommandParameter="{Binding}">
                                                     <Panel>
                                                         <PathIcon Data="{StaticResource IconStarOutline}" Width="16" Height="16" IsVisible="{Binding !IsFavorite}"/>
@@ -252,17 +252,17 @@
                                                 </Button>
                                                 <Button Classes="primary small" 
                                                         Content="Connect"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.SelectConnectionCommand}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.SelectConnectionCommand}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Classes="icon" 
                                                         ToolTip.Tip="Edit"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.StartEditConnectionCommand}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.StartEditConnectionCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
                                                 </Button>
                                                 <Button Classes="icon" 
                                                         ToolTip.Tip="Delete"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectionLibraryViewModel.DeleteConnectionCommand}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.DeleteConnectionCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
                                                 </Button>

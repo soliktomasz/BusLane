@@ -35,7 +35,7 @@
                                     </StackPanel>
                                 </StackPanel>
                                 <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Queues.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
+                                    <TextBlock Text="{Binding Navigation.Queues.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -52,7 +52,7 @@
                             </StackPanel>
                         </Border>
                         
-                        <ListBox ItemsSource="{Binding Queues}" 
+                        <ListBox ItemsSource="{Binding Navigation.Queues}" 
                                  Margin="4,0,0,0"
                                  Classes="entity-list"
                                  Background="Transparent"
@@ -80,7 +80,7 @@
                                                 <Border.IsVisible>
                                                     <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                         <Binding Path="."/>
-                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedQueue"/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedQueue"/>
                                                     </MultiBinding>
                                                 </Border.IsVisible>
                                             </Border>
@@ -90,7 +90,7 @@
                                                 <Border.Background>
                                                     <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                         <Binding Path="."/>
-                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedQueue"/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedQueue"/>
                                                     </MultiBinding>
                                                 </Border.Background>
                                                 <Grid ColumnDefinitions="Auto,*">
@@ -157,7 +157,7 @@
                                     </StackPanel>
                                 </StackPanel>
                                 <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Topics.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
+                                    <TextBlock Text="{Binding Navigation.Topics.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#616161"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -174,7 +174,7 @@
                             </StackPanel>
                         </Border>
                         
-                        <ListBox ItemsSource="{Binding Topics}" 
+                        <ListBox ItemsSource="{Binding Navigation.Topics}" 
                                  Margin="4,0,0,0"
                                  Classes="entity-list"
                                  Background="Transparent"
@@ -203,7 +203,7 @@
                                                         <Border.IsVisible>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                                 <Binding Path="."/>
-                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic"/>
+                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedTopic"/>
                                                             </MultiBinding>
                                                         </Border.IsVisible>
                                                     </Border>
@@ -213,7 +213,7 @@
                                                         <Border.Background>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                 <Binding Path="."/>
-                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedTopic"/>
+                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedTopic"/>
                                                             </MultiBinding>
                                                         </Border.Background>
                                                         <Grid ColumnDefinitions="Auto,*">
@@ -277,7 +277,7 @@
                                                                 <Border.IsVisible>
                                                                     <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                                         <Binding Path="."/>
-                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSubscription"/>
+                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedSubscription"/>
                                                                     </MultiBinding>
                                                                 </Border.IsVisible>
                                                             </Border>
@@ -287,7 +287,7 @@
                                                                 <Border.Background>
                                                                     <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                         <Binding Path="."/>
-                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedSubscription"/>
+                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedSubscription"/>
                                                                     </MultiBinding>
                                                                 </Border.Background>
                                                                 <Grid ColumnDefinitions="Auto,*">

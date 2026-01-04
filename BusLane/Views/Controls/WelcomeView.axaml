@@ -9,8 +9,8 @@
                 HorizontalAlignment="Center"
                 MaxWidth="480">
         <!-- Show when not authenticated and no active connection -->
-        <StackPanel IsVisible="{Binding !IsAuthenticated}">
-            <StackPanel IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNull}}">
+        <StackPanel IsVisible="{Binding !Connection.IsAuthenticated}">
+            <StackPanel IsVisible="{Binding Connection.ActiveConnection, Converter={x:Static ObjectConverters.IsNull}}">
                 <TextBlock Text="Welcome to Bus Lane" Classes="title-large" HorizontalAlignment="Center"/>
                 <TextBlock Text="Connect using a connection string or sign in with your Azure account to manage your Service Bus resources." 
                            Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,24" TextWrapping="Wrap" TextAlignment="Center"/>
@@ -25,9 +25,9 @@
                 </StackPanel>
                 
                 <!-- Saved Connections Preview -->
-                <StackPanel Margin="0,32,0,0" IsVisible="{Binding SavedConnections.Count}">
+                <StackPanel Margin="0,32,0,0" IsVisible="{Binding Connection.SavedConnections.Count}">
                     <TextBlock Text="Recent Connections" Classes="body-strong" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                    <ItemsControl ItemsSource="{Binding SavedConnections}" MaxHeight="200">
+                    <ItemsControl ItemsSource="{Binding Connection.SavedConnections}" MaxHeight="200">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:SavedConnection">
                                 <Button Classes="secondary" 

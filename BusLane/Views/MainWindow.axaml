@@ -30,14 +30,14 @@
 
             <!-- Content when namespace selected (Azure mode) -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  IsVisible="{Binding Navigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="{Binding SelectedNamespace.Name}" Classes="title"/>
-                        <TextBlock Text="{Binding SelectedNamespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding Navigation.SelectedNamespace.Name}" Classes="title"/>
+                        <TextBlock Text="{Binding Navigation.SelectedNamespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
                     </StackPanel>
                     <Button Classes="secondary small" Content="Refresh"
                             Command="{Binding RefreshCommand}"
@@ -57,21 +57,21 @@
 
             <!-- Content when connected via connection string -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  IsVisible="{Binding Connection.ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="{Binding ActiveConnection.Name}" Classes="title"/>
+                        <TextBlock Text="{Binding Connection.ActiveConnection.Name}" Classes="title"/>
                         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
                             <Border Classes="badge-info" Padding="8,4">
-                                <TextBlock Text="{Binding ActiveConnection.TypeDisplayName}" FontSize="12" Foreground="{DynamicResource AccentBrand}"/>
+                                <TextBlock Text="{Binding Connection.ActiveConnection.TypeDisplayName}" FontSize="12" Foreground="{DynamicResource AccentBrand}"/>
                             </Border>
-                            <TextBlock Text="{Binding ActiveConnection.EntityName}" Classes="caption" VerticalAlignment="Center"
-                                       IsVisible="{Binding ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Text="{Binding ActiveConnection.Endpoint}" Classes="caption" VerticalAlignment="Center"
-                                       IsVisible="{Binding ActiveConnection.IsNamespaceLevel}"/>
+                            <TextBlock Text="{Binding Connection.ActiveConnection.EntityName}" Classes="caption" VerticalAlignment="Center"
+                                       IsVisible="{Binding Connection.ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Text="{Binding Connection.ActiveConnection.Endpoint}" Classes="caption" VerticalAlignment="Center"
+                                       IsVisible="{Binding Connection.ActiveConnection.IsNamespaceLevel}"/>
                         </StackPanel>
                     </StackPanel>
                     <Button Classes="secondary small" Content="Refresh"
@@ -92,7 +92,7 @@
 
             <!-- Live Stream Panel (overlay when active) -->
             <Border Grid.Row="0" Grid.RowSpan="2"
-                    IsVisible="{Binding ShowLiveStream}"
+                    IsVisible="{Binding FeaturePanels.ShowLiveStream}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
                     <Border Grid.Row="0" Margin="0,0,0,16">
@@ -102,13 +102,13 @@
                                     Command="{Binding CloseLiveStreamCommand}"/>
                         </Grid>
                     </Border>
-                    <controls:LiveStreamView Grid.Row="1" DataContext="{Binding LiveStreamViewModel}"/>
+                    <controls:LiveStreamView Grid.Row="1" DataContext="{Binding FeaturePanels.LiveStreamViewModel}"/>
                 </Grid>
             </Border>
 
             <!-- Charts Panel (overlay when active) -->
             <Border Grid.Row="0" Grid.RowSpan="2"
-                    IsVisible="{Binding ChartsViewModel, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    IsVisible="{Binding FeaturePanels.ChartsViewModel, Converter={x:Static ObjectConverters.IsNotNull}}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
                     <Border Grid.Row="0" Margin="0,0,0,16">
@@ -118,7 +118,7 @@
                                     Command="{Binding CloseChartsCommand}"/>
                         </Grid>
                     </Border>
-                    <ContentControl Grid.Row="1" Content="{Binding ChartsViewModel}">
+                    <ContentControl Grid.Row="1" Content="{Binding FeaturePanels.ChartsViewModel}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate DataType="vm:ChartsViewModel">
                                 <controls:ChartsView />
@@ -164,14 +164,14 @@
 
         <!-- Alerts Dialog (modal overlay) -->
         <Border Grid.Column="0" Grid.ColumnSpan="2"
-                IsVisible="{Binding ShowAlerts}"
+                IsVisible="{Binding FeaturePanels.ShowAlerts}"
                 Background="{DynamicResource ModalOverlay}">
             <Border Background="{DynamicResource CardBackground}"
                     CornerRadius="12"
                     MaxWidth="900" MaxHeight="700"
                     VerticalAlignment="Center" HorizontalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
-                <dialogs:AlertsDialog DataContext="{Binding AlertsViewModel}"/>
+                <dialogs:AlertsDialog DataContext="{Binding FeaturePanels.AlertsViewModel}"/>
             </Border>
         </Border>
     </Grid>
