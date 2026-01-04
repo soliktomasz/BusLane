@@ -26,7 +26,7 @@ public partial class App : Application
     {
         Instance = this;
         AvaloniaXamlLoader.Load(this);
-        ApplyTheme(Preferences.Theme);
+        // Theme will be applied in OnFrameworkInitializationCompleted when services are available
         SetMacOSDockIcon();
     }
 
@@ -34,6 +34,10 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Apply theme from preferences service
+            var preferencesService = Program.Services!.GetRequiredService<IPreferencesService>();
+            ApplyTheme(preferencesService.Theme);
+            
             var vm = Program.Services!.GetRequiredService<MainWindowViewModel>();
             var mainWindow = new MainWindow { DataContext = vm, Title = "Bus Lane" };
             MainWindow = mainWindow;

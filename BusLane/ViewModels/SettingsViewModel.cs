@@ -10,7 +10,7 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private readonly Action _onClose;
     private readonly MainWindowViewModel? _mainViewModel;
-    private readonly IPreferencesService? _preferencesService;
+    private readonly IPreferencesService _preferencesService;
     private string _originalTheme = "Light";
     private bool _isLoading;
 
@@ -27,22 +27,14 @@ public partial class SettingsViewModel : ViewModelBase
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
 
-    public SettingsViewModel(Action onClose, MainWindowViewModel? mainViewModel = null)
-    {
-        _onClose = onClose;
-        _mainViewModel = mainViewModel;
-        LoadSettings();
-        _originalTheme = Theme;
-    }
-
     public SettingsViewModel(
-        Action onClose, 
-        MainWindowViewModel? mainViewModel,
-        IPreferencesService preferencesService)
+        Action onClose,
+        IPreferencesService preferencesService,
+        MainWindowViewModel? mainViewModel = null)
     {
         _onClose = onClose;
-        _mainViewModel = mainViewModel;
         _preferencesService = preferencesService;
+        _mainViewModel = mainViewModel;
         LoadSettings();
         _originalTheme = Theme;
     }
@@ -63,30 +55,14 @@ public partial class SettingsViewModel : ViewModelBase
         {
             _isLoading = true;
 
-            if (_preferencesService != null)
-            {
-                // Use injected service
-                ConfirmBeforeDelete = _preferencesService.ConfirmBeforeDelete;
-                ConfirmBeforePurge = _preferencesService.ConfirmBeforePurge;
-                AutoRefreshMessages = _preferencesService.AutoRefreshMessages;
-                AutoRefreshIntervalSeconds = _preferencesService.AutoRefreshIntervalSeconds;
-                DefaultMessageCount = _preferencesService.DefaultMessageCount;
-                ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
-                EnableMessagePreview = _preferencesService.EnableMessagePreview;
-                Theme = _preferencesService.Theme;
-            }
-            else
-            {
-                // Fallback to static Preferences for backwards compatibility
-                ConfirmBeforeDelete = Preferences.ConfirmBeforeDelete;
-                ConfirmBeforePurge = Preferences.ConfirmBeforePurge;
-                AutoRefreshMessages = Preferences.AutoRefreshMessages;
-                AutoRefreshIntervalSeconds = Preferences.AutoRefreshIntervalSeconds;
-                DefaultMessageCount = Preferences.DefaultMessageCount;
-                ShowDeadLetterBadges = Preferences.ShowDeadLetterBadges;
-                EnableMessagePreview = Preferences.EnableMessagePreview;
-                Theme = Preferences.Theme;
-            }
+            ConfirmBeforeDelete = _preferencesService.ConfirmBeforeDelete;
+            ConfirmBeforePurge = _preferencesService.ConfirmBeforePurge;
+            AutoRefreshMessages = _preferencesService.AutoRefreshMessages;
+            AutoRefreshIntervalSeconds = _preferencesService.AutoRefreshIntervalSeconds;
+            DefaultMessageCount = _preferencesService.DefaultMessageCount;
+            ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
+            EnableMessagePreview = _preferencesService.EnableMessagePreview;
+            Theme = _preferencesService.Theme;
         }
         finally
         {
@@ -100,32 +76,15 @@ public partial class SettingsViewModel : ViewModelBase
         // Store the theme we want to keep
         var themeToApply = Theme;
 
-        if (_preferencesService != null)
-        {
-            // Use injected service
-            _preferencesService.ConfirmBeforeDelete = ConfirmBeforeDelete;
-            _preferencesService.ConfirmBeforePurge = ConfirmBeforePurge;
-            _preferencesService.AutoRefreshMessages = AutoRefreshMessages;
-            _preferencesService.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
-            _preferencesService.DefaultMessageCount = DefaultMessageCount;
-            _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
-            _preferencesService.EnableMessagePreview = EnableMessagePreview;
-            _preferencesService.Theme = themeToApply;
-            _preferencesService.Save();
-        }
-        else
-        {
-            // Fallback to static Preferences
-            Preferences.ConfirmBeforeDelete = ConfirmBeforeDelete;
-            Preferences.ConfirmBeforePurge = ConfirmBeforePurge;
-            Preferences.AutoRefreshMessages = AutoRefreshMessages;
-            Preferences.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
-            Preferences.DefaultMessageCount = DefaultMessageCount;
-            Preferences.ShowDeadLetterBadges = ShowDeadLetterBadges;
-            Preferences.EnableMessagePreview = EnableMessagePreview;
-            Preferences.Theme = themeToApply;
-            Preferences.Save();
-        }
+        _preferencesService.ConfirmBeforeDelete = ConfirmBeforeDelete;
+        _preferencesService.ConfirmBeforePurge = ConfirmBeforePurge;
+        _preferencesService.AutoRefreshMessages = AutoRefreshMessages;
+        _preferencesService.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
+        _preferencesService.DefaultMessageCount = DefaultMessageCount;
+        _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
+        _preferencesService.EnableMessagePreview = EnableMessagePreview;
+        _preferencesService.Theme = themeToApply;
+        _preferencesService.Save();
         
         // Close the dialog
         _onClose();
@@ -165,103 +124,4 @@ public partial class SettingsViewModel : ViewModelBase
     }
 }
 
-/// <summary>
-/// Simple static class to hold user preferences.
-/// In a real application, this would persist to a file or other storage.
-/// </summary>
-public static class Preferences
-{
-    private static readonly string PreferencesPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "BusLane",
-        "preferences.json"
-    );
-
-    public static bool ConfirmBeforeDelete { get; set; } = true;
-    public static bool ConfirmBeforePurge { get; set; } = true;
-    public static bool AutoRefreshMessages { get; set; }
-    public static int AutoRefreshIntervalSeconds { get; set; } = 30;
-    public static int DefaultMessageCount { get; set; } = 100;
-    public static bool ShowDeadLetterBadges { get; set; } = true;
-    public static bool EnableMessagePreview { get; set; } = true;
-    public static string Theme { get; set; } = "Light";
-
-    static Preferences()
-    {
-        Load();
-    }
-
-    public static void Load()
-    {
-        try
-        {
-            if (File.Exists(PreferencesPath))
-            {
-                var json = File.ReadAllText(PreferencesPath);
-                var data = System.Text.Json.JsonSerializer.Deserialize<PreferencesData>(json);
-                if (data != null)
-                {
-                    ConfirmBeforeDelete = data.ConfirmBeforeDelete;
-                    ConfirmBeforePurge = data.ConfirmBeforePurge;
-                    AutoRefreshMessages = data.AutoRefreshMessages;
-                    AutoRefreshIntervalSeconds = data.AutoRefreshIntervalSeconds;
-                    DefaultMessageCount = data.DefaultMessageCount;
-                    ShowDeadLetterBadges = data.ShowDeadLetterBadges;
-                    EnableMessagePreview = data.EnableMessagePreview;
-                    Theme = data.Theme ?? "Light";
-                }
-            }
-        }
-        catch
-        {
-            // Use defaults if loading fails
-        }
-    }
-
-    public static void Save()
-    {
-        try
-        {
-            var directory = Path.GetDirectoryName(PreferencesPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var data = new PreferencesData
-            {
-                ConfirmBeforeDelete = ConfirmBeforeDelete,
-                ConfirmBeforePurge = ConfirmBeforePurge,
-                AutoRefreshMessages = AutoRefreshMessages,
-                AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds,
-                DefaultMessageCount = DefaultMessageCount,
-                ShowDeadLetterBadges = ShowDeadLetterBadges,
-                EnableMessagePreview = EnableMessagePreview,
-                Theme = Theme
-            };
-
-            var json = System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-            File.WriteAllText(PreferencesPath, json);
-        }
-        catch
-        {
-            // Silently fail if saving doesn't work
-        }
-    }
-
-    private class PreferencesData
-    {
-        public bool ConfirmBeforeDelete { get; set; }
-        public bool ConfirmBeforePurge { get; set; }
-        public bool AutoRefreshMessages { get; set; }
-        public int AutoRefreshIntervalSeconds { get; set; }
-        public int DefaultMessageCount { get; set; }
-        public bool ShowDeadLetterBadges { get; set; }
-        public bool EnableMessagePreview { get; set; }
-        public string? Theme { get; set; }
-    }
-}
 

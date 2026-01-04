@@ -14,6 +14,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
 {
     private readonly IServiceBusService _serviceBus;
     private readonly IConnectionStringService _connectionStringService;
+    private readonly IPreferencesService _preferencesService;
     private readonly Func<string?> _getEndpoint;
     private readonly Func<string?> _getConnectionString;
     private readonly Func<string?> _getEntityName;
@@ -104,6 +105,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public MessageOperationsViewModel(
         IServiceBusService serviceBus,
         IConnectionStringService connectionStringService,
+        IPreferencesService preferencesService,
         Func<string?> getEndpoint,
         Func<string?> getConnectionString,
         Func<string?> getEntityName,
@@ -114,6 +116,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     {
         _serviceBus = serviceBus;
         _connectionStringService = connectionStringService;
+        _preferencesService = preferencesService;
         _getEndpoint = getEndpoint;
         _getConnectionString = getConnectionString;
         _getEntityName = getEntityName;
@@ -191,12 +194,12 @@ public partial class MessageOperationsViewModel : ViewModelBase
             if (!string.IsNullOrEmpty(connectionString))
             {
                 msgs = await _connectionStringService.PeekMessagesAsync(
-                    connectionString, entityName, subscription, Preferences.DefaultMessageCount, showDeadLetter, requiresSession);
+                    connectionString, entityName, subscription, _preferencesService.DefaultMessageCount, showDeadLetter, requiresSession);
             }
             else if (!string.IsNullOrEmpty(endpoint))
             {
                 msgs = await _serviceBus.PeekMessagesAsync(
-                    endpoint, entityName, subscription, Preferences.DefaultMessageCount, showDeadLetter, requiresSession);
+                    endpoint, entityName, subscription, _preferencesService.DefaultMessageCount, showDeadLetter, requiresSession);
             }
             else
             {

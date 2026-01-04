@@ -31,6 +31,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IConnectionStringService _connectionStringService;
     private readonly IVersionService _versionService;
     private readonly IAlertService _alertService;
+    private readonly IPreferencesService _preferencesService;
     private IFileDialogService? _fileDialogService;
 
     // Composed components
@@ -126,8 +127,8 @@ public partial class MainWindowViewModel : ViewModelBase
     #endregion
 
     // Settings-driven computed properties
-    public bool ShowDeadLetterBadges => Preferences.ShowDeadLetterBadges;
-    public bool EnableMessagePreview => Preferences.EnableMessagePreview;
+    public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
+    public bool EnableMessagePreview => _preferencesService.EnableMessagePreview;
 
     public string AppVersion => _versionService.DisplayVersion;
 
@@ -173,6 +174,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IConnectionStorageService connectionStorage,
         IConnectionStringService connectionStringService,
         IVersionService versionService,
+        IPreferencesService preferencesService,
         ILiveStreamService liveStreamService,
         IMetricsService metricsService,
         IAlertService alertService,
@@ -183,6 +185,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _connectionStringService = connectionStringService;
         _versionService = versionService;
         _alertService = alertService;
+        _preferencesService = preferencesService;
         _fileDialogService = fileDialogService;
 
         // Initialize composed components
@@ -195,7 +198,7 @@ public partial class MainWindowViewModel : ViewModelBase
             OnDisconnectedAsync);
 
         MessageOps = new MessageOperationsViewModel(
-            serviceBus, connectionStringService,
+            serviceBus, connectionStringService, preferencesService,
             () => Navigation.CurrentEndpoint ?? Connection.CurrentEndpoint,
             () => Connection.CurrentConnectionString,
             () => Navigation.CurrentEntityName,
@@ -319,7 +322,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _autoRefreshTimer = new System.Timers.Timer();
         _autoRefreshTimer.Elapsed += async (_, _) =>
         {
-            if (Preferences.AutoRefreshMessages && Navigation.CurrentEntityName != null)
+            if (_preferencesService.AutoRefreshMessages && Navigation.CurrentEntityName != null)
             {
                 await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                 {
@@ -339,9 +342,9 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (_autoRefreshTimer == null) return;
 
-        if (Preferences.AutoRefreshMessages)
+        if (_preferencesService.AutoRefreshMessages)
         {
-            _autoRefreshTimer.Interval = Preferences.AutoRefreshIntervalSeconds * 1000;
+            _autoRefreshTimer.Interval = _preferencesService.AutoRefreshIntervalSeconds * 1000;
             _autoRefreshTimer.Start();
         }
         else
@@ -861,7 +864,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var subscription = Navigation.CurrentSubscriptionName;
 
-        if (Preferences.ConfirmBeforePurge)
+        if (_preferencesService.ConfirmBeforePurge)
         {
             var queueType = Navigation.ShowDeadLetter ? "dead letter queue" : "queue";
             var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
@@ -911,7 +914,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var count = MessageOps.SelectedMessagesCount;
 
-        if (Preferences.ConfirmBeforePurge)
+        if (_preferencesService.ConfirmBeforePurge)
         {
             ShowConfirmation(
                 "Confirm Bulk Resend",
@@ -1077,7 +1080,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSettings()
     {
-        SettingsViewModel = new SettingsViewModel(CloseSettings, this);
+        SettingsViewModel = new SettingsViewModel(CloseSettings, _preferencesService, this);
         ShowSettings = true;
     }
 
