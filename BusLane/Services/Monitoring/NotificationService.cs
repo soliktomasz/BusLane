@@ -4,14 +4,10 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using BusLane.Models;
+using BusLane.Services.Infrastructure;
 
 public class NotificationService : INotificationService
 {
-    private static readonly string SettingsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "BusLane",
-        "notification-settings.json"
-    );
 
     private bool _isEnabled;
 
@@ -166,15 +162,11 @@ public class NotificationService : INotificationService
     {
         try
         {
-            var directory = Path.GetDirectoryName(SettingsPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+            AppPaths.EnsureDirectoryExists();
 
             var settings = new NotificationSettings { IsEnabled = _isEnabled };
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SettingsPath, json);
+            File.WriteAllText(AppPaths.NotificationSettings, json);
         }
         catch
         {
@@ -186,9 +178,9 @@ public class NotificationService : INotificationService
     {
         try
         {
-            if (File.Exists(SettingsPath))
+            if (File.Exists(AppPaths.NotificationSettings))
             {
-                var json = File.ReadAllText(SettingsPath);
+                var json = File.ReadAllText(AppPaths.NotificationSettings);
                 var settings = JsonSerializer.Deserialize<NotificationSettings>(json);
                 _isEnabled = settings?.IsEnabled ?? false;
             }

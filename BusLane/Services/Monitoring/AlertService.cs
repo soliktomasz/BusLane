@@ -3,14 +3,10 @@ namespace BusLane.Services.Monitoring;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using BusLane.Models;
+using BusLane.Services.Infrastructure;
 
 public class AlertService : IAlertService
 {
-    private static readonly string AlertRulesPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "BusLane",
-        "alert-rules.json"
-    );
 
     private readonly List<AlertRule> _rules = [];
     private readonly List<AlertEvent> _activeAlerts = [];
@@ -269,11 +265,7 @@ public class AlertService : IAlertService
     {
         try
         {
-            var directory = Path.GetDirectoryName(AlertRulesPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+            AppPaths.EnsureDirectoryExists();
 
             var data = _rules.Select(r => new AlertRuleData
             {
@@ -287,7 +279,7 @@ public class AlertService : IAlertService
             }).ToList();
 
             var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(AlertRulesPath, json);
+            File.WriteAllText(AppPaths.AlertRules, json);
         }
         catch
         {
@@ -299,9 +291,9 @@ public class AlertService : IAlertService
     {
         try
         {
-            if (File.Exists(AlertRulesPath))
+            if (File.Exists(AppPaths.AlertRules))
             {
-                var json = File.ReadAllText(AlertRulesPath);
+                var json = File.ReadAllText(AppPaths.AlertRules);
                 var data = JsonSerializer.Deserialize<List<AlertRuleData>>(json);
 
                 if (data != null)

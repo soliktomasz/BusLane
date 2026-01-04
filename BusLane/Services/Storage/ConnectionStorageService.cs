@@ -6,20 +6,13 @@ using Infrastructure;
 
 public class ConnectionStorageService : IConnectionStorageService
 {
-    private readonly string _storageFilePath;
     private readonly IEncryptionService _encryptionService;
     private List<SavedConnection> _connections = [];
 
     public ConnectionStorageService(IEncryptionService encryptionService)
     {
         _encryptionService = encryptionService;
-
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BusLane"
-        );
-        Directory.CreateDirectory(appDataPath);
-        _storageFilePath = Path.Combine(appDataPath, "connections.json");
+        AppPaths.EnsureDirectoryExists();
     }
 
     public async Task<IEnumerable<SavedConnection>> GetConnectionsAsync()
@@ -60,7 +53,7 @@ public class ConnectionStorageService : IConnectionStorageService
 
     private async Task LoadConnectionsAsync()
     {
-        if (!File.Exists(_storageFilePath))
+        if (!File.Exists(AppPaths.Connections))
         {
             _connections = [];
             return;
@@ -68,7 +61,7 @@ public class ConnectionStorageService : IConnectionStorageService
 
         try
         {
-            var json = await File.ReadAllTextAsync(_storageFilePath);
+            var json = await File.ReadAllTextAsync(AppPaths.Connections);
             var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, GetJsonOptions()) ?? [];
 
             _connections = storedConnections
@@ -98,7 +91,7 @@ public class ConnectionStorageService : IConnectionStorageService
             // Try loading legacy format (unencrypted SavedConnection)
             try
             {
-                var json = await File.ReadAllTextAsync(_storageFilePath);
+                var json = await File.ReadAllTextAsync(AppPaths.Connections);
                 _connections = JsonSerializer.Deserialize<List<SavedConnection>>(json, GetJsonOptions()) ?? [];
             }
             catch
@@ -125,7 +118,7 @@ public class ConnectionStorageService : IConnectionStorageService
             .ToList();
 
         var json = JsonSerializer.Serialize(storedConnections, GetJsonOptions());
-        await File.WriteAllTextAsync(_storageFilePath, json);
+        await File.WriteAllTextAsync(AppPaths.Connections, json);
     }
 
     private static JsonSerializerOptions GetJsonOptions() => new()

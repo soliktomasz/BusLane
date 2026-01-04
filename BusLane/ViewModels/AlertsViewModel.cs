@@ -210,7 +210,6 @@ public partial class AlertsViewModel : ViewModelBase
         AlertType.DeadLetterThreshold => "Dead Letter Count",
         AlertType.MessageCountThreshold => "Message Count",
         AlertType.QueueSizeThreshold => "Queue Size (bytes)",
-        AlertType.InactivityThreshold => "Inactivity (hours)",
         _ => type.ToString()
     };
 

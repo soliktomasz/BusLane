@@ -8,11 +8,6 @@ namespace BusLane.Services.Infrastructure;
 /// </summary>
 public class PreferencesService : IPreferencesService
 {
-    private static readonly string PreferencesPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "BusLane",
-        "preferences.json"
-    );
 
     public bool ConfirmBeforeDelete { get; set; } = true;
     public bool ConfirmBeforePurge { get; set; } = true;
@@ -34,9 +29,9 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            if (File.Exists(PreferencesPath))
+            if (File.Exists(AppPaths.Preferences))
             {
-                var json = File.ReadAllText(PreferencesPath);
+                var json = File.ReadAllText(AppPaths.Preferences);
                 var data = JsonSerializer.Deserialize<PreferencesData>(json);
                 if (data != null)
                 {
@@ -61,11 +56,7 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            var directory = Path.GetDirectoryName(PreferencesPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+            AppPaths.EnsureDirectoryExists();
 
             var data = new PreferencesData
             {
@@ -83,7 +74,7 @@ public class PreferencesService : IPreferencesService
             {
                 WriteIndented = true
             });
-            File.WriteAllText(PreferencesPath, json);
+            File.WriteAllText(AppPaths.Preferences, json);
             
             PreferencesChanged?.Invoke(this, EventArgs.Empty);
         }

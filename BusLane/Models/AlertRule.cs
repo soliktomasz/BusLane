@@ -4,8 +4,7 @@ public enum AlertType
 {
     DeadLetterThreshold,
     MessageCountThreshold,
-    QueueSizeThreshold,
-    InactivityThreshold
+    QueueSizeThreshold
 }
 
 public enum AlertSeverity
