@@ -33,7 +33,7 @@ jobs:
           cp BusLane/Assets/icon.png docs/assets/icon.png
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: 'docs'
 
