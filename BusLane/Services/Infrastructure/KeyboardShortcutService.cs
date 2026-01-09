@@ -143,7 +143,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             
             [KeyboardShortcutAction.DeselectAll] = new(
                 KeyboardShortcutAction.DeselectAll, "Messages", "Deselect all messages",
-                primary | KeyModifiers.Shift, Key.A),
+                primary | KeyModifiers.Shift, Key.D),
             
             [KeyboardShortcutAction.ToggleMultiSelect] = new(
                 KeyboardShortcutAction.ToggleMultiSelect, "Messages", "Toggle multi-select mode",
@@ -151,12 +151,12 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             
             [KeyboardShortcutAction.ToggleDeadLetter] = new(
                 KeyboardShortcutAction.ToggleDeadLetter, "Messages", "Toggle dead letter view",
-                primary, Key.D),
+                primary | KeyModifiers.Shift, Key.L),
             
             // Feature panel shortcuts
             [KeyboardShortcutAction.OpenLiveStream] = new(
                 KeyboardShortcutAction.OpenLiveStream, "Features", "Open live stream",
-                primary | KeyModifiers.Shift, Key.L),
+                primary, Key.D),
             
             [KeyboardShortcutAction.OpenCharts] = new(
                 KeyboardShortcutAction.OpenCharts, "Features", "Open charts & metrics",
