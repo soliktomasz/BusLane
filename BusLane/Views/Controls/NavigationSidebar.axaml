@@ -5,12 +5,12 @@
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.NavigationSidebar"
              x:DataType="vm:MainWindowViewModel">
-    
+
     <UserControl.Resources>
         <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
         <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
     </UserControl.Resources>
-    
+
     <Border Classes="sidebar">
         <DockPanel>
             <!-- App Header -->
@@ -21,36 +21,36 @@
                             <Canvas Width="512" Height="512">
                                 <!-- Rounded square background -->
                                 <Rectangle Canvas.Left="32" Canvas.Top="32" Width="448" Height="448" RadiusX="96" RadiusY="96" Fill="#0F172A"/>
-                                
+
                                 <!-- Road -->
                                 <Rectangle Canvas.Left="32" Canvas.Top="240" Width="448" Height="120" Fill="#1E293B"/>
-                                
+
                                 <!-- Lane dashes -->
                                 <Rectangle Canvas.Left="72" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
                                 <Rectangle Canvas.Left="152" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
                                 <Rectangle Canvas.Left="232" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
                                 <Rectangle Canvas.Left="312" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
                                 <Rectangle Canvas.Left="392" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
-                                
+
                                 <!-- Bus body -->
                                 <Rectangle Canvas.Left="120" Canvas.Top="136" Width="272" Height="136" RadiusX="24" RadiusY="24" Fill="#F59E0B"/>
-                                
+
                                 <!-- Roof accent -->
                                 <Rectangle Canvas.Left="120" Canvas.Top="136" Width="272" Height="20" RadiusX="24" RadiusY="24" Fill="#D97706"/>
                                 <Rectangle Canvas.Left="120" Canvas.Top="148" Width="272" Height="8" Fill="#D97706"/>
-                                
+
                                 <!-- Windows row -->
                                 <Rectangle Canvas.Left="152" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
                                 <Rectangle Canvas.Left="216" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
                                 <Rectangle Canvas.Left="280" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
                                 <Rectangle Canvas.Left="344" Canvas.Top="168" Width="32" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
-                                
+
                                 <!-- Front -->
                                 <Rectangle Canvas.Left="360" Canvas.Top="224" Width="24" Height="24" RadiusX="6" RadiusY="6" Fill="#FDE68A"/>
-                                
+
                                 <!-- Back -->
                                 <Rectangle Canvas.Left="128" Canvas.Top="224" Width="16" Height="24" RadiusX="4" RadiusY="4" Fill="#DC2626"/>
-                                
+
                                 <!-- Wheels -->
                                 <Ellipse Canvas.Left="160" Canvas.Top="240" Width="64" Height="64" Fill="#0F172A"/>
                                 <Ellipse Canvas.Left="176" Canvas.Top="256" Width="32" Height="32" Fill="#475569"/>
@@ -70,11 +70,11 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
-            
+
             <!-- Action Buttons -->
             <StackPanel DockPanel.Dock="Top" Margin="12,16,12,12" Spacing="8">
                 <!-- Connection Library Button (always visible) -->
-                <Button Classes="primary" 
+                <Button Classes="primary"
                         Command="{Binding OpenConnectionLibraryCommand}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Center"
@@ -84,9 +84,9 @@
                         <TextBlock Text="My Connections" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Button>
-                
+
                 <!-- Azure Sign In (when not authenticated and not using connection string) -->
-                <Button Classes="secondary" 
+                <Button Classes="secondary"
                         Command="{Binding LoginCommand}"
                         IsVisible="{Binding !Connection.IsAuthenticated}"
                         HorizontalAlignment="Stretch"
@@ -97,9 +97,9 @@
                         <TextBlock Text="Sign in with Azure"/>
                     </StackPanel>
                 </Button>
-                
+
                 <!-- Sign Out (when authenticated with Azure) -->
-                <Button Classes="secondary" 
+                <Button Classes="secondary"
                         Command="{Binding LogoutCommand}"
                         IsVisible="{Binding Connection.IsAuthenticated}"
                         HorizontalAlignment="Stretch"
@@ -111,13 +111,13 @@
                     </StackPanel>
                 </Button>
             </StackPanel>
-            
+
             <Separator DockPanel.Dock="Top" Margin="12,0"/>
-            
+
             <!-- Favorite Connections Section -->
-            <StackPanel DockPanel.Dock="Top" 
+            <StackPanel DockPanel.Dock="Top"
                         IsVisible="{Binding Connection.HasFavoriteConnections}"
-                        Margin="0,12,0,0">
+                        Margin="12,12,12,0">
                 <ToggleButton Classes="subtle"
                               HorizontalAlignment="Stretch"
                               HorizontalContentAlignment="Stretch"
@@ -133,18 +133,18 @@
                             <TextBlock Text="{Binding Connection.FavoriteConnections.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
                         </Border>
                         <Panel Grid.Column="3" VerticalAlignment="Center">
-                            <PathIcon Data="{StaticResource IconChevronDown}" 
+                            <PathIcon Data="{StaticResource IconChevronDown}"
                                        Width="10" Height="10"
                                        IsVisible="{Binding #FavoritesToggleButton.IsChecked}"/>
-                            <PathIcon Data="{StaticResource IconChevronRight}" 
+                            <PathIcon Data="{StaticResource IconChevronRight}"
                                        Width="10" Height="10"
                                        IsVisible="{Binding !#FavoritesToggleButton.IsChecked}"/>
                         </Panel>
                     </Grid>
                 </ToggleButton>
-                
-                <ListBox ItemsSource="{Binding Connection.FavoriteConnections}" 
-                         Margin="8,0,8,8"
+
+                <ListBox ItemsSource="{Binding Connection.FavoriteConnections}"
+                         Margin="0,0,0,8"
                          Classes="entity-list"
                          Background="Transparent"
                          BorderThickness="0"
@@ -157,7 +157,7 @@
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:SavedConnection">
-                            <Button Classes="subtle" 
+                            <Button Classes="subtle"
                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
                                     CommandParameter="{Binding}"
                                     HorizontalAlignment="Stretch"
@@ -166,7 +166,7 @@
                                     Margin="4,2">
                                 <Grid ColumnDefinitions="Auto,*">
                                     <!-- Selection indicator bar -->
-                                    <Border Grid.Column="0" Classes="selection-indicator" 
+                                    <Border Grid.Column="0" Classes="selection-indicator"
                                             VerticalAlignment="Stretch"
                                             Margin="0,4,4,4">
                                         <Border.IsVisible>
@@ -176,7 +176,7 @@
                                             </MultiBinding>
                                         </Border.IsVisible>
                                     </Border>
-                                    
+
                                     <!-- Connection content with selection background -->
                                     <Border Grid.Column="1" Padding="12,10" CornerRadius="6">
                                         <Border.Background>
@@ -187,24 +187,24 @@
                                         </Border.Background>
                                         <Grid ColumnDefinitions="Auto,*">
                                             <!-- Connection Icon -->
-                                            <Border Grid.Column="0" 
-                                                    Width="36" Height="36" 
-                                                    CornerRadius="6" 
+                                            <Border Grid.Column="0"
+                                                    Width="36" Height="36"
+                                                    CornerRadius="6"
                                                     Background="{DynamicResource SurfaceBrand}"
                                                     Margin="0,0,10,0">
-                                                <PathIcon Data="{StaticResource IconConnection}" Width="16" Height="16" 
+                                                <PathIcon Data="{StaticResource IconConnection}" Width="16" Height="16"
                                                           Foreground="{DynamicResource AccentBrand}"
                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            
+
                                             <!-- Connection Details -->
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                <TextBlock Text="{Binding Name}" 
-                                                           FontWeight="SemiBold" 
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="SemiBold"
                                                            FontSize="12"
                                                            TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding TypeDisplayName}" 
-                                                           Classes="caption" 
+                                                <TextBlock Text="{Binding TypeDisplayName}"
+                                                           Classes="caption"
                                                            FontSize="10"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
@@ -215,16 +215,16 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                
+
                 <Separator Margin="12,4,12,0"/>
             </StackPanel>
-            
+
             <!-- Live Stream, Charts, Alerts Buttons - Docked to bottom -->
             <StackPanel DockPanel.Dock="Bottom" Margin="12,0,12,4" Spacing="4">
                 <Separator Margin="0,8,0,8"/>
-                
+
                 <!-- Live Stream Button -->
-                <Button Classes="subtle" 
+                <Button Classes="subtle"
                         Command="{Binding OpenLiveStreamCommand}"
                         HorizontalAlignment="Stretch"
                         Padding="12,10">
@@ -233,9 +233,9 @@
                         <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                
+
                 <!-- Charts Button -->
-                <Button Classes="subtle" 
+                <Button Classes="subtle"
                         Command="{Binding OpenChartsCommand}"
                         HorizontalAlignment="Stretch"
                         Padding="12,10">
@@ -244,9 +244,9 @@
                         <TextBlock Text="Charts" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                
+
                 <!-- Alerts Button with Badge -->
-                <Button Classes="subtle" 
+                <Button Classes="subtle"
                         Command="{Binding OpenAlertsCommand}"
                         HorizontalAlignment="Stretch"
                         Padding="12,10">
@@ -255,24 +255,24 @@
                             <PathIcon Data="{StaticResource IconBell}" Width="16" Height="16"/>
                             <TextBlock Text="Alerts" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <Border Grid.Column="2" 
-                                Background="{DynamicResource DangerBackground}" 
-                                CornerRadius="10" 
+                        <Border Grid.Column="2"
+                                Background="{DynamicResource DangerBackground}"
+                                CornerRadius="10"
                                 Padding="8,2"
                                 IsVisible="{Binding FeaturePanels.ActiveAlertCount}"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="{Binding FeaturePanels.ActiveAlertCount}" 
-                                       FontSize="11" 
+                            <TextBlock Text="{Binding FeaturePanels.ActiveAlertCount}"
+                                       FontSize="11"
                                        Foreground="White"
                                        FontWeight="SemiBold"/>
                         </Border>
                     </Grid>
                 </Button>
             </StackPanel>
-            
+
             <!-- Settings Button - Docked to bottom -->
             <Button DockPanel.Dock="Bottom"
-                    Classes="subtle" 
+                    Classes="subtle"
                     Command="{Binding OpenSettingsCommand}"
                     HorizontalAlignment="Stretch"
                     Margin="12,8,12,12"
@@ -282,7 +282,7 @@
                     <TextBlock Text="Settings" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
-            
+
             <!-- Active Connection Card (when using connection string) - Docked to bottom -->
             <Border DockPanel.Dock="Bottom" Margin="12,12,12,8"
                     IsVisible="{Binding Connection.ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
@@ -295,17 +295,17 @@
                                 <Border Width="8" Height="8" CornerRadius="4" Background="{DynamicResource TextSuccess}"/>
                                 <TextBlock Text="Connected" Classes="caption" Foreground="{DynamicResource TextSuccess}"/>
                             </StackPanel>
-                            <TextBlock Text="{Binding Connection.ActiveConnection.Name}" 
-                                       FontWeight="SemiBold" 
-                                       FontSize="14" 
+                            <TextBlock Text="{Binding Connection.ActiveConnection.Name}"
+                                       FontWeight="SemiBold"
+                                       FontSize="14"
                                        Margin="0,6,0,0"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding Connection.ActiveConnection.EntityName}" 
-                                       Classes="caption" 
+                            <TextBlock Text="{Binding Connection.ActiveConnection.EntityName}"
+                                       Classes="caption"
                                        Margin="0,2,0,0"
                                        TextTrimming="CharacterEllipsis"
                                        IsVisible="{Binding Connection.ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            
+
                             <!-- Dead Letter Count Badge -->
                             <Border Classes="badge-danger" Padding="8,4" Margin="0,8,0,0"
                                     HorizontalAlignment="Left"
@@ -315,9 +315,9 @@
                             </Border>
                         </StackPanel>
                     </Border>
-                    
+
                     <!-- Disconnect Button -->
-                    <Button Classes="danger-outline" 
+                    <Button Classes="danger-outline"
                             Content="Disconnect"
                             Command="{Binding DisconnectConnectionCommand}"
                             HorizontalAlignment="Stretch"
@@ -326,12 +326,12 @@
                             Padding="12,6"/>
                 </StackPanel>
             </Border>
-            
+
             <!-- Azure Account Section (when authenticated) -->
-            <StackPanel DockPanel.Dock="Top" 
+            <StackPanel DockPanel.Dock="Top"
                         IsVisible="{Binding Connection.ShowAzureSections}"
                         Margin="0,12,0,0">
-                
+
                 <!-- Subscription Picker Section -->
                 <Border Background="{DynamicResource SurfaceSubtle}" Padding="12,10" Margin="12,0">
                     <StackPanel Spacing="8">
@@ -351,9 +351,9 @@
                         </ComboBox>
                     </StackPanel>
                 </Border>
-                
+
                 <Separator Margin="12,12"/>
-                
+
                 <!-- Namespaces Section Header -->
                 <Grid Margin="16,4,16,8" ColumnDefinitions="Auto,*,Auto">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
@@ -365,10 +365,10 @@
                     </Border>
                 </Grid>
             </StackPanel>
-            
+
             <!-- Namespaces List (Scrollable with virtualization) -->
-            <ListBox ItemsSource="{Binding Navigation.Namespaces}" 
-                     IsVisible="{Binding Connection.ShowAzureSections}" 
+            <ListBox ItemsSource="{Binding Navigation.Namespaces}"
+                     IsVisible="{Binding Connection.ShowAzureSections}"
                      Margin="8,0,8,8"
                      Classes="entity-list"
                      Background="Transparent"
@@ -381,7 +381,7 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:ServiceBusNamespace">
-                            <Button Classes="subtle" 
+                            <Button Classes="subtle"
                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectNamespaceCommand}"
                                     CommandParameter="{Binding}"
                                     HorizontalAlignment="Stretch"
@@ -390,7 +390,7 @@
                                     Margin="4,2">
                                 <Grid ColumnDefinitions="Auto,*">
                                     <!-- Selection indicator bar (Fluent 2 accent bar) -->
-                                    <Border Grid.Column="0" Classes="selection-indicator" 
+                                    <Border Grid.Column="0" Classes="selection-indicator"
                                             VerticalAlignment="Stretch"
                                             Margin="0,4,4,4">
                                         <Border.IsVisible>
@@ -400,7 +400,7 @@
                                             </MultiBinding>
                                         </Border.IsVisible>
                                     </Border>
-                                    
+
                                     <!-- Namespace content with selection background -->
                                     <Border Grid.Column="1" Padding="12,10" CornerRadius="6">
                                         <Border.Background>
@@ -411,26 +411,26 @@
                                         </Border.Background>
                                         <Grid ColumnDefinitions="Auto,*">
                                             <!-- Namespace Icon -->
-                                            <Border Grid.Column="0" 
-                                                    Width="40" Height="40" 
-                                                    CornerRadius="8" 
+                                            <Border Grid.Column="0"
+                                                    Width="40" Height="40"
+                                                    CornerRadius="8"
                                                     Background="{DynamicResource SurfaceBrand}"
                                                     Margin="0,0,12,0">
-                                                <TextBlock Text="SB" FontWeight="Bold" FontSize="13" 
+                                                <TextBlock Text="SB" FontWeight="Bold" FontSize="13"
                                                            Foreground="{DynamicResource AccentBrand}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            
+
                                             <!-- Namespace Details -->
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                <TextBlock Text="{Binding Name}" 
-                                                           FontWeight="SemiBold" 
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="SemiBold"
                                                            FontSize="13"
                                                            TextTrimming="CharacterEllipsis"/>
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <PathIcon Data="{StaticResource IconLocation}" Width="10" Height="10" Foreground="{DynamicResource SubtleForeground}"/>
-                                                    <TextBlock Text="{Binding Location}" 
-                                                               Classes="caption" 
+                                                    <TextBlock Text="{Binding Location}"
+                                                               Classes="caption"
                                                                FontSize="11"
                                                                TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
@@ -442,7 +442,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            
+
             <!-- Empty State when not authenticated and no active connection -->
             <Border Margin="12,24,12,12"
                     Classes="empty-state">
@@ -455,8 +455,8 @@
                 <StackPanel HorizontalAlignment="Center" Spacing="12">
                     <PathIcon Data="{StaticResource IconCloud}" Width="32" Height="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
                     <TextBlock Text="Get Started" FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Sign in with Azure or use a&#10;saved connection to browse&#10;your Service Bus resources." 
-                               Classes="caption" 
+                    <TextBlock Text="Sign in with Azure or use a&#10;saved connection to browse&#10;your Service Bus resources."
+                               Classes="caption"
                                TextAlignment="Center"
                                LineHeight="18"/>
                 </StackPanel>
