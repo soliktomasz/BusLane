@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             x:Class="BusLane.Views.Controls.SyntaxHighlightedTextBox">
+    <AvalonEdit:TextEditor x:Name="Editor"
+                           IsReadOnly="True"
+                           ShowLineNumbers="False"
+                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                           FontSize="12"
+                           Background="{DynamicResource SurfaceSubtle}"
+                           Padding="12"
+                           WordWrap="True"
+                           HorizontalScrollBarVisibility="Auto"
+                           VerticalScrollBarVisibility="Auto"/>
+</UserControl>

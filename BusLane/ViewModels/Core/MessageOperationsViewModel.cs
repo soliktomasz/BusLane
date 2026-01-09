@@ -27,6 +27,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FormattedMessageBody))]
     [NotifyPropertyChangedFor(nameof(IsMessageBodyJson))]
+    [NotifyPropertyChangedFor(nameof(IsMessageBodyXml))]
     [NotifyPropertyChangedFor(nameof(FormattedApplicationProperties))]
     private MessageInfo? _selectedMessage;
 
@@ -60,6 +61,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             var trimmed = SelectedMessage.Body.Trim();
             return (trimmed.StartsWith("{") && trimmed.EndsWith("}")) ||
                    (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
+        }
+    }
+
+    public bool IsMessageBodyXml
+    {
+        get
+        {
+            if (SelectedMessage?.Body == null) return false;
+            var trimmed = SelectedMessage.Body.Trim();
+            return trimmed.StartsWith("<") && trimmed.EndsWith(">");
         }
     }
 
