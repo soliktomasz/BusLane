@@ -23,11 +23,9 @@
             <converters:SeverityToColorConverter x:Key="SeverityToColorConverter"/>
             <converters:SeverityToBackgroundConverter x:Key="SeverityToBackgroundConverter"/>
             
-            <!-- Additional theme resources -->
+            <!-- Additional theme resources (legacy - prefer ThemeDictionaries) -->
             <SolidColorBrush x:Key="DangerBackground" Color="#D13438"/>
             <SolidColorBrush x:Key="SuccessForeground" Color="#107C10"/>
-            <SolidColorBrush x:Key="AccentSubtle" Color="#E6F2FB"/>
-            <SolidColorBrush x:Key="SurfaceDefault" Color="#FFFFFF"/>
 
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light Theme - Microsoft Fluent 2 Design -->
@@ -62,6 +60,12 @@
                     <SolidColorBrush x:Key="SurfaceSuccess" Color="#F1FAF1"/>
                     <SolidColorBrush x:Key="SurfaceWarning" Color="#FFF9F5"/>
 
+                    <!-- Subtle semantic backgrounds for badges and indicators -->
+                    <SolidColorBrush x:Key="AccentSubtle" Color="#EBF3FC"/>
+                    <SolidColorBrush x:Key="SuccessSubtle" Color="#DFF6DD"/>
+                    <SolidColorBrush x:Key="WarningSubtle" Color="#FFF4CE"/>
+                    <SolidColorBrush x:Key="DangerSubtle" Color="#FDF3F4"/>
+
                     <!-- Semantic text colors - Fluent 2 status tokens -->
                     <SolidColorBrush x:Key="TextDanger" Color="#C50F1F"/>
                     <SolidColorBrush x:Key="TextDangerHover" Color="#A80000"/>
@@ -78,6 +82,7 @@
 
                     <!-- Overlay and inputs -->
                     <SolidColorBrush x:Key="ModalOverlay" Color="#66000000"/>
+                    <SolidColorBrush x:Key="LoadingOverlay" Color="#99000000"/>
                     <SolidColorBrush x:Key="InputBackground" Color="#FFFFFF"/>
 
                     <!-- Tab, toolbar, and utility surfaces -->
@@ -128,6 +133,12 @@
                     <SolidColorBrush x:Key="SurfaceSuccess" Color="#283F2A"/>
                     <SolidColorBrush x:Key="SurfaceWarning" Color="#433519"/>
 
+                    <!-- Subtle semantic backgrounds for badges and indicators -->
+                    <SolidColorBrush x:Key="AccentSubtle" Color="#0F2D40"/>
+                    <SolidColorBrush x:Key="SuccessSubtle" Color="#1E3A21"/>
+                    <SolidColorBrush x:Key="WarningSubtle" Color="#3D3017"/>
+                    <SolidColorBrush x:Key="DangerSubtle" Color="#3B2323"/>
+
                     <!-- Semantic text colors - Fluent 2 with better contrast -->
                     <SolidColorBrush x:Key="TextDanger" Color="#FF99A4"/>
                     <SolidColorBrush x:Key="TextDangerHover" Color="#FFC4CC"/>
@@ -144,6 +155,7 @@
 
                     <!-- Overlay and inputs -->
                     <SolidColorBrush x:Key="ModalOverlay" Color="#B3000000"/>
+                    <SolidColorBrush x:Key="LoadingOverlay" Color="#CC000000"/>
                     <SolidColorBrush x:Key="InputBackground" Color="#333333"/>
 
                     <!-- Tab, toolbar, and utility surfaces -->

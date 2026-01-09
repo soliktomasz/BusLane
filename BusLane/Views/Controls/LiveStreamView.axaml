@@ -54,7 +54,8 @@
             <Border Grid.Row="1" Background="{DynamicResource SurfaceSubtle}" Padding="16,12">
                 <Grid ColumnDefinitions="*,Auto">
                     <!-- Search/Filter -->
-                    <Border Grid.Column="0" Background="{DynamicResource SurfaceDefault}" CornerRadius="6" Padding="8,6" Margin="0,0,12,0">
+                    <Border Grid.Column="0" Background="{DynamicResource InputBackground}" CornerRadius="6" Padding="8,6" Margin="0,0,12,0"
+                            BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <PathIcon Grid.Column="0" Data="{StaticResource IconSearch}"
                                       Width="14" Height="14"
@@ -100,10 +101,12 @@
                 <!-- Error message -->
                 <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                         VerticalAlignment="Top" Margin="16"
-                        Padding="16" Background="#FFF4F4" CornerRadius="8">
+                        Padding="16" Background="{DynamicResource SurfaceDanger}"
+                        CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource TextDanger}">
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <PathIcon Data="{StaticResource IconWarning}" Width="20" Height="20" Foreground="#D13438"/>
-                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#D13438" VerticalAlignment="Center"/>
+                        <PathIcon Data="{StaticResource IconWarning}" Width="20" Height="20" Foreground="{DynamicResource TextDanger}"/>
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource TextDanger}"
+                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -117,7 +120,7 @@
                                   Foreground="{DynamicResource SubtleForeground}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Select an entity to stream"
                                    FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource DefaultForeground}"
+                                   Foreground="{DynamicResource AppForeground}"
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="Choose a queue or topic subscription to start receiving live messages"
                                    FontSize="13" Foreground="{DynamicResource SubtleForeground}"
@@ -131,7 +134,9 @@
                                 <ListBox ItemsSource="{Binding AvailableQueues}"
                                          SelectedItem="{Binding SelectedStreamEntity}"
                                          MaxHeight="150"
-                                         Background="{DynamicResource SurfaceDefault}"
+                                         Background="{DynamicResource CardBackground}"
+                                         BorderBrush="{DynamicResource BorderDefault}"
+                                         BorderThickness="1"
                                          CornerRadius="6"
                                          Padding="4">
                                     <ListBox.ItemTemplate>
@@ -164,7 +169,9 @@
                                                 </StackPanel>
                                                 <ListBox ItemsSource="{Binding Subscriptions}"
                                                          SelectedItem="{Binding $parent[UserControl].((vm:LiveStreamViewModel)DataContext).SelectedStreamEntity}"
-                                                         Background="{DynamicResource SurfaceDefault}"
+                                                         Background="{DynamicResource CardBackground}"
+                                                         BorderBrush="{DynamicResource BorderDefault}"
+                                                         BorderThickness="1"
                                                          CornerRadius="6"
                                                          Margin="24,4,0,0"
                                                          Padding="4"
@@ -204,7 +211,7 @@
 
                         <!-- No entities available -->
                         <TextBlock Text="No queues or topics available. Please connect to a namespace first."
-                                   FontSize="13" Foreground="{DynamicResource DangerForeground}"
+                                   FontSize="13" Foreground="{DynamicResource TextDanger}"
                                    HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
                                    IsVisible="{Binding !HasEntities}"/>
                     </StackPanel>
@@ -217,19 +224,23 @@
                          Padding="8">
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="models:LiveStreamMessage">
-                            <Border Padding="12,8" Margin="0,2" CornerRadius="4"
-                                    Background="{DynamicResource SurfaceSubtle}">
+                            <Border Padding="12,10" Margin="0,2" CornerRadius="6"
+                                    Background="{DynamicResource CardBackground}"
+                                    BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
                                 <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                     <!-- Message ID and time -->
                                     <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding MessageId}" FontWeight="SemiBold" FontSize="13"/>
-                                        <Border Background="{DynamicResource AccentSubtle}" CornerRadius="4" Padding="6,2">
-                                            <TextBlock Text="{Binding EntityType}" FontSize="11" Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="{Binding MessageId}" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppForeground}"/>
+                                        <Border Background="{DynamicResource AccentSubtle}" CornerRadius="4" Padding="6,2"
+                                                BorderThickness="1" BorderBrush="{DynamicResource AccentBrand}">
+                                            <TextBlock Text="{Binding EntityType}" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AccentBrand}"/>
                                         </Border>
                                     </StackPanel>
                                     <TextBlock Grid.Row="0" Grid.Column="1"
                                                Text="{Binding ReceivedAt, StringFormat='{}{0:HH:mm:ss.fff}'}"
-                                               FontSize="12" Foreground="{DynamicResource SubtleForeground}"/>
+                                               FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SubtleForeground}"/>
 
                                     <!-- Body preview -->
                                     <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
