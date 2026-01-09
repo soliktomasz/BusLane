@@ -143,7 +143,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             
             [KeyboardShortcutAction.DeselectAll] = new(
                 KeyboardShortcutAction.DeselectAll, "Messages", "Deselect all messages",
-                primary | KeyModifiers.Shift, Key.D),
+                primary | KeyModifiers.Shift, Key.U),
             
             [KeyboardShortcutAction.ToggleMultiSelect] = new(
                 KeyboardShortcutAction.ToggleMultiSelect, "Messages", "Toggle multi-select mode",
@@ -151,20 +151,20 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             
             [KeyboardShortcutAction.ToggleDeadLetter] = new(
                 KeyboardShortcutAction.ToggleDeadLetter, "Messages", "Toggle dead letter view",
-                primary | KeyModifiers.Shift, Key.L),
+                primary, Key.D),
             
             // Feature panel shortcuts
             [KeyboardShortcutAction.OpenLiveStream] = new(
                 KeyboardShortcutAction.OpenLiveStream, "Features", "Open live stream",
-                primary, Key.D),
+                primary | KeyModifiers.Shift, Key.L),
             
             [KeyboardShortcutAction.OpenCharts] = new(
                 KeyboardShortcutAction.OpenCharts, "Features", "Open charts & metrics",
-                primary | KeyModifiers.Shift, Key.C),
+                primary | KeyModifiers.Shift, Key.O),
             
             [KeyboardShortcutAction.OpenAlerts] = new(
                 KeyboardShortcutAction.OpenAlerts, "Features", "Open alerts",
-                primary | KeyModifiers.Shift, Key.A),
+                primary | KeyModifiers.Shift, Key.E),
             
             [KeyboardShortcutAction.OpenSettings] = new(
                 KeyboardShortcutAction.OpenSettings, "Features", "Open settings",
@@ -177,7 +177,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             
             [KeyboardShortcutAction.Disconnect] = new(
                 KeyboardShortcutAction.Disconnect, "Connections", "Disconnect",
-                primary | KeyModifiers.Shift, Key.D),
+                primary | KeyModifiers.Shift, Key.W),
             
             // General shortcuts
             [KeyboardShortcutAction.CloseDialog] = new(

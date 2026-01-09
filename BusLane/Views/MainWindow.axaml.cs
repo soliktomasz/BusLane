@@ -35,6 +35,16 @@ public partial class MainWindow : Window
             .FirstOrDefault(c => c.Name == name);
     }
 
+    /// <summary>
+    /// Checks if the currently focused element is a text input control.
+    /// Used to avoid intercepting standard text editing shortcuts (Cmd+C, Cmd+A, etc.)
+    /// </summary>
+    private bool IsTextInputFocused()
+    {
+        var focusedElement = FocusManager?.GetFocusedElement();
+        return focusedElement is TextBox or AutoCompleteBox;
+    }
+
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm)
@@ -99,13 +109,17 @@ public partial class MainWindow : Window
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.FocusSearch))
         {
-            // Find the MessageSearchTextBox in the visual tree and focus it
-            var searchBox = FindDescendantByName<TextBox>("MessageSearchTextBox");
-            if (searchBox != null)
+            // Don't intercept Cmd+F when a text input is already focused
+            if (!IsTextInputFocused())
             {
-                searchBox.Focus();
-                searchBox.SelectAll();
-                e.Handled = true;
+                // Find the MessageSearchTextBox in the visual tree and focus it
+                var searchBox = FindDescendantByName<TextBox>("MessageSearchTextBox");
+                if (searchBox != null)
+                {
+                    searchBox.Focus();
+                    searchBox.SelectAll();
+                    e.Handled = true;
+                }
             }
         }
         // Message shortcuts
@@ -119,7 +133,8 @@ public partial class MainWindow : Window
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.CopyMessageBody))
         {
-            if (vm.MessageOps.SelectedMessage != null)
+            // Don't intercept Cmd+C when a text input is focused - allow normal copy behavior
+            if (!IsTextInputFocused() && vm.MessageOps.SelectedMessage != null)
             {
                 vm.CopyMessageBodyCommand.Execute(null);
                 e.Handled = true;
@@ -135,8 +150,14 @@ public partial class MainWindow : Window
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SelectAll))
         {
-            if (vm.MessageOps.IsMultiSelectMode)
+            // Don't intercept Cmd+A when a text input is focused - allow normal select all behavior
+            // When not in a text input, enable multi-select mode and select all messages
+            if (!IsTextInputFocused() && vm.MessageOps.FilteredMessages.Count > 0)
             {
+                if (!vm.MessageOps.IsMultiSelectMode)
+                {
+                    vm.ToggleMultiSelectModeCommand.Execute(null);
+                }
                 vm.SelectAllMessagesCommand.Execute(null);
                 e.Handled = true;
             }
