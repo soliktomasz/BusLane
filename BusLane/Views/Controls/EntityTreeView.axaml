@@ -5,55 +5,61 @@
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.EntityTreeView"
              x:DataType="vm:MainWindowViewModel">
-    
+
     <UserControl.Resources>
         <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
         <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
         <converters:DeadLetterBadgeVisibilityConverter x:Key="DeadLetterBadgeVisibilityConverter"/>
     </UserControl.Resources>
-    
+
     <Border Classes="card" Padding="0">
         <DockPanel>
-            <StackPanel DockPanel.Dock="Top" Margin="16,16,16,16">
-                <TextBlock Text="Entities" Classes="heading"/>
-                <TextBlock Text="Queues, topics and subscriptions" Classes="caption" Margin="0,4,0,0"/>
-            </StackPanel>
+            <!-- Header -->
+            <Border DockPanel.Dock="Top" Padding="16,14,16,12" Background="{DynamicResource SurfaceSubtle}">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Entities" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="Queues, topics and subscriptions" FontSize="11"
+                               Foreground="{DynamicResource SubtleForeground}"/>
+                </StackPanel>
+            </Border>
+
             <ScrollViewer>
-                <StackPanel Spacing="12" Margin="16,0,16,16">
+                <StackPanel Spacing="16" Margin="12,12,12,16">
                     <!-- Queues Section -->
-                    <StackPanel IsVisible="{Binding Navigation.HasQueues}">
-                        <Border Classes="section-header">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                                    <Border Classes="entity-icon-queue">
-                                        <PathIcon Data="{StaticResource IconQueue}" Width="16" Height="16" Foreground="{DynamicResource AccentBrand}"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="Queues" FontWeight="SemiBold" FontSize="14"/>
-                                        <TextBlock Text="Point-to-point messaging" Classes="caption" FontSize="11"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Navigation.Queues.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
+                    <StackPanel IsVisible="{Binding Navigation.HasQueues}" Spacing="6">
+                        <!-- Section Header -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,0">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Border Width="24" Height="24" CornerRadius="4"
+                                        Background="{DynamicResource SurfaceBrand}">
+                                    <PathIcon Data="{StaticResource IconQueue}" Width="12" Height="12"
+                                              Foreground="{DynamicResource AccentBrand}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                            </Grid>
-                        </Border>
-                        
-                        <!-- Loading indicator for queues -->
-                        <Border IsVisible="{Binding IsLoading}" 
-                                Margin="4,8,0,8" 
-                                Padding="12,8" 
-                                Background="{DynamicResource SurfaceSubtle}" 
-                                CornerRadius="6">
-                            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                                <ProgressBar IsIndeterminate="True" Width="60" Height="4" />
-                                <TextBlock Text="Loading queues..." FontSize="12" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                                <TextBlock Text="Queues" FontSize="12" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource AppForeground}"/>
+                            </StackPanel>
+                            <Border Grid.Column="2" Background="{DynamicResource SurfaceSubtle}"
+                                    CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Navigation.Queues.Count}" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource SubtleForeground}"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Loading indicator -->
+                        <Border IsVisible="{Binding IsLoading}"
+                                Padding="10,6"
+                                Background="{DynamicResource SurfaceSubtle}"
+                                CornerRadius="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" Width="50" Height="2" />
+                                <TextBlock Text="Loading queues..." FontSize="11"
+                                           Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
-                        
-                        <ListBox ItemsSource="{Binding Navigation.Queues}" 
-                                 Margin="4,0,0,0"
+
+                        <!-- Queue List -->
+                        <ListBox ItemsSource="{Binding Navigation.Queues}"
                                  Classes="entity-list"
                                  Background="Transparent"
                                  BorderThickness="0"
@@ -71,12 +77,13 @@
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
                                             Padding="0"
-                                            Margin="0,2">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <!-- Selection indicator bar -->
-                                            <Border Grid.Column="0" Classes="selection-indicator" 
-                                                    VerticalAlignment="Stretch"
-                                                    Margin="0,4,4,4">
+                                            Margin="0,1">
+                                        <Grid ColumnDefinitions="3,*">
+                                            <!-- Selection indicator -->
+                                            <Border Grid.Column="0"
+                                                    Background="{DynamicResource AccentBrand}"
+                                                    CornerRadius="2"
+                                                    Margin="0,6">
                                                 <Border.IsVisible>
                                                     <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                         <Binding Path="."/>
@@ -84,9 +91,9 @@
                                                     </MultiBinding>
                                                 </Border.IsVisible>
                                             </Border>
-                                            
-                                            <!-- Entity content with selection background -->
-                                            <Border Grid.Column="1" Padding="12,10" CornerRadius="6">
+
+                                            <!-- Content -->
+                                            <Border Grid.Column="1" Padding="10,8" CornerRadius="4" Margin="4,0,0,0">
                                                 <Border.Background>
                                                     <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                         <Binding Path="."/>
@@ -94,40 +101,42 @@
                                                     </MultiBinding>
                                                 </Border.Background>
                                                 <Grid ColumnDefinitions="Auto,*">
-                                                    <Border Grid.Column="0" Classes="entity-icon-queue" Margin="0,0,12,0">
-                                                        <TextBlock Text="Q" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource AccentBrand}" 
+                                                    <!-- Icon -->
+                                                    <Border Grid.Column="0" Width="28" Height="28" CornerRadius="4"
+                                                            Background="{DynamicResource AccentBrand}" Margin="0,0,10,0">
+                                                        <TextBlock Text="Q" FontWeight="SemiBold" FontSize="12"
+                                                                   Foreground="{DynamicResource TextOnBrand}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" 
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Medium"
                                                                    TextTrimming="CharacterEllipsis"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="8">
-                                                            <Border Classes="counter-active">
-                                                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="Active:" FontSize="10" Foreground="{DynamicResource AccentBrand}"/>
-                                                                    <TextBlock Text="{Binding ActiveMessageCount}" 
-                                                                               FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrand}"/>
-                                                                </StackPanel>
+                                                        <!-- Counters -->
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <Border Background="{DynamicResource SurfaceBrand}"
+                                                                    CornerRadius="3" Padding="5,2">
+                                                                <TextBlock FontSize="10" Foreground="{DynamicResource AccentBrand}">
+                                                                    <Run Text="{Binding ActiveMessageCount}"/><Run Text=" active"/>
+                                                                </TextBlock>
                                                             </Border>
-                                                            <Border Classes="counter-dead">
+                                                            <Border Background="{DynamicResource SurfaceDanger}"
+                                                                    CornerRadius="3" Padding="5,2">
                                                                 <Border.IsVisible>
                                                                     <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
                                                                         <Binding Path="DeadLetterCount"/>
                                                                         <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ShowDeadLetterBadges"/>
                                                                     </MultiBinding>
                                                                 </Border.IsVisible>
-                                                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="DLQ:" FontSize="10" Foreground="{DynamicResource TextDanger}"/>
-                                                                    <TextBlock Text="{Binding DeadLetterCount}" 
-                                                                               FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextDanger}"/>
-                                                                </StackPanel>
+                                                                <TextBlock FontSize="10" Foreground="{DynamicResource TextDanger}">
+                                                                    <Run Text="{Binding DeadLetterCount}"/><Run Text=" dlq"/>
+                                                                </TextBlock>
                                                             </Border>
-                                                            <Border Classes="counter-scheduled" IsVisible="{Binding ScheduledCount}">
-                                                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="Scheduled:" FontSize="10" Foreground="{DynamicResource TextWarning}"/>
-                                                                    <TextBlock Text="{Binding ScheduledCount}" 
-                                                                               FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextWarning}"/>
-                                                                </StackPanel>
+                                                            <Border Background="{DynamicResource SurfaceWarning}"
+                                                                    CornerRadius="3" Padding="5,2"
+                                                                    IsVisible="{Binding ScheduledCount}">
+                                                                <TextBlock FontSize="10" Foreground="{DynamicResource TextWarning}">
+                                                                    <Run Text="{Binding ScheduledCount}"/><Run Text=" sched"/>
+                                                                </TextBlock>
                                                             </Border>
                                                         </StackPanel>
                                                     </StackPanel>
@@ -139,43 +148,46 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </StackPanel>
-                    
-                    <Border Classes="section-divider" IsVisible="{Binding Navigation.HasQueues}"/>
-                    
+
+                    <!-- Divider -->
+                    <Border Height="1" Background="{DynamicResource BorderDefault}"
+                            IsVisible="{Binding Navigation.HasQueues}" Margin="4,0"/>
+
                     <!-- Topics Section -->
-                    <StackPanel IsVisible="{Binding Navigation.HasTopics}">
-                        <Border Classes="section-header">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                                    <Border Classes="entity-icon-topic">
-                                        <PathIcon Data="{StaticResource IconTopic}" Width="16" Height="16" Foreground="{DynamicResource TextSuccess}"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="Topics" FontWeight="SemiBold" FontSize="14"/>
-                                        <TextBlock Text="Publish-subscribe messaging" Classes="caption" FontSize="11"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                <Border Grid.Column="2" Classes="badge-muted" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Navigation.Topics.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
+                    <StackPanel IsVisible="{Binding Navigation.HasTopics}" Spacing="6">
+                        <!-- Section Header -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,0">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Border Width="24" Height="24" CornerRadius="4"
+                                        Background="{DynamicResource SurfaceSuccess}">
+                                    <PathIcon Data="{StaticResource IconTopic}" Width="12" Height="12"
+                                              Foreground="{DynamicResource TextSuccess}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                            </Grid>
-                        </Border>
-                        
-                        <!-- Loading indicator for topics -->
-                        <Border IsVisible="{Binding IsLoading}" 
-                                Margin="4,8,0,8" 
-                                Padding="12,8" 
-                                Background="{DynamicResource SurfaceSubtle}" 
-                                CornerRadius="6">
-                            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                                <ProgressBar IsIndeterminate="True" Width="60" Height="4" />
-                                <TextBlock Text="Loading topics..." FontSize="12" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                                <TextBlock Text="Topics" FontSize="12" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource AppForeground}"/>
+                            </StackPanel>
+                            <Border Grid.Column="2" Background="{DynamicResource SurfaceSubtle}"
+                                    CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Navigation.Topics.Count}" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource SubtleForeground}"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Loading indicator -->
+                        <Border IsVisible="{Binding IsLoading}"
+                                Padding="10,6"
+                                Background="{DynamicResource SurfaceSubtle}"
+                                CornerRadius="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" Width="50" Height="2" />
+                                <TextBlock Text="Loading topics..." FontSize="11"
+                                           Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
-                        
-                        <ListBox ItemsSource="{Binding Navigation.Topics}" 
-                                 Margin="4,0,0,0"
+
+                        <!-- Topic List -->
+                        <ListBox ItemsSource="{Binding Navigation.Topics}"
                                  Classes="entity-list"
                                  Background="Transparent"
                                  BorderThickness="0"
@@ -187,7 +199,7 @@
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:TopicInfo">
-                                    <Expander Margin="0,2" IsExpanded="False" Expanding="OnTopicExpanderExpanding">
+                                    <Expander Margin="0,1" IsExpanded="False" Expanding="OnTopicExpanderExpanding">
                                         <Expander.Header>
                                             <Button Classes="subtle"
                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectTopicForConnectionCommand}"
@@ -195,11 +207,12 @@
                                                     HorizontalAlignment="Stretch"
                                                     HorizontalContentAlignment="Stretch"
                                                     Padding="0">
-                                                <Grid ColumnDefinitions="Auto,*">
-                                                    <!-- Selection indicator bar -->
-                                                    <Border Grid.Column="0" Classes="selection-indicator" 
-                                                            VerticalAlignment="Stretch"
-                                                            Margin="0,4,4,4">
+                                                <Grid ColumnDefinitions="3,*">
+                                                    <!-- Selection indicator -->
+                                                    <Border Grid.Column="0"
+                                                            Background="{DynamicResource TextSuccess}"
+                                                            CornerRadius="2"
+                                                            Margin="0,6">
                                                         <Border.IsVisible>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                                 <Binding Path="."/>
@@ -207,9 +220,9 @@
                                                             </MultiBinding>
                                                         </Border.IsVisible>
                                                     </Border>
-                                                    
-                                                    <!-- Topic content with selection background -->
-                                                    <Border Grid.Column="1" Padding="8,8" CornerRadius="6">
+
+                                                    <!-- Content -->
+                                                    <Border Grid.Column="1" Padding="10,8" CornerRadius="4" Margin="4,0,0,0">
                                                         <Border.Background>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                 <Binding Path="."/>
@@ -217,118 +230,124 @@
                                                             </MultiBinding>
                                                         </Border.Background>
                                                         <Grid ColumnDefinitions="Auto,*">
-                                                            <Border Grid.Column="0" Classes="entity-icon-topic" Margin="0,0,12,0">
-                                                                <TextBlock Text="T" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextSuccess}" 
+                                                            <!-- Icon -->
+                                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="4"
+                                                                    Background="{DynamicResource TextSuccess}" Margin="0,0,10,0">
+                                                                <TextBlock Text="T" FontWeight="SemiBold" FontSize="12"
+                                                                           Foreground="{DynamicResource TextOnBrand}"
                                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
-                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                                <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Medium"
                                                                            TextTrimming="CharacterEllipsis"/>
-                                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Spacing="8">
-                                                                    <Border Classes="badge-muted">
-                                                                        <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscriptions'}" 
-                                                                                   FontSize="10" Foreground="{DynamicResource SubtleForeground}"/>
-                                                                    </Border>
-                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscriptions'}"
+                                                                           FontSize="10" Foreground="{DynamicResource SubtleForeground}"/>
                                                             </StackPanel>
                                                         </Grid>
                                                     </Border>
                                                 </Grid>
                                             </Button>
                                         </Expander.Header>
-                                        <!-- Topic Subscriptions -->
-                                        <StackPanel>
-                                            <!-- Loading indicator for subscriptions -->
-                                            <Border IsVisible="{Binding IsLoadingSubscriptions}" 
-                                                    Margin="20,8,0,8" 
-                                                    Padding="12,8" 
-                                                    Background="{DynamicResource SurfaceSubtle}" 
-                                                    CornerRadius="6">
-                                                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                                                    <ProgressBar IsIndeterminate="True" Width="50" Height="3" />
-                                                    <TextBlock Text="Loading subscriptions..." FontSize="11" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+
+                                        <!-- Subscriptions -->
+                                        <StackPanel Margin="24,4,0,8">
+                                            <!-- Loading indicator -->
+                                            <Border IsVisible="{Binding IsLoadingSubscriptions}"
+                                                    Padding="8,4"
+                                                    Background="{DynamicResource SurfaceSubtle}"
+                                                    CornerRadius="4"
+                                                    Margin="0,0,0,4">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                                    <ProgressBar IsIndeterminate="True" Width="40" Height="2" />
+                                                    <TextBlock Text="Loading..." FontSize="10"
+                                                               Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
+
+                                            <!-- Subscription List -->
                                             <ListBox ItemsSource="{Binding Subscriptions}"
-                                                     Margin="20,8,0,4"
-                                                 Classes="entity-list"
-                                                 Background="Transparent"
-                                                 BorderThickness="0"
-                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                            <ListBox.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <VirtualizingStackPanel/>
-                                                </ItemsPanelTemplate>
-                                            </ListBox.ItemsPanel>
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate x:DataType="models:SubscriptionInfo">
-                                                    <Button Classes="subtle"
-                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionForConnectionCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Stretch"
-                                                            Padding="0"
-                                                            Margin="0,2">
-                                                        <Grid ColumnDefinitions="Auto,*">
-                                                            <!-- Selection indicator bar -->
-                                                            <Border Grid.Column="0" Classes="selection-indicator" 
-                                                                    VerticalAlignment="Stretch"
-                                                                    Margin="0,4,4,4">
-                                                                <Border.IsVisible>
-                                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
-                                                                        <Binding Path="."/>
-                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedSubscription"/>
-                                                                    </MultiBinding>
-                                                                </Border.IsVisible>
-                                                            </Border>
-                                                            
-                                                            <!-- Subscription content with selection background -->
-                                                            <Border Grid.Column="1" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource BorderMuted}" BorderThickness="1">
-                                                                <Border.Background>
-                                                                    <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
-                                                                        <Binding Path="."/>
-                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedSubscription"/>
-                                                                    </MultiBinding>
-                                                                </Border.Background>
-                                                                <Grid ColumnDefinitions="Auto,*">
-                                                                    <Border Grid.Column="0" Classes="entity-icon-subscription" Width="28" Height="28" Margin="0,0,10,0">
-                                                                        <TextBlock Text="S" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextWarning}" 
-                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
-                                                                                   TextTrimming="CharacterEllipsis"/>
-                                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Spacing="6">
-                                                                            <Border Classes="counter-active" Padding="4,2">
-                                                                                <StackPanel Orientation="Horizontal" Spacing="3">
-                                                                                    <TextBlock Text="{Binding ActiveMessageCount}" 
-                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrand}"/>
-                                                                                    <TextBlock Text="active" FontSize="9" Foreground="{DynamicResource AccentBrand}"/>
-                                                                                </StackPanel>
-                                                                            </Border>
-                                                                            <Border Classes="counter-dead" Padding="4,2">
-                                                                                <Border.IsVisible>
-                                                                                    <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
-                                                                                        <Binding Path="DeadLetterCount"/>
-                                                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ShowDeadLetterBadges"/>
-                                                                                    </MultiBinding>
-                                                                                </Border.IsVisible>
-                                                                                <StackPanel Orientation="Horizontal" Spacing="3">
-                                                                                    <TextBlock Text="{Binding DeadLetterCount}" 
-                                                                                               FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextDanger}"/>
-                                                                                    <TextBlock Text="dead" FontSize="9" Foreground="{DynamicResource TextDanger}"/>
-                                                                                </StackPanel>
-                                                                            </Border>
+                                                     Classes="entity-list"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                                <ListBox.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <VirtualizingStackPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ListBox.ItemsPanel>
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="models:SubscriptionInfo">
+                                                        <Button Classes="subtle"
+                                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionForConnectionCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                HorizontalAlignment="Stretch"
+                                                                HorizontalContentAlignment="Stretch"
+                                                                Padding="0"
+                                                                Margin="0,1">
+                                                            <Grid ColumnDefinitions="3,*">
+                                                                <!-- Selection indicator -->
+                                                                <Border Grid.Column="0"
+                                                                        Background="{DynamicResource TextWarning}"
+                                                                        CornerRadius="2"
+                                                                        Margin="0,4">
+                                                                    <Border.IsVisible>
+                                                                        <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                            <Binding Path="."/>
+                                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedSubscription"/>
+                                                                        </MultiBinding>
+                                                                    </Border.IsVisible>
+                                                                </Border>
+
+                                                                <!-- Content -->
+                                                                <Border Grid.Column="1" Padding="8,6" CornerRadius="4" Margin="4,0,0,0"
+                                                                        BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
+                                                                    <Border.Background>
+                                                                        <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                            <Binding Path="."/>
+                                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedSubscription"/>
+                                                                        </MultiBinding>
+                                                                    </Border.Background>
+                                                                    <Grid ColumnDefinitions="Auto,*">
+                                                                        <!-- Icon -->
+                                                                        <Border Grid.Column="0" Width="22" Height="22" CornerRadius="3"
+                                                                                Background="{DynamicResource TextWarning}" Margin="0,0,8,0">
+                                                                            <TextBlock Text="S" FontWeight="SemiBold" FontSize="10"
+                                                                                       Foreground="{DynamicResource TextOnBrand}"
+                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                                            <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Medium"
+                                                                                       TextTrimming="CharacterEllipsis"/>
+                                                                            <!-- Counters -->
+                                                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                                <Border Background="{DynamicResource SurfaceBrand}"
+                                                                                        CornerRadius="2" Padding="4,1">
+                                                                                    <TextBlock FontSize="9" Foreground="{DynamicResource AccentBrand}">
+                                                                                        <Run Text="{Binding ActiveMessageCount}"/><Run Text=" active"/>
+                                                                                    </TextBlock>
+                                                                                </Border>
+                                                                                <Border Background="{DynamicResource SurfaceDanger}"
+                                                                                        CornerRadius="2" Padding="4,1">
+                                                                                    <Border.IsVisible>
+                                                                                        <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
+                                                                                            <Binding Path="DeadLetterCount"/>
+                                                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ShowDeadLetterBadges"/>
+                                                                                        </MultiBinding>
+                                                                                    </Border.IsVisible>
+                                                                                    <TextBlock FontSize="9" Foreground="{DynamicResource TextDanger}">
+                                                                                        <Run Text="{Binding DeadLetterCount}"/><Run Text=" dlq"/>
+                                                                                    </TextBlock>
+                                                                                </Border>
+                                                                            </StackPanel>
                                                                         </StackPanel>
-                                                                    </StackPanel>
-                                                                </Grid>
-                                                            </Border>
-                                                        </Grid>
-                                                    </Button>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-                                    </StackPanel>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </Grid>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
                                     </Expander>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
