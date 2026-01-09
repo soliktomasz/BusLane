@@ -86,7 +86,7 @@
     </Style>
 
     <Style Selector="Button.secondary">
-        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="12,8"/>
@@ -98,13 +98,13 @@
     </Style>
 
     <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
     </Style>
 
     <Style Selector="Button.secondary:pressed /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Background" Value="{DynamicResource TabNavBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
     </Style>
 
     <Style Selector="Button.subtle">
@@ -136,7 +136,12 @@
     </Style>
 
     <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#FCA5A5"/>
+        <Setter Property="Background" Value="{DynamicResource TextDangerHover}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Button.danger:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource TextDanger}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
 
@@ -174,8 +179,8 @@
 
     <!-- Warning Button Styles -->
     <Style Selector="Button.warning">
-        <Setter Property="Background" Value="#F59E0B"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="{DynamicResource TextWarning}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -185,12 +190,13 @@
     </Style>
 
     <Style Selector="Button.warning:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#D97706"/>
+        <Setter Property="Background" Value="{DynamicResource TextWarningHover}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
 
     <Style Selector="Button.warning:pressed /template/ ContentPresenter">
-        <Setter Property="Background" Value="#B45309"/>
+        <Setter Property="Background" Value="{DynamicResource TextWarning}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
 
     <Style Selector="Button.small">
@@ -356,14 +362,23 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
     </Style>
 
-    <!-- Card - Fluent 2 with elevation -->
+    <!-- Card - Fluent 2 with elevation system -->
     <Style Selector="Border.card">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 2 8 0 #20000000"/>
+        <Setter Property="BoxShadow" Value="0 2 4 0 #18000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.card:pointerover">
+        <Setter Property="BoxShadow" Value="0 4 8 0 #20000000"/>
     </Style>
 
     <Style Selector="Border.card-elevated">
@@ -372,7 +387,16 @@
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 4 16 0 #30000000"/>
+        <Setter Property="BoxShadow" Value="0 4 12 0 #24000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.card-elevated:pointerover">
+        <Setter Property="BoxShadow" Value="0 8 16 0 #28000000"/>
     </Style>
 
     <!-- Navigation Pane / Sidebar - Fluent 2 -->
@@ -564,7 +588,7 @@
         <Setter Property="Padding" Value="24"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 16 32 0 #26000000"/>
+        <Setter Property="BoxShadow" Value="0 8 24 0 #32000000"/>
         <Setter Property="MaxWidth" Value="640"/>
         <Setter Property="MaxHeight" Value="560"/>
     </Style>
@@ -602,7 +626,7 @@
         <Setter Property="CornerRadius" Value="4"/>
     </Style>
 
-    <!-- Entity Card Styles - Fluent 2 -->
+    <!-- Entity Card Styles - Fluent 2 with smooth transitions -->
     <Style Selector="Border.entity-item">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="CornerRadius" Value="6"/>
@@ -611,6 +635,12 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"/>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1"/>
+            </Transitions>
+        </Setter>
     </Style>
 
     <Style Selector="Border.entity-item:pointerover">
@@ -625,6 +655,12 @@
         <Setter Property="Margin" Value="0,2"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorder}"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"/>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1"/>
+            </Transitions>
+        </Setter>
     </Style>
 
     <Style Selector="Border.entity-item-selected:pointerover">
@@ -691,8 +727,10 @@
     <Style Selector="Border.section-header">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="CornerRadius" Value="6"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="Margin" Value="0,4,0,8"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Margin" Value="0,8,0,8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
 
     <!-- Message Counter Styles - Compact Fluent 2 -->
@@ -800,16 +838,19 @@
     <Style Selector="TextBox.code-editor">
         <Setter Property="FontFamily" Value="JetBrains Mono, Cascadia Code, Consolas, monospace"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Background" Value="#1E1E1E"/>
-        <Setter Property="Foreground" Value="#D4D4D4"/>
-        <Setter Property="BorderBrush" Value="#3C3C3C"/>
-        <Setter Property="CaretBrush" Value="#FFFFFF"/>
+        <Setter Property="Background" Value="{DynamicResource CodeBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource CodeForeground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CodeBorder}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource CodeForeground}"/>
+        <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
     </Style>
 
     <Style Selector="TextBox.code-editor:focus">
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="BorderThickness" Value="1,1,1,2"/>
     </Style>
 
     <!-- Toolbar button -->
@@ -852,7 +893,7 @@
         <Setter Property="Padding" Value="0"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 16 48 0 #26000000"/>
+        <Setter Property="BoxShadow" Value="0 8 24 0 #32000000"/>
     </Style>
 
     <!-- Quick action chip -->
@@ -906,17 +947,27 @@
     <!-- Sidebar namespace item styles -->
     <Style Selector="Border.namespace-item">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="Margin" Value="4,2"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"/>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1"/>
+            </Transitions>
+        </Setter>
     </Style>
 
     <Style Selector="Border.namespace-item:pointerover">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.namespace-item:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
     </Style>
 
     <!-- Sidebar subscription picker card -->

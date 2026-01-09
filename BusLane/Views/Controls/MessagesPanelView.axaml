@@ -157,17 +157,6 @@
                     <!-- Loading indicator for messages -->
                     <TabItem.Content>
                         <Grid>
-                            <Border IsVisible="{Binding MessageOps.IsLoadingMessages}"
-                                    VerticalAlignment="Top"
-                                    Margin="16,16,16,0"
-                                    Padding="16,12"
-                                    Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="8">
-                                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
-                                    <ProgressBar IsIndeterminate="True" Width="80" Height="4" />
-                                    <TextBlock Text="Loading messages..." FontSize="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
                             <ListBox ItemsSource="{Binding MessageOps.FilteredMessages}"
                              SelectedItem="{Binding MessageOps.SelectedMessage}"
                              Background="Transparent"
@@ -264,6 +253,39 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                            <!-- Beautiful centered loading overlay -->
+                            <Border IsVisible="{Binding MessageOps.IsLoadingMessages}"
+                                    Background="{DynamicResource LoadingOverlay}"
+                                    IsHitTestVisible="True">
+                                <Border Background="{DynamicResource CardBackground}"
+                                        Padding="32,24"
+                                        CornerRadius="12"
+                                        BorderThickness="1"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BoxShadow="0 8 32 0 #40000000"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        MinWidth="280">
+                                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                                        <ProgressBar IsIndeterminate="True" Width="200" Height="4"
+                                                     Foreground="{DynamicResource AccentBrand}"
+                                                     Background="{DynamicResource BorderDefault}"/>
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <TextBlock Text="Loading Messages"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppForeground}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Please wait while we fetch the messages..."
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource SubtleForeground}"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Border>
                         </Grid>
                     </TabItem.Content>
                 </TabItem>
@@ -272,17 +294,6 @@
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
                         <Grid>
-                            <Border IsVisible="{Binding MessageOps.IsLoadingMessages}"
-                                    VerticalAlignment="Top"
-                                    Margin="16,16,16,0"
-                                    Padding="16,12"
-                                    Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="8">
-                                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
-                                    <ProgressBar IsIndeterminate="True" Width="80" Height="4" />
-                                    <TextBlock Text="Loading messages..." FontSize="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
                             <ListBox ItemsSource="{Binding MessageOps.FilteredMessages}"
                              SelectedItem="{Binding MessageOps.SelectedMessage}"
                              Background="Transparent"
@@ -387,6 +398,39 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                            <!-- Beautiful centered loading overlay -->
+                            <Border IsVisible="{Binding MessageOps.IsLoadingMessages}"
+                                    Background="{DynamicResource LoadingOverlay}"
+                                    IsHitTestVisible="True">
+                                <Border Background="{DynamicResource CardBackground}"
+                                        Padding="32,24"
+                                        CornerRadius="12"
+                                        BorderThickness="1"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BoxShadow="0 8 32 0 #40000000"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        MinWidth="280">
+                                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                                        <ProgressBar IsIndeterminate="True" Width="200" Height="4"
+                                                     Foreground="{DynamicResource AccentBrand}"
+                                                     Background="{DynamicResource BorderDefault}"/>
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <TextBlock Text="Loading Dead Letter Messages"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppForeground}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Please wait while we fetch the dead letter messages..."
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource SubtleForeground}"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Border>
                         </Grid>
                     </TabItem.Content>
                 </TabItem>
