@@ -66,6 +66,7 @@ public partial class MainWindowViewModel : ViewModelBase
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
     public bool EnableMessagePreview => _preferencesService.EnableMessagePreview;
+    public bool IsNavigationPanelVisible => _preferencesService.ShowNavigationPanel;
 
     public string AppVersion => _versionService.DisplayVersion;
 
@@ -945,6 +946,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private void ToggleStatusPopup() => ShowStatusPopup = !ShowStatusPopup;
+
+    [RelayCommand]
+    private void ToggleNavigationPanel()
+    {
+        _preferencesService.ShowNavigationPanel = !_preferencesService.ShowNavigationPanel;
+        _preferencesService.Save();
+        OnPropertyChanged(nameof(IsNavigationPanelVisible));
+    }
 
     [RelayCommand]
     private void CloseStatusPopup() => ShowStatusPopup = false;

@@ -27,6 +27,12 @@
     
     <!-- Chevron right icon -->
     <StreamGeometry x:Key="IconChevronRight">M8.293 5.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L13.586 12 8.293 6.707a1 1 0 010-1.414z</StreamGeometry>
+
+    <!-- Chevron left icon -->
+    <StreamGeometry x:Key="IconChevronLeft">M15.707 5.293a1 1 0 010 1.414L10.414 12l5.293 5.293a1 1 0 01-1.414 1.414l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 0z</StreamGeometry>
+
+    <!-- Sidebar / Panel icon -->
+    <StreamGeometry x:Key="IconSidebar">M3.75 3.75h16.5v16.5H3.75V3.75zM9 3.75v16.5M5.25 3.75a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H5.25z</StreamGeometry>
     
     <!-- Connection / Plug icon -->
     <StreamGeometry x:Key="IconConnection">M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1</StreamGeometry>

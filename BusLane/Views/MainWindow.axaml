@@ -11,12 +11,37 @@
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen">
 
-    <Grid ColumnDefinitions="Auto,*">
+    <Grid ColumnDefinitions="Auto,Auto,*">
         <!-- Navigation Pane (Fluent 2 Sidebar) -->
-        <controls:NavigationSidebar Grid.Column="0"/>
+        <controls:NavigationSidebar Grid.Column="0"
+                                    IsVisible="{Binding IsNavigationPanelVisible}"/>
+
+        <!-- Expand/Collapse Toggle Button -->
+        <Border Grid.Column="1"
+                Background="{DynamicResource SurfaceSubtle}"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BorderThickness="0,0,1,0"
+                VerticalAlignment="Stretch">
+            <Button Classes="subtle"
+                    Command="{Binding ToggleNavigationPanelCommand}"
+                    ToolTip.Tip="Toggle navigation panel"
+                    Padding="4,0"
+                    Width="20"
+                    VerticalAlignment="Stretch"
+                    VerticalContentAlignment="Center">
+                <Panel>
+                    <PathIcon Data="{StaticResource IconChevronLeft}"
+                              Width="12" Height="12"
+                              IsVisible="{Binding IsNavigationPanelVisible}"/>
+                    <PathIcon Data="{StaticResource IconChevronRight}"
+                              Width="12" Height="12"
+                              IsVisible="{Binding !IsNavigationPanelVisible}"/>
+                </Panel>
+            </Button>
+        </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Column="1" Margin="24,20">
+        <Grid Grid.Column="2" Margin="24,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -153,17 +178,17 @@
         </Grid>
 
         <!-- Modal Dialogs -->
-        <dialogs:StatusPopupDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:MessageDetailDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:SendMessageDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:SaveMessageDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:LoadMessageDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:ConnectionLibraryDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="2"/>
-        <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="2"/>
+        <dialogs:StatusPopupDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:MessageDetailDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:SendMessageDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:SaveMessageDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:LoadMessageDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:ConnectionLibraryDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="3"/>
 
         <!-- Alerts Dialog (modal overlay) -->
-        <Border Grid.Column="0" Grid.ColumnSpan="2"
+        <Border Grid.Column="0" Grid.ColumnSpan="3"
                 IsVisible="{Binding FeaturePanels.ShowAlerts}"
                 Background="{DynamicResource ModalOverlay}">
             <Border Background="{DynamicResource CardBackground}"

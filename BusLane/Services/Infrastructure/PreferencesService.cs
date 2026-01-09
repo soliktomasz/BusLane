@@ -16,6 +16,7 @@ public class PreferencesService : IPreferencesService
     public int DefaultMessageCount { get; set; } = 100;
     public bool ShowDeadLetterBadges { get; set; } = true;
     public bool EnableMessagePreview { get; set; } = true;
+    public bool ShowNavigationPanel { get; set; } = true;
     public string Theme { get; set; } = "Light";
 
     public event EventHandler? PreferencesChanged;
@@ -42,6 +43,7 @@ public class PreferencesService : IPreferencesService
                     DefaultMessageCount = data.DefaultMessageCount;
                     ShowDeadLetterBadges = data.ShowDeadLetterBadges;
                     EnableMessagePreview = data.EnableMessagePreview;
+                    ShowNavigationPanel = data.ShowNavigationPanel;
                     Theme = data.Theme ?? "Light";
                 }
             }
@@ -67,6 +69,7 @@ public class PreferencesService : IPreferencesService
                 DefaultMessageCount = DefaultMessageCount,
                 ShowDeadLetterBadges = ShowDeadLetterBadges,
                 EnableMessagePreview = EnableMessagePreview,
+                ShowNavigationPanel = ShowNavigationPanel,
                 Theme = Theme
             };
 
@@ -93,6 +96,7 @@ public class PreferencesService : IPreferencesService
         public int DefaultMessageCount { get; set; }
         public bool ShowDeadLetterBadges { get; set; }
         public bool EnableMessagePreview { get; set; }
+        public bool ShowNavigationPanel { get; set; } = true;
         public string? Theme { get; set; }
     }
 }

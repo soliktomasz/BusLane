@@ -12,6 +12,7 @@ public interface IPreferencesService
     int DefaultMessageCount { get; set; }
     bool ShowDeadLetterBadges { get; set; }
     bool EnableMessagePreview { get; set; }
+    bool ShowNavigationPanel { get; set; }
     string Theme { get; set; }
     void Save();
     void Load();
