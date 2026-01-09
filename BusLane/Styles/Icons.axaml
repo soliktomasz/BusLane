@@ -120,6 +120,12 @@
     
     <!-- Keyboard icon -->
     <StreamGeometry x:Key="IconKeyboard">M2.25 6A2.25 2.25 0 014.5 3.75h15A2.25 2.25 0 0121.75 6v9a2.25 2.25 0 01-2.25 2.25h-15A2.25 2.25 0 012.25 15V6zm3 2.25a.75.75 0 000 1.5h.75a.75.75 0 000-1.5h-.75zm3.75.75a.75.75 0 01.75-.75h.75a.75.75 0 010 1.5h-.75a.75.75 0 01-.75-.75zm4.5-.75a.75.75 0 000 1.5h.75a.75.75 0 000-1.5h-.75zm3.75.75a.75.75 0 01.75-.75h.75a.75.75 0 010 1.5h-.75a.75.75 0 01-.75-.75zM5.25 12a.75.75 0 000 1.5h9a.75.75 0 000-1.5h-9zm12.75.75a.75.75 0 01.75-.75h.75a.75.75 0 010 1.5h-.75a.75.75 0 01-.75-.75z</StreamGeometry>
-    
+
+    <!-- Export / Upload icon -->
+    <StreamGeometry x:Key="IconExport">M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 9l5-5 5 5M12 4v12</StreamGeometry>
+
+    <!-- Copy / Duplicate icon -->
+    <StreamGeometry x:Key="IconCopy">M8 4v12a2 2 0 002 2h8a2 2 0 002-2V7.242a2 2 0 00-.602-1.43L16.083 2.57A2 2 0 0014.685 2H10a2 2 0 00-2 2z M6 8H4a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2</StreamGeometry>
+
 </ResourceDictionary>
 

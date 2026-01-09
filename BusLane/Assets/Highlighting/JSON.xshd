@@ -14,13 +14,9 @@
     </Rule>
 
     <!-- String values -->
-    <Span color="String">
-      <Begin>"</Begin>
-      <End>"</End>
-      <RuleSet>
-        <Rule>\\.</Rule>
-      </RuleSet>
-    </Span>
+    <Rule color="String">
+      "(?:[^"\\]|\\.)*"
+    </Rule>
 
     <!-- Numbers -->
     <Rule color="Number">
