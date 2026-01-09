@@ -7,14 +7,16 @@
 
     <Border Classes="modal-overlay"
             IsVisible="{Binding MessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <Border Classes="modal"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                MinWidth="680"
-                MaxWidth="800"
-                MaxHeight="720"
-                Padding="0">
-            <DockPanel>
+        <Border Background="{DynamicResource CardBackground}"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BoxShadow="0 8 32 0 #40000000"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                Margin="48"
+                ClipToBounds="True">
+            <DockPanel Margin="0,0,0,8">
                 <!-- Header -->
                 <Border DockPanel.Dock="Top"
                         Background="{DynamicResource SurfaceSubtle}"
@@ -70,8 +72,8 @@
                 </Border>
 
                 <!-- Content -->
-                <ScrollViewer Padding="20">
-                    <StackPanel Spacing="16">
+                <ScrollViewer>
+                    <StackPanel Spacing="16" Margin="20,20,20,40">
                         <!-- Dead Letter Alert -->
                         <Border Classes="infobar-error"
                                 IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
@@ -156,9 +158,7 @@
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
                                         <TextBlock Text="Delivery Count" Classes="caption" Margin="0,0,0,4"/>
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeliveryCount}" FontWeight="SemiBold"/>
-                                        </StackPanel>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeliveryCount}" FontWeight="SemiBold"/>
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,12,0"
                                                 IsVisible="{Binding MessageOps.SelectedMessage.ScheduledEnqueueTime, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -251,7 +251,7 @@
                                          Text="{Binding MessageOps.FormattedMessageBody, Mode=OneWay}"
                                          IsJson="{Binding MessageOps.IsMessageBodyJson}"
                                          IsXml="{Binding MessageOps.IsMessageBodyXml}"
-                                         MaxHeight="280"/>
+                                         MinHeight="300"/>
                             </Border>
                         </StackPanel>
                     </StackPanel>
