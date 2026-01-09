@@ -12,6 +12,11 @@ using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
 
+/// <summary>
+/// Represents a group of keyboard shortcuts for display in the help dialog.
+/// </summary>
+public record KeyboardShortcutGroup(string Category, IReadOnlyList<KeyboardShortcut> Shortcuts);
+
 public enum ConnectionMode
 {
     None,
@@ -31,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IVersionService _versionService;
     private readonly IAlertService _alertService;
     private readonly IPreferencesService _preferencesService;
+    private readonly IKeyboardShortcutService _keyboardShortcutService;
     private IFileDialogService? _fileDialogService;
 
     // Composed components
@@ -59,6 +65,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _confirmDialogConfirmText = "Confirm";
     private Func<Task>? _confirmDialogAction;
 
+    // Keyboard shortcuts dialog
+    [ObservableProperty] private bool _showKeyboardShortcuts;
+
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
@@ -69,6 +78,16 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsNavigationPanelVisible => _preferencesService.ShowNavigationPanel;
 
     public string AppVersion => _versionService.DisplayVersion;
+
+    /// <summary>Gets the keyboard shortcut service for handling shortcuts.</summary>
+    public IKeyboardShortcutService KeyboardShortcuts => _keyboardShortcutService;
+
+    /// <summary>Gets keyboard shortcuts grouped by category for display.</summary>
+    public IReadOnlyList<KeyboardShortcutGroup> KeyboardShortcutGroups =>
+        _keyboardShortcutService.GetAllShortcuts()
+            .GroupBy(s => s.Category)
+            .Select(g => new KeyboardShortcutGroup(g.Key, g.ToList()))
+            .ToList();
 
     /// <summary>
     /// Executes a service operation using either connection string or Azure account mode.
@@ -117,6 +136,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IMetricsService metricsService,
         IAlertService alertService,
         INotificationService notificationService,
+        IKeyboardShortcutService keyboardShortcutService,
         IFileDialogService? fileDialogService = null)
     {
         _serviceBus = serviceBus;
@@ -124,6 +144,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _versionService = versionService;
         _alertService = alertService;
         _preferencesService = preferencesService;
+        _keyboardShortcutService = keyboardShortcutService;
         _fileDialogService = fileDialogService;
 
         // Initialize composed components
@@ -970,6 +991,22 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ShowSettings = false;
         SettingsViewModel = null;
+    }
+
+    [RelayCommand]
+    private void ShowKeyboardShortcutsHelp() => ShowKeyboardShortcuts = true;
+
+    [RelayCommand]
+    private void CloseKeyboardShortcuts() => ShowKeyboardShortcuts = false;
+
+    /// <summary>
+    /// Toggles the dead letter view for the current entity.
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleDeadLetterViewAsync()
+    {
+        Navigation.ShowDeadLetter = !Navigation.ShowDeadLetter;
+        await MessageOps.LoadMessagesAsync();
     }
 
     #endregion

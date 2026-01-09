@@ -33,6 +33,7 @@ class Program
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IPreferencesService, PreferencesService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
         
         // Auth services
         services.AddSingleton<IAzureAuthService, AzureAuthService>();

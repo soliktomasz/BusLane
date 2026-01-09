@@ -37,7 +37,7 @@
                             <!-- Multi-select toggle button -->
                             <ToggleButton Classes="subtle small"
                                           IsChecked="{Binding MessageOps.IsMultiSelectMode, Mode=TwoWay}"
-                                          ToolTip.Tip="Toggle multi-select mode"
+                                          ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)"
                                           Padding="8,6">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12"/>
