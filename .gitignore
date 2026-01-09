@@ -164,7 +164,4 @@ secrets.json
 *.cer
 *.crt
 
-
-release_script.sh
-
 BusLane.sln.DotSettings.user
