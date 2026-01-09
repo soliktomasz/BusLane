@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
 
@@ -22,6 +23,16 @@ public partial class MainWindow : Window
         
         // Handle keyboard shortcuts
         KeyDown += OnKeyDown;
+    }
+
+    /// <summary>
+    /// Finds a control by name in the visual tree.
+    /// </summary>
+    private T? FindDescendantByName<T>(string name) where T : Control
+    {
+        return this.GetVisualDescendants()
+            .OfType<T>()
+            .FirstOrDefault(c => c.Name == name);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -85,6 +96,17 @@ public partial class MainWindow : Window
         {
             vm.ToggleNavigationPanelCommand.Execute(null);
             e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.FocusSearch))
+        {
+            // Find the MessageSearchTextBox in the visual tree and focus it
+            var searchBox = FindDescendantByName<TextBox>("MessageSearchTextBox");
+            if (searchBox != null)
+            {
+                searchBox.Focus();
+                searchBox.SelectAll();
+                e.Handled = true;
+            }
         }
         // Message shortcuts
         else if (shortcuts.Matches(e, KeyboardShortcutAction.NewMessage))
