@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.KeyboardShortcutsDialog"
+             x:DataType="vm:MainWindowViewModel">
+
+    <!-- Keyboard Shortcuts Help Dialog -->
+    <Border IsVisible="{Binding ShowKeyboardShortcuts}"
+            Background="{DynamicResource ModalOverlay}">
+        <Border Background="{DynamicResource CardBackground}"
+                CornerRadius="12"
+                MaxWidth="600" MaxHeight="700"
+                MinWidth="450"
+                VerticalAlignment="Center" HorizontalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+            <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+                <!-- Header -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Keyboard Shortcuts" Classes="title"/>
+                        <TextBlock Text="Press Escape to close" Classes="caption" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" 
+                            Classes="subtle" 
+                            Content="✕"
+                            Command="{Binding CloseKeyboardShortcutsCommand}"
+                            VerticalAlignment="Top"/>
+                </Grid>
+                
+                <!-- Shortcuts List -->
+                <ScrollViewer Grid.Row="1" 
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding KeyboardShortcutGroups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,20">
+                                    <!-- Category Header -->
+                                    <TextBlock Text="{Binding Category}" 
+                                               FontWeight="SemiBold"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource AccentBrand}"
+                                               Margin="0,0,0,8"/>
+                                    
+                                    <!-- Shortcuts in Category -->
+                                    <ItemsControl ItemsSource="{Binding Shortcuts}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="*,Auto" 
+                                                      Margin="0,4"
+                                                      Background="Transparent">
+                                                    <TextBlock Grid.Column="0" 
+                                                               Text="{Binding Description}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1"
+                                                            Background="{DynamicResource SurfaceSubtle}"
+                                                            BorderBrush="{DynamicResource BorderDefault}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8,4"
+                                                            MinWidth="80"
+                                                            HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding DisplayText}"
+                                                                   FontFamily="Consolas, Menlo, monospace"
+                                                                   FontSize="12"
+                                                                   HorizontalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+                <!-- Footer -->
+                <Border Grid.Row="2" 
+                        BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource BorderMuted}"
+                        Padding="0,16,0,0"
+                        Margin="0,16,0,0">
+                    <TextBlock Text="Tip: Most shortcuts use ⌘ (Cmd) on macOS or Ctrl on Windows/Linux"
+                               Classes="caption"
+                               TextWrapping="Wrap"
+                               HorizontalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>
+

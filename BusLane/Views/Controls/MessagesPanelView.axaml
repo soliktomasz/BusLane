@@ -37,7 +37,7 @@
                             <!-- Multi-select toggle button -->
                             <ToggleButton Classes="subtle small"
                                           IsChecked="{Binding MessageOps.IsMultiSelectMode, Mode=TwoWay}"
-                                          ToolTip.Tip="Toggle multi-select mode"
+                                          ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)"
                                           Padding="8,6">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12"/>
@@ -128,6 +128,7 @@
                                       Margin="4,0,8,0"
                                       VerticalAlignment="Center"/>
                             <TextBox Grid.Column="1"
+                                     x:Name="MessageSearchTextBox"
                                      Text="{Binding MessageOps.MessageSearchText, Mode=TwoWay}"
                                      Watermark="Search by message ID, body, correlation ID, subject..."
                                      Background="Transparent"

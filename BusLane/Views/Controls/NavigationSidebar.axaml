@@ -270,18 +270,28 @@
                 </Button>
             </StackPanel>
 
-            <!-- Settings Button - Docked to bottom -->
-            <Button DockPanel.Dock="Bottom"
-                    Classes="subtle"
-                    Command="{Binding OpenSettingsCommand}"
-                    HorizontalAlignment="Stretch"
-                    Margin="12,8,12,12"
-                    Padding="12,10">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <PathIcon Data="{StaticResource IconSettings}" Width="16" Height="16"/>
-                    <TextBlock Text="Settings" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Button>
+            <!-- Settings and Help Buttons - Docked to bottom -->
+            <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12" Spacing="4">
+                <Button Classes="subtle"
+                        Command="{Binding ShowKeyboardShortcutsHelpCommand}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,10"
+                        ToolTip.Tip="⌘? or Ctrl+?">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource IconKeyboard}" Width="16" Height="16"/>
+                        <TextBlock Text="Keyboard Shortcuts" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="subtle"
+                        Command="{Binding OpenSettingsCommand}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource IconSettings}" Width="16" Height="16"/>
+                        <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
 
             <!-- Active Connection Card (when using connection string) - Docked to bottom -->
             <Border DockPanel.Dock="Bottom" Margin="12,12,12,8"

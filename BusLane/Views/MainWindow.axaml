@@ -186,6 +186,7 @@
         <dialogs:ConnectionLibraryDialog Grid.Column="0" Grid.ColumnSpan="3"/>
         <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="3"/>
         <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+        <dialogs:KeyboardShortcutsDialog Grid.Column="0" Grid.ColumnSpan="3"/>
 
         <!-- Alerts Dialog (modal overlay) -->
         <Border Grid.Column="0" Grid.ColumnSpan="3"
