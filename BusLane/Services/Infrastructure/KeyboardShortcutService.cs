@@ -91,6 +91,7 @@ public record KeyboardShortcut(
         Key.Delete => "Del",
         Key.Back => "⌫",
         Key.Return => "↵",
+        Key.OemComma => ",",
         Key.OemQuestion => "?",
         _ => key.ToString()
     };
