@@ -28,105 +28,138 @@
             <SolidColorBrush x:Key="SuccessForeground" Color="#107C10"/>
             <SolidColorBrush x:Key="AccentSubtle" Color="#E6F2FB"/>
             <SolidColorBrush x:Key="SurfaceDefault" Color="#FFFFFF"/>
-            
+
             <ResourceDictionary.ThemeDictionaries>
-                <!-- Light Theme -->
+                <!-- Light Theme - Microsoft Fluent 2 Design -->
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="AppBackground" Color="#F3F3F3"/>
-                    <SolidColorBrush x:Key="AppForeground" Color="#1A1A1A"/>
+                    <!-- Background and surface layers -->
+                    <SolidColorBrush x:Key="AppBackground" Color="#F5F5F5"/>
+                    <SolidColorBrush x:Key="AppForeground" Color="#242424"/>
                     <SolidColorBrush x:Key="SubtleForeground" Color="#616161"/>
                     <SolidColorBrush x:Key="MutedForeground" Color="#8A8A8A"/>
                     <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="SidebarBackground" Color="#FAFAFA"/>
-                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#FAFAFA"/>
+                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#F9F9F9"/>
+
+                    <!-- Border colors - Fluent 2 stroke tokens -->
                     <SolidColorBrush x:Key="BorderDefault" Color="#E0E0E0"/>
-                    <SolidColorBrush x:Key="BorderStrong" Color="#D1D1D1"/>
-                    <SolidColorBrush x:Key="BorderMuted" Color="#E8E8E8"/>
+                    <SolidColorBrush x:Key="BorderStrong" Color="#C7C7C7"/>
+                    <SolidColorBrush x:Key="BorderMuted" Color="#EBEBEB"/>
+
+                    <!-- Brand accent colors - Fluent 2 brand ramp -->
                     <SolidColorBrush x:Key="AccentBrand" Color="#0F6CBD"/>
                     <SolidColorBrush x:Key="AccentBrandHover" Color="#115EA3"/>
                     <SolidColorBrush x:Key="AccentBrandPressed" Color="#0C4A7E"/>
                     <SolidColorBrush x:Key="TextOnBrand" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="SurfaceBrand" Color="#E6F2FB"/>
-                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#D4E9F7"/>
-                    <SolidColorBrush x:Key="SurfaceDanger" Color="#FCE9E8"/>
-                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#E6F4E6"/>
-                    <SolidColorBrush x:Key="SurfaceWarning" Color="#FDF4E5"/>
-                    <SolidColorBrush x:Key="TextDanger" Color="#C42B1C"/>
-                    <SolidColorBrush x:Key="TextSuccess" Color="#0E7A0D"/>
-                    <SolidColorBrush x:Key="TextWarning" Color="#F7630C"/>
+
+                    <!-- Surface backgrounds with brand tint -->
+                    <SolidColorBrush x:Key="SurfaceBrand" Color="#EBF3FC"/>
+                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#D9EDFC"/>
+                    <SolidColorBrush x:Key="SurfaceAccent" Color="#EBF3FC"/>
+
+                    <!-- Semantic surface colors -->
+                    <SolidColorBrush x:Key="SurfaceDanger" Color="#FDF3F4"/>
+                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#F1FAF1"/>
+                    <SolidColorBrush x:Key="SurfaceWarning" Color="#FFF9F5"/>
+
+                    <!-- Semantic text colors - Fluent 2 status tokens -->
+                    <SolidColorBrush x:Key="TextDanger" Color="#C50F1F"/>
+                    <SolidColorBrush x:Key="TextDangerHover" Color="#A80000"/>
+                    <SolidColorBrush x:Key="TextSuccess" Color="#0E700E"/>
+                    <SolidColorBrush x:Key="TextSuccessHover" Color="#094509"/>
+                    <SolidColorBrush x:Key="TextWarning" Color="#CA5010"/>
+                    <SolidColorBrush x:Key="TextWarningHover" Color="#8E3A0B"/>
+
+                    <!-- Interactive states - Fluent 2 subtle backgrounds -->
                     <SolidColorBrush x:Key="HoverBackground" Color="#0A000000"/>
-                    <SolidColorBrush x:Key="PressedBackground" Color="#12000000"/>
-                    <SolidColorBrush x:Key="SelectedBackground" Color="#E6F2FB"/>
-                    <SolidColorBrush x:Key="SelectedBorder" Color="#B4D6F4"/>
+                    <SolidColorBrush x:Key="PressedBackground" Color="#14000000"/>
+                    <SolidColorBrush x:Key="SelectedBackground" Color="#EBF3FC"/>
+                    <SolidColorBrush x:Key="SelectedBorder" Color="#0F6CBD"/>
+
+                    <!-- Overlay and inputs -->
                     <SolidColorBrush x:Key="ModalOverlay" Color="#66000000"/>
                     <SolidColorBrush x:Key="InputBackground" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="TabNavBackground" Color="#F5F5F5"/>
+
+                    <!-- Tab, toolbar, and utility surfaces -->
+                    <SolidColorBrush x:Key="TabNavBackground" Color="#F3F3F3"/>
                     <SolidColorBrush x:Key="TabItemHover" Color="#E8E8E8"/>
                     <SolidColorBrush x:Key="ToolbarHover" Color="#E8E8E8"/>
-                    <SolidColorBrush x:Key="ToolbarPressed" Color="#D4D4D4"/>
-                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#F9F9F9"/>
+                    <SolidColorBrush x:Key="ToolbarPressed" Color="#D1D1D1"/>
+                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#FAFAFA"/>
                     <SolidColorBrush x:Key="PropertyRowHover" Color="#F0F0F0"/>
-                    <SolidColorBrush x:Key="ChipBackground" Color="#F0F0F0"/>
+                    <SolidColorBrush x:Key="ChipBackground" Color="#EBEBEB"/>
                     <SolidColorBrush x:Key="ChipHover" Color="#E0E0E0"/>
+
+                    <!-- Code editor -->
+                    <SolidColorBrush x:Key="CodeBackground" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4"/>
+                    <SolidColorBrush x:Key="CodeBorder" Color="#3C3C3C"/>
                 </ResourceDictionary>
                 
-                <!-- Dark Theme - Fluent 2 Design Language -->
+                <!-- Dark Theme - Microsoft Fluent 2 Design -->
                 <ResourceDictionary x:Key="Dark">
-                    <!-- Background layers (elevation) -->
-                    <SolidColorBrush x:Key="AppBackground" Color="#202020"/>
+                    <!-- Background layers - Fluent 2 elevation system -->
+                    <SolidColorBrush x:Key="AppBackground" Color="#1C1C1C"/>
                     <SolidColorBrush x:Key="AppForeground" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="SubtleForeground" Color="#ABABAB"/>
-                    <SolidColorBrush x:Key="MutedForeground" Color="#767676"/>
-                    <SolidColorBrush x:Key="CardBackground" Color="#2D2D2D"/>
-                    <SolidColorBrush x:Key="SidebarBackground" Color="#202020"/>
-                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#292929"/>
-                    
-                    <!-- Borders - Fluent 2 uses subtle stroke colors -->
-                    <SolidColorBrush x:Key="BorderDefault" Color="#3D3D3D"/>
-                    <SolidColorBrush x:Key="BorderStrong" Color="#4D4D4D"/>
+                    <SolidColorBrush x:Key="SubtleForeground" Color="#C8C8C8"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#8A8A8A"/>
+                    <SolidColorBrush x:Key="CardBackground" Color="#292929"/>
+                    <SolidColorBrush x:Key="SidebarBackground" Color="#1C1C1C"/>
+                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#242424"/>
+
+                    <!-- Border colors - Fluent 2 stroke tokens for dark -->
+                    <SolidColorBrush x:Key="BorderDefault" Color="#424242"/>
+                    <SolidColorBrush x:Key="BorderStrong" Color="#5C5C5C"/>
                     <SolidColorBrush x:Key="BorderMuted" Color="#333333"/>
-                    
-                    <!-- Accent brand colors - Fluent 2 brand ramp for dark -->
-                    <SolidColorBrush x:Key="AccentBrand" Color="#479EF5"/>
-                    <SolidColorBrush x:Key="AccentBrandHover" Color="#62ABF5"/>
-                    <SolidColorBrush x:Key="AccentBrandPressed" Color="#2886DE"/>
+
+                    <!-- Brand accent colors - Fluent 2 brand ramp for dark mode -->
+                    <SolidColorBrush x:Key="AccentBrand" Color="#60CDFF"/>
+                    <SolidColorBrush x:Key="AccentBrandHover" Color="#8CD9FF"/>
+                    <SolidColorBrush x:Key="AccentBrandPressed" Color="#3AA0F3"/>
                     <SolidColorBrush x:Key="TextOnBrand" Color="#000000"/>
-                    
+
                     <!-- Surface backgrounds with brand tint -->
-                    <SolidColorBrush x:Key="SurfaceBrand" Color="#0A2D4D"/>
-                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#0F3D66"/>
-                    
-                    <!-- Semantic surface colors -->
-                    <SolidColorBrush x:Key="SurfaceDanger" Color="#3B1919"/>
-                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#0D2D17"/>
-                    <SolidColorBrush x:Key="SurfaceWarning" Color="#3D2E0F"/>
-                    
-                    <!-- Semantic text colors - Fluent 2 status colors for dark -->
-                    <SolidColorBrush x:Key="TextDanger" Color="#F87171"/>
-                    <SolidColorBrush x:Key="TextSuccess" Color="#6EE7B7"/>
-                    <SolidColorBrush x:Key="TextWarning" Color="#FCD34D"/>
-                    
-                    <!-- Interactive states -->
-                    <SolidColorBrush x:Key="HoverBackground" Color="#1AFFFFFF"/>
-                    <SolidColorBrush x:Key="PressedBackground" Color="#26FFFFFF"/>
-                    <SolidColorBrush x:Key="SelectedBackground" Color="#0F3D66"/>
-                    <SolidColorBrush x:Key="SelectedBorder" Color="#479EF5"/>
-                    
-                    <!-- Overlay and input -->
+                    <SolidColorBrush x:Key="SurfaceBrand" Color="#0F2D40"/>
+                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#153D54"/>
+                    <SolidColorBrush x:Key="SurfaceAccent" Color="#0F2D40"/>
+
+                    <!-- Semantic surface colors - improved contrast -->
+                    <SolidColorBrush x:Key="SurfaceDanger" Color="#442726"/>
+                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#283F2A"/>
+                    <SolidColorBrush x:Key="SurfaceWarning" Color="#433519"/>
+
+                    <!-- Semantic text colors - Fluent 2 with better contrast -->
+                    <SolidColorBrush x:Key="TextDanger" Color="#FF99A4"/>
+                    <SolidColorBrush x:Key="TextDangerHover" Color="#FFC4CC"/>
+                    <SolidColorBrush x:Key="TextSuccess" Color="#6CCB5F"/>
+                    <SolidColorBrush x:Key="TextSuccessHover" Color="#92DD86"/>
+                    <SolidColorBrush x:Key="TextWarning" Color="#FCE100"/>
+                    <SolidColorBrush x:Key="TextWarningHover" Color="#FFEB3B"/>
+
+                    <!-- Interactive states - Fluent 2 subtle overlays -->
+                    <SolidColorBrush x:Key="HoverBackground" Color="#10FFFFFF"/>
+                    <SolidColorBrush x:Key="PressedBackground" Color="#18FFFFFF"/>
+                    <SolidColorBrush x:Key="SelectedBackground" Color="#0F2D40"/>
+                    <SolidColorBrush x:Key="SelectedBorder" Color="#60CDFF"/>
+
+                    <!-- Overlay and inputs -->
                     <SolidColorBrush x:Key="ModalOverlay" Color="#B3000000"/>
-                    <SolidColorBrush x:Key="InputBackground" Color="#383838"/>
-                    
-                    <!-- Tab and toolbar -->
-                    <SolidColorBrush x:Key="TabNavBackground" Color="#292929"/>
-                    <SolidColorBrush x:Key="TabItemHover" Color="#383838"/>
-                    <SolidColorBrush x:Key="ToolbarHover" Color="#383838"/>
-                    <SolidColorBrush x:Key="ToolbarPressed" Color="#444444"/>
-                    
-                    <!-- Property and chip backgrounds -->
-                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#292929"/>
-                    <SolidColorBrush x:Key="PropertyRowHover" Color="#333333"/>
-                    <SolidColorBrush x:Key="ChipBackground" Color="#383838"/>
-                    <SolidColorBrush x:Key="ChipHover" Color="#444444"/>
+                    <SolidColorBrush x:Key="InputBackground" Color="#333333"/>
+
+                    <!-- Tab, toolbar, and utility surfaces -->
+                    <SolidColorBrush x:Key="TabNavBackground" Color="#242424"/>
+                    <SolidColorBrush x:Key="TabItemHover" Color="#333333"/>
+                    <SolidColorBrush x:Key="ToolbarHover" Color="#333333"/>
+                    <SolidColorBrush x:Key="ToolbarPressed" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#242424"/>
+                    <SolidColorBrush x:Key="PropertyRowHover" Color="#2E2E2E"/>
+                    <SolidColorBrush x:Key="ChipBackground" Color="#333333"/>
+                    <SolidColorBrush x:Key="ChipHover" Color="#3D3D3D"/>
+
+                    <!-- Code editor - improved dark theme -->
+                    <SolidColorBrush x:Key="CodeBackground" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4"/>
+                    <SolidColorBrush x:Key="CodeBorder" Color="#3C3C3C"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
