@@ -71,8 +71,19 @@ public partial class ConnectionViewModel : ViewModelBase
 
     public async Task InitializeAsync()
     {
-        _setStatus("Loading saved connections...");
+        _setStatus("Loading...");
         await LoadSavedConnectionsAsync();
+
+        // Try to restore previous Azure session from cached credentials
+        _setStatus("Checking for saved Azure session...");
+        if (await _auth.TrySilentLoginAsync())
+        {
+            CurrentMode = ConnectionMode.AzureAccount;
+            _setStatus("Restored Azure session");
+            await _onConnected();
+            return;
+        }
+
         _setStatus(SavedConnections.Count > 0
             ? "Select a saved connection or sign in with Azure"
             : "Add a connection or sign in with Azure to get started");
