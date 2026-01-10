@@ -22,10 +22,13 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _showDeadLetterBadges = true;
     [ObservableProperty] private bool _enableMessagePreview = true;
     [ObservableProperty] private string _theme = "Light";
+    [ObservableProperty] private bool _checkForUpdates = true;
+    [ObservableProperty] private int _updateCheckIntervalHours = 24;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
+    public int[] AvailableUpdateCheckIntervals { get; } = [6, 12, 24, 48, 168]; // 6h, 12h, 24h, 48h, 1 week
 
     public SettingsViewModel(
         Action onClose,
@@ -70,7 +73,8 @@ public partial class SettingsViewModel : ViewModelBase
             ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
-            // Note: _isLoading is set to false via Dispatcher in constructor (normal case)
+            CheckForUpdates = _preferencesService.CheckForUpdates;
+            UpdateCheckIntervalHours = _preferencesService.UpdateCheckIntervalHours;
         }
         catch
         {
@@ -94,6 +98,8 @@ public partial class SettingsViewModel : ViewModelBase
         _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
         _preferencesService.EnableMessagePreview = EnableMessagePreview;
         _preferencesService.Theme = themeToApply;
+        _preferencesService.CheckForUpdates = CheckForUpdates;
+        _preferencesService.UpdateCheckIntervalHours = UpdateCheckIntervalHours;
         _preferencesService.Save();
         
         // Close the dialog
@@ -136,6 +142,17 @@ public partial class SettingsViewModel : ViewModelBase
         ShowDeadLetterBadges = true;
         EnableMessagePreview = true;
         Theme = "Light";
+        CheckForUpdates = true;
+        UpdateCheckIntervalHours = 24;
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdatesNowAsync()
+    {
+        if (_mainViewModel != null)
+        {
+            await _mainViewModel.CheckForUpdatesManuallyAsync();
+        }
     }
 }
 

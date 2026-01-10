@@ -30,6 +30,7 @@ class Program
     {
         // Infrastructure services
         services.AddSingleton<IVersionService, VersionService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IPreferencesService, PreferencesService>();
         services.AddSingleton<IDialogService, DialogService>();
@@ -65,7 +66,8 @@ class Program
             sp.GetRequiredService<IMetricsService>(),
             sp.GetRequiredService<IAlertService>(),
             sp.GetRequiredService<INotificationService>(),
-            sp.GetRequiredService<IKeyboardShortcutService>()
+            sp.GetRequiredService<IKeyboardShortcutService>(),
+            sp.GetRequiredService<IUpdateService>()
         ));
 
         // Other ViewModels

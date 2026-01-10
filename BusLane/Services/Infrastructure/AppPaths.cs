@@ -46,5 +46,10 @@ internal static class AppPaths
     /// Gets the directory path for the application data folder.
     /// </summary>
     public static string DataFolder => AppDataFolder;
+
+    /// <summary>
+    /// Gets the directory path for the application data folder (alias for DataFolder).
+    /// </summary>
+    public static string AppDataDirectory => AppDataFolder;
 }
 
