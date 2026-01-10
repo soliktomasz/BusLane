@@ -215,14 +215,14 @@
                 </Button.Template>
             </Button>
 
-            <!-- Slide-in Panel from Right -->
+            <!-- Slide-in Panel from Left -->
             <Border Background="{DynamicResource CardBackground}"
                     Width="420"
-                    HorizontalAlignment="Right"
+                    HorizontalAlignment="Left"
                     VerticalAlignment="Stretch"
                     BorderBrush="{DynamicResource BorderDefault}"
-                    BorderThickness="1,0,0,0"
-                    BoxShadow="-8 0 32 0 #30000000">
+                    BorderThickness="0,0,1,0"
+                    BoxShadow="8 0 32 0 #30000000">
 
                 <DockPanel>
                     <!-- Panel Header -->
