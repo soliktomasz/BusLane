@@ -79,9 +79,22 @@ public partial class SyntaxHighlightedTextBox : UserControl
         if (change.Property == TextProperty)
         {
             _editor.Text = Text ?? string.Empty;
+            UpdateSyntaxHighlighting();
         }
-        else if (change.Property == IsJsonProperty || change.Property == IsXmlProperty)
+        else if (change.Property == IsJsonProperty)
         {
+            if (IsJson && IsXml)
+            {
+                SetValue(IsXmlProperty, false);
+            }
+            UpdateSyntaxHighlighting();
+        }
+        else if (change.Property == IsXmlProperty)
+        {
+            if (IsXml && IsJson)
+            {
+                SetValue(IsJsonProperty, false);
+            }
             UpdateSyntaxHighlighting();
         }
     }
