@@ -261,33 +261,70 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Updates Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,14"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <PathIcon Data="{StaticResource IconRefresh}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Check for Updates -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Check for updates automatically" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Automatically check for new versions"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.CheckForUpdates}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"
+                                                IsVisible="{Binding SettingsViewModel.CheckForUpdates}"/>
+
+                                        <!-- Update Check Interval -->
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              IsVisible="{Binding SettingsViewModel.CheckForUpdates}">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Check interval" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="How often to check for updates (in hours)"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ComboBox Grid.Column="1"
+                                                      ItemsSource="{Binding SettingsViewModel.AvailableUpdateCheckIntervals}"
+                                                      SelectedItem="{Binding SettingsViewModel.UpdateCheckIntervalHours}"
+                                                      Width="100"
+                                                      VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Check Now Button -->
+                                        <Button Classes="secondary small"
+                                                Content="Check for updates now"
+                                                Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
+                                                HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         </StackPanel>
-
-                        <Separator/>
-
-                        <!-- Update Settings -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="14"/>
-
-                            <CheckBox IsChecked="{Binding SettingsViewModel.CheckForUpdates}"
-                                      Content="Check for updates automatically"/>
-
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto"
-                                  IsEnabled="{Binding SettingsViewModel.CheckForUpdates}">
-                                <TextBlock Text="Check interval (hours)" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding SettingsViewModel.AvailableUpdateCheckIntervals}"
-                                          SelectedItem="{Binding SettingsViewModel.UpdateCheckIntervalHours}"
-                                          Width="100"/>
-                            </Grid>
-
-                            <Button Classes="secondary small"
-                                    Content="Check for updates now"
-                                    Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
-                                    HorizontalAlignment="Left"
-                                    Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </StackPanel>
                     </Border>
                 </ScrollViewer>
 
