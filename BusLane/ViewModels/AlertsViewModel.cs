@@ -100,12 +100,11 @@ public partial class AlertsViewModel : ViewModelBase
     {
         EditingRule = rule;
         RuleName = rule.Name;
-        SelectedAlertType = rule.Type;
-        SelectedSeverity = rule.Severity;
-        Threshold = rule.Threshold;
         EntityPattern = rule.EntityPattern ?? "";
         RuleEnabled = rule.IsEnabled;
 
+        IsActiveAlertsTabSelected = false;
+        IsRulesTabSelected = true;
         IsAddingRule = true; // Show the form
         IsEditingRule = true;
         OnPropertyChanged(nameof(FormTitle));
