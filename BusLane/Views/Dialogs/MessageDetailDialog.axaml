@@ -1,208 +1,258 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
+             xmlns:controls="using:BusLane.Views.Controls"
              x:Class="BusLane.Views.Dialogs.MessageDetailDialog"
              x:DataType="vm:MainWindowViewModel">
-    
+
     <Border Classes="modal-overlay"
             IsVisible="{Binding MessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <Border Classes="modal" 
-                VerticalAlignment="Center" 
-                HorizontalAlignment="Center"
-                MinWidth="600"
-                MaxWidth="800"
-                MaxHeight="700">
-            <DockPanel>
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <TextBlock Text="Message Details" Classes="heading"/>
-                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
-                        <!-- Export Message Button -->
-                        <Button Classes="subtle small" 
-                                Command="{Binding ExportMessageCommand}"
-                                CommandParameter="{Binding MessageOps.SelectedMessage}"
-                                ToolTip.Tip="Export message to JSON file">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <TextBlock Text="📤" FontSize="12"/>
-                                <TextBlock Text="Export"/>
+        <Border Background="{DynamicResource CardBackground}"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BoxShadow="0 8 32 0 #40000000"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                Margin="48"
+                ClipToBounds="True">
+            <DockPanel Margin="0,0,0,8">
+                <!-- Header -->
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource SurfaceSubtle}"
+                        CornerRadius="8,8,0,0"
+                        Padding="20,16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Message Details" Classes="heading"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="Sequence" Classes="caption"/>
+                                <TextBlock Text="{Binding MessageOps.SelectedMessage.SequenceNumber}"
+                                           Classes="caption"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentBrand}"/>
                             </StackPanel>
-                        </Button>
-                        <!-- Resend Message Button -->
-                        <Button Classes="subtle small" 
-                                Command="{Binding ResendMessageCommand}"
-                                CommandParameter="{Binding MessageOps.SelectedMessage}"
-                                ToolTip.Tip="Resend this message (sends immediately with same content)">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <PathIcon Data="{StaticResource IconSend}" Width="12" Height="12"/>
-                                <TextBlock Text="Resend"/>
-                            </StackPanel>
-                        </Button>
-                        <!-- Clone Message Button -->
-                        <Button Classes="subtle small" 
-                                Command="{Binding CloneMessageCommand}"
-                                CommandParameter="{Binding MessageOps.SelectedMessage}"
-                                ToolTip.Tip="Clone this message (opens send dialog with pre-filled content)">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <PathIcon Data="{StaticResource IconEdit}" Width="12" Height="12"/>
-                                <TextBlock Text="Clone"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Classes="icon" 
-                                Command="{Binding ClearSelectedMessageCommand}">
-                            <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
-                        </Button>
-                    </StackPanel>
-                </Grid>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Classes="toolbar"
+                                    Command="{Binding ExportMessageCommand}"
+                                    CommandParameter="{Binding MessageOps.SelectedMessage}"
+                                    ToolTip.Tip="Export message to JSON file">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <PathIcon Data="{StaticResource IconExport}" Width="14" Height="14" Foreground="{DynamicResource SubtleForeground}"/>
+                                    <TextBlock Text="Export"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbar"
+                                    Command="{Binding ResendMessageCommand}"
+                                    CommandParameter="{Binding MessageOps.SelectedMessage}"
+                                    ToolTip.Tip="Resend this message">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14" Foreground="{DynamicResource SubtleForeground}"/>
+                                    <TextBlock Text="Resend"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbar"
+                                    Command="{Binding CloneMessageCommand}"
+                                    CommandParameter="{Binding MessageOps.SelectedMessage}"
+                                    ToolTip.Tip="Clone to new message">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <PathIcon Data="{StaticResource IconCopy}" Width="14" Height="14" Foreground="{DynamicResource SubtleForeground}"/>
+                                    <TextBlock Text="Clone"/>
+                                </StackPanel>
+                            </Button>
+                            <Rectangle Width="1" Fill="{DynamicResource BorderDefault}" Margin="4,4"/>
+                            <Button Classes="icon"
+                                    Command="{Binding ClearSelectedMessageCommand}"
+                                    ToolTip.Tip="Close">
+                                <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
                 <ScrollViewer>
-                    <StackPanel Spacing="12">
-                        <!-- Dead Letter Info Section (only visible for dead letter messages) -->
-                        <Border Classes="surface-danger" Padding="12" Margin="0,0,0,8"
+                    <StackPanel Spacing="16" Margin="20,20,20,40">
+                        <!-- Dead Letter Alert -->
+                        <Border Classes="infobar-error"
                                 IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Dead Letter Information" FontWeight="Bold" Foreground="{DynamicResource TextDanger}"/>
-                                <StackPanel IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Reason" Classes="caption" Foreground="{DynamicResource TextDanger}" Margin="0,0,0,2"/>
-                                    <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeadLetterReason}" TextWrapping="Wrap"/>
+                            <StackPanel Spacing="10">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{StaticResource IconWarning}" Width="16" Height="16" Foreground="{DynamicResource TextDanger}"/>
+                                    <TextBlock Text="Dead Letter" FontWeight="SemiBold" Foreground="{DynamicResource TextDanger}"/>
                                 </StackPanel>
-                                <StackPanel IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterErrorDescription, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Error Description" Classes="caption" Foreground="{DynamicResource TextDanger}" Margin="0,0,0,2"/>
-                                    <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeadLetterErrorDescription}" TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <StackPanel IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterSource, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Source" Classes="caption" Foreground="{DynamicResource TextDanger}" Margin="0,0,0,2"/>
-                                    <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeadLetterSource}" TextWrapping="Wrap"/>
-                                </StackPanel>
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="24,0,0,0">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,8"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Reason" Classes="caption" Margin="0,0,0,2"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeadLetterReason}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterSource, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Source" Classes="caption" Margin="0,0,0,2"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeadLetterSource}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.DeadLetterErrorDescription, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Error" Classes="caption" Margin="0,0,0,2"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeadLetterErrorDescription}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </Border>
-                        
-                        <!-- Basic Message Properties -->
-                        <TextBlock Text="Message Properties" Classes="body-strong" Margin="0,0,0,4"/>
-                        
-                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
-                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
-                                <TextBlock Text="Message ID" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.MessageId}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,8">
-                                <TextBlock Text="Correlation ID" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.CorrelationId}" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,8">
-                                <TextBlock Text="Sequence Number" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.SequenceNumber}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,8">
-                                <TextBlock Text="Delivery Count" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeliveryCount}"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,8">
-                                <TextBlock Text="Enqueued Time" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.EnqueuedTime}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="8,0,0,8">
-                                <TextBlock Text="Expires At" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ExpiresAt}"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,8,8"
-                                        IsVisible="{Binding MessageOps.SelectedMessage.ScheduledEnqueueTime, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                <TextBlock Text="Scheduled Enqueue Time" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ScheduledEnqueueTime}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="8,0,0,8">
-                                <TextBlock Text="Time to Live" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.TimeToLive}"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,8,8">
-                                <TextBlock Text="Content Type" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ContentType}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="8,0,0,8"
-                                        IsVisible="{Binding MessageOps.SelectedMessage.SessionId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <TextBlock Text="Session ID" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.SessionId}" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="5" Grid.Column="0" Margin="0,0,8,8"
-                                        IsVisible="{Binding MessageOps.SelectedMessage.Subject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <TextBlock Text="Subject" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.Subject}" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="5" Grid.Column="1" Margin="8,0,0,8"
-                                        IsVisible="{Binding MessageOps.SelectedMessage.PartitionKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <TextBlock Text="Partition Key" Classes="caption" Margin="0,0,0,2"/>
-                                <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.PartitionKey}" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Grid>
-                        
-                        <!-- Routing Properties -->
+
+                        <!-- Message Identity -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="IDENTITY" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="12">
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
+                                        <TextBlock Text="Message ID" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.MessageId}"
+                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontSize="12"
+                                                             TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.CorrelationId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Correlation ID" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.CorrelationId}"
+                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontSize="12"
+                                                             TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.SessionId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Session ID" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.SessionId}"
+                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontSize="12"
+                                                             TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.Subject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Subject" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.Subject}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Timing & Delivery -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="TIMING" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="12">
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
+                                        <TextBlock Text="Enqueued" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.EnqueuedTime}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,10">
+                                        <TextBlock Text="Expires" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ExpiresAt}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
+                                        <TextBlock Text="Time to Live" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.TimeToLive}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Delivery Count" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.DeliveryCount}" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,12,0"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.ScheduledEnqueueTime, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <TextBlock Text="Scheduled For" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ScheduledEnqueueTime}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="2">
+                                        <TextBlock Text="Content Type" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ContentType}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Routing (conditional) -->
                         <StackPanel Spacing="8"
                                     IsVisible="{Binding MessageOps.SelectedMessage.To, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Text="Routing Properties" Classes="body-strong" Margin="0,8,0,4"/>
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
-                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8"
-                                            IsVisible="{Binding MessageOps.SelectedMessage.To, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="To" Classes="caption" Margin="0,0,0,2"/>
-                                    <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.To}" TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,8"
-                                            IsVisible="{Binding MessageOps.SelectedMessage.ReplyTo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Reply To" Classes="caption" Margin="0,0,0,2"/>
-                                    <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ReplyTo}" TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,8"
-                                            IsVisible="{Binding MessageOps.SelectedMessage.ReplyToSessionId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="Reply To Session ID" Classes="caption" Margin="0,0,0,2"/>
-                                    <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ReplyToSessionId}" TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
+                            <TextBlock Text="ROUTING" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="12">
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+                                    <StackPanel Grid.Column="0" Margin="0,0,12,0"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.To, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="To" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.To}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,12,0"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.ReplyTo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Reply To" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.ReplyTo}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2"
+                                                IsVisible="{Binding MessageOps.SelectedMessage.PartitionKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Partition Key" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding MessageOps.SelectedMessage.PartitionKey}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
                         </StackPanel>
-                        
-                        <!-- Application Properties -->
+
+                        <!-- Application Properties (conditional) -->
                         <StackPanel Spacing="8"
                                     IsVisible="{Binding MessageOps.FormattedApplicationProperties, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Text="Application Properties" Classes="body-strong" Margin="0,8,0,4"/>
-                            <TextBox Text="{Binding MessageOps.FormattedApplicationProperties, Mode=OneWay}" 
-                                     IsReadOnly="True"
-                                     TextWrapping="Wrap"
-                                     AcceptsReturn="True"
-                                     MaxHeight="150"
-                                     FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                     FontSize="12"
-                                     Background="{DynamicResource SurfaceSubtle}"
-                                     BorderThickness="0"
-                                     Padding="12"
-                                     CornerRadius="4"/>
+                            <TextBlock Text="APPLICATION PROPERTIES" Classes="field-group-header"/>
+                            <Border Background="{DynamicResource SurfaceSubtle}"
+                                    CornerRadius="6"
+                                    Padding="0"
+                                    BorderThickness="1"
+                                    BorderBrush="{DynamicResource BorderMuted}">
+                                <TextBox Text="{Binding MessageOps.FormattedApplicationProperties, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="True"
+                                         MaxHeight="120"
+                                         FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                         FontSize="12"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Padding="12"/>
+                            </Border>
                         </StackPanel>
-                        
-                        <!-- Message Body (at the end) -->
-                        <StackPanel Margin="0,8,0,0">
-                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+
+                        <!-- Message Body -->
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Body" Classes="body-strong"/>
-                                    <Border Classes="badge" IsVisible="{Binding MessageOps.IsMessageBodyJson}">
-                                        <TextBlock Text="JSON" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
+                                    <TextBlock Text="BODY" Classes="field-group-header" VerticalAlignment="Center"/>
+                                    <Border Classes="badge-info" IsVisible="{Binding MessageOps.IsMessageBodyJson}" VerticalAlignment="Center">
+                                        <TextBlock Text="JSON"/>
+                                    </Border>
+                                    <Border Classes="badge-info" IsVisible="{Binding MessageOps.IsMessageBodyXml}" VerticalAlignment="Center">
+                                        <TextBlock Text="XML"/>
                                     </Border>
                                 </StackPanel>
-                                <Button Grid.Column="1" 
-                                        Classes="subtle small"
-                                        Content="Copy"
+                                <Button Grid.Column="1"
+                                        Classes="toolbar"
                                         Command="{Binding CopyMessageBodyCommand}"
-                                        ToolTip.Tip="Copy body to clipboard"/>
+                                        ToolTip.Tip="Copy body to clipboard">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <PathIcon Data="{StaticResource IconCopy}" Width="12" Height="12" Foreground="{DynamicResource SubtleForeground}"/>
+                                        <TextBlock Text="Copy"/>
+                                    </StackPanel>
+                                </Button>
                             </Grid>
-                            <TextBox Text="{Binding MessageOps.FormattedMessageBody, Mode=OneWay}" 
-                                     IsReadOnly="True"
-                                     TextWrapping="Wrap"
-                                     AcceptsReturn="True"
-                                     MaxHeight="300"
-                                     FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                     FontSize="12"
-                                     Background="{DynamicResource SurfaceSubtle}"
-                                     BorderThickness="0"
-                                     Padding="12"
-                                     CornerRadius="4"/>
+                            <Border Background="{DynamicResource SurfaceSubtle}"
+                                    CornerRadius="6"
+                                    BorderThickness="1"
+                                    BorderBrush="{DynamicResource BorderMuted}"
+                                    Padding="0">
+                                <controls:SyntaxHighlightedTextBox
+                                         Text="{Binding MessageOps.FormattedMessageBody, Mode=OneWay}"
+                                         IsJson="{Binding MessageOps.IsMessageBodyJson}"
+                                         IsXml="{Binding MessageOps.IsMessageBodyXml}"
+                                         MinHeight="300"/>
+                            </Border>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -210,4 +260,3 @@
         </Border>
     </Border>
 </UserControl>
-
