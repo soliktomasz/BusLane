@@ -187,21 +187,37 @@ jobs:
           # Ad-hoc code sign the app bundle
           codesign --force --deep --sign - "${APP_BUNDLE}"
 
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: Convert DMG background SVG to PNG
+        run: |
+          # Use qlmanage (Quick Look) to convert SVG to PNG on macOS
+          # This handles SVG with gradients and text properly
+          cd BusLane/Assets
+          qlmanage -t -s 540 -o . dmg-background.svg
+          mv dmg-background.svg.png dmg-background.png 2>/dev/null || true
+
       - name: Create DMG installer
         run: |
           APP_NAME="Bus Lane"
           DMG_NAME="BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}"
           
-          # Create a temporary directory for DMG contents
-          mkdir -p dmg_contents
-          cp -R "${APP_NAME}.app" dmg_contents/
-          
-          # Create a symbolic link to Applications folder
-          ln -s /Applications dmg_contents/Applications
-          
-          # Create the DMG
-          hdiutil create -volname "${APP_NAME}" -srcfolder dmg_contents -ov -format UDZO "${DMG_NAME}.dmg"
-
+          # Create DMG with pretty background and layout
+          create-dmg \
+            --volname "${APP_NAME}" \
+            --volicon "BusLane/Assets/icon.icns" \
+            --background "BusLane/Assets/dmg-background.png" \
+            --window-pos 200 120 \
+            --window-size 540 380 \
+            --icon-size 80 \
+            --icon "${APP_NAME}.app" 130 200 \
+            --hide-extension "${APP_NAME}.app" \
+            --app-drop-link 410 200 \
+            --no-internet-enable \
+            "${DMG_NAME}.dmg" \
+            "${APP_NAME}.app"
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v6
         with:

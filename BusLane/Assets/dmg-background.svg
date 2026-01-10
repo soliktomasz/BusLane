@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="540" height="380" viewBox="0 0 540 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#16213e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f3460;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4a90d9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#67b26f;stop-opacity:1" />
+    </linearGradient>
+    <!-- Subtle pattern -->
+    <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.03)"/>
+    </pattern>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="540" height="380" fill="url(#bgGradient)"/>
+  <rect width="540" height="380" fill="url(#dots)"/>
+  
+  <!-- Decorative circles -->
+  <circle cx="50" cy="50" r="100" fill="rgba(74,144,217,0.05)"/>
+  <circle cx="490" cy="330" r="120" fill="rgba(103,178,111,0.05)"/>
+  
+  <!-- Title text area (top) -->
+  <text x="270" y="45" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" 
+        font-size="24" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.9">
+    Install Bus Lane
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="270" y="70" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+        font-size="13" fill="#8892b0" text-anchor="middle">
+    Drag the app to the Applications folder
+  </text>
+  
+  <!-- Arrow pointing from left to right (between app icon position and Applications folder position) -->
+  <!-- App icon will be at ~130, Applications at ~410 -->
+  <g transform="translate(220, 200)">
+    <!-- Arrow line -->
+    <path d="M 0 0 L 80 0" stroke="url(#arrowGradient)" stroke-width="3" stroke-linecap="round" 
+          stroke-dasharray="8 4" opacity="0.8"/>
+    <!-- Arrow head -->
+    <polygon points="85,0 70,-10 70,10" fill="url(#arrowGradient)" opacity="0.8"/>
+  </g>
+  
+  <!-- Icon placeholder labels -->
+  <text x="130" y="300" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+        font-size="12" fill="#a8b2d1" text-anchor="middle">
+    Bus Lane
+  </text>
+  
+  <text x="410" y="300" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+        font-size="12" fill="#a8b2d1" text-anchor="middle">
+    Applications
+  </text>
+  
+  <!-- Bottom branding -->
+  <text x="270" y="360" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+        font-size="11" fill="#5a6785" text-anchor="middle">
+    Azure Service Bus Explorer
+  </text>
+</svg>
+
