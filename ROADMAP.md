@@ -23,7 +23,7 @@ This document outlines the planned features and improvements for BusLane. Items 
 - [ ] **Keyboard Shortcuts** — Quick actions (Ctrl+R refresh, Ctrl+N new message, etc.)
 - [ ] **Syntax Highlighting** — JSON/XML highlighting in message body
 - [ ] **JSON Formatter** — Format and validate JSON message bodies
-- [ ] **Code Generation** — Generate C#/Python code snippets for sending messages
+- [ ] **Better Namespace Explorer** — Improve namespace selector for better clarity and functionality
 - [ ] **Recent Connections** — Quick access to recently used connections
 
 ### v0.9.0 — Advanced Monitoring
