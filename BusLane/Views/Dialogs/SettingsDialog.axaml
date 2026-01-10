@@ -9,102 +9,286 @@
         <Border Classes="modal"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                MinWidth="500"
-                MaxWidth="600">
-            <DockPanel>
+                MinWidth="540"
+                MaxWidth="580"
+                MaxHeight="680"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,20">
-                    <TextBlock Text="Settings" Classes="heading"/>
-                    <Button Classes="icon"
-                            HorizontalAlignment="Right"
-                            Command="{Binding SettingsViewModel.CancelCommand}">
-                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
-                    </Button>
-                </Grid>
-
-                <!-- Action Buttons - Always visible at the bottom -->
-                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,20,0,0">
-                    <Button Classes="secondary small"
-                            Content="Reset to Defaults"
-                            Command="{Binding SettingsViewModel.ResetToDefaultsCommand}"/>
-                    <Button Classes="secondary small"
-                            Content="Cancel"
-                            Command="{Binding SettingsViewModel.CancelCommand}"/>
-                    <Button Classes="primary small"
-                            Content="Save Settings"
-                            Command="{Binding SettingsViewModel.SaveSettingsCommand}"/>
-                </StackPanel>
-
-                <ScrollViewer>
-                    <StackPanel Spacing="24">
-                        <!-- Confirmation Settings -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Confirmations" FontWeight="SemiBold" FontSize="14"/>
-
-                            <CheckBox IsChecked="{Binding SettingsViewModel.ConfirmBeforeDelete}"
-                                      Content="Confirm before deleting messages"/>
-
-                            <CheckBox IsChecked="{Binding SettingsViewModel.ConfirmBeforePurge}"
-                                      Content="Confirm before purging queues"/>
+                <Border Grid.Row="0"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="0,0,0,1"
+                        Padding="24,20">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrand}"
+                                Margin="0,0,16,0">
+                            <PathIcon Data="{StaticResource IconSettings}"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource AccentBrand}"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Settings" Classes="title" FontSize="20"/>
+                            <TextBlock Text="Customize your BusLane experience" Classes="caption"/>
                         </StackPanel>
+                        <Button Grid.Column="2"
+                                Classes="subtle"
+                                Padding="8"
+                                VerticalAlignment="Top"
+                                Command="{Binding SettingsViewModel.CancelCommand}">
+                            <PathIcon Data="{StaticResource IconClose}" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
+                </Border>
 
-                        <Separator/>
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1">
+                    <Border Padding="24,20">
+                        <StackPanel Spacing="16">
 
-                        <!-- Message Settings -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Messages" FontWeight="SemiBold" FontSize="14"/>
+                            <!-- Appearance Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,14"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <PathIcon Data="{StaticResource IconChart}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
 
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
-                                <TextBlock Text="Default message count to load" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding SettingsViewModel.AvailableMessageCounts}"
-                                          SelectedItem="{Binding SettingsViewModel.DefaultMessageCount}"
-                                          Width="100"/>
-                            </Grid>
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Theme -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Theme" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Choose your preferred color scheme"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ComboBox Grid.Column="1"
+                                                      ItemsSource="{Binding SettingsViewModel.AvailableThemes}"
+                                                      SelectedItem="{Binding SettingsViewModel.Theme}"
+                                                      Width="130"
+                                                      VerticalAlignment="Center"/>
+                                        </Grid>
 
-                            <CheckBox IsChecked="{Binding SettingsViewModel.EnableMessagePreview}"
-                                      Content="Enable message body preview in list"/>
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Dead Letter Badges -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Dead letter badges" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Show message counts on dead letter queues"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.ShowDeadLetterBadges}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Messages Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,14"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <PathIcon Data="{StaticResource IconMessage}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Messages" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Default Message Count -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Default message count" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Number of messages to load by default"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ComboBox Grid.Column="1"
+                                                      ItemsSource="{Binding SettingsViewModel.AvailableMessageCounts}"
+                                                      SelectedItem="{Binding SettingsViewModel.DefaultMessageCount}"
+                                                      Width="100"
+                                                      VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Message Preview -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Message preview" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Show message body preview in the list"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.EnableMessagePreview}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Auto Refresh Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,14"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <PathIcon Data="{StaticResource IconRefresh}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Auto Refresh" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Auto Refresh Toggle -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Enable auto-refresh" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Automatically refresh the message list"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.AutoRefreshMessages}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"
+                                                IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}"/>
+
+                                        <!-- Refresh Interval -->
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Refresh interval" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="How often to refresh (in seconds)"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ComboBox Grid.Column="1"
+                                                      ItemsSource="{Binding SettingsViewModel.AvailableRefreshIntervals}"
+                                                      SelectedItem="{Binding SettingsViewModel.AutoRefreshIntervalSeconds}"
+                                                      Width="100"
+                                                      VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Confirmations Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,14"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <PathIcon Data="{StaticResource IconWarning}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource TextWarning}"/>
+                                        <TextBlock Text="Confirmations" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Confirm Delete -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Confirm before delete" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Ask for confirmation when deleting messages"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.ConfirmBeforeDelete}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Confirm Purge -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Confirm before purge" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Ask for confirmation when purging queues"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.ConfirmBeforePurge}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         </StackPanel>
-
-                        <Separator/>
-
-                        <!-- Auto Refresh Settings -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Auto Refresh" FontWeight="SemiBold" FontSize="14"/>
-
-                            <CheckBox IsChecked="{Binding SettingsViewModel.AutoRefreshMessages}"
-                                      Content="Auto-refresh message list"/>
-
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto"
-                                  IsEnabled="{Binding SettingsViewModel.AutoRefreshMessages}">
-                                <TextBlock Text="Refresh interval (seconds)" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding SettingsViewModel.AvailableRefreshIntervals}"
-                                          SelectedItem="{Binding SettingsViewModel.AutoRefreshIntervalSeconds}"
-                                          Width="100"/>
-                            </Grid>
-                        </StackPanel>
-
-                        <Separator/>
-
-                        <!-- Display Settings -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Display" FontWeight="SemiBold" FontSize="14"/>
-
-                            <CheckBox IsChecked="{Binding SettingsViewModel.ShowDeadLetterBadges}"
-                                      Content="Show dead letter count badges"/>
-
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
-                                <TextBlock Text="Theme" VerticalAlignment="Center"/>
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding SettingsViewModel.AvailableThemes}"
-                                          SelectedItem="{Binding SettingsViewModel.Theme}"
-                                          Width="120"/>
-                            </Grid>
-                        </StackPanel>
-                    </StackPanel>
+                    </Border>
                 </ScrollViewer>
-            </DockPanel>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="0,1,0,0"
+                        Padding="24,16"
+                        Background="{DynamicResource CardBackground}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Button Grid.Column="0"
+                                Classes="subtle small"
+                                Content="Reset to Defaults"
+                                Command="{Binding SettingsViewModel.ResetToDefaultsCommand}"/>
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button Classes="secondary small"
+                                    Content="Cancel"
+                                    Command="{Binding SettingsViewModel.CancelCommand}"/>
+                            <Button Classes="primary small"
+                                    Content="Save Changes"
+                                    Command="{Binding SettingsViewModel.SaveSettingsCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
     </Border>
 </UserControl>
