@@ -1,0 +1,135 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.DeviceCodeDialog"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowDeviceCodeDialog}">
+        <Border Classes="modal"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                MinWidth="450"
+                MaxWidth="550">
+            <DockPanel>
+                <!-- Header -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <TextBlock Text="Sign in with Azure" Classes="heading"/>
+                    <Button Classes="icon"
+                            HorizontalAlignment="Right"
+                            Command="{Binding CloseDeviceCodeDialogCommand}">
+                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                    </Button>
+                </Grid>
+
+                <!-- Instructions -->
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Browser authentication failed. Please use the device code flow instead:"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,16"
+                           Opacity="0.8"/>
+
+                <!-- Steps -->
+                <StackPanel DockPanel.Dock="Top" Spacing="12" Margin="0,0,0,20">
+                    <!-- Step 1 -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Background="{DynamicResource AccentBrush}"
+                                CornerRadius="12"
+                                Width="24" Height="24"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="1"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Open the authentication page" FontWeight="SemiBold"/>
+                            <Button Classes="accent small"
+                                    Command="{Binding OpenDeviceCodeUrlCommand}"
+                                    HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <PathIcon Data="{StaticResource IconExternalLink}" Width="12" Height="12"/>
+                                    <TextBlock Text="Open microsoft.com/devicelogin"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Step 2 -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Background="{DynamicResource AccentBrush}"
+                                CornerRadius="12"
+                                Width="24" Height="24"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="2"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Enter this code" FontWeight="SemiBold"/>
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    CornerRadius="4"
+                                    Padding="12,8"
+                                    HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="{Binding DeviceCodeUserCode}"
+                                               FontFamily="Consolas,Monaco,monospace"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                    <Button Classes="icon small"
+                                            Command="{Binding CopyDeviceCodeCommand}"
+                                            ToolTip.Tip="Copy code">
+                                        <PathIcon Data="{StaticResource IconCopy}" Width="14" Height="14"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Step 3 -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Background="{DynamicResource AccentBrush}"
+                                CornerRadius="12"
+                                Width="24" Height="24"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="3"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <TextBlock Text="Complete sign-in in your browser"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Status -->
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="4"
+                        Padding="12,8"
+                        Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource IconInfo}"
+                                  Width="14" Height="14"
+                                  Foreground="{DynamicResource AccentBrush}"/>
+                        <TextBlock Text="Waiting for authentication to complete..."
+                                   Opacity="0.8"
+                                   FontStyle="Italic"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Cancel Button -->
+                <Button Classes="secondary small"
+                        Content="Cancel"
+                        HorizontalAlignment="Right"
+                        Command="{Binding CloseDeviceCodeDialogCommand}"/>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>

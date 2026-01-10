@@ -12,7 +12,7 @@ using Services.Storage;
 public partial class ConnectionLibraryViewModel : ViewModelBase
 {
     private readonly IConnectionStorageService _connectionStorage;
-    private readonly IConnectionStringService _connectionStringService;
+    private readonly IServiceBusOperationsFactory _operationsFactory;
     private readonly Action<SavedConnection> _onConnectionSelected;
     private readonly Action<string> _onStatusUpdate;
     private readonly Func<Task>? _onFavoritesChanged;
@@ -45,13 +45,13 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
     public ConnectionLibraryViewModel(
         IConnectionStorageService connectionStorage,
-        IConnectionStringService connectionStringService,
+        IServiceBusOperationsFactory operationsFactory,
         Action<SavedConnection> onConnectionSelected,
         Action<string> onStatusUpdate,
         Func<Task>? onFavoritesChanged = null)
     {
         _connectionStorage = connectionStorage;
-        _connectionStringService = connectionStringService;
+        _operationsFactory = operationsFactory;
         _onConnectionSelected = onConnectionSelected;
         _onStatusUpdate = onStatusUpdate;
         _onFavoritesChanged = onFavoritesChanged;
@@ -147,8 +147,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
         try
         {
-            var (isValid, _, _, errorMessage) =
-                await _connectionStringService.ValidateConnectionStringAsync(NewConnectionString);
+            var ops = _operationsFactory.CreateFromConnectionString(NewConnectionString);
+            var (isValid, _, _, errorMessage) = await ops.ValidateAsync();
 
             if (!isValid)
             {
@@ -157,7 +157,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             }
 
             // For namespace connections, try to detect entities
-            var info = await _connectionStringService.GetNamespaceInfoAsync(NewConnectionString);
+            var info = await ops.GetNamespaceInfoAsync();
             if (info != null)
             {
                 DetectedInfo = $"Found {info.QueueCount} queue(s), {info.TopicCount} topic(s)";
@@ -245,8 +245,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
         try
         {
-            var (isValid, _, endpoint, errorMessage) =
-                await _connectionStringService.ValidateConnectionStringAsync(NewConnectionString);
+            var ops = _operationsFactory.CreateFromConnectionString(NewConnectionString);
+            var (isValid, _, endpoint, errorMessage) = await ops.ValidateAsync();
 
             if (!isValid)
             {
@@ -256,7 +256,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             }
 
             // Try to get namespace info
-            var info = await _connectionStringService.GetNamespaceInfoAsync(NewConnectionString);
+            var info = await ops.GetNamespaceInfoAsync();
             if (info != null)
             {
                 CheckConnectionResult = $"Connection successful! Found {info.QueueCount} queue(s), {info.TopicCount} topic(s)";
@@ -327,4 +327,3 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             : $"'{connection.Name}' removed from favorites");
     }
 }
-

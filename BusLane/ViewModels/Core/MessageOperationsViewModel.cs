@@ -12,11 +12,8 @@ namespace BusLane.ViewModels.Core;
 /// </summary>
 public partial class MessageOperationsViewModel : ViewModelBase
 {
-    private readonly IServiceBusService _serviceBus;
-    private readonly IConnectionStringService _connectionStringService;
+    private readonly Func<IServiceBusOperations?> _getOperations;
     private readonly IPreferencesService _preferencesService;
-    private readonly Func<string?> _getEndpoint;
-    private readonly Func<string?> _getConnectionString;
     private readonly Func<string?> _getEntityName;
     private readonly Func<string?> _getSubscriptionName;
     private readonly Func<bool> _getRequiresSession;
@@ -115,22 +112,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
     }
 
     public MessageOperationsViewModel(
-        IServiceBusService serviceBus,
-        IConnectionStringService connectionStringService,
+        Func<IServiceBusOperations?> getOperations,
         IPreferencesService preferencesService,
-        Func<string?> getEndpoint,
-        Func<string?> getConnectionString,
         Func<string?> getEntityName,
         Func<string?> getSubscriptionName,
         Func<bool> getRequiresSession,
         Func<bool> getShowDeadLetter,
         Action<string> setStatus)
     {
-        _serviceBus = serviceBus;
-        _connectionStringService = connectionStringService;
+        _getOperations = getOperations;
         _preferencesService = preferencesService;
-        _getEndpoint = getEndpoint;
-        _getConnectionString = getConnectionString;
         _getEntityName = getEntityName;
         _getSubscriptionName = getSubscriptionName;
         _getRequiresSession = getRequiresSession;
@@ -183,11 +174,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
     [RelayCommand]
     public async Task LoadMessagesAsync()
     {
-        var endpoint = _getEndpoint();
-        var connectionString = _getConnectionString();
+        var operations = _getOperations();
         var entityName = _getEntityName();
 
-        if (entityName == null) return;
+        if (entityName == null || operations == null) return;
 
         var subscription = _getSubscriptionName();
         var requiresSession = _getRequiresSession();
@@ -201,22 +191,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
         try
         {
             Messages.Clear();
-            IEnumerable<MessageInfo> msgs;
-
-            if (!string.IsNullOrEmpty(connectionString))
-            {
-                msgs = await _connectionStringService.PeekMessagesAsync(
-                    connectionString, entityName, subscription, _preferencesService.DefaultMessageCount, showDeadLetter, requiresSession);
-            }
-            else if (!string.IsNullOrEmpty(endpoint))
-            {
-                msgs = await _serviceBus.PeekMessagesAsync(
-                    endpoint, entityName, subscription, _preferencesService.DefaultMessageCount, showDeadLetter, requiresSession);
-            }
-            else
-            {
-                return;
-            }
+            var msgs = await operations.PeekMessagesAsync(
+                entityName, subscription, _preferencesService.DefaultMessageCount, showDeadLetter, requiresSession);
 
             var sortedMsgs = SortDescending
                 ? msgs.OrderByDescending(m => m.EnqueuedTime)

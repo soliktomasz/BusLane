@@ -38,10 +38,14 @@ class Program
         // Auth services
         services.AddSingleton<IAzureAuthService, AzureAuthService>();
         
-        // Service Bus services
-        services.AddSingleton<IServiceBusService, ServiceBusService>();
+        // Service Bus services - unified operations
+        services.AddSingleton<IServiceBusOperationsFactory>(sp =>
+        {
+            var auth = sp.GetRequiredService<IAzureAuthService>();
+            return new ServiceBusOperationsFactory(() => auth.ArmClient);
+        });
+        services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
-        services.AddSingleton<IConnectionStringService, ConnectionStringService>();
 
         // Monitoring services for Live Stream, Charts, and Alerts
         services.AddSingleton<ILiveStreamService, LiveStreamService>();
@@ -49,8 +53,22 @@ class Program
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<INotificationService, NotificationService>();
 
-        // ViewModels
-        services.AddSingleton<MainWindowViewModel>();
+        // Main ViewModel with unified services
+        services.AddSingleton<MainWindowViewModel>(sp => new MainWindowViewModel(
+            sp.GetRequiredService<IAzureAuthService>(),
+            sp.GetRequiredService<IAzureResourceService>(),
+            sp.GetRequiredService<IServiceBusOperationsFactory>(),
+            sp.GetRequiredService<IConnectionStorageService>(),
+            sp.GetRequiredService<IVersionService>(),
+            sp.GetRequiredService<IPreferencesService>(),
+            sp.GetRequiredService<ILiveStreamService>(),
+            sp.GetRequiredService<IMetricsService>(),
+            sp.GetRequiredService<IAlertService>(),
+            sp.GetRequiredService<INotificationService>(),
+            sp.GetRequiredService<IKeyboardShortcutService>()
+        ));
+
+        // Other ViewModels
         services.AddTransient<LoginViewModel>();
         services.AddTransient<NamespaceViewModel>();
         services.AddTransient<QueueViewModel>();

@@ -5,7 +5,7 @@ using BusLane.Models;
 
 /// <summary>
 /// Shared operations and utilities for Service Bus services.
-/// Eliminates duplication between ServiceBusService and ConnectionStringService.
+/// Used by ConnectionStringOperations and AzureCredentialOperations implementations.
 /// </summary>
 internal static class ServiceBusOperations
 {
