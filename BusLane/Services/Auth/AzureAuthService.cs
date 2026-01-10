@@ -6,7 +6,7 @@ using Azure.ResourceManager;
 
 public class AzureAuthService : IAzureAuthService
 {
-    private InteractiveBrowserCredential? _credential;
+    private TokenCredential? _credential;
     private ArmClient? _armClient;
     private readonly TokenCachePersistenceOptions _cacheOptions;
 
@@ -16,6 +16,11 @@ public class AzureAuthService : IAzureAuthService
     public ArmClient? ArmClient => _armClient;
 
     public event EventHandler<bool>? AuthenticationChanged;
+
+    /// <summary>
+    /// Event raised when device code authentication requires user action.
+    /// </summary>
+    public event EventHandler<DeviceCodeInfo>? DeviceCodeRequired;
 
     public AzureAuthService()
     {
@@ -27,7 +32,7 @@ public class AzureAuthService : IAzureAuthService
         };
     }
 
-    private InteractiveBrowserCredentialOptions CreateCredentialOptions()
+    private InteractiveBrowserCredentialOptions CreateBrowserCredentialOptions()
     {
         return new InteractiveBrowserCredentialOptions
         {
@@ -38,12 +43,34 @@ public class AzureAuthService : IAzureAuthService
         };
     }
 
+    private DeviceCodeCredentialOptions CreateDeviceCodeCredentialOptions()
+    {
+        return new DeviceCodeCredentialOptions
+        {
+            TenantId = "common",
+            ClientId = "04b07795-8ddb-461a-bbee-02f9e1bf7b46", // Azure CLI
+            AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
+            TokenCachePersistenceOptions = _cacheOptions,
+            DeviceCodeCallback = (deviceCodeInfo, cancellation) =>
+            {
+                // Notify subscribers about the device code
+                var info = new DeviceCodeInfo(
+                    deviceCodeInfo.UserCode,
+                    deviceCodeInfo.VerificationUri.ToString(),
+                    deviceCodeInfo.Message);
+                DeviceCodeRequired?.Invoke(this, info);
+                Console.WriteLine(deviceCodeInfo.Message);
+                return Task.CompletedTask;
+            }
+        };
+    }
+
     public async Task<bool> TrySilentLoginAsync(CancellationToken ct = default)
     {
         try
         {
-            var options = CreateCredentialOptions();
-            _credential = new InteractiveBrowserCredential(options);
+            var options = CreateBrowserCredentialOptions();
+            var browserCredential = new InteractiveBrowserCredential(options);
 
             // Try to get a token silently (will use cached token if available)
             var context = new TokenRequestContext(
@@ -51,8 +78,9 @@ public class AzureAuthService : IAzureAuthService
             );
 
             // Use GetTokenAsync - if there's a valid cached token, it won't prompt
-            var token = await _credential.GetTokenAsync(context, ct);
+            var token = await browserCredential.GetTokenAsync(context, ct);
 
+            _credential = browserCredential;
             _armClient = new ArmClient(_credential);
             IsAuthenticated = true;
             UserName = "Azure User";
@@ -73,17 +101,18 @@ public class AzureAuthService : IAzureAuthService
 
     public async Task<bool> LoginAsync(CancellationToken ct = default)
     {
+        // Try interactive browser first
         try
         {
-            var options = CreateCredentialOptions();
-            _credential = new InteractiveBrowserCredential(options);
+            var browserOptions = CreateBrowserCredentialOptions();
+            var browserCredential = new InteractiveBrowserCredential(browserOptions);
 
-            // Force authentication by requesting a token
             var context = new TokenRequestContext(
                 new[] { "https://management.azure.com/.default" }
             );
-            _ = await _credential.GetTokenAsync(context, ct);
+            _ = await browserCredential.GetTokenAsync(context, ct);
 
+            _credential = browserCredential;
             _armClient = new ArmClient(_credential);
             IsAuthenticated = true;
             UserName = "Azure User";
@@ -91,12 +120,37 @@ public class AzureAuthService : IAzureAuthService
             AuthenticationChanged?.Invoke(this, true);
             return true;
         }
-        catch (Exception ex)
+        catch (Exception browserEx)
         {
-            Console.WriteLine($"Login failed: {ex.Message}");
-            IsAuthenticated = false;
-            AuthenticationChanged?.Invoke(this, false);
-            return false;
+            Console.WriteLine($"Browser login failed: {browserEx.Message}");
+            Console.WriteLine("Falling back to device code authentication...");
+
+            // Fallback to device code authentication
+            try
+            {
+                var deviceCodeOptions = CreateDeviceCodeCredentialOptions();
+                var deviceCodeCredential = new DeviceCodeCredential(deviceCodeOptions);
+
+                var context = new TokenRequestContext(
+                    new[] { "https://management.azure.com/.default" }
+                );
+                _ = await deviceCodeCredential.GetTokenAsync(context, ct);
+
+                _credential = deviceCodeCredential;
+                _armClient = new ArmClient(_credential);
+                IsAuthenticated = true;
+                UserName = "Azure User";
+
+                AuthenticationChanged?.Invoke(this, true);
+                return true;
+            }
+            catch (Exception deviceCodeEx)
+            {
+                Console.WriteLine($"Device code login failed: {deviceCodeEx.Message}");
+                IsAuthenticated = false;
+                AuthenticationChanged?.Invoke(this, false);
+                return false;
+            }
         }
     }
 

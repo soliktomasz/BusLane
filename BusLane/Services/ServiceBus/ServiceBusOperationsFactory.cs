@@ -25,11 +25,11 @@ public interface IServiceBusOperationsFactory
 /// </summary>
 public class ServiceBusOperationsFactory : IServiceBusOperationsFactory
 {
-    private readonly ArmClient? _armClient;
+    private readonly Func<ArmClient?> _getArmClient;
 
-    public ServiceBusOperationsFactory(ArmClient? armClient = null)
+    public ServiceBusOperationsFactory(Func<ArmClient?> getArmClient)
     {
-        _armClient = armClient;
+        _getArmClient = getArmClient;
     }
 
     public IConnectionStringOperations CreateFromConnectionString(string connectionString)
@@ -39,14 +39,15 @@ public class ServiceBusOperationsFactory : IServiceBusOperationsFactory
 
     public IAzureCredentialOperations CreateFromAzureCredential(string endpoint, string namespaceId, TokenCredential credential)
     {
-        if (_armClient == null)
-            throw new InvalidOperationException("ArmClient is required for Azure credential operations");
+        var armClient = _getArmClient();
+        if (armClient == null)
+            throw new InvalidOperationException("ArmClient is required for Azure credential operations. Please sign in first.");
 
         return new AzureCredentialOperations(
             endpoint,
             namespaceId,
             credential,
-            () => _armClient.GetServiceBusNamespaceResource(new ResourceIdentifier(namespaceId))
+            () => armClient.GetServiceBusNamespaceResource(new ResourceIdentifier(namespaceId))
         );
     }
 }

@@ -73,6 +73,12 @@ public partial class MainWindowViewModel : ViewModelBase
     // Keyboard shortcuts dialog
     [ObservableProperty] private bool _showKeyboardShortcuts;
 
+    // Device code authentication dialog
+    [ObservableProperty] private bool _showDeviceCodeDialog;
+    [ObservableProperty] private string _deviceCodeUserCode = "";
+    [ObservableProperty] private string _deviceCodeUrl = "";
+    [ObservableProperty] private string _deviceCodeMessage = "";
+
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
@@ -154,6 +160,28 @@ public partial class MainWindowViewModel : ViewModelBase
                 _ = LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id);
             else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
                 _ = MessageOps.LoadMessagesAsync();
+        };
+
+        // Wire up device code authentication event
+        _auth.DeviceCodeRequired += (_, info) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                DeviceCodeUserCode = info.UserCode;
+                DeviceCodeUrl = info.VerificationUri;
+                DeviceCodeMessage = info.Message;
+                ShowDeviceCodeDialog = true;
+            });
+        };
+
+        // Close device code dialog when authentication completes
+        _auth.AuthenticationChanged += (_, authenticated) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (authenticated)
+                    ShowDeviceCodeDialog = false;
+            });
         };
 
         InitializeAutoRefreshTimer();
@@ -921,6 +949,45 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private void CloseKeyboardShortcuts() => ShowKeyboardShortcuts = false;
+
+    [RelayCommand]
+    private void CloseDeviceCodeDialog() => ShowDeviceCodeDialog = false;
+
+    [RelayCommand]
+    private async Task CopyDeviceCodeAsync()
+    {
+        if (string.IsNullOrEmpty(DeviceCodeUserCode)) return;
+
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var clipboard = desktop.MainWindow?.Clipboard;
+            if (clipboard != null)
+            {
+                await clipboard.SetTextAsync(DeviceCodeUserCode);
+                StatusMessage = "Code copied to clipboard";
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void OpenDeviceCodeUrl()
+    {
+        if (string.IsNullOrEmpty(DeviceCodeUrl)) return;
+
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = DeviceCodeUrl,
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to open browser: {ex.Message}";
+        }
+    }
 
     /// <summary>
     /// Toggles the dead letter view for the current entity.

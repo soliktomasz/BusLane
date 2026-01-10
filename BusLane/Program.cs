@@ -42,7 +42,7 @@ class Program
         services.AddSingleton<IServiceBusOperationsFactory>(sp =>
         {
             var auth = sp.GetRequiredService<IAzureAuthService>();
-            return new ServiceBusOperationsFactory(auth.ArmClient);
+            return new ServiceBusOperationsFactory(() => auth.ArmClient);
         });
         services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
