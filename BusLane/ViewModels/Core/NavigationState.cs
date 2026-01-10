@@ -18,12 +18,24 @@ public partial class NavigationState : ViewModelBase
     [ObservableProperty] private SubscriptionInfo? _selectedSubscription;
     [ObservableProperty] private bool _showDeadLetter;
     [ObservableProperty] private int _selectedMessageTabIndex;
+    [ObservableProperty] private string _namespaceFilter = string.Empty;
 
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
     public ObservableCollection<TopicInfo> Topics { get; } = [];
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
+
+    /// <summary>
+    /// Gets the filtered namespaces based on the current filter text.
+    /// </summary>
+    public IEnumerable<ServiceBusNamespace> FilteredNamespaces =>
+        string.IsNullOrWhiteSpace(NamespaceFilter)
+            ? Namespaces
+            : Namespaces.Where(n =>
+                n.Name.Contains(NamespaceFilter, StringComparison.OrdinalIgnoreCase) ||
+                n.Location.Contains(NamespaceFilter, StringComparison.OrdinalIgnoreCase) ||
+                n.ResourceGroup.Contains(NamespaceFilter, StringComparison.OrdinalIgnoreCase));
 
     // Computed properties for visibility bindings
     public bool HasQueues => Queues.Count > 0;
@@ -68,6 +80,15 @@ public partial class NavigationState : ViewModelBase
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
+        Namespaces.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(FilteredNamespaces));
+        };
+    }
+
+    partial void OnNamespaceFilterChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredNamespaces));
     }
 
     partial void OnSelectedMessageTabIndexChanged(int value)

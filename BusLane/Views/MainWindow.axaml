@@ -1,8 +1,10 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:BusLane.ViewModels"
+        xmlns:models="using:BusLane.Models"
         xmlns:controls="using:BusLane.Views.Controls"
         xmlns:dialogs="using:BusLane.Views.Dialogs"
+        xmlns:converters="using:BusLane.Converters"
         x:Class="BusLane.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Bus Lane - Service Bus Manager"
@@ -10,6 +12,11 @@
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
+        <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
+    </Window.Resources>
 
     <Grid ColumnDefinitions="Auto,Auto,*">
         <!-- Navigation Pane (Fluent 2 Sidebar) -->
@@ -188,6 +195,232 @@
         <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="3"/>
         <dialogs:KeyboardShortcutsDialog Grid.Column="0" Grid.ColumnSpan="3"/>
         <dialogs:DeviceCodeDialog Grid.Column="0" Grid.ColumnSpan="3"/>
+
+        <!-- Namespace Selection Slide-in Panel (Azure mode) -->
+        <Grid Grid.Column="0" Grid.ColumnSpan="3"
+              IsVisible="{Binding Connection.IsNamespacePanelOpen}">
+            <!-- Overlay background (click to close) -->
+            <Button Background="{DynamicResource ModalOverlay}"
+                    Command="{Binding CloseNamespacePanelCommand}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    BorderThickness="0"
+                    CornerRadius="0"
+                    Padding="0"
+                    Cursor="Arrow">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Slide-in Panel from Left -->
+            <Border Background="{DynamicResource CardBackground}"
+                    Width="420"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    BorderBrush="{DynamicResource BorderDefault}"
+                    BorderThickness="0,0,1,0"
+                    BoxShadow="8 0 32 0 #30000000">
+
+                <DockPanel>
+                    <!-- Panel Header -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{DynamicResource SurfaceSubtle}"
+                            Padding="20,16"
+                            BorderBrush="{DynamicResource BorderDefault}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Select Namespace" Classes="title" FontSize="20"/>
+                                <TextBlock Text="Choose an Azure subscription and namespace to browse"
+                                           Classes="caption" FontSize="12"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="subtle"
+                                    Command="{Binding CloseNamespacePanelCommand}"
+                                    Padding="8"
+                                    VerticalAlignment="Top">
+                                <PathIcon Data="{StaticResource IconClose}" Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Panel Content -->
+                    <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="20" Spacing="20">
+
+                            <!-- Subscription Picker Card -->
+                            <Border Background="{DynamicResource SurfaceSubtle}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource SurfaceBrand}">
+                                            <PathIcon Data="{StaticResource IconCloud}" Width="18" Height="18"
+                                                      Foreground="{DynamicResource AccentBrand}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Azure Subscription" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="Select a subscription" Classes="caption" FontSize="12"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <ComboBox ItemsSource="{Binding Navigation.Subscriptions}"
+                                              SelectedItem="{Binding Navigation.SelectedAzureSubscription}"
+                                              HorizontalAlignment="Stretch"
+                                              Padding="14,12"
+                                              MinHeight="44">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="models:AzureSubscription">
+                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" FontSize="14"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Namespaces Section -->
+                            <StackPanel Spacing="12">
+                                <!-- Header with count -->
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                        <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource AccentBrand}">
+                                            <PathIcon Data="{StaticResource IconNamespace}" Width="16" Height="16"
+                                                      Foreground="{DynamicResource TextOnBrand}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Namespaces" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2" Classes="badge-info" VerticalAlignment="Center" Padding="10,5">
+                                        <TextBlock Text="{Binding Navigation.Namespaces.Count}" FontSize="12" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Search Box -->
+                                <TextBox Text="{Binding Navigation.NamespaceFilter, Mode=TwoWay}"
+                                         Watermark="Search by name, location, or resource group..."
+                                         Padding="14,12"
+                                         FontSize="13">
+                                    <TextBox.InnerLeftContent>
+                                        <PathIcon Data="{StaticResource IconSearch}" Width="14" Height="14"
+                                                  Foreground="{DynamicResource SubtleForeground}"
+                                                  Margin="4,0,0,0"/>
+                                    </TextBox.InnerLeftContent>
+                                </TextBox>
+
+                                <!-- Namespace List -->
+                                <Border Background="{DynamicResource SurfaceSubtle}"
+                                        CornerRadius="8"
+                                        Padding="8"
+                                        MinHeight="200"
+                                        MaxHeight="400">
+                                    <ListBox ItemsSource="{Binding Navigation.FilteredNamespaces}"
+                                             Classes="entity-list"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate x:DataType="models:ServiceBusNamespace">
+                                                <Button Classes="subtle"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectNamespaceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        HorizontalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        Padding="0"
+                                                        Margin="0,2">
+                                                    <Grid ColumnDefinitions="Auto,*">
+                                                        <!-- Selection indicator bar -->
+                                                        <Border Grid.Column="0" Classes="selection-indicator"
+                                                                VerticalAlignment="Stretch"
+                                                                Margin="0,6,8,6">
+                                                            <Border.IsVisible>
+                                                                <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                    <Binding Path="."/>
+                                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedNamespace"/>
+                                                                </MultiBinding>
+                                                            </Border.IsVisible>
+                                                        </Border>
+
+                                                        <!-- Namespace content -->
+                                                        <Border Grid.Column="1" Padding="12,10" CornerRadius="8">
+                                                            <Border.Background>
+                                                                <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                    <Binding Path="."/>
+                                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedNamespace"/>
+                                                                </MultiBinding>
+                                                            </Border.Background>
+                                                            <Grid ColumnDefinitions="Auto,*">
+                                                                <!-- Namespace Icon -->
+                                                                <Border Grid.Column="0"
+                                                                        Width="48" Height="48"
+                                                                        CornerRadius="10"
+                                                                        Background="{DynamicResource SurfaceBrand}"
+                                                                        Margin="0,0,14,0">
+                                                                    <TextBlock Text="SB" FontWeight="Bold" FontSize="15"
+                                                                               Foreground="{DynamicResource AccentBrand}"
+                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+
+                                                                <!-- Namespace Details -->
+                                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               FontWeight="SemiBold"
+                                                                               FontSize="14"
+                                                                               TextTrimming="CharacterEllipsis"/>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                        <PathIcon Data="{StaticResource IconLocation}" Width="11" Height="11"
+                                                                                  Foreground="{DynamicResource SubtleForeground}"/>
+                                                                        <TextBlock Text="{Binding Location}"
+                                                                                   Classes="caption"
+                                                                                   FontSize="12"
+                                                                                   TextTrimming="CharacterEllipsis"/>
+                                                                    </StackPanel>
+                                                                    <TextBlock Text="{Binding ResourceGroup}"
+                                                                               FontSize="11"
+                                                                               Foreground="{DynamicResource MutedForeground}"
+                                                                               TextTrimming="CharacterEllipsis"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+
+                                <!-- Empty state when no namespaces -->
+                                <Border Background="{DynamicResource SurfaceSubtle}"
+                                        CornerRadius="8"
+                                        Padding="24"
+                                        IsVisible="{Binding !Navigation.Namespaces.Count}">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                        <PathIcon Data="{StaticResource IconNamespace}" Width="32" Height="32"
+                                                  Foreground="{DynamicResource SubtleForeground}"
+                                                  HorizontalAlignment="Center"/>
+                                        <TextBlock Text="No namespaces found"
+                                                   Classes="caption"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Select a subscription above to load namespaces"
+                                                   Classes="caption"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource MutedForeground}"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
 
         <!-- Alerts Dialog (modal overlay) -->
         <Border Grid.Column="0" Grid.ColumnSpan="3"

@@ -32,12 +32,23 @@ public partial class ConnectionViewModel : ViewModelBase
     [ObservableProperty] private SavedConnection? _activeConnection;
     [ObservableProperty] private bool _showConnectionLibrary;
     [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
+    [ObservableProperty] private bool _isNamespacePanelOpen;
 
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
     public ObservableCollection<SavedConnection> FavoriteConnections { get; } = [];
 
     public bool ShowAzureSections => IsAuthenticated && CurrentMode == ConnectionMode.AzureAccount;
     public bool HasFavoriteConnections => FavoriteConnections.Count > 0;
+
+    /// <summary>
+    /// Opens the namespace selection panel.
+    /// </summary>
+    public void OpenNamespacePanel() => IsNamespacePanelOpen = true;
+
+    /// <summary>
+    /// Closes the namespace selection panel.
+    /// </summary>
+    public void CloseNamespacePanel() => IsNamespacePanelOpen = false;
 
     /// <summary>
     /// Gets the current connection string (null if in Azure account mode).
@@ -79,6 +90,7 @@ public partial class ConnectionViewModel : ViewModelBase
         if (await _auth.TrySilentLoginAsync())
         {
             CurrentMode = ConnectionMode.AzureAccount;
+            IsNamespacePanelOpen = true;
             _setStatus("Restored Azure session");
             await _onConnected();
             return;
@@ -114,6 +126,7 @@ public partial class ConnectionViewModel : ViewModelBase
             {
                 CurrentMode = ConnectionMode.AzureAccount;
                 ActiveConnection = null;
+                IsNamespacePanelOpen = true;
                 _setStatus("Ready");
                 await _onConnected();
             }
@@ -134,6 +147,7 @@ public partial class ConnectionViewModel : ViewModelBase
         await _auth.LogoutAsync();
         CurrentMode = ConnectionMode.None;
         ActiveConnection = null;
+        IsNamespacePanelOpen = false;
         await _onDisconnected();
         _setStatus("Disconnected");
     }

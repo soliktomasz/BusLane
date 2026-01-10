@@ -127,5 +127,8 @@
     <!-- Copy / Duplicate icon -->
     <StreamGeometry x:Key="IconCopy">M8 4v12a2 2 0 002 2h8a2 2 0 002-2V7.242a2 2 0 00-.602-1.43L16.083 2.57A2 2 0 0014.685 2H10a2 2 0 00-2 2z M6 8H4a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2</StreamGeometry>
 
+    <!-- Swap / Switch icon -->
+    <StreamGeometry x:Key="IconSwap">M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5</StreamGeometry>
+
 </ResourceDictionary>
 

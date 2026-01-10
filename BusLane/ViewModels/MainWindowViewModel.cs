@@ -321,7 +321,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SelectNamespaceAsync(ServiceBusNamespace ns)
     {
         Navigation.SelectedNamespace = ns;
-        
+
+        // Close the namespace selection panel
+        Connection.CloseNamespacePanel();
+
         // Create operations for this namespace using Azure credentials
         if (_auth.Credential != null)
         {
@@ -926,6 +929,12 @@ public partial class MainWindowViewModel : ViewModelBase
         _preferencesService.Save();
         OnPropertyChanged(nameof(IsNavigationPanelVisible));
     }
+
+    [RelayCommand]
+    private void OpenNamespacePanel() => Connection.OpenNamespacePanel();
+
+    [RelayCommand]
+    private void CloseNamespacePanel() => Connection.CloseNamespacePanel();
 
     [RelayCommand]
     private void CloseStatusPopup() => ShowStatusPopup = false;

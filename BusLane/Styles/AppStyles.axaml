@@ -402,7 +402,7 @@
     <!-- Navigation Pane / Sidebar - Fluent 2 -->
     <Style Selector="Border.sidebar">
         <Setter Property="Background" Value="{DynamicResource SidebarBackground}"/>
-        <Setter Property="Width" Value="280"/>
+        <Setter Property="Width" Value="320"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="0,0,1,0"/>
     </Style>
