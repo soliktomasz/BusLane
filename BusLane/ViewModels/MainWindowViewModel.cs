@@ -31,13 +31,18 @@ public enum ConnectionMode
 public partial class MainWindowViewModel : ViewModelBase
 {
     // Services (injected)
-    private readonly IServiceBusService _serviceBus;
-    private readonly IConnectionStringService _connectionStringService;
+    private readonly IAzureAuthService _auth;
+    private readonly IAzureResourceService _azureResources;
+    private readonly IServiceBusOperationsFactory _operationsFactory;
     private readonly IVersionService _versionService;
     private readonly IAlertService _alertService;
     private readonly IPreferencesService _preferencesService;
+    private readonly IConnectionStorageService _connectionStorage;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
     private IFileDialogService? _fileDialogService;
+
+    // Current operations instance - unified interface for all Service Bus operations
+    private IServiceBusOperations? _operations;
 
     // Composed components
     public NavigationState Navigation { get; }
@@ -71,7 +76,6 @@ public partial class MainWindowViewModel : ViewModelBase
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
-
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
     public bool EnableMessagePreview => _preferencesService.EnableMessagePreview;
@@ -89,47 +93,11 @@ public partial class MainWindowViewModel : ViewModelBase
             .Select(g => new KeyboardShortcutGroup(g.Key, g.ToList()))
             .ToList();
 
-    /// <summary>
-    /// Executes a service operation using either connection string or Azure account mode.
-    /// Eliminates duplicated if/else blocks throughout the codebase.
-    /// </summary>
-    private async Task<T?> ExecuteServiceOperationAsync<T>(
-        Func<IConnectionStringService, string, Task<T>> connectionStringOp,
-        Func<IServiceBusService, string, Task<T>> azureOp)
-    {
-        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-        {
-            return await connectionStringOp(_connectionStringService, Connection.ActiveConnection.ConnectionString);
-        }
-        if (Navigation.SelectedNamespace != null)
-        {
-            return await azureOp(_serviceBus, Navigation.SelectedNamespace.Endpoint);
-        }
-        return default;
-    }
-
-    /// <summary>
-    /// Executes a service operation without return value.
-    /// </summary>
-    private async Task ExecuteServiceOperationAsync(
-        Func<IConnectionStringService, string, Task> connectionStringOp,
-        Func<IServiceBusService, string, Task> azureOp)
-    {
-        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-        {
-            await connectionStringOp(_connectionStringService, Connection.ActiveConnection.ConnectionString);
-        }
-        else if (Navigation.SelectedNamespace != null)
-        {
-            await azureOp(_serviceBus, Navigation.SelectedNamespace.Endpoint);
-        }
-    }
-
     public MainWindowViewModel(
         IAzureAuthService auth,
-        IServiceBusService serviceBus,
+        IAzureResourceService azureResources,
+        IServiceBusOperationsFactory operationsFactory,
         IConnectionStorageService connectionStorage,
-        IConnectionStringService connectionStringService,
         IVersionService versionService,
         IPreferencesService preferencesService,
         ILiveStreamService liveStreamService,
@@ -139,8 +107,10 @@ public partial class MainWindowViewModel : ViewModelBase
         IKeyboardShortcutService keyboardShortcutService,
         IFileDialogService? fileDialogService = null)
     {
-        _serviceBus = serviceBus;
-        _connectionStringService = connectionStringService;
+        _auth = auth;
+        _azureResources = azureResources;
+        _operationsFactory = operationsFactory;
+        _connectionStorage = connectionStorage;
         _versionService = versionService;
         _alertService = alertService;
         _preferencesService = preferencesService;
@@ -149,17 +119,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Initialize composed components
         Navigation = new NavigationState();
-        
+
         Connection = new ConnectionViewModel(
-            auth, serviceBus, connectionStorage, connectionStringService,
+            auth,
+            connectionStorage,
+            operationsFactory,
             msg => StatusMessage = msg,
             OnConnectedAsync,
             OnDisconnectedAsync);
 
         MessageOps = new MessageOperationsViewModel(
-            serviceBus, connectionStringService, preferencesService,
-            () => Navigation.CurrentEndpoint ?? Connection.CurrentEndpoint,
-            () => Connection.CurrentConnectionString,
+            () => _operations,
+            preferencesService,
             () => Navigation.CurrentEntityName,
             () => Navigation.CurrentSubscriptionName,
             () => Navigation.CurrentEntityRequiresSession,
@@ -188,8 +159,15 @@ public partial class MainWindowViewModel : ViewModelBase
         InitializeAutoRefreshTimer();
     }
 
-
     public void SetFileDialogService(IFileDialogService fileDialogService) => _fileDialogService = fileDialogService;
+
+    /// <summary>
+    /// Sets the current operations instance and updates child ViewModels.
+    /// </summary>
+    private void SetOperations(IServiceBusOperations? operations)
+    {
+        _operations = operations;
+    }
 
     private async Task OnConnectedAsync()
     {
@@ -199,12 +177,16 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         else if (Connection.ActiveConnection != null)
         {
+            // Create operations from connection string
+            var connStrOps = _operationsFactory.CreateFromConnectionString(Connection.ActiveConnection.ConnectionString);
+            SetOperations(connStrOps);
             await LoadConnectionEntitiesAsync(Connection.ActiveConnection);
         }
     }
 
     private Task OnDisconnectedAsync()
     {
+        SetOperations(null);
         Navigation.Clear();
         MessageOps.Clear();
         FeaturePanels.CloseAll();
@@ -272,7 +254,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task LoadSubscriptionsAsync()
     {
         Navigation.Subscriptions.Clear();
-        foreach (var sub in await _serviceBus.GetSubscriptionsAsync())
+        foreach (var sub in await _azureResources.GetAzureSubscriptionsAsync())
             Navigation.Subscriptions.Add(sub);
 
         if (Navigation.Subscriptions.Count > 0)
@@ -289,7 +271,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             Navigation.Namespaces.Clear();
-            foreach (var ns in await _serviceBus.GetNamespacesAsync(subscriptionId))
+            foreach (var ns in await _azureResources.GetNamespacesAsync(subscriptionId))
                 Navigation.Namespaces.Add(ns);
             StatusMessage = $"Found {Navigation.Namespaces.Count} namespace(s)";
         }
@@ -311,6 +293,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SelectNamespaceAsync(ServiceBusNamespace ns)
     {
         Navigation.SelectedNamespace = ns;
+        
+        // Create operations for this namespace using Azure credentials
+        if (_auth.Credential != null)
+        {
+            var ops = _operationsFactory.CreateFromAzureCredential(ns.Endpoint, ns.Id, _auth.Credential);
+            SetOperations(ops);
+        }
+
         IsLoading = true;
         StatusMessage = $"Loading {ns.Name}...";
 
@@ -319,11 +309,14 @@ public partial class MainWindowViewModel : ViewModelBase
             Navigation.ClearEntities();
             MessageOps.Clear();
 
-            foreach (var q in await _serviceBus.GetQueuesAsync(ns.Id))
-                Navigation.Queues.Add(q);
+            if (_operations != null)
+            {
+                foreach (var q in await _operations.GetQueuesAsync())
+                    Navigation.Queues.Add(q);
 
-            foreach (var t in await _serviceBus.GetTopicsAsync(ns.Id))
-                Navigation.Topics.Add(t);
+                foreach (var t in await _operations.GetTopicsAsync())
+                    Navigation.Topics.Add(t);
+            }
 
             StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
             await _alertService.EvaluateAlertsAsync(Navigation.Queues, Navigation.TopicSubscriptions);
@@ -352,7 +345,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SelectTopicAsync(TopicInfo topic)
     {
-        if (Navigation.SelectedNamespace == null && Connection.ActiveConnection == null) return;
+        if (_operations == null) return;
 
         Navigation.SelectedTopic = topic;
         Navigation.SelectedQueue = null;
@@ -366,17 +359,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            IEnumerable<SubscriptionInfo> subs;
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                subs = await _connectionStringService.GetTopicSubscriptionsAsync(
-                    Connection.ActiveConnection.ConnectionString, topic.Name);
-            }
-            else
-            {
-                subs = await _serviceBus.GetSubscriptionsAsync(Navigation.SelectedNamespace!.Id, topic.Name);
-            }
-
+            var subs = await _operations.GetSubscriptionsAsync(topic.Name);
             foreach (var sub in subs)
                 Navigation.TopicSubscriptions.Add(sub);
 
@@ -405,27 +388,13 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadTopicSubscriptionsAsync(TopicInfo topic)
     {
-        if (topic.SubscriptionsLoaded || topic.IsLoadingSubscriptions) return;
+        if (topic.SubscriptionsLoaded || topic.IsLoadingSubscriptions || _operations == null) return;
 
         topic.IsLoadingSubscriptions = true;
 
         try
         {
-            IEnumerable<SubscriptionInfo> subs;
-
-            if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-            {
-                subs = await _connectionStringService.GetTopicSubscriptionsAsync(
-                    Connection.ActiveConnection.ConnectionString, topic.Name);
-            }
-            else if (Connection.CurrentMode == ConnectionMode.AzureAccount && Navigation.SelectedNamespace != null)
-            {
-                subs = await _serviceBus.GetSubscriptionsAsync(Navigation.SelectedNamespace.Id, topic.Name);
-            }
-            else
-            {
-                return;
-            }
+            var subs = await _operations.GetSubscriptionsAsync(topic.Name);
 
             topic.Subscriptions.Clear();
             foreach (var sub in subs)
@@ -448,6 +417,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadConnectionEntitiesAsync(SavedConnection connection)
     {
+        if (_operations == null) return;
+
         IsLoading = true;
 
         try
@@ -458,11 +429,11 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 StatusMessage = "Loading queues and topics...";
 
-                var queues = await _connectionStringService.GetQueuesFromConnectionAsync(connection.ConnectionString);
+                var queues = await _operations.GetQueuesAsync();
                 foreach (var queue in queues)
                     Navigation.Queues.Add(queue);
 
-                var topics = await _connectionStringService.GetTopicsFromConnectionAsync(connection.ConnectionString);
+                var topics = await _operations.GetTopicsAsync();
                 foreach (var topic in topics)
                     Navigation.Topics.Add(topic);
 
@@ -470,8 +441,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else if (connection.Type == ConnectionType.Queue)
             {
-                var queueInfo = await _connectionStringService.GetQueueInfoAsync(
-                    connection.ConnectionString, connection.EntityName!);
+                var queueInfo = await _operations.GetQueueInfoAsync(connection.EntityName!);
 
                 if (queueInfo != null)
                 {
@@ -487,8 +457,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else if (connection.Type == ConnectionType.Topic)
             {
-                var topicInfo = await _connectionStringService.GetTopicInfoAsync(
-                    connection.ConnectionString, connection.EntityName!);
+                var topicInfo = await _operations.GetTopicInfoAsync(connection.EntityName!);
 
                 if (topicInfo != null)
                 {
@@ -496,8 +465,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     Navigation.SelectedTopic = topicInfo;
                     Navigation.SelectedEntity = topicInfo;
 
-                    var subs = await _connectionStringService.GetTopicSubscriptionsAsync(
-                        connection.ConnectionString, connection.EntityName!);
+                    var subs = await _operations.GetSubscriptionsAsync(connection.EntityName!);
                     foreach (var sub in subs)
                         Navigation.TopicSubscriptions.Add(sub);
                 }
@@ -561,32 +529,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OpenSendMessagePopup()
     {
         var entityName = Navigation.CurrentEntityName;
-        if (entityName == null) return;
+        if (entityName == null || _operations == null) return;
 
-        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-        {
-            SendMessageViewModel = new SendMessageViewModel(
-                _connectionStringService,
-                Connection.ActiveConnection.ConnectionString,
-                entityName,
-                CloseSendMessagePopup,
-                msg => StatusMessage = msg,
-                _fileDialogService);
-        }
-        else if (Navigation.SelectedNamespace != null)
-        {
-            SendMessageViewModel = new SendMessageViewModel(
-                _serviceBus,
-                Navigation.SelectedNamespace.Endpoint,
-                entityName,
-                CloseSendMessagePopup,
-                msg => StatusMessage = msg,
-                _fileDialogService);
-        }
-        else
-        {
-            return;
-        }
+        SendMessageViewModel = new SendMessageViewModel(
+            _operations,
+            entityName,
+            CloseSendMessagePopup,
+            msg => StatusMessage = msg,
+            _fileDialogService);
 
         ShowSendMessagePopup = true;
     }
@@ -609,7 +559,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task ResendMessageAsync(MessageInfo? message = null)
     {
         var msg = message ?? MessageOps.SelectedMessage;
-        if (msg == null) return;
+        if (msg == null || _operations == null) return;
 
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
@@ -621,15 +571,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var properties = msg.Properties.ToDictionary(p => p.Key, p => p.Value);
 
-            await ExecuteServiceOperationAsync(
-                async (svc, connStr) => await svc.SendMessageAsync(
-                    connStr, entityName, msg.Body, properties,
-                    msg.ContentType, msg.CorrelationId, null, msg.SessionId, msg.Subject,
-                    msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null),
-                async (svc, endpoint) => await svc.SendMessageAsync(
-                    endpoint, entityName, msg.Body, properties,
-                    msg.ContentType, msg.CorrelationId, null, msg.SessionId, msg.Subject,
-                    msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null));
+            await _operations.SendMessageAsync(
+                entityName, msg.Body, properties,
+                msg.ContentType, msg.CorrelationId, null, msg.SessionId, msg.Subject,
+                msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null);
 
             StatusMessage = "Message resent successfully";
             await MessageOps.LoadMessagesAsync();
@@ -648,37 +593,19 @@ public partial class MainWindowViewModel : ViewModelBase
     private void CloneMessage(MessageInfo? message = null)
     {
         var msg = message ?? MessageOps.SelectedMessage;
-        if (msg == null) return;
+        if (msg == null || _operations == null) return;
 
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
 
-        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-        {
-            SendMessageViewModel = new SendMessageViewModel(
-                _connectionStringService,
-                Connection.ActiveConnection.ConnectionString,
-                entityName,
-                CloseSendMessagePopup,
-                status => StatusMessage = status,
-                _fileDialogService);
-        }
-        else if (Navigation.SelectedNamespace != null)
-        {
-            SendMessageViewModel = new SendMessageViewModel(
-                _serviceBus,
-                Navigation.SelectedNamespace.Endpoint,
-                entityName,
-                CloseSendMessagePopup,
-                status => StatusMessage = status,
-                _fileDialogService);
-        }
-        else
-        {
-            return;
-        }
+        SendMessageViewModel = new SendMessageViewModel(
+            _operations,
+            entityName,
+            CloseSendMessagePopup,
+            status => StatusMessage = status,
+            _fileDialogService);
 
-        SendMessageViewModel!.PopulateFromMessage(msg);
+        SendMessageViewModel.PopulateFromMessage(msg);
         ShowSendMessagePopup = true;
         MessageOps.ClearSelectedMessage();
     }
@@ -754,7 +681,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task PurgeMessagesAsync()
     {
         var entityName = Navigation.CurrentEntityName;
-        if (entityName == null) return;
+        if (entityName == null || _operations == null) return;
 
         var subscription = Navigation.CurrentSubscriptionName;
 
@@ -776,15 +703,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task ExecutePurgeAsync(string entityName, string? subscription)
     {
+        if (_operations == null) return;
+
         IsLoading = true;
         StatusMessage = "Purging messages...";
 
         try
         {
-            await ExecuteServiceOperationAsync(
-                async (svc, connStr) => await svc.PurgeMessagesAsync(connStr, entityName, subscription, Navigation.ShowDeadLetter),
-                async (svc, endpoint) => await svc.PurgeMessagesAsync(endpoint, entityName, subscription, Navigation.ShowDeadLetter));
-
+            await _operations.PurgeMessagesAsync(entityName, subscription, Navigation.ShowDeadLetter);
             StatusMessage = "Purge complete";
             await MessageOps.LoadMessagesAsync();
         }
@@ -801,7 +727,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task BulkResendMessagesAsync()
     {
-        if (!MessageOps.HasSelectedMessages) return;
+        if (!MessageOps.HasSelectedMessages || _operations == null) return;
 
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
@@ -824,6 +750,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task ExecuteBulkResendAsync(string entityName)
     {
+        if (_operations == null) return;
+
         IsLoading = true;
         var count = MessageOps.SelectedMessagesCount;
         StatusMessage = $"Resending {count} message(s)...";
@@ -831,10 +759,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var messagesToResend = MessageOps.SelectedMessages.ToList();
-
-            var sentCount = await ExecuteServiceOperationAsync(
-                async (svc, connStr) => await svc.ResendMessagesAsync(connStr, entityName, messagesToResend),
-                async (svc, endpoint) => await svc.ResendMessagesAsync(endpoint, entityName, messagesToResend));
+            var sentCount = await _operations.ResendMessagesAsync(entityName, messagesToResend);
 
             StatusMessage = $"Successfully resent {sentCount} of {count} message(s)";
             MessageOps.SelectedMessages.Clear();
@@ -853,7 +778,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void BulkDeleteMessagesAsync()
     {
-        if (!MessageOps.HasSelectedMessages) return;
+        if (!MessageOps.HasSelectedMessages || _operations == null) return;
 
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
@@ -871,6 +796,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task ExecuteBulkDeleteAsync(string entityName, string? subscription)
     {
+        if (_operations == null) return;
+
         IsLoading = true;
         var count = MessageOps.SelectedMessagesCount;
         StatusMessage = $"Deleting {count} message(s)...";
@@ -878,10 +805,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var sequenceNumbers = MessageOps.SelectedMessages.Select(m => m.SequenceNumber).ToList();
-
-            var deletedCount = await ExecuteServiceOperationAsync(
-                async (svc, connStr) => await svc.DeleteMessagesAsync(connStr, entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter),
-                async (svc, endpoint) => await svc.DeleteMessagesAsync(endpoint, entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter));
+            var deletedCount = await _operations.DeleteMessagesAsync(entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter);
 
             StatusMessage = $"Successfully deleted {deletedCount} of {count} message(s)";
             MessageOps.SelectedMessages.Clear();
@@ -900,7 +824,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ResubmitDeadLetterMessagesAsync()
     {
-        if (!MessageOps.HasSelectedMessages || !Navigation.ShowDeadLetter) return;
+        if (!MessageOps.HasSelectedMessages || !Navigation.ShowDeadLetter || _operations == null) return;
 
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
@@ -918,6 +842,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task ExecuteResubmitDeadLettersAsync(string entityName, string? subscription)
     {
+        if (_operations == null) return;
+
         IsLoading = true;
         var count = MessageOps.SelectedMessagesCount;
         StatusMessage = $"Resubmitting {count} dead letter message(s)...";
@@ -925,10 +851,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var messagesToResubmit = MessageOps.SelectedMessages.ToList();
-
-            var resubmittedCount = await ExecuteServiceOperationAsync(
-                async (svc, connStr) => await svc.ResubmitDeadLetterMessagesAsync(connStr, entityName, subscription, messagesToResubmit),
-                async (svc, endpoint) => await svc.ResubmitDeadLetterMessagesAsync(endpoint, entityName, subscription, messagesToResubmit));
+            var resubmittedCount = await _operations.ResubmitDeadLetterMessagesAsync(entityName, subscription, messagesToResubmit);
 
             StatusMessage = $"Successfully resubmitted {resubmittedCount} of {count} message(s)";
             MessageOps.SelectedMessages.Clear();

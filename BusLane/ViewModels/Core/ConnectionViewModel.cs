@@ -15,9 +15,8 @@ namespace BusLane.ViewModels.Core;
 public partial class ConnectionViewModel : ViewModelBase
 {
     private readonly IAzureAuthService _auth;
-    private readonly IServiceBusService _serviceBus;
     private readonly IConnectionStorageService _connectionStorage;
-    private readonly IConnectionStringService _connectionStringService;
+    private readonly IServiceBusOperationsFactory _operationsFactory;
     private readonly Action<string> _setStatus;
     private readonly Func<Task> _onConnected;
     private readonly Func<Task> _onDisconnected;
@@ -53,17 +52,15 @@ public partial class ConnectionViewModel : ViewModelBase
 
     public ConnectionViewModel(
         IAzureAuthService auth,
-        IServiceBusService serviceBus,
         IConnectionStorageService connectionStorage,
-        IConnectionStringService connectionStringService,
+        IServiceBusOperationsFactory operationsFactory,
         Action<string> setStatus,
         Func<Task> onConnected,
         Func<Task> onDisconnected)
     {
         _auth = auth;
-        _serviceBus = serviceBus;
         _connectionStorage = connectionStorage;
-        _connectionStringService = connectionStringService;
+        _operationsFactory = operationsFactory;
         _setStatus = setStatus;
         _onConnected = onConnected;
         _onDisconnected = onDisconnected;
@@ -165,7 +162,7 @@ public partial class ConnectionViewModel : ViewModelBase
     {
         ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
             _connectionStorage,
-            _connectionStringService,
+            _operationsFactory,
             async conn =>
             {
                 ShowConnectionLibrary = false;
@@ -194,4 +191,3 @@ public partial class ConnectionViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasFavoriteConnections));
     }
 }
-
