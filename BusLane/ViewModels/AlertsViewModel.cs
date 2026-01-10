@@ -19,6 +19,10 @@ public partial class AlertsViewModel : ViewModelBase
     [ObservableProperty] private AlertRule? _editingRule;
     [ObservableProperty] private bool _systemNotificationsEnabled;
 
+    // Tab navigation
+    [ObservableProperty] private bool _isActiveAlertsTabSelected = true;
+    [ObservableProperty] private bool _isRulesTabSelected;
+
     // New/Edit rule form
     [ObservableProperty] private string _ruleName = "";
     [ObservableProperty] private AlertType _selectedAlertType = AlertType.DeadLetterThreshold;
@@ -78,12 +82,17 @@ public partial class AlertsViewModel : ViewModelBase
     }
 
 
+    public string FormTitle => IsEditingRule ? "Edit Alert Rule" : "New Alert Rule";
+
     [RelayCommand]
     private void ShowAddRule()
     {
         ResetForm();
         IsAddingRule = true;
         IsEditingRule = false;
+        IsActiveAlertsTabSelected = false;
+        IsRulesTabSelected = true;
+        OnPropertyChanged(nameof(FormTitle));
     }
 
     [RelayCommand]
@@ -97,8 +106,9 @@ public partial class AlertsViewModel : ViewModelBase
         EntityPattern = rule.EntityPattern ?? "";
         RuleEnabled = rule.IsEnabled;
 
-        IsAddingRule = false;
+        IsAddingRule = true; // Show the form
         IsEditingRule = true;
+        OnPropertyChanged(nameof(FormTitle));
     }
 
     [RelayCommand]
