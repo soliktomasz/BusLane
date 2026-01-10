@@ -60,15 +60,24 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _isLoading = true;
 
-        ConfirmBeforeDelete = _preferencesService.ConfirmBeforeDelete;
-        ConfirmBeforePurge = _preferencesService.ConfirmBeforePurge;
-        AutoRefreshMessages = _preferencesService.AutoRefreshMessages;
-        AutoRefreshIntervalSeconds = _preferencesService.AutoRefreshIntervalSeconds;
-        DefaultMessageCount = _preferencesService.DefaultMessageCount;
-        ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
-        EnableMessagePreview = _preferencesService.EnableMessagePreview;
-        Theme = _preferencesService.Theme;
-        // Note: _isLoading is set to false via Dispatcher in constructor
+        try
+        {
+            ConfirmBeforeDelete = _preferencesService.ConfirmBeforeDelete;
+            ConfirmBeforePurge = _preferencesService.ConfirmBeforePurge;
+            AutoRefreshMessages = _preferencesService.AutoRefreshMessages;
+            AutoRefreshIntervalSeconds = _preferencesService.AutoRefreshIntervalSeconds;
+            DefaultMessageCount = _preferencesService.DefaultMessageCount;
+            ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
+            EnableMessagePreview = _preferencesService.EnableMessagePreview;
+            Theme = _preferencesService.Theme;
+            // Note: _isLoading is set to false via Dispatcher in constructor (normal case)
+        }
+        catch
+        {
+            // If loading fails, reset _isLoading immediately to avoid stuck state
+            _isLoading = false;
+            throw;
+        }
     }
 
     [RelayCommand]
