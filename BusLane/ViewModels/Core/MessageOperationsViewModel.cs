@@ -70,7 +70,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
         {
             if (SelectedMessage?.Body == null) return false;
             var trimmed = SelectedMessage.Body.Trim();
-            return trimmed.StartsWith("<") && trimmed.EndsWith(">");
+            return trimmed.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) || 
+                   (trimmed.StartsWith("<") && trimmed.Contains("</") && trimmed.EndsWith(">"));
         }
     }
 
