@@ -35,26 +35,33 @@ public partial class SettingsViewModel : ViewModelBase
         _onClose = onClose;
         _preferencesService = preferencesService;
         _mainViewModel = mainViewModel;
+
+        // Capture original theme BEFORE loading to avoid any binding interference
+        _originalTheme = preferencesService.Theme;
+
         LoadSettings();
-        _originalTheme = Theme;
+
+        // Schedule the end of loading state to happen after UI bindings are established
+        Dispatcher.UIThread.Post(() => _isLoading = false, DispatcherPriority.Loaded);
     }
 
     partial void OnThemeChanged(string value)
     {
-        // Skip theme preview during initial load
-        if (_isLoading)
+        // Skip theme preview during initial load, binding initialization, or dialog closing
+        // Also skip if value is null/empty (can happen during binding teardown)
+        if (_isLoading || string.IsNullOrEmpty(value))
             return;
-            
+
         // Apply theme immediately as preview when user changes it
         App.Instance?.ApplyTheme(value);
     }
 
     private void LoadSettings()
     {
+        _isLoading = true;
+
         try
         {
-            _isLoading = true;
-
             ConfirmBeforeDelete = _preferencesService.ConfirmBeforeDelete;
             ConfirmBeforePurge = _preferencesService.ConfirmBeforePurge;
             AutoRefreshMessages = _preferencesService.AutoRefreshMessages;
@@ -63,10 +70,13 @@ public partial class SettingsViewModel : ViewModelBase
             ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
+            // Note: _isLoading is set to false via Dispatcher in constructor (normal case)
         }
-        finally
+        catch
         {
+            // If loading fails, reset _isLoading immediately to avoid stuck state
             _isLoading = false;
+            throw;
         }
     }
 
@@ -102,12 +112,17 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private void Cancel()
     {
-        // Revert theme to original if it was changed
-        if (Theme != _originalTheme)
-        {
-            App.Instance?.ApplyTheme(_originalTheme);
-        }
+        // Block any further theme changes from binding teardown
+        _isLoading = true;
+
+        var themeToRestore = _originalTheme;
         _onClose();
+
+        // Apply theme AFTER dialog is fully closed to override any binding-triggered changes
+        Dispatcher.UIThread.Post(() =>
+        {
+            App.Instance?.ApplyTheme(themeToRestore);
+        }, DispatcherPriority.Background);
     }
 
     [RelayCommand]
