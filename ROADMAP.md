@@ -6,7 +6,17 @@ This document outlines the planned features and improvements for BusLane. Items 
 
 ---
 
-## ✅ Completed (v0.7.0)
+## ✅ Completed (v0.8.0)
+
+### v0.8.0 — Developer Experience
+
+- [x] **Keyboard Shortcuts** — Quick actions (Ctrl+R refresh, Ctrl+N new message, etc.)
+- [x] **Syntax Highlighting** — JSON/XML highlighting in message body
+- [x] **JSON Formatter** — Format and validate JSON message bodies
+- [x] **Better Namespace Explorer** — Improve namespace selector for better clarity and functionality
+- [x] **Recent Connections** — Quick access to recently used connections
+
+### v0.7.0 — Enhanced Message Management
 
 - [x] **Message Search & Filter** — Search messages by content, properties, or metadata
 - [x] **Bulk Operations** — Select multiple messages for delete/move operations
@@ -18,13 +28,6 @@ This document outlines the planned features and improvements for BusLane. Items 
 
 ## 📅 Planned
 
-### v0.8.0 — Developer Experience
-
-- [ ] **Keyboard Shortcuts** — Quick actions (Ctrl+R refresh, Ctrl+N new message, etc.)
-- [ ] **Syntax Highlighting** — JSON/XML highlighting in message body
-- [ ] **JSON Formatter** — Format and validate JSON message bodies
-- [ ] **Better Namespace Explorer** — Improve namespace selector for better clarity and functionality
-- [ ] **Recent Connections** — Quick access to recently used connections
 
 ### v0.9.0 — Advanced Monitoring
 
@@ -99,9 +102,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 | Priority | Impact | Effort | Items |
 |----------|--------|--------|-------|
-| 🔴 High | High | Low | Recent connections, Keyboard shortcuts |
-| 🟠 Medium | High | Medium | Syntax highlighting, JSON formatter, Code generation |
-| 🟡 Medium | Medium | Medium | Historical metrics, Custom dashboards, Auto-update |
+| 🔴 High | High | Low | Auto-update, Windows Installer |
+| 🟠 Medium | High | Medium | Historical metrics, Custom dashboards |
+| 🟡 Medium | Medium | Medium | macOS Signing, Linux Packages |
 | 🟢 Low | Medium | High | Additional Azure services, AI features |
 
 ---
@@ -112,6 +115,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.8.0 | 2026 | Developer Experience, Keyboard Shortcuts, Syntax Highlighting, JSON Formatter |
 | v0.7.0 | 2026 | Enhanced Message Management, Search & Filter, Bulk Operations, Export/Import |
 | v0.6.0 | 2025 | Live Charts, Alert system |
 | v0.5.x | 2025 | Connection library, Message templates |

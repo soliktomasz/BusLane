@@ -5,7 +5,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)
 ![Avalonia UI](https://img.shields.io/badge/Avalonia-11.3-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Version](https://img.shields.io/badge/Version-0.7.3-blue.svg)
+![Version](https://img.shields.io/badge/Version-0.8.0-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-tomaszsolik-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=000000)](https://www.buymeacoffee.com/tomaszsolik)
 
@@ -29,6 +29,8 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 ### Namespace & Entity Management
 - **Subscription Management** - Browse and switch between Azure subscriptions
 - **Namespace Explorer** - View all Service Bus namespaces in your subscription
+- **Namespace Selection Panel** - Slide-in panel for easy namespace browsing and selection
+- **Namespace Search** - Filter namespaces by name, location, or resource group
 - **Queue Management** - Browse queues, view message counts, and manage messages
 - **Topic & Subscription Support** - Full support for topics and their subscriptions
 - **Session-Enabled Queues** - Support for session-enabled queues and subscriptions
@@ -249,12 +251,12 @@ For detailed security information and vulnerability reporting, see [SECURITY.md]
 See [ROADMAP.md](ROADMAP.md) for planned features and future development.
 
 Highlights for upcoming releases:
-- 📦 Bulk message operations
-- 📤 Export/Import messages to JSON/XML
 - ⌨️ Keyboard shortcuts
 - 🎨 Syntax highlighting for JSON/XML
 - 📊 Historical metrics and custom dashboards
+- 📈 Export charts and metric comparison
 - 🔄 Auto-update functionality
+- 📦 Windows/macOS/Linux installers
 
 ## Contributing
 
