@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.UpdateAvailableDialog"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowUpdateDialog}">
+        <Border Classes="modal" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center"
+                MinWidth="500"
+                MaxWidth="600">
+            <DockPanel>
+                <!-- Header -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,20">
+                    <TextBlock Text="Update Available" Classes="heading"/>
+                    <Button Classes="icon" 
+                            HorizontalAlignment="Right"
+                            Command="{Binding CloseUpdateDialogCommand}">
+                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                    </Button>
+                </Grid>
+                
+                <!-- Content -->
+                <StackPanel DockPanel.Dock="Top" Spacing="16" Margin="0,0,0,24">
+                    <TextBlock TextWrapping="Wrap">
+                        <Run Text="A new version of Bus Lane is available!" FontWeight="SemiBold"/>
+                    </TextBlock>
+                    
+                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <TextBlock Text="Current version:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding AppVersion}" Grid.Row="0" Grid.Column="1" 
+                                   FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        
+                        <TextBlock Text="Latest version:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding UpdateDialogLatestVersion}" Grid.Row="1" Grid.Column="1" 
+                                   FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </Grid>
+                    
+                    <Separator/>
+                    
+                    <TextBlock Text="Release Notes" FontWeight="SemiBold" FontSize="14"/>
+                    <ScrollViewer MaxHeight="200" 
+                                  Background="{DynamicResource SurfaceSubtle}"
+                                  BorderBrush="{DynamicResource BorderDefault}"
+                                  BorderThickness="1"
+                                  CornerRadius="4"
+                                  Padding="12">
+                        <TextBlock Text="{Binding UpdateDialogReleaseNotes}" 
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource DefaultForeground}"/>
+                    </ScrollViewer>
+                </StackPanel>
+                
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Classes="secondary small" 
+                            Content="Remind Me Later" 
+                            Command="{Binding RemindMeLaterUpdateCommand}"/>
+                    <Button Classes="primary small" 
+                            Content="Download Update" 
+                            Command="{Binding DownloadUpdateCommand}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Border>
+</UserControl>

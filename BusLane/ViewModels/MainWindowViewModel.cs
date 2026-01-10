@@ -11,6 +11,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using System.Diagnostics;
 
 /// <summary>
 /// Represents a group of keyboard shortcuts for display in the help dialog.
@@ -39,6 +40,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly IUpdateService _updateService;
     private IFileDialogService? _fileDialogService;
 
     // Current operations instance - unified interface for all Service Bus operations
@@ -79,8 +81,18 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _deviceCodeUrl = "";
     [ObservableProperty] private string _deviceCodeMessage = "";
 
+    // Update dialog
+    [ObservableProperty] private bool _showUpdateDialog;
+    [ObservableProperty] private string _updateDialogLatestVersion = "";
+    [ObservableProperty] private string _updateDialogReleaseNotes = "";
+    [ObservableProperty] private string _updateDialogDownloadUrl = "";
+
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
+    
+    // Update check
+    private System.Timers.Timer? _updateCheckTimer;
+    private DateTime? _lastUpdateCheckTime;
 
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
@@ -111,6 +123,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IAlertService alertService,
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
+        IUpdateService updateService,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -121,6 +134,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _alertService = alertService;
         _preferencesService = preferencesService;
         _keyboardShortcutService = keyboardShortcutService;
+        _updateService = updateService;
         _fileDialogService = fileDialogService;
 
         // Initialize composed components
@@ -185,6 +199,13 @@ public partial class MainWindowViewModel : ViewModelBase
         };
 
         InitializeAutoRefreshTimer();
+        InitializeUpdateCheckTimer();
+        
+        // Perform initial update check if enabled (non-blocking)
+        if (_preferencesService.CheckForUpdates)
+        {
+            _ = Task.Run(async () => await CheckForUpdatesAsync(silent: true));
+        }
     }
 
     public void SetFileDialogService(IFileDialogService fileDialogService) => _fileDialogService = fileDialogService;
@@ -262,6 +283,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowDeadLetterBadges));
         OnPropertyChanged(nameof(EnableMessagePreview));
         UpdateAutoRefreshTimer();
+        UpdateUpdateCheckTimer();
     }
 
     #region Initialization & Subscriptions
@@ -1126,6 +1148,142 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ShowConfirmDialog = false;
         _confirmDialogAction = null;
+    }
+
+    #endregion
+
+    #region Update Check
+
+    private void InitializeUpdateCheckTimer()
+    {
+        _updateCheckTimer = new System.Timers.Timer();
+        _updateCheckTimer.Elapsed += async (_, _) =>
+        {
+            if (_preferencesService.CheckForUpdates)
+            {
+                var hoursSinceLastCheck = _lastUpdateCheckTime.HasValue
+                    ? (DateTime.UtcNow - _lastUpdateCheckTime.Value).TotalHours
+                    : double.MaxValue;
+
+                if (hoursSinceLastCheck >= _preferencesService.UpdateCheckIntervalHours)
+                {
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        await CheckForUpdatesAsync(silent: false);
+                    });
+                }
+            }
+        };
+        UpdateUpdateCheckTimer();
+    }
+
+    public void UpdateUpdateCheckTimer()
+    {
+        if (_updateCheckTimer == null) return;
+
+        if (_preferencesService.CheckForUpdates)
+        {
+            var intervalHours = _preferencesService.UpdateCheckIntervalHours;
+            _updateCheckTimer.Interval = TimeSpan.FromHours(intervalHours).TotalMilliseconds;
+            _updateCheckTimer.AutoReset = true;
+            _updateCheckTimer.Start();
+        }
+        else
+        {
+            _updateCheckTimer.Stop();
+        }
+    }
+
+    private async Task CheckForUpdatesAsync(bool silent = false)
+    {
+        try
+        {
+            _lastUpdateCheckTime = DateTime.UtcNow;
+            var hasUpdate = await _updateService.CheckForUpdatesAsync();
+
+            if (hasUpdate && _updateService.LatestReleaseInfo != null && !silent)
+            {
+                var releaseInfo = _updateService.LatestReleaseInfo;
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    // Close settings dialog if it's open, so update dialog appears on top
+                    if (ShowSettings)
+                    {
+                        CloseSettings();
+                    }
+                    
+                    UpdateDialogLatestVersion = $"v{releaseInfo.Version}";
+                    UpdateDialogReleaseNotes = string.IsNullOrWhiteSpace(releaseInfo.ReleaseNotes)
+                        ? "No release notes available."
+                        : releaseInfo.ReleaseNotes;
+                    UpdateDialogDownloadUrl = releaseInfo.DownloadUrl;
+                    ShowUpdateDialog = true;
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error checking for updates: {ex.Message}");
+            // Silently fail - don't interrupt user experience
+        }
+    }
+
+    [RelayCommand]
+    public async Task CheckForUpdatesManuallyAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            await CheckForUpdatesAsync(silent: false);
+            if (!_updateService.IsUpdateAvailable)
+            {
+                StatusMessage = "You are running the latest version.";
+                ShowStatusPopup = true;
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private void DownloadUpdate()
+    {
+        try
+        {
+            var url = !string.IsNullOrWhiteSpace(UpdateDialogDownloadUrl)
+                ? UpdateDialogDownloadUrl
+                : "https://github.com/soliktomasz/BusLane/releases/latest";
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error opening download URL: {ex.Message}");
+            StatusMessage = "Failed to open download page. Please visit https://github.com/soliktomasz/BusLane/releases";
+            ShowStatusPopup = true;
+        }
+        finally
+        {
+            ShowUpdateDialog = false;
+        }
+    }
+
+    [RelayCommand]
+    private void RemindMeLaterUpdate()
+    {
+        ShowUpdateDialog = false;
+    }
+
+    [RelayCommand]
+    private void CloseUpdateDialog()
+    {
+        ShowUpdateDialog = false;
     }
 
     #endregion

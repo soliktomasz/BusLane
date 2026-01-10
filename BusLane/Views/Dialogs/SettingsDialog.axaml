@@ -262,6 +262,32 @@
                         </Border>
 
                         </StackPanel>
+
+                        <Separator/>
+
+                        <!-- Update Settings -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="14"/>
+
+                            <CheckBox IsChecked="{Binding SettingsViewModel.CheckForUpdates}"
+                                      Content="Check for updates automatically"/>
+
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto"
+                                  IsEnabled="{Binding SettingsViewModel.CheckForUpdates}">
+                                <TextBlock Text="Check interval (hours)" VerticalAlignment="Center"/>
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding SettingsViewModel.AvailableUpdateCheckIntervals}"
+                                          SelectedItem="{Binding SettingsViewModel.UpdateCheckIntervalHours}"
+                                          Width="100"/>
+                            </Grid>
+
+                            <Button Classes="secondary small"
+                                    Content="Check for updates now"
+                                    Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
                     </Border>
                 </ScrollViewer>
 

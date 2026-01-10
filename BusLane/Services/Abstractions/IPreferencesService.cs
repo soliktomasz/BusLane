@@ -14,6 +14,8 @@ public interface IPreferencesService
     bool EnableMessagePreview { get; set; }
     bool ShowNavigationPanel { get; set; }
     string Theme { get; set; }
+    bool CheckForUpdates { get; set; }
+    int UpdateCheckIntervalHours { get; set; }
     void Save();
     void Load();
     event EventHandler? PreferencesChanged;

@@ -18,6 +18,8 @@ public class PreferencesService : IPreferencesService
     public bool EnableMessagePreview { get; set; } = true;
     public bool ShowNavigationPanel { get; set; } = true;
     public string Theme { get; set; } = "Light";
+    public bool CheckForUpdates { get; set; } = true;
+    public int UpdateCheckIntervalHours { get; set; } = 24;
 
     public event EventHandler? PreferencesChanged;
 
@@ -45,6 +47,8 @@ public class PreferencesService : IPreferencesService
                     EnableMessagePreview = data.EnableMessagePreview;
                     ShowNavigationPanel = data.ShowNavigationPanel;
                     Theme = data.Theme ?? "Light";
+                    CheckForUpdates = data.CheckForUpdates;
+                    UpdateCheckIntervalHours = data.UpdateCheckIntervalHours;
                 }
             }
         }
@@ -70,7 +74,9 @@ public class PreferencesService : IPreferencesService
                 ShowDeadLetterBadges = ShowDeadLetterBadges,
                 EnableMessagePreview = EnableMessagePreview,
                 ShowNavigationPanel = ShowNavigationPanel,
-                Theme = Theme
+                Theme = Theme,
+                CheckForUpdates = CheckForUpdates,
+                UpdateCheckIntervalHours = UpdateCheckIntervalHours
             };
 
             var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
@@ -98,5 +104,7 @@ public class PreferencesService : IPreferencesService
         public bool EnableMessagePreview { get; set; }
         public bool ShowNavigationPanel { get; set; } = true;
         public string? Theme { get; set; }
+        public bool CheckForUpdates { get; set; } = true;
+        public int UpdateCheckIntervalHours { get; set; } = 24;
     }
 }
