@@ -3,6 +3,7 @@ namespace BusLane.Services.ServiceBus;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ServiceBus;
+using Serilog;
 
 /// <summary>
 /// Factory for creating Service Bus operation instances.
@@ -34,6 +35,7 @@ public class ServiceBusOperationsFactory : IServiceBusOperationsFactory
 
     public IConnectionStringOperations CreateFromConnectionString(string connectionString)
     {
+        Log.Debug("Creating Service Bus operations from connection string");
         return new ConnectionStringOperations(connectionString);
     }
 
@@ -41,8 +43,12 @@ public class ServiceBusOperationsFactory : IServiceBusOperationsFactory
     {
         var armClient = _getArmClient();
         if (armClient == null)
+        {
+            Log.Error("Cannot create Azure credential operations: ArmClient is not initialized");
             throw new InvalidOperationException("ArmClient is required for Azure credential operations. Please sign in first.");
+        }
 
+        Log.Debug("Creating Service Bus operations for endpoint {Endpoint} with Azure credentials", endpoint);
         return new AzureCredentialOperations(
             endpoint,
             namespaceId,

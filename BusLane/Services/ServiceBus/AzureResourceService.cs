@@ -1,4 +1,5 @@
 using Azure.ResourceManager.ServiceBus;
+using Serilog;
 
 namespace BusLane.Services.ServiceBus;
 
@@ -19,20 +20,31 @@ public class AzureResourceService : IAzureResourceService
 
     public async Task<IEnumerable<AzureSubscription>> GetAzureSubscriptionsAsync(CancellationToken ct = default)
     {
-        if (_auth.ArmClient == null) return [];
+        if (_auth.ArmClient == null)
+        {
+            Log.Warning("Cannot get Azure subscriptions: ArmClient is not initialized");
+            return [];
+        }
 
+        Log.Debug("Fetching Azure subscriptions");
         var subs = new List<AzureSubscription>();
         await foreach (var sub in _auth.ArmClient.GetSubscriptions().GetAllAsync(ct))
         {
             subs.Add(new AzureSubscription(sub.Data.SubscriptionId, sub.Data.DisplayName));
         }
+        Log.Information("Retrieved {Count} Azure subscriptions", subs.Count);
         return subs;
     }
 
     public async Task<IEnumerable<ServiceBusNamespace>> GetNamespacesAsync(string subscriptionId, CancellationToken ct = default)
     {
-        if (_auth.ArmClient == null) return [];
+        if (_auth.ArmClient == null)
+        {
+            Log.Warning("Cannot get namespaces: ArmClient is not initialized");
+            return [];
+        }
 
+        Log.Debug("Fetching Service Bus namespaces for subscription {SubscriptionId}", subscriptionId);
         var sub = _auth.ArmClient.GetSubscriptionResource(
             new Azure.Core.ResourceIdentifier($"/subscriptions/{subscriptionId}")
         );
@@ -51,6 +63,8 @@ public class AzureResourceService : IAzureResourceService
                 endpoint
             ));
         }
+        Log.Information("Retrieved {Count} Service Bus namespaces in subscription {SubscriptionId}", 
+            namespaces.Count, subscriptionId);
         return namespaces;
     }
 }

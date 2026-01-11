@@ -94,6 +94,8 @@ class Program
                 o.Dsn = sentryDsn;
                 o.MinimumBreadcrumbLevel = LogEventLevel.Debug;
                 o.MinimumEventLevel = LogEventLevel.Error;
+                o.AttachStacktrace = true;
+                o.SendDefaultPii = false;
             })
             .CreateLogger();
     }

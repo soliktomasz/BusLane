@@ -3,6 +3,7 @@ namespace BusLane.Services.Auth;
 using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
+using Serilog;
 
 public class AzureAuthService : IAzureAuthService
 {
@@ -79,12 +80,12 @@ public class AzureAuthService : IAzureAuthService
             if (File.Exists(_authRecordPath))
             {
                 File.Delete(_authRecordPath);
-                Console.WriteLine("Authentication record deleted");
+                Log.Information("Authentication record deleted");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to delete auth record: {ex.Message}");
+            Log.Warning(ex, "Failed to delete authentication record from {Path}", _authRecordPath);
         }
     }
 
@@ -127,11 +128,11 @@ public class AzureAuthService : IAzureAuthService
         _authRecord = LoadAuthenticationRecord();
         if (_authRecord == null)
         {
-            Console.WriteLine("No saved authentication record found");
+            Log.Debug("No saved authentication record found, silent login not possible");
             return false;
         }
 
-        Console.WriteLine($"Found saved auth record for: {_authRecord.Username}");
+        Log.Debug("Found saved authentication record for user {Username}", _authRecord.Username);
 
         var context = new TokenRequestContext(
             new[] { "https://management.azure.com/.default" }
@@ -160,16 +161,16 @@ public class AzureAuthService : IAzureAuthService
             UserName = _authRecord.Username;
 
             AuthenticationChanged?.Invoke(this, true);
-            Console.WriteLine($"Silent login succeeded for: {_authRecord.Username}");
+            Log.Information("Silent login succeeded for user {Username}", _authRecord.Username);
             return true;
         }
         catch (AuthenticationRequiredException)
         {
-            Console.WriteLine("Cached token expired, interactive login required");
+            Log.Debug("Cached token expired, interactive login required");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Silent login failed: {ex.Message}");
+            Log.Warning(ex, "Silent login failed");
         }
 
         // Clear invalid auth record
@@ -239,6 +240,7 @@ public class AzureAuthService : IAzureAuthService
 
     public Task LogoutAsync()
     {
+        Log.Information("User {Username} logged out", UserName ?? "unknown");
         DeleteAuthenticationRecord();
         _authRecord = null;
         _credential = null;

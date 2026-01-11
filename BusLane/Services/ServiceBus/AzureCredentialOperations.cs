@@ -4,6 +4,7 @@ using Azure.Core;
 using Azure.Messaging.ServiceBus;
 using Azure.ResourceManager.ServiceBus;
 using BusLane.Models;
+using Serilog;
 
 /// <summary>
 /// Service Bus operations using Azure credential (DefaultAzureCredential/InteractiveBrowserCredential) for authentication.
@@ -32,10 +33,12 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         _namespaceId = namespaceId;
         _credential = credential;
         _getNamespaceResource = getNamespaceResource;
+        Log.Debug("AzureCredentialOperations initialized for endpoint {Endpoint}", _endpoint);
     }
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
     {
+        Log.Debug("Fetching queues from {Endpoint}", _endpoint);
         var ns = _getNamespaceResource();
         var queues = new List<QueueInfo>();
 
@@ -54,6 +57,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 q.Data.LockDuration ?? TimeSpan.FromMinutes(1)
             ));
         }
+        Log.Debug("Retrieved {Count} queues from {Endpoint}", queues.Count, _endpoint);
         return queues;
     }
 
@@ -167,6 +171,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         TimeSpan? timeToLive = null, DateTimeOffset? scheduledEnqueueTime = null,
         CancellationToken ct = default)
     {
+        Log.Debug("Sending message to {EntityName} via Azure credential", entityName);
         await using var client = CreateClient();
         await using var sender = client.CreateSender(entityName);
 
@@ -175,33 +180,49 @@ public class AzureCredentialOperations : IAzureCredentialOperations
             subject, to, replyTo, replyToSessionId, partitionKey, timeToLive, scheduledEnqueueTime, properties);
 
         await sender.SendMessageAsync(msg, ct);
+        Log.Information("Message sent to {EntityName} (MessageId: {MessageId})", entityName, msg.MessageId);
     }
 
     public async Task PurgeMessagesAsync(string entityName, string? subscription, bool deadLetter, CancellationToken ct = default)
     {
+        Log.Information("Purging messages from {EntityName}{Subscription} (DeadLetter: {DeadLetter})", 
+            entityName, subscription != null ? $"/{subscription}" : "", deadLetter);
         await using var client = CreateClient();
         await ServiceBusOperations.PurgeMessagesAsync(client, entityName, subscription, deadLetter, ct);
+        Log.Information("Purge completed for {EntityName}", entityName);
     }
 
     public async Task<int> DeleteMessagesAsync(
         string entityName, string? subscription, IEnumerable<long> sequenceNumbers,
         bool deadLetter = false, CancellationToken ct = default)
     {
+        var sequenceList = sequenceNumbers.ToList();
+        Log.Debug("Deleting {Count} messages from {EntityName}", sequenceList.Count, entityName);
         await using var client = CreateClient();
-        return await ServiceBusOperations.DeleteMessagesAsync(client, entityName, subscription, sequenceNumbers, deadLetter, ct);
+        var deleted = await ServiceBusOperations.DeleteMessagesAsync(client, entityName, subscription, sequenceList, deadLetter, ct);
+        Log.Information("Deleted {DeletedCount} messages from {EntityName}", deleted, entityName);
+        return deleted;
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
+        var messageList = messages.ToList();
+        Log.Debug("Resending {Count} messages to {EntityName}", messageList.Count, entityName);
         await using var client = CreateClient();
-        return await ServiceBusOperations.ResendMessagesAsync(client, entityName, messages, ct);
+        var resent = await ServiceBusOperations.ResendMessagesAsync(client, entityName, messageList, ct);
+        Log.Information("Resent {ResentCount} messages to {EntityName}", resent, entityName);
+        return resent;
     }
 
     public async Task<int> ResubmitDeadLetterMessagesAsync(
         string entityName, string? subscription, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
+        var messageList = messages.ToList();
+        Log.Debug("Resubmitting {Count} dead letter messages from {EntityName}", messageList.Count, entityName);
         await using var client = CreateClient();
-        return await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(client, entityName, subscription, messages, ct);
+        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(client, entityName, subscription, messageList, ct);
+        Log.Information("Resubmitted {ResubmittedCount} dead letter messages from {EntityName}", resubmitted, entityName);
+        return resubmitted;
     }
 
     #region Private Helpers

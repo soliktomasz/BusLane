@@ -3,6 +3,7 @@ namespace BusLane.Services.ServiceBus;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using BusLane.Models;
+using Serilog;
 
 /// <summary>
 /// Service Bus operations using a connection string for authentication.
@@ -172,15 +173,23 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
+        var messageList = messages.ToList();
+        Log.Debug("Resending {Count} messages to {EntityName}", messageList.Count, entityName);
         await using var client = new ServiceBusClient(_connectionString);
-        return await ServiceBusOperations.ResendMessagesAsync(client, entityName, messages, ct);
+        var resent = await ServiceBusOperations.ResendMessagesAsync(client, entityName, messageList, ct);
+        Log.Information("Resent {ResentCount} messages to {EntityName}", resent, entityName);
+        return resent;
     }
 
     public async Task<int> ResubmitDeadLetterMessagesAsync(
         string entityName, string? subscription, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
+        var messageList = messages.ToList();
+        Log.Debug("Resubmitting {Count} dead letter messages from {EntityName}", messageList.Count, entityName);
         await using var client = new ServiceBusClient(_connectionString);
-        return await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(client, entityName, subscription, messages, ct);
+        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(client, entityName, subscription, messageList, ct);
+        Log.Information("Resubmitted {ResubmittedCount} dead letter messages from {EntityName}", resubmitted, entityName);
+        return resubmitted;
     }
 
     public async Task<(bool IsValid, string? EntityName, string? Endpoint, string? ErrorMessage)> ValidateAsync(CancellationToken ct = default)

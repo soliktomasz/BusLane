@@ -3,6 +3,7 @@ namespace BusLane.Services.Storage;
 using System.Text.Json;
 using BusLane.Models;
 using Infrastructure;
+using Serilog;
 
 public class ConnectionStorageService : IConnectionStorageService
 {
@@ -75,8 +76,9 @@ public class ConnectionStorageService : IConnectionStorageService
                     // was encrypted with a different key (e.g., from a different machine)
                     if (connectionString == null)
                     {
-                        Console.WriteLine($"Warning: Failed to decrypt connection '{stored.Name}' (ID: {stored.Id}). " +
-                                          "The connection may have been encrypted with a different key.");
+                        Log.Warning("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId}). " +
+                                    "The connection may have been encrypted with a different key", 
+                            stored.Name, stored.Id);
                         return null;
                     }
 

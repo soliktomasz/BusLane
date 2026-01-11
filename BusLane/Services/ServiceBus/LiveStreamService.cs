@@ -5,6 +5,7 @@ using System.Reactive.Subjects;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using BusLane.Models;
+using Serilog;
 
 public class LiveStreamService : ILiveStreamService
 {
@@ -98,6 +99,9 @@ public class LiveStreamService : ILiveStreamService
         _currentTopicName = topicName;
         _isPeekMode = peekOnly;
 
+        Log.Information("Starting live stream for subscription {TopicName}/{SubscriptionName} at {Endpoint} (PeekOnly: {PeekOnly})", 
+            topicName, subscriptionName, endpoint, peekOnly);
+
         try
         {
             _client = new ServiceBusClient(endpoint, new DefaultAzureCredential());
@@ -112,9 +116,13 @@ public class LiveStreamService : ILiveStreamService
             }
 
             SetStreamingStatus(true);
+            Log.Debug("Live stream started successfully for subscription {TopicName}/{SubscriptionName}", 
+                topicName, subscriptionName);
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "Failed to start live stream for subscription {TopicName}/{SubscriptionName}", 
+                topicName, subscriptionName);
             StreamError?.Invoke(this, ex);
             throw;
         }
@@ -224,6 +232,7 @@ public class LiveStreamService : ILiveStreamService
 
         _processor.ProcessErrorAsync += args =>
         {
+            Log.Error(args.Exception, "Live stream processor error for entity {EntityPath}", args.EntityPath);
             StreamError?.Invoke(this, args.Exception);
             return Task.CompletedTask;
         };
@@ -233,6 +242,11 @@ public class LiveStreamService : ILiveStreamService
 
     public async Task StopStreamAsync()
     {
+        if (_isStreaming)
+        {
+            Log.Information("Stopping live stream for {EntityName}", _currentEntityName);
+        }
+        
         SetStreamingStatus(false);
         
         _peekCts?.Cancel();
@@ -257,6 +271,8 @@ public class LiveStreamService : ILiveStreamService
             await _client.DisposeAsync();
             _client = null;
         }
+        
+        Log.Debug("Live stream resources cleaned up");
     }
 
     private void SetStreamingStatus(bool isStreaming)

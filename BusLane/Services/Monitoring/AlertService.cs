@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
+using Serilog;
 
 public class AlertService : IAlertService
 {
@@ -33,9 +34,13 @@ public class AlertService : IAlertService
 
     public void RemoveRule(string ruleId)
     {
-        _rules.RemoveAll(r => r.Id == ruleId);
+        var removedCount = _rules.RemoveAll(r => r.Id == ruleId);
         SaveRules();
         AlertsChanged?.Invoke(this, EventArgs.Empty);
+        if (removedCount > 0)
+        {
+            Log.Information("Alert rule removed: {RuleId}", ruleId);
+        }
     }
 
     public void UpdateRule(AlertRule rule)
@@ -106,12 +111,15 @@ public class AlertService : IAlertService
                 _activeAlerts.Add(alert);
                 triggeredAlerts.Add(alert);
                 AlertTriggered?.Invoke(this, alert);
+                Log.Warning("Alert triggered: {AlertType} on {EntityName} - Current value: {CurrentValue}, Threshold: {Threshold}", 
+                    alert.Rule.Type, alert.EntityName, alert.CurrentValue, alert.Rule.Threshold);
             }
         }
 
         if (triggeredAlerts.Count > 0)
         {
             AlertsChanged?.Invoke(this, EventArgs.Empty);
+            Log.Information("Alert evaluation completed: {TriggeredCount} new alerts triggered", triggeredAlerts.Count);
         }
 
         return Task.FromResult<IEnumerable<AlertEvent>>(triggeredAlerts);
