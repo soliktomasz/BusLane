@@ -46,7 +46,7 @@ class Program
         });
         
         // Configure Serilog with Sentry sink
-        ConfigureLogging();
+        ConfigureLogging(sentryDsn);
         
         try
         {
@@ -69,7 +69,7 @@ class Program
         }
     }
 
-    private static void ConfigureLogging()
+    private static void ConfigureLogging(string sentryDsn = "")
     {
         var logPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -91,6 +91,7 @@ class Program
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.Sentry(o =>
             {
+                o.Dsn = sentryDsn;
                 o.MinimumBreadcrumbLevel = LogEventLevel.Debug;
                 o.MinimumEventLevel = LogEventLevel.Error;
             })
