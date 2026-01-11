@@ -2,7 +2,11 @@ using Avalonia;
 using Avalonia.ReactiveUI;
 using BusLane.Services.Abstractions;
 using BusLane.ViewModels;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Sentry;
+using Serilog;
+using Serilog.Events;
 
 namespace BusLane;
 
@@ -19,11 +23,78 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        Services = services.BuildServiceProvider();
+        // Build configuration from appsettings files
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        // Get Sentry DSN from configuration or environment variable
+        var sentryDsn = configuration["Sentry:Dsn"] 
+                        ?? Environment.GetEnvironmentVariable("SENTRY_DSN") 
+                        ?? "";
+        
+        // Initialize Sentry SDK
+        using var sentryDisposable = SentrySdk.Init(o =>
+        {
+            o.Dsn = sentryDsn;
+            o.Debug = false;
+            o.TracesSampleRate = 1.0;
+            o.IsGlobalModeEnabled = true;
+            o.AutoSessionTracking = true;
+            o.AttachStacktrace = true;
+        });
+        
+        // Configure Serilog with Sentry sink
+        ConfigureLogging();
+        
+        try
+        {
+            Log.Information("Starting BusLane application");
+            
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            Services = services.BuildServiceProvider();
+
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Application terminated unexpectedly");
+            SentrySdk.CaptureException(ex);
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+    }
+
+    private static void ConfigureLogging()
+    {
+        var logPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "BusLane",
+            "logs",
+            "buslane-.log");
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                logPath,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.Sentry(o =>
+            {
+                o.MinimumBreadcrumbLevel = LogEventLevel.Debug;
+                o.MinimumEventLevel = LogEventLevel.Error;
+            })
+            .CreateLogger();
     }
 
     private static void ConfigureServices(IServiceCollection services)

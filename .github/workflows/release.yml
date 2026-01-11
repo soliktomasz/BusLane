@@ -34,6 +34,10 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
+      - name: Create appsettings.json
+        run: |
+          echo '{"Sentry":{"Dsn":"${{ secrets.SENTRY_DSN }}"}}' > BusLane/appsettings.json
+
       - name: Publish self-contained
         run: |
           dotnet publish -c Release -r linux-x64 \
@@ -85,6 +89,12 @@ jobs:
           }
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           Write-Output "Extracted version: $VERSION"
+
+      - name: Create appsettings.json
+        run: |
+          @'
+          {"Sentry":{"Dsn":"${{ secrets.SENTRY_DSN }}"}}
+          '@ | Out-File -FilePath BusLane/appsettings.json -Encoding utf8
 
       - name: Publish self-contained
         run: |
@@ -141,6 +151,10 @@ jobs:
           VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
+
+      - name: Create appsettings.json
+        run: |
+          echo '{"Sentry":{"Dsn":"${{ secrets.SENTRY_DSN }}"}}' > BusLane/appsettings.json
 
       - name: Publish self-contained
         run: |
