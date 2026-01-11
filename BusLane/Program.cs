@@ -1,20 +1,19 @@
+namespace BusLane;
+
 using Avalonia;
 using Avalonia.ReactiveUI;
-using BusLane.Services.Abstractions;
-using BusLane.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Sentry;
 using Serilog;
 using Serilog.Events;
 
-namespace BusLane;
-
+using Services.Abstractions;
 using Services.Auth;
 using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using ViewModels;
 
 class Program
 {
