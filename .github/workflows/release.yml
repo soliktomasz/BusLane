@@ -40,7 +40,7 @@ jobs:
 
       - name: Publish self-contained
         run: |
-          dotnet publish -c Release -r linux-x64 \
+          dotnet publish BusLane/BusLane.csproj -c Release -r linux-x64 \
             --self-contained true \
             -p:PublishSingleFile=true \
             -p:IncludeNativeLibrariesForSelfExtract=true \
@@ -98,7 +98,7 @@ jobs:
 
       - name: Publish self-contained
         run: |
-          dotnet publish -c Release -r win-x64 `
+          dotnet publish BusLane/BusLane.csproj -c Release -r win-x64 `
             --self-contained true `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
@@ -158,7 +158,7 @@ jobs:
 
       - name: Publish self-contained
         run: |
-          dotnet publish -c Release -r ${{ matrix.runtime }} \
+          dotnet publish BusLane/BusLane.csproj -c Release -r ${{ matrix.runtime }} \
             --self-contained true \
             -p:PublishSingleFile=true \
             -p:IncludeNativeLibrariesForSelfExtract=true \
