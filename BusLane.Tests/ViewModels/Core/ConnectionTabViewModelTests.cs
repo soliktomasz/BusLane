@@ -1,7 +1,9 @@
 // BusLane.Tests/ViewModels/Core/ConnectionTabViewModelTests.cs
+using BusLane.Services.Abstractions;
 using BusLane.ViewModels;
 using BusLane.ViewModels.Core;
 using FluentAssertions;
+using NSubstitute;
 
 namespace BusLane.Tests.ViewModels.Core;
 
@@ -39,5 +41,22 @@ public class ConnectionTabViewModelTests
         tab.IsConnected.Should().BeFalse();
         tab.IsLoading.Should().BeFalse();
         tab.Mode.Should().Be(ConnectionMode.None);
+    }
+
+    [Fact]
+    public void Constructor_WithPreferencesService_InitializesMessageOps()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+
+        // Act
+        var tab = new ConnectionTabViewModel(
+            "test-id",
+            "Test Tab",
+            "test.servicebus.windows.net",
+            preferencesService);
+
+        // Assert
+        tab.MessageOps.Should().NotBeNull();
     }
 }

@@ -12,6 +12,8 @@ namespace BusLane.ViewModels.Core;
 /// </summary>
 public partial class ConnectionTabViewModel : ViewModelBase
 {
+    private readonly IPreferencesService _preferencesService;
+
     // Identity
     [ObservableProperty] private string _tabId;
     [ObservableProperty] private string _tabTitle;
@@ -25,6 +27,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
     // Composed components
     public NavigationState Navigation { get; }
+    public MessageOperationsViewModel MessageOps { get; }
 
     // Connection resources (set after connection)
     private IServiceBusOperations? _operations;
@@ -32,11 +35,31 @@ public partial class ConnectionTabViewModel : ViewModelBase
     private ServiceBusNamespace? _namespace;
 
     public ConnectionTabViewModel(string tabId, string tabTitle, string tabSubtitle)
+        : this(tabId, tabTitle, tabSubtitle, null!)
+    {
+    }
+
+    public ConnectionTabViewModel(
+        string tabId,
+        string tabTitle,
+        string tabSubtitle,
+        IPreferencesService preferencesService)
     {
         _tabId = tabId;
         _tabTitle = tabTitle;
         _tabSubtitle = tabSubtitle;
+        _preferencesService = preferencesService;
+
         Navigation = new NavigationState();
+
+        MessageOps = new MessageOperationsViewModel(
+            () => _operations,
+            preferencesService ?? new DummyPreferencesService(),
+            () => Navigation.CurrentEntityName,
+            () => Navigation.CurrentSubscriptionName,
+            () => Navigation.CurrentEntityRequiresSession,
+            () => Navigation.ShowDeadLetter,
+            msg => StatusMessage = msg);
     }
 
     /// <summary>
@@ -53,4 +76,21 @@ public partial class ConnectionTabViewModel : ViewModelBase
     /// Gets the namespace if connected via Azure credentials.
     /// </summary>
     public ServiceBusNamespace? Namespace => _namespace;
+
+    // Minimal implementation for parameterless constructor
+    private class DummyPreferencesService : IPreferencesService
+    {
+        public bool ConfirmBeforeDelete { get; set; } = true;
+        public bool ConfirmBeforePurge { get; set; } = true;
+        public bool AutoRefreshMessages { get; set; }
+        public int AutoRefreshIntervalSeconds { get; set; } = 30;
+        public int DefaultMessageCount { get; set; } = 100;
+        public bool ShowDeadLetterBadges { get; set; } = true;
+        public bool EnableMessagePreview { get; set; } = true;
+        public bool ShowNavigationPanel { get; set; } = true;
+        public string Theme { get; set; } = "System";
+        public event EventHandler? PreferencesChanged;
+        public void Save() { }
+        public void Load() { }
+    }
 }
