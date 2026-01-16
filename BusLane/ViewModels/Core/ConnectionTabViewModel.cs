@@ -1,4 +1,5 @@
 // BusLane/ViewModels/Core/ConnectionTabViewModel.cs
+using Azure.Core;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
@@ -76,6 +77,152 @@ public partial class ConnectionTabViewModel : ViewModelBase
     /// Gets the namespace if connected via Azure credentials.
     /// </summary>
     public ServiceBusNamespace? Namespace => _namespace;
+
+    /// <summary>
+    /// Connects to a Service Bus namespace using a saved connection string.
+    /// </summary>
+    public async Task ConnectWithConnectionStringAsync(
+        SavedConnection connection,
+        IServiceBusOperationsFactory operationsFactory)
+    {
+        IsLoading = true;
+        StatusMessage = $"Connecting to {connection.Name}...";
+
+        try
+        {
+            _savedConnection = connection;
+            _operations = operationsFactory.CreateFromConnectionString(connection.ConnectionString);
+            Mode = ConnectionMode.ConnectionString;
+
+            TabTitle = connection.Name;
+            TabSubtitle = connection.Endpoint ?? "";
+
+            await LoadEntitiesAsync(connection);
+
+            IsConnected = true;
+            StatusMessage = "Connected";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Connection failed: {ex.Message}";
+            _operations = null;
+            _savedConnection = null;
+            Mode = ConnectionMode.None;
+            throw;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Connects to a Service Bus namespace using Azure credentials.
+    /// </summary>
+    public async Task ConnectWithAzureCredentialAsync(
+        ServiceBusNamespace ns,
+        TokenCredential credential,
+        IServiceBusOperationsFactory operationsFactory)
+    {
+        IsLoading = true;
+        StatusMessage = $"Connecting to {ns.Name}...";
+
+        try
+        {
+            _namespace = ns;
+            _operations = operationsFactory.CreateFromAzureCredential(ns.Endpoint, ns.Id, credential);
+            Mode = ConnectionMode.AzureAccount;
+
+            TabTitle = ns.Name;
+            TabSubtitle = ns.Endpoint;
+
+            await LoadNamespaceEntitiesAsync();
+
+            IsConnected = true;
+            StatusMessage = "Connected";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Connection failed: {ex.Message}";
+            _operations = null;
+            _namespace = null;
+            Mode = ConnectionMode.None;
+            throw;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Disconnects from the current Service Bus namespace.
+    /// </summary>
+    public Task DisconnectAsync()
+    {
+        _operations = null;
+        _savedConnection = null;
+        _namespace = null;
+        Mode = ConnectionMode.None;
+        IsConnected = false;
+
+        Navigation.Clear();
+        MessageOps.Clear();
+
+        StatusMessage = "Disconnected";
+        return Task.CompletedTask;
+    }
+
+    private async Task LoadEntitiesAsync(SavedConnection connection)
+    {
+        if (_operations == null) return;
+
+        Navigation.Clear();
+
+        if (connection.Type == ConnectionType.Namespace)
+        {
+            await LoadNamespaceEntitiesAsync();
+        }
+        else if (connection.Type == ConnectionType.Queue && connection.EntityName != null)
+        {
+            var queueInfo = await _operations.GetQueueInfoAsync(connection.EntityName);
+            if (queueInfo != null)
+            {
+                Navigation.Queues.Add(queueInfo);
+                Navigation.SelectedQueue = queueInfo;
+                Navigation.SelectedEntity = queueInfo;
+            }
+        }
+        else if (connection.Type == ConnectionType.Topic && connection.EntityName != null)
+        {
+            var topicInfo = await _operations.GetTopicInfoAsync(connection.EntityName);
+            if (topicInfo != null)
+            {
+                Navigation.Topics.Add(topicInfo);
+                Navigation.SelectedTopic = topicInfo;
+                Navigation.SelectedEntity = topicInfo;
+
+                var subs = await _operations.GetSubscriptionsAsync(connection.EntityName);
+                foreach (var sub in subs)
+                    Navigation.TopicSubscriptions.Add(sub);
+            }
+        }
+    }
+
+    private async Task LoadNamespaceEntitiesAsync()
+    {
+        if (_operations == null) return;
+
+        var queues = await _operations.GetQueuesAsync();
+        foreach (var queue in queues)
+            Navigation.Queues.Add(queue);
+
+        var topics = await _operations.GetTopicsAsync();
+        foreach (var topic in topics)
+            Navigation.Topics.Add(topic);
+
+        StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
+    }
 
     // Minimal implementation for parameterless constructor
     private class DummyPreferencesService : IPreferencesService
