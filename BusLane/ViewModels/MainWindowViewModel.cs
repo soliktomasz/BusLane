@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -49,6 +50,17 @@ public partial class MainWindowViewModel : ViewModelBase
     public MessageOperationsViewModel MessageOps { get; }
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
+
+    // Tab management
+    public ObservableCollection<ConnectionTabViewModel> ConnectionTabs { get; } = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveTabs))]
+    [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
+    private ConnectionTabViewModel? _activeTab;
+
+    public bool HasActiveTabs => ConnectionTabs.Count > 0;
+    public string? ShellStatusMessage => ActiveTab?.StatusMessage ?? StatusMessage;
 
     // UI State
     [ObservableProperty] private bool _isLoading;
