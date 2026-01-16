@@ -1141,4 +1141,122 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Tab Management
+
+    /// <summary>
+    /// Opens a new tab for the given saved connection.
+    /// </summary>
+    [RelayCommand]
+    public async Task OpenTabForConnectionAsync(SavedConnection connection)
+    {
+        var tab = new ConnectionTabViewModel(
+            Guid.NewGuid().ToString(),
+            connection.Name,
+            connection.Endpoint ?? "",
+            _preferencesService);
+
+        ConnectionTabs.Add(tab);
+        ActiveTab = tab;
+        OnPropertyChanged(nameof(HasActiveTabs));
+
+        try
+        {
+            await tab.ConnectWithConnectionStringAsync(connection, _operationsFactory);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to connect: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Opens a new tab for the given Azure namespace.
+    /// </summary>
+    [RelayCommand]
+    public async Task OpenTabForNamespaceAsync(ServiceBusNamespace ns)
+    {
+        if (_auth.Credential == null) return;
+
+        var tab = new ConnectionTabViewModel(
+            Guid.NewGuid().ToString(),
+            ns.Name,
+            ns.Endpoint,
+            _preferencesService);
+
+        ConnectionTabs.Add(tab);
+        ActiveTab = tab;
+        OnPropertyChanged(nameof(HasActiveTabs));
+
+        try
+        {
+            await tab.ConnectWithAzureCredentialAsync(ns, _auth.Credential, _operationsFactory);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to connect: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Closes the specified tab.
+    /// </summary>
+    [RelayCommand]
+    public async Task CloseTabAsync(string tabId)
+    {
+        var tab = ConnectionTabs.FirstOrDefault(t => t.TabId == tabId);
+        if (tab == null) return;
+
+        await tab.DisconnectAsync();
+
+        var index = ConnectionTabs.IndexOf(tab);
+        ConnectionTabs.Remove(tab);
+        OnPropertyChanged(nameof(HasActiveTabs));
+
+        // Switch to nearest tab or clear active
+        if (ConnectionTabs.Count == 0)
+        {
+            ActiveTab = null;
+        }
+        else if (ActiveTab == tab)
+        {
+            var newIndex = Math.Min(index, ConnectionTabs.Count - 1);
+            ActiveTab = ConnectionTabs[newIndex];
+        }
+    }
+
+    /// <summary>
+    /// Switches to the specified tab.
+    /// </summary>
+    [RelayCommand]
+    public void SwitchToTab(string tabId)
+    {
+        var tab = ConnectionTabs.FirstOrDefault(t => t.TabId == tabId);
+        if (tab != null)
+        {
+            ActiveTab = tab;
+        }
+    }
+
+    /// <summary>
+    /// Closes the currently active tab.
+    /// </summary>
+    [RelayCommand]
+    public async Task CloseActiveTabAsync()
+    {
+        if (ActiveTab != null)
+        {
+            await CloseTabAsync(ActiveTab.TabId);
+        }
+    }
+
+    partial void OnActiveTabChanged(ConnectionTabViewModel? value)
+    {
+        OnPropertyChanged(nameof(ShellStatusMessage));
+
+        // Update the legacy _operations reference for backward compatibility
+        SetOperations(value?.Operations);
+    }
+
+    #endregion
 }
