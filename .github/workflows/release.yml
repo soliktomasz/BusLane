@@ -137,10 +137,17 @@ jobs:
           # Build the installer
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ./installer.iss
           
+          # List Output directory contents for debugging
+          Write-Output "Output directory contents:"
+          Get-ChildItem -Path ./Output -Recurse | Select-Object FullName, Length
+          
           # Move installer to root (output goes to Output folder by default)
-          if (Test-Path "./Output/BusLane-${{ steps.version.outputs.version }}-win-x64-setup.exe") {
-            Move-Item -Path "./Output/BusLane-${{ steps.version.outputs.version }}-win-x64-setup.exe" -Destination "./BusLane-${{ steps.version.outputs.version }}-win-x64-setup.exe" -Force
+          if (Test-Path "./Output") {
+            Move-Item -Path "./Output/*" -Destination "./" -Force -Include "*.exe"
           }
+          
+          # Verify installer exists
+          Get-ChildItem -Path . -Filter "*setup.exe" | Select-Object Name, Length
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
@@ -148,7 +155,7 @@ jobs:
           name: BusLane-${{ steps.version.outputs.version }}-win-x64
           path: |
             BusLane-${{ steps.version.outputs.version }}-win-x64.zip
-            BusLane-${{ steps.version.outputs.version }}-win-x64-setup.exe
+            *setup.exe
           retention-days: 30
 
   build-macos:
@@ -288,6 +295,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create tag for manual release
         if: github.event_name == 'workflow_dispatch'
