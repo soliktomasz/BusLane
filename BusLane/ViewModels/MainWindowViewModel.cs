@@ -1249,6 +1249,45 @@ public partial class MainWindowViewModel : ViewModelBase
         SaveTabSession();
     }
 
+    /// <summary>
+    /// Switches to the next tab in the list.
+    /// </summary>
+    [RelayCommand]
+    public void NextTab()
+    {
+        if (ConnectionTabs.Count <= 1) return;
+
+        var currentIndex = ActiveTab != null ? ConnectionTabs.IndexOf(ActiveTab) : -1;
+        var nextIndex = (currentIndex + 1) % ConnectionTabs.Count;
+        ActiveTab = ConnectionTabs[nextIndex];
+    }
+
+    /// <summary>
+    /// Switches to the previous tab in the list.
+    /// </summary>
+    [RelayCommand]
+    public void PreviousTab()
+    {
+        if (ConnectionTabs.Count <= 1) return;
+
+        var currentIndex = ActiveTab != null ? ConnectionTabs.IndexOf(ActiveTab) : 0;
+        var prevIndex = currentIndex <= 0 ? ConnectionTabs.Count - 1 : currentIndex - 1;
+        ActiveTab = ConnectionTabs[prevIndex];
+    }
+
+    /// <summary>
+    /// Switches to a tab by its 1-based index (for keyboard shortcuts).
+    /// </summary>
+    [RelayCommand]
+    public void SwitchToTabByIndex(int index)
+    {
+        var zeroBasedIndex = index - 1;
+        if (zeroBasedIndex >= 0 && zeroBasedIndex < ConnectionTabs.Count)
+        {
+            ActiveTab = ConnectionTabs[zeroBasedIndex];
+        }
+    }
+
     #endregion
 
     #region Session Persistence
