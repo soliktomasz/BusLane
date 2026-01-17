@@ -6,7 +6,16 @@ This document outlines the planned features and improvements for BusLane. Items 
 
 ---
 
-## ✅ Completed (v0.8.0)
+## ✅ Completed
+
+### v0.9.0 — Multi-Connection Tabs
+
+- [x] **Tab Management** — Open multiple Service Bus connections simultaneously in tabs
+- [x] **Session Persistence** — Restore open tabs on application restart
+- [x] **Lucide Icons** — Migrated to modern, consistent icon system
+- [x] **Tab Keyboard Shortcuts** — Ctrl+T (new), Ctrl+W (close), Ctrl+Tab (next)
+- [x] **Tab-Specific Operations** — Each tab maintains independent message operations state
+- [x] **Improved UX** — Better loading states and connection handling
 
 ### v0.8.0 — Developer Experience
 
@@ -28,8 +37,7 @@ This document outlines the planned features and improvements for BusLane. Items 
 
 ## 📅 Planned
 
-
-### v0.9.0 — Advanced Monitoring
+### v0.10.0 — Advanced Monitoring
 
 - [ ] **Historical Metrics** — Store and display metric history
 - [ ] **Custom Dashboards** — Configurable dashboard layouts
@@ -115,6 +123,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.9.0 | 2026 | Multi-Connection Tabs, Session Persistence, Lucide Icons Migration |
 | v0.8.0 | 2026 | Developer Experience, Keyboard Shortcuts, Syntax Highlighting, JSON Formatter |
 | v0.7.0 | 2026 | Enhanced Message Management, Search & Filter, Bulk Operations, Export/Import |
 | v0.6.0 | 2025 | Live Charts, Alert system |

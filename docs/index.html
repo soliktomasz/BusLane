@@ -411,71 +411,170 @@
             padding: 6rem 2rem;
             background: linear-gradient(180deg, transparent 0%, rgba(255, 140, 0, 0.03) 50%, transparent 100%);
         }
-        
-        .roadmap-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
+
+        .roadmap-timeline {
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+            position: relative;
         }
-        
-        .roadmap-card {
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--success) 0%, var(--primary) 33%, var(--accent) 66%, var(--border) 100%);
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .roadmap-item {
+            position: relative;
+            padding: 1.75rem 2rem;
+            margin-bottom: 2rem;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 1.75rem;
             transition: all 0.3s;
+            width: calc(50% - 3rem);
+            text-align: left;
         }
-        
-        .roadmap-card:hover {
+
+        .roadmap-item:nth-child(odd) {
+            margin-left: calc(50% + 3rem);
+        }
+
+        .roadmap-item:nth-child(even) {
+            margin-right: calc(50% + 3rem);
+            text-align: left;
+        }
+
+        .roadmap-connector {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3rem;
+            height: 2px;
+            z-index: 1;
+        }
+
+        .roadmap-item:nth-child(odd) .roadmap-connector {
+            left: -3rem;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .roadmap-item:nth-child(even) .roadmap-connector {
+            right: -3rem;
+            background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary) 100%);
+        }
+
+        .roadmap-connector::before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: var(--bg-card);
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 12px rgba(0, 120, 212, 0.5);
+        }
+
+        .roadmap-item:nth-child(odd) .roadmap-connector::before {
+            left: -7px;
+        }
+
+        .roadmap-item:nth-child(even) .roadmap-connector::before {
+            right: -7px;
+        }
+
+        .roadmap-connector::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-light);
+            border-radius: 2px;
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg);
+        }
+
+        .roadmap-item:nth-child(odd) .roadmap-connector::after {
+            right: -4px;
+        }
+
+        .roadmap-item:nth-child(even) .roadmap-connector::after {
+            left: -4px;
+        }
+
+        .roadmap-item:hover {
             transform: translateY(-3px);
             border-color: var(--accent);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
-        
+
+        .roadmap-item:hover .roadmap-connector::before {
+            border-color: var(--accent);
+            box-shadow: 0 0 16px rgba(255, 140, 0, 0.6);
+        }
+
         .roadmap-version {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: flex-start;
         }
-        
+
+        .roadmap-list li {
+            justify-content: flex-start;
+        }
+
         .version-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 50px;
             font-size: 0.75rem;
             font-weight: 700;
         }
-        
+
         .version-badge.current {
             background: rgba(63, 185, 80, 0.15);
             color: var(--success);
+            border-color: var(--success);
         }
-        
+
         .version-badge.next {
             background: rgba(0, 120, 212, 0.15);
             color: var(--primary-light);
+            border-color: var(--primary);
         }
-        
+
         .version-badge.future {
             background: rgba(255, 140, 0, 0.15);
             color: var(--accent-light);
+            border-color: var(--accent);
         }
-        
+
         .version-status {
             font-size: 0.75rem;
             color: var(--text-muted);
         }
-        
-        .roadmap-card h3 {
-            font-size: 1.125rem;
+
+        .roadmap-item h3 {
+            font-size: 1.25rem;
             font-weight: 700;
             margin-bottom: 1rem;
+            text-align: left;
         }
-        
+
         .roadmap-list {
             list-style: none;
         }
-        
+
         .roadmap-list li {
             display: flex;
             align-items: center;
@@ -483,27 +582,57 @@
             padding: 0.375rem 0;
             font-size: 0.875rem;
             color: var(--text-secondary);
+            justify-content: flex-start;
         }
-        
+
         .roadmap-list li i {
             width: 16px;
             height: 16px;
             flex-shrink: 0;
         }
-        
+
         .roadmap-list li.completed {
             color: var(--success);
         }
-        
+
         .roadmap-list li.completed i {
             color: var(--success);
         }
-        
+
         .roadmap-cta {
             display: flex;
             gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .roadmap-timeline::before {
+                left: 1.5rem;
+            }
+
+            .roadmap-item {
+                width: calc(100% - 4.5rem);
+                margin-left: 4.5rem !important;
+                margin-right: 0 !important;
+                text-align: left !important;
+            }
+
+            .roadmap-connector {
+                left: -3rem !important;
+                right: auto !important;
+                background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%) !important;
+            }
+
+            .roadmap-connector::before {
+                left: -7px !important;
+                right: auto !important;
+            }
+
+            .roadmap-connector::after {
+                right: -4px !important;
+                left: auto !important;
+            }
         }
         
         /* Platforms Section */
@@ -920,7 +1049,7 @@
         <div class="hero-content">
             <div class="hero-badge">
                 <i data-lucide="sparkles"></i>
-                <span>Version 0.8.3 — Now Available!</span>
+                <span>Version 0.9.0 — Now Available!</span>
             </div>
             <h1>
                 Manage <span class="gradient">Azure Service Bus</span>
@@ -1028,23 +1157,25 @@
                     See what's coming in future releases and help shape the direction of BusLane.
                 </p>
             </div>
-            <div class="roadmap-grid">
-                <div class="roadmap-card">
+            <div class="roadmap-timeline">
+                <div class="roadmap-item">
+                    <div class="roadmap-connector"></div>
                     <div class="roadmap-version">
-                        <span class="version-badge current">v0.8.3</span>
+                        <span class="version-badge current">v0.9.0</span>
                         <span class="version-status">Current</span>
                     </div>
-                    <h3>Developer Experience</h3>
+                    <h3>Multi-Connection Tabs</h3>
                     <ul class="roadmap-list">
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Keyboard shortcuts</li>
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Syntax highlighting</li>
-                        <li class="completed"><i data-lucide="check-circle-2"></i> JSON formatter</li>
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Better Namespace explorer</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i> Tab management</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i> Session persistence</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i> Lucide icons migration</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i> Tab keyboard shortcuts</li>
                     </ul>
                 </div>
-                <div class="roadmap-card">
+                <div class="roadmap-item">
+                    <div class="roadmap-connector"></div>
                     <div class="roadmap-version">
-                        <span class="version-badge next">v0.9.0</span>
+                        <span class="version-badge next">v0.10.0</span>
                         <span class="version-status">Next</span>
                     </div>
                     <h3>Advanced Monitoring</h3>
@@ -1055,7 +1186,8 @@
                         <li><i data-lucide="circle"></i> Metric comparison</li>
                     </ul>
                 </div>
-                <div class="roadmap-card">
+                <div class="roadmap-item">
+                    <div class="roadmap-connector"></div>
                     <div class="roadmap-version">
                         <span class="version-badge future">v1.0.0</span>
                         <span class="version-status">Planned</span>
@@ -1068,7 +1200,8 @@
                         <li><i data-lucide="circle"></i> Telemetry (opt-in)</li>
                     </ul>
                 </div>
-                <div class="roadmap-card">
+                <div class="roadmap-item">
+                    <div class="roadmap-connector"></div>
                     <div class="roadmap-version">
                         <span class="version-badge future">Future</span>
                         <span class="version-status">Considering</span>
