@@ -165,6 +165,71 @@
                 </Grid>
             </Border>
 
+            <!-- Tab Loading Overlay (shown when connecting to a namespace) -->
+            <Border Grid.Row="0" Grid.RowSpan="2"
+                    IsVisible="{Binding ActiveTab.IsLoading}"
+                    Background="{DynamicResource LoadingOverlay}"
+                    IsHitTestVisible="True">
+                <Border Background="{DynamicResource CardBackground}"
+                        Padding="48,40"
+                        CornerRadius="16"
+                        BorderThickness="1"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BoxShadow="0 12 48 0 #50000000"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MinWidth="360">
+                    <StackPanel Spacing="24" HorizontalAlignment="Center">
+                        <!-- Animated loading ring -->
+                        <Border Width="64" Height="64"
+                                HorizontalAlignment="Center"
+                                CornerRadius="32"
+                                BorderThickness="4"
+                                BorderBrush="{DynamicResource AccentBrand}"
+                                Background="Transparent">
+                            <Border.Styles>
+                                <Style Selector="Border">
+                                    <Style.Animations>
+                                        <Animation Duration="0:0:1.2" IterationCount="INFINITE">
+                                            <KeyFrame Cue="0%">
+                                                <Setter Property="Opacity" Value="0.3"/>
+                                            </KeyFrame>
+                                            <KeyFrame Cue="50%">
+                                                <Setter Property="Opacity" Value="1"/>
+                                            </KeyFrame>
+                                            <KeyFrame Cue="100%">
+                                                <Setter Property="Opacity" Value="0.3"/>
+                                            </KeyFrame>
+                                        </Animation>
+                                    </Style.Animations>
+                                </Style>
+                            </Border.Styles>
+                        </Border>
+                        
+                        <StackPanel Spacing="12" HorizontalAlignment="Center">
+                            <TextBlock Text="Connecting..."
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppForeground}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding ActiveTab.StatusMessage}"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SubtleForeground}"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="300"/>
+                        </StackPanel>
+                        
+                        <ProgressBar IsIndeterminate="True" 
+                                     Width="240" 
+                                     Height="4"
+                                     Foreground="{DynamicResource AccentBrand}"
+                                     Background="{DynamicResource BorderDefault}"/>
+                    </StackPanel>
+                </Border>
+            </Border>
+
             <!-- Status Bar -->
             <Border Grid.Row="2" Margin="0,12,0,0">
                 <Grid ColumnDefinitions="Auto,*">
