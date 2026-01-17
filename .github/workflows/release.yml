@@ -347,6 +347,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
           files: |
             artifacts/**/*.tar.gz
             artifacts/**/*.zip
