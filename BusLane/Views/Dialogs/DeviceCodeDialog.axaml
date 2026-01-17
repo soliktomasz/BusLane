@@ -18,7 +18,7 @@
                     <Button Classes="icon"
                             HorizontalAlignment="Right"
                             Command="{Binding CloseDeviceCodeDialogCommand}">
-                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                        <LucideIcon Kind="X" Size="14"/>
                     </Button>
                 </Grid>
 
@@ -49,7 +49,7 @@
                                     Command="{Binding OpenDeviceCodeUrlCommand}"
                                     HorizontalAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <PathIcon Data="{StaticResource IconExternalLink}" Width="12" Height="12"/>
+                                    <LucideIcon Kind="ExternalLink" Size="12"/>
                                     <TextBlock Text="Open microsoft.com/devicelogin"/>
                                 </StackPanel>
                             </Button>
@@ -83,7 +83,7 @@
                                     <Button Classes="icon small"
                                             Command="{Binding CopyDeviceCodeCommand}"
                                             ToolTip.Tip="Copy code">
-                                        <PathIcon Data="{StaticResource IconCopy}" Width="14" Height="14"/>
+                                        <LucideIcon Kind="Copy" Size="14"/>
                                     </Button>
                                 </StackPanel>
                             </Border>
@@ -115,8 +115,8 @@
                         Padding="12,8"
                         Margin="0,0,0,16">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <PathIcon Data="{StaticResource IconInfo}"
-                                  Width="14" Height="14"
+                        <LucideIcon Kind="Info"
+                                  Size="14"
                                   Foreground="{DynamicResource AccentBrush}"/>
                         <TextBlock Text="Waiting for authentication to complete..."
                                    Opacity="0.8"

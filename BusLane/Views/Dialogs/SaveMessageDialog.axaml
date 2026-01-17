@@ -17,10 +17,10 @@
                     <Border Background="{DynamicResource SurfaceBrand}" 
                             CornerRadius="8" 
                             Width="40" Height="40">
-                        <PathIcon Data="{StaticResource IconSave}" 
-                                  Width="18" Height="18"
+                        <LucideIcon Kind="Save"
+                                  Size="18"
                                   Foreground="{DynamicResource AccentBrand}"
-                                  HorizontalAlignment="Center" 
+                                  HorizontalAlignment="Center"
                                   VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
@@ -49,7 +49,7 @@
                             Command="{Binding SendMessageViewModel.SaveMessageCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="Save Template"/>
-                            <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12"/>
+                            <LucideIcon Kind="Check" Size="12"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>

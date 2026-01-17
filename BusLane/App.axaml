@@ -12,9 +12,6 @@
     <!-- Fluent Design 2 Theme Resources -->
     <Application.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="/Styles/Icons.axaml"/>
-            </ResourceDictionary.MergedDictionaries>
             
             <!-- Converters for Live Stream, Charts, and Alerts -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>

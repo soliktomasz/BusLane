@@ -18,7 +18,7 @@
                     <Button Classes="icon" 
                             HorizontalAlignment="Right"
                             Command="{Binding CancelConfirmDialogCommand}">
-                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                        <LucideIcon Kind="X" Size="14"/>
                     </Button>
                 </Grid>
                 

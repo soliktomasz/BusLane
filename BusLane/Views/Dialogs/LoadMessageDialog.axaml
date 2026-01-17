@@ -41,7 +41,7 @@
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
                                     Command="{Binding SendMessageViewModel.HideLoadCommand}">
-                                <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                                <LucideIcon Kind="X" Size="14"/>
                             </Button>
                         </Grid>
                         <!-- Import/Export buttons row -->
@@ -71,7 +71,7 @@
                             IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}"
                             Margin="16">
                         <StackPanel HorizontalAlignment="Center" Spacing="8">
-                            <PathIcon Data="{StaticResource IconMessage}" Width="32" Height="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
+                            <LucideIcon Kind="MessageSquare" Size="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
                             <TextBlock Text="No saved templates yet" 
                                        Classes="body-strong" 
                                        HorizontalAlignment="Center"/>
@@ -132,7 +132,7 @@
                                                         ToolTip.Tip="Delete template"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <PathIcon Data="{StaticResource IconDelete}" Width="12" Height="12"/>
+                                                    <LucideIcon Kind="Trash2" Size="12"/>
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
