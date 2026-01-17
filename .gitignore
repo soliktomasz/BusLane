@@ -165,3 +165,6 @@ secrets.json
 *.crt
 
 BusLane.sln.DotSettings.user
+
+# Git Worktrees
+.worktrees/

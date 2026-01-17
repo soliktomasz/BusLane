@@ -319,8 +319,8 @@
                             <!-- Dead Letter Count Badge -->
                             <Border Classes="badge-danger" Padding="8,4" Margin="0,8,0,0"
                                     HorizontalAlignment="Left"
-                                    IsVisible="{Binding Navigation.HasDeadLetters}">
-                                <TextBlock Text="{Binding Navigation.TotalDeadLetterCount, StringFormat='{}{0} Dead Letters'}"
+                                    IsVisible="{Binding CurrentNavigation.HasDeadLetters}">
+                                <TextBlock Text="{Binding CurrentNavigation.TotalDeadLetterCount, StringFormat='{}{0} Dead Letters'}"
                                            Foreground="White" FontSize="11" FontWeight="SemiBold"/>
                             </Border>
                         </StackPanel>
@@ -348,7 +348,7 @@
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="0"
-                        IsVisible="{Binding Navigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        IsVisible="{Binding CurrentNavigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}">
                     <StackPanel>
                         <!-- Namespace Info -->
                         <Border Background="{DynamicResource SurfaceSubtle}"
@@ -370,14 +370,14 @@
 
                                 <!-- Namespace Details -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="{Binding Navigation.SelectedNamespace.Name}"
+                                    <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.Name}"
                                                FontWeight="SemiBold"
                                                FontSize="13"
                                                TextTrimming="CharacterEllipsis"/>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <PathIcon Data="{StaticResource IconLocation}" Width="10" Height="10"
                                                   Foreground="{DynamicResource SubtleForeground}"/>
-                                        <TextBlock Text="{Binding Navigation.SelectedNamespace.Location}"
+                                        <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.Location}"
                                                    Classes="caption"
                                                    FontSize="11"
                                                    TextTrimming="CharacterEllipsis"/>
@@ -404,7 +404,7 @@
                 <Border Background="{DynamicResource SurfaceSubtle}"
                         CornerRadius="8"
                         Padding="16"
-                        IsVisible="{Binding Navigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNull}}">
+                        IsVisible="{Binding CurrentNavigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNull}}">
                     <StackPanel Spacing="12" HorizontalAlignment="Center">
                         <Border Width="48" Height="48" CornerRadius="10" Background="{DynamicResource SurfaceBrand}" HorizontalAlignment="Center">
                             <PathIcon Data="{StaticResource IconNamespace}" Width="24" Height="24"

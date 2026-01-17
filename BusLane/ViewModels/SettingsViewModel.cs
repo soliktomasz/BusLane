@@ -22,6 +22,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _showDeadLetterBadges = true;
     [ObservableProperty] private bool _enableMessagePreview = true;
     [ObservableProperty] private string _theme = "Light";
+    [ObservableProperty] private bool _restoreTabsOnStartup = true;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
@@ -70,6 +71,7 @@ public partial class SettingsViewModel : ViewModelBase
             ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
+            RestoreTabsOnStartup = _preferencesService.RestoreTabsOnStartup;
             // Note: _isLoading is set to false via Dispatcher in constructor (normal case)
         }
         catch
@@ -94,6 +96,7 @@ public partial class SettingsViewModel : ViewModelBase
         _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
         _preferencesService.EnableMessagePreview = EnableMessagePreview;
         _preferencesService.Theme = themeToApply;
+        _preferencesService.RestoreTabsOnStartup = RestoreTabsOnStartup;
         _preferencesService.Save();
         
         // Close the dialog
@@ -136,6 +139,7 @@ public partial class SettingsViewModel : ViewModelBase
         ShowDeadLetterBadges = true;
         EnableMessagePreview = true;
         Theme = "Light";
+        RestoreTabsOnStartup = true;
     }
 }
 

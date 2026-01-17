@@ -261,6 +261,43 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Session Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,14"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <PathIcon Data="{StaticResource IconQueue}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Session" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Restore Tabs -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Restore tabs on startup" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Remember open connections between sessions"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.RestoreTabsOnStartup}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         </StackPanel>
                     </Border>
                 </ScrollViewer>

@@ -14,6 +14,11 @@ public interface IPreferencesService
     bool EnableMessagePreview { get; set; }
     bool ShowNavigationPanel { get; set; }
     string Theme { get; set; }
+
+    // Session persistence
+    bool RestoreTabsOnStartup { get; set; }
+    string OpenTabsJson { get; set; }
+
     void Save();
     void Load();
     event EventHandler? PreferencesChanged;

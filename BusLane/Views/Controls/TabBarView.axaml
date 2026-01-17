@@ -1,0 +1,114 @@
+<!-- BusLane/Views/Controls/TabBarView.axaml -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             xmlns:core="using:BusLane.ViewModels.Core"
+             xmlns:converters="using:BusLane.Converters"
+             x:Class="BusLane.Views.Controls.TabBarView"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="8,4"
+            IsVisible="{Binding HasActiveTabs}">
+        <Grid ColumnDefinitions="*,Auto">
+            <!-- Tab List -->
+            <ScrollViewer Grid.Column="0"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding ConnectionTabs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="core:ConnectionTabViewModel">
+                            <Button Classes="tab-button"
+                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).SwitchToTabCommand}"
+                                    CommandParameter="{Binding TabId}"
+                                    Padding="12,8"
+                                    MinWidth="120"
+                                    MaxWidth="200">
+                                <Button.Background>
+                                    <MultiBinding Converter="{x:Static converters:TabActiveConverter.Instance}">
+                                        <Binding Path="TabId"/>
+                                        <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
+                                    </MultiBinding>
+                                </Button.Background>
+                                <Button.BorderBrush>
+                                    <MultiBinding Converter="{x:Static converters:TabActiveBorderConverter.Instance}">
+                                        <Binding Path="TabId"/>
+                                        <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
+                                    </MultiBinding>
+                                </Button.BorderBrush>
+                                <Button.Styles>
+                                    <Style Selector="Button.tab-button">
+                                        <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                                        <Setter Property="CornerRadius" Value="6,6,0,0"/>
+                                    </Style>
+                                    <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter">
+                                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                    </Style>
+                                </Button.Styles>
+
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Connection Status Indicator -->
+                                    <Ellipse Grid.Column="0"
+                                             Width="8" Height="8"
+                                             Margin="0,0,8,0"
+                                             VerticalAlignment="Center"
+                                             IsVisible="{Binding IsConnected}">
+                                        <Ellipse.Styles>
+                                            <Style Selector="Ellipse">
+                                                <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
+                                            </Style>
+                                        </Ellipse.Styles>
+                                    </Ellipse>
+
+                                    <!-- Tab Title & Subtitle -->
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding TabTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding TabSubtitle}"
+                                                   FontSize="10"
+                                                   Opacity="0.7"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+
+                                    <!-- Close Button -->
+                                    <Button Grid.Column="2"
+                                            Classes="subtle"
+                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
+                                            CommandParameter="{Binding TabId}"
+                                            Padding="4"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Close tab">
+                                        <PathIcon Data="{StaticResource IconClose}" Width="10" Height="10"/>
+                                    </Button>
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- New Tab Button -->
+            <Button Grid.Column="1"
+                    Classes="subtle"
+                    Command="{Binding Connection.OpenConnectionLibraryCommand}"
+                    Padding="8,6"
+                    Margin="8,0,0,0"
+                    ToolTip.Tip="Open new connection tab">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{StaticResource IconPlus}" Width="12" Height="12"/>
+                    <TextBlock Text="New Tab" FontSize="12"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

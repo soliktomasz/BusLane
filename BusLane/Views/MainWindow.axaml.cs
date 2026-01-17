@@ -221,6 +221,76 @@ public partial class MainWindow : Window
                 e.Handled = true;
             }
         }
+        // Tab shortcuts
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.CloseTab))
+        {
+            if (vm.ActiveTab != null)
+            {
+                vm.CloseActiveTabCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.NextTab))
+        {
+            if (vm.ConnectionTabs.Count > 1)
+            {
+                vm.NextTabCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.PreviousTab))
+        {
+            if (vm.ConnectionTabs.Count > 1)
+            {
+                vm.PreviousTabCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab1))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(1);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab2))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(2);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab3))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(3);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab4))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(4);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab5))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(5);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab6))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(6);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab7))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(7);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab8))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(8);
+            e.Handled = true;
+        }
+        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab9))
+        {
+            vm.SwitchToTabByIndexCommand.Execute(9);
+            e.Handled = true;
+        }
         // Help
         else if (shortcuts.Matches(e, KeyboardShortcutAction.ShowHelp))
         {

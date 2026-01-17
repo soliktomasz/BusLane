@@ -50,7 +50,21 @@ public enum KeyboardShortcutAction
     // Connections
     OpenConnectionLibrary,
     Disconnect,
-    
+
+    // Tabs
+    CloseTab,
+    NextTab,
+    PreviousTab,
+    SwitchToTab1,
+    SwitchToTab2,
+    SwitchToTab3,
+    SwitchToTab4,
+    SwitchToTab5,
+    SwitchToTab6,
+    SwitchToTab7,
+    SwitchToTab8,
+    SwitchToTab9,
+
     // General
     CloseDialog,
     ShowHelp
@@ -179,7 +193,56 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             [KeyboardShortcutAction.Disconnect] = new(
                 KeyboardShortcutAction.Disconnect, "Connections", "Disconnect",
                 primary | KeyModifiers.Shift, Key.W),
-            
+
+            // Tab shortcuts
+            [KeyboardShortcutAction.CloseTab] = new(
+                KeyboardShortcutAction.CloseTab, "Tabs", "Close current tab",
+                primary, Key.W),
+
+            [KeyboardShortcutAction.NextTab] = new(
+                KeyboardShortcutAction.NextTab, "Tabs", "Switch to next tab",
+                primary | KeyModifiers.Shift, Key.OemCloseBrackets),
+
+            [KeyboardShortcutAction.PreviousTab] = new(
+                KeyboardShortcutAction.PreviousTab, "Tabs", "Switch to previous tab",
+                primary | KeyModifiers.Shift, Key.OemOpenBrackets),
+
+            [KeyboardShortcutAction.SwitchToTab1] = new(
+                KeyboardShortcutAction.SwitchToTab1, "Tabs", "Switch to tab 1",
+                primary, Key.D1),
+
+            [KeyboardShortcutAction.SwitchToTab2] = new(
+                KeyboardShortcutAction.SwitchToTab2, "Tabs", "Switch to tab 2",
+                primary, Key.D2),
+
+            [KeyboardShortcutAction.SwitchToTab3] = new(
+                KeyboardShortcutAction.SwitchToTab3, "Tabs", "Switch to tab 3",
+                primary, Key.D3),
+
+            [KeyboardShortcutAction.SwitchToTab4] = new(
+                KeyboardShortcutAction.SwitchToTab4, "Tabs", "Switch to tab 4",
+                primary, Key.D4),
+
+            [KeyboardShortcutAction.SwitchToTab5] = new(
+                KeyboardShortcutAction.SwitchToTab5, "Tabs", "Switch to tab 5",
+                primary, Key.D5),
+
+            [KeyboardShortcutAction.SwitchToTab6] = new(
+                KeyboardShortcutAction.SwitchToTab6, "Tabs", "Switch to tab 6",
+                primary, Key.D6),
+
+            [KeyboardShortcutAction.SwitchToTab7] = new(
+                KeyboardShortcutAction.SwitchToTab7, "Tabs", "Switch to tab 7",
+                primary, Key.D7),
+
+            [KeyboardShortcutAction.SwitchToTab8] = new(
+                KeyboardShortcutAction.SwitchToTab8, "Tabs", "Switch to tab 8",
+                primary, Key.D8),
+
+            [KeyboardShortcutAction.SwitchToTab9] = new(
+                KeyboardShortcutAction.SwitchToTab9, "Tabs", "Switch to tab 9",
+                primary, Key.D9),
+
             // General shortcuts
             [KeyboardShortcutAction.CloseDialog] = new(
                 KeyboardShortcutAction.CloseDialog, "General", "Close dialog / Cancel",

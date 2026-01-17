@@ -27,8 +27,8 @@
                                     VerticalAlignment="Center">
                                 <Button.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                        <Binding Path="Navigation.SelectedQueue" Converter="{x:Static ObjectConverters.IsNotNull}"/>
-                                        <Binding Path="Navigation.SelectedTopic" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                        <Binding Path="CurrentNavigation.SelectedQueue" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                        <Binding Path="CurrentNavigation.SelectedTopic" Converter="{x:Static ObjectConverters.IsNotNull}"/>
                                     </MultiBinding>
                                 </Button.IsVisible>
                             </Button>
@@ -36,7 +36,7 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                             <!-- Multi-select toggle button -->
                             <ToggleButton Classes="subtle small"
-                                          IsChecked="{Binding MessageOps.IsMultiSelectMode, Mode=TwoWay}"
+                                          IsChecked="{Binding CurrentMessageOps.IsMultiSelectMode, Mode=TwoWay}"
                                           ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)"
                                           Padding="8,6">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
@@ -45,7 +45,7 @@
                                 </StackPanel>
                             </ToggleButton>
                             <Button Classes="subtle small"
-                                    Content="{Binding MessageOps.SortButtonText}"
+                                    Content="{Binding CurrentMessageOps.SortButtonText}"
                                     Command="{Binding ToggleSortOrderCommand}"
                                     ToolTip.Tip="Toggle sort order"
                                     Padding="8,6"/>
@@ -66,10 +66,10 @@
                             Background="{DynamicResource SurfaceAccent}"
                             CornerRadius="6"
                             Padding="12,8"
-                            IsVisible="{Binding MessageOps.IsMultiSelectMode}">
+                            IsVisible="{Binding CurrentMessageOps.IsMultiSelectMode}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                <TextBlock Text="{Binding MessageOps.SelectedMessagesCount, StringFormat='{}{0} selected'}"
+                                <TextBlock Text="{Binding CurrentMessageOps.SelectedMessagesCount, StringFormat='{}{0} selected'}"
                                            FontWeight="SemiBold"
                                            FontSize="13"
                                            VerticalAlignment="Center"/>
@@ -94,7 +94,7 @@
                                 </Button>
                                 <Button Classes="warning small"
                                         Command="{Binding ResubmitDeadLetterMessagesAsyncCommand}"
-                                        IsVisible="{Binding Navigation.ShowDeadLetter}"
+                                        IsVisible="{Binding CurrentNavigation.ShowDeadLetter}"
                                         Padding="12,6"
                                         ToolTip.Tip="Resubmit selected messages from dead letter queue">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
@@ -129,7 +129,7 @@
                                       VerticalAlignment="Center"/>
                             <TextBox Grid.Column="1"
                                      x:Name="MessageSearchTextBox"
-                                     Text="{Binding MessageOps.MessageSearchText, Mode=TwoWay}"
+                                     Text="{Binding CurrentMessageOps.MessageSearchText, Mode=TwoWay}"
                                      Watermark="Search by message ID, body, correlation ID, subject..."
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -140,7 +140,7 @@
                             <Button Grid.Column="2"
                                     Classes="subtle small"
                                     Command="{Binding ClearMessageSearchCommand}"
-                                    IsVisible="{Binding MessageOps.MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    IsVisible="{Binding CurrentMessageOps.MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                     Padding="4"
                                     ToolTip.Tip="Clear search">
                                 <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
@@ -152,14 +152,14 @@
 
             <!-- Tab Content Area -->
             <TabControl Grid.Row="1"
-                        SelectedIndex="{Binding Navigation.SelectedMessageTabIndex}">
+                        SelectedIndex="{Binding CurrentNavigation.SelectedMessageTabIndex}">
 
                 <TabItem Header="Active Messages">
                     <!-- Loading indicator for messages -->
                     <TabItem.Content>
                         <Grid>
-                            <ListBox ItemsSource="{Binding MessageOps.FilteredMessages}"
-                             SelectedItem="{Binding MessageOps.SelectedMessage}"
+                            <ListBox ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
+                             SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
                              Background="Transparent"
                              Padding="8"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -178,7 +178,7 @@
                                     <Grid ColumnDefinitions="Auto,*">
                                         <!-- Checkbox for multi-select mode -->
                                         <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MessageOps.IsMultiSelectMode}"
+                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.IsMultiSelectMode}"
                                                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleMessageSelectionCommand}"
                                                   CommandParameter="{Binding}"
                                                   Margin="0,0,8,0"
@@ -186,8 +186,8 @@
                                             <CheckBox.IsChecked>
                                                 <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
                                                     <Binding Path="."/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MessageOps.SelectedMessages"/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MessageOps.SelectionVersion"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectedMessages"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectionVersion"/>
                                                 </MultiBinding>
                                             </CheckBox.IsChecked>
                                         </CheckBox>
@@ -256,7 +256,7 @@
                         </ListBox>
 
                             <!-- Beautiful centered loading overlay -->
-                            <Border IsVisible="{Binding MessageOps.IsLoadingMessages}"
+                            <Border IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
                                     Background="{DynamicResource LoadingOverlay}"
                                     IsHitTestVisible="True">
                                 <Border Background="{DynamicResource CardBackground}"
@@ -295,8 +295,8 @@
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
                         <Grid>
-                            <ListBox ItemsSource="{Binding MessageOps.FilteredMessages}"
-                             SelectedItem="{Binding MessageOps.SelectedMessage}"
+                            <ListBox ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
+                             SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
                              Background="Transparent"
                              Padding="8"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -315,7 +315,7 @@
                                     <Grid ColumnDefinitions="Auto,*">
                                         <!-- Checkbox for multi-select mode -->
                                         <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MessageOps.IsMultiSelectMode}"
+                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.IsMultiSelectMode}"
                                                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleMessageSelectionCommand}"
                                                   CommandParameter="{Binding}"
                                                   Margin="0,0,8,0"
@@ -323,8 +323,8 @@
                                             <CheckBox.IsChecked>
                                                 <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
                                                     <Binding Path="."/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MessageOps.SelectedMessages"/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).MessageOps.SelectionVersion"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectedMessages"/>
+                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectionVersion"/>
                                                 </MultiBinding>
                                             </CheckBox.IsChecked>
                                         </CheckBox>
@@ -401,7 +401,7 @@
                         </ListBox>
 
                             <!-- Beautiful centered loading overlay -->
-                            <Border IsVisible="{Binding MessageOps.IsLoadingMessages}"
+                            <Border IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
                                     Background="{DynamicResource LoadingOverlay}"
                                     IsHitTestVisible="True">
                                 <Border Background="{DynamicResource CardBackground}"
