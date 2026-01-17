@@ -67,14 +67,14 @@
 
             <!-- Content when namespace selected (Azure mode) -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding Navigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  IsVisible="{Binding CurrentNavigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="{Binding Navigation.SelectedNamespace.Name}" Classes="title"/>
-                        <TextBlock Text="{Binding Navigation.SelectedNamespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.Name}" Classes="title"/>
+                        <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
                     </StackPanel>
                     <Button Classes="secondary small" Content="Refresh"
                             Command="{Binding RefreshCommand}"
@@ -273,8 +273,8 @@
                                         </StackPanel>
                                     </StackPanel>
 
-                                    <ComboBox ItemsSource="{Binding Navigation.Subscriptions}"
-                                              SelectedItem="{Binding Navigation.SelectedAzureSubscription}"
+                                    <ComboBox ItemsSource="{Binding CurrentNavigation.Subscriptions}"
+                                              SelectedItem="{Binding CurrentNavigation.SelectedAzureSubscription}"
                                               HorizontalAlignment="Stretch"
                                               Padding="14,12"
                                               MinHeight="44">
@@ -300,12 +300,12 @@
                                         <TextBlock Text="Namespaces" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <Border Grid.Column="2" Classes="badge-info" VerticalAlignment="Center" Padding="10,5">
-                                        <TextBlock Text="{Binding Navigation.Namespaces.Count}" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding CurrentNavigation.Namespaces.Count}" FontSize="12" FontWeight="SemiBold"/>
                                     </Border>
                                 </Grid>
 
                                 <!-- Search Box -->
-                                <TextBox Text="{Binding Navigation.NamespaceFilter, Mode=TwoWay}"
+                                <TextBox Text="{Binding CurrentNavigation.NamespaceFilter, Mode=TwoWay}"
                                          Watermark="Search by name, location, or resource group..."
                                          Padding="14,12"
                                          FontSize="13">
@@ -322,7 +322,7 @@
                                         Padding="8"
                                         MinHeight="200"
                                         MaxHeight="400">
-                                    <ListBox ItemsSource="{Binding Navigation.FilteredNamespaces}"
+                                    <ListBox ItemsSource="{Binding CurrentNavigation.FilteredNamespaces}"
                                              Classes="entity-list"
                                              Background="Transparent"
                                              BorderThickness="0"
@@ -349,7 +349,7 @@
                                                             <Border.IsVisible>
                                                                 <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                                     <Binding Path="."/>
-                                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedNamespace"/>
+                                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentNavigation.SelectedNamespace"/>
                                                                 </MultiBinding>
                                                             </Border.IsVisible>
                                                         </Border>
@@ -359,7 +359,7 @@
                                                             <Border.Background>
                                                                 <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                     <Binding Path="."/>
-                                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Navigation.SelectedNamespace"/>
+                                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentNavigation.SelectedNamespace"/>
                                                                 </MultiBinding>
                                                             </Border.Background>
                                                             <Grid ColumnDefinitions="Auto,*">
@@ -406,7 +406,7 @@
                                 <Border Background="{DynamicResource SurfaceSubtle}"
                                         CornerRadius="8"
                                         Padding="24"
-                                        IsVisible="{Binding !Navigation.Namespaces.Count}">
+                                        IsVisible="{Binding !CurrentNavigation.Namespaces.Count}">
                                     <StackPanel HorizontalAlignment="Center" Spacing="8">
                                         <PathIcon Data="{StaticResource IconNamespace}" Width="32" Height="32"
                                                   Foreground="{DynamicResource SubtleForeground}"

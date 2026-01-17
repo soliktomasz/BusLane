@@ -57,10 +57,22 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveTabs))]
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
+    [NotifyPropertyChangedFor(nameof(CurrentNavigation))]
+    [NotifyPropertyChangedFor(nameof(CurrentMessageOps))]
     private ConnectionTabViewModel? _activeTab;
 
     public bool HasActiveTabs => ConnectionTabs.Count > 0;
     public string? ShellStatusMessage => ActiveTab?.StatusMessage ?? StatusMessage;
+
+    /// <summary>
+    /// Gets the navigation state for the active tab, or the legacy navigation if no tab is active.
+    /// </summary>
+    public NavigationState CurrentNavigation => ActiveTab?.Navigation ?? Navigation;
+
+    /// <summary>
+    /// Gets the message operations for the active tab, or the legacy message ops if no tab is active.
+    /// </summary>
+    public MessageOperationsViewModel CurrentMessageOps => ActiveTab?.MessageOps ?? MessageOps;
 
     // UI State
     [ObservableProperty] private bool _isLoading;
