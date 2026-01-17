@@ -135,14 +135,16 @@ Key differences:
 **Views to Update**
 - `Views/MainWindow.axaml`
 - `Views/NavigationSidebar.axaml`
-- `Views/MessageListPanel.axaml`
-- `Views/MessageDetailPanel.axaml`
-- `Views/ConnectionLibraryDialog.axaml`
-- `Views/SendMessageDialog.axaml`
-- `Views/SettingsDialog.axaml`
-- `Views/AlertsPanel.axaml`
-- `Views/LiveStreamPanel.axaml`
-- `Views/ChartPanel.axaml`
+- `Views/MainWindow.axaml`
+- `Views/NavigationSidebar.axaml`
+- `Views/Controls/MessagesPanelView.axaml`
+- `Views/Dialogs/MessageDetailDialog.axaml`
+- `Views/Dialogs/ConnectionLibraryDialog.axaml`
+- `Views/Dialogs/SendMessageDialog.axaml`
+- `Views/Dialogs/SettingsDialog.axaml`
+- `Views/Dialogs/AlertsDialog.axaml`
+- `Views/Controls/LiveStreamView.axaml`
+- `Views/Controls/ChartsView.axaml`
 
 ### Unchanged
 - Custom bus logo in `NavigationSidebar.axaml` (inline Canvas)
