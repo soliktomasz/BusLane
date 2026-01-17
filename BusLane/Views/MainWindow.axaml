@@ -48,15 +48,20 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Column="2" Margin="24,20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <Grid Grid.Column="2" RowDefinitions="Auto,*">
+            <!-- Tab Bar -->
+            <controls:TabBarView Grid.Row="0"/>
 
-            <!-- Welcome / Not Connected -->
-            <controls:WelcomeView Grid.Row="1"
+            <!-- Content Area -->
+            <Grid Grid.Row="1" Margin="24,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Welcome / Not Connected -->
+                <controls:WelcomeView Grid.Row="1"
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
 
@@ -182,6 +187,7 @@
                     </Button>
                 </Grid>
             </Border>
+            </Grid>
         </Grid>
 
         <!-- Modal Dialogs -->
