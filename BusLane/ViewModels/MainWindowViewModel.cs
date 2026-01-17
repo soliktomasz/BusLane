@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -296,6 +297,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             await Connection.InitializeAsync();
+            await RestoreTabSessionAsync();
         }
         finally
         {
@@ -1242,6 +1244,85 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Update the legacy _operations reference for backward compatibility
         SetOperations(value?.Operations);
+
+        // Save session state when active tab changes
+        SaveTabSession();
+    }
+
+    #endregion
+
+    #region Session Persistence
+
+    /// <summary>
+    /// Saves the current tab session to preferences.
+    /// </summary>
+    public void SaveTabSession()
+    {
+        try
+        {
+            var states = ConnectionTabs.Select((tab, index) => new TabSessionState
+            {
+                TabId = tab.TabId,
+                Mode = tab.Mode,
+                ConnectionId = tab.SavedConnection?.Id,
+                NamespaceId = tab.Namespace?.Id,
+                SelectedEntityName = tab.Navigation.CurrentEntityName,
+                TabOrder = index
+            }).ToList();
+
+            _preferencesService.OpenTabsJson = JsonSerializer.Serialize(states);
+            _preferencesService.Save();
+        }
+        catch
+        {
+            // Silently ignore save failures
+        }
+    }
+
+    /// <summary>
+    /// Restores tabs from the saved session.
+    /// </summary>
+    public async Task RestoreTabSessionAsync()
+    {
+        if (!_preferencesService.RestoreTabsOnStartup)
+            return;
+
+        try
+        {
+            var states = JsonSerializer.Deserialize<List<TabSessionState>>(_preferencesService.OpenTabsJson);
+            if (states == null || states.Count == 0)
+                return;
+
+            foreach (var state in states.OrderBy(s => s.TabOrder))
+            {
+                if (state.Mode == ConnectionMode.ConnectionString && state.ConnectionId != null)
+                {
+                    // Restore connection string tab
+                    var connection = await _connectionStorage.GetConnectionAsync(state.ConnectionId);
+                    if (connection != null)
+                    {
+                        await OpenTabForConnectionAsync(connection);
+                    }
+                }
+                else if (state.Mode == ConnectionMode.AzureAccount && state.NamespaceId != null)
+                {
+                    // Azure tabs require re-authentication, skip for now
+                    // Could be enhanced to prompt for re-auth
+                }
+            }
+        }
+        catch
+        {
+            // Silently ignore restore failures
+        }
+    }
+
+    /// <summary>
+    /// Called when the application is closing to save session state.
+    /// </summary>
+    public void OnApplicationClosing()
+    {
+        SaveTabSession();
     }
 
     #endregion
