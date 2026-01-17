@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 0.5.0)'
+        required: true
+        type: string
 
 env:
   DOTNET_VERSION: '10.0.x'
@@ -28,11 +34,15 @@ jobs:
       - name: Build and extract version
         id: version
         run: |
-          BUILD_OUTPUT=$(dotnet build BusLane/BusLane.csproj -c Release -r linux-x64 --no-restore 2>&1)
-          echo "$BUILD_OUTPUT"
-          VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            BUILD_OUTPUT=$(dotnet build BusLane/BusLane.csproj -c Release -r linux-x64 --no-restore 2>&1)
+            echo "$BUILD_OUTPUT"
+            VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
+          echo "Using version: $VERSION"
 
       - name: Create appsettings.json
         run: |
@@ -80,15 +90,19 @@ jobs:
       - name: Build and extract version
         id: version
         run: |
-          $BUILD_OUTPUT = dotnet build BusLane/BusLane.csproj -c Release -r win-x64 --no-restore 2>&1 | Out-String
-          Write-Output $BUILD_OUTPUT
-          if ($BUILD_OUTPUT -match "MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?)") {
-            $VERSION = $matches[1]
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $VERSION = "${{ github.event.inputs.version }}"
           } else {
-            $VERSION = "0.0.0"
+            $BUILD_OUTPUT = dotnet build BusLane/BusLane.csproj -c Release -r win-x64 --no-restore 2>&1 | Out-String
+            Write-Output $BUILD_OUTPUT
+            if ($BUILD_OUTPUT -match "MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?)") {
+              $VERSION = $matches[1]
+            } else {
+              $VERSION = "0.0.0"
+            }
           }
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
-          Write-Output "Extracted version: $VERSION"
+          Write-Output "Using version: $VERSION"
 
       - name: Create appsettings.json
         run: |
@@ -165,11 +179,15 @@ jobs:
       - name: Build and extract version
         id: version
         run: |
-          BUILD_OUTPUT=$(dotnet build BusLane/BusLane.csproj -c Release -r ${{ matrix.runtime }} --no-restore 2>&1)
-          echo "$BUILD_OUTPUT"
-          VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            BUILD_OUTPUT=$(dotnet build BusLane/BusLane.csproj -c Release -r ${{ matrix.runtime }} --no-restore 2>&1)
+            echo "$BUILD_OUTPUT"
+            VERSION=$(echo "$BUILD_OUTPUT" | grep "MinVer: Calculated version" | sed -E 's/.*MinVer: Calculated version ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?).*/\1/' || echo "0.0.0")
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
+          echo "Using version: $VERSION"
 
       - name: Create appsettings.json
         run: |
@@ -271,6 +289,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create tag for manual release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          TAG="v${{ github.event.inputs.version }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
@@ -315,6 +342,6 @@ jobs:
             artifacts/**/*.exe
           body_path: release_notes.md
           draft: false
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.event.inputs.version, 'alpha') || contains(github.event.inputs.version, 'beta') || contains(github.event.inputs.version, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
