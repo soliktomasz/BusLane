@@ -439,6 +439,7 @@
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding Path="!Connection.ShowAzureSections"/>
                         <Binding Path="Connection.ActiveConnection" Converter="{x:Static ObjectConverters.IsNull}"/>
+                        <Binding Path="!HasActiveConnectionTab"/>
                     </MultiBinding>
                 </Border.IsVisible>
                 <StackPanel HorizontalAlignment="Center" Spacing="12">
