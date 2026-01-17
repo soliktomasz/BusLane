@@ -369,3 +369,312 @@ public class CustomPropertyTests
     }
 }
 
+public class MessageInfoTests
+{
+    [Fact]
+    public void MessageInfo_WithSameValues_AreEqual()
+    {
+        // Arrange
+        var props = new Dictionary<string, object> { { "key", "value" } };
+        var enqueuedTime = DateTimeOffset.UtcNow;
+
+        var msg1 = new MessageInfo("msg-1", "corr-1", "application/json", "body", enqueuedTime, null, 1, 0, null, props);
+        var msg2 = new MessageInfo("msg-1", "corr-1", "application/json", "body", enqueuedTime, null, 1, 0, null, props);
+
+        // Assert
+        msg1.Should().Be(msg2);
+    }
+
+    [Fact]
+    public void MessageInfo_BodyPreview_TruncatesLongBody()
+    {
+        // Arrange - Body longer than 200 chars
+        var longBody = new string('A', 300);
+        var msg = new MessageInfo("msg-1", null, null, longBody, DateTimeOffset.UtcNow, null, 1, 0, null, new Dictionary<string, object>());
+
+        // Act & Assert
+        msg.BodyPreview.Length.Should().BeLessThanOrEqualTo(201); // 200 chars + ellipsis
+        msg.BodyPreview.Should().EndWith("…");
+    }
+
+    [Fact]
+    public void MessageInfo_BodyPreview_PreservesShortBody()
+    {
+        // Arrange
+        const string shortBody = "Short message body";
+        var msg = new MessageInfo("msg-1", null, null, shortBody, DateTimeOffset.UtcNow, null, 1, 0, null, new Dictionary<string, object>());
+
+        // Act & Assert
+        msg.BodyPreview.Should().Be(shortBody);
+    }
+
+    [Fact]
+    public void MessageInfo_BodyPreview_HandlesEmptyBody()
+    {
+        // Arrange
+        var msg = new MessageInfo("msg-1", null, null, "", DateTimeOffset.UtcNow, null, 1, 0, null, new Dictionary<string, object>());
+
+        // Act & Assert
+        msg.BodyPreview.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void MessageInfo_BodyPreview_ReplacesNewlines()
+    {
+        // Arrange
+        const string bodyWithNewlines = "Line1\nLine2\r\nLine3";
+        var msg = new MessageInfo("msg-1", null, null, bodyWithNewlines, DateTimeOffset.UtcNow, null, 1, 0, null, new Dictionary<string, object>());
+
+        // Act & Assert
+        msg.BodyPreview.Should().NotContain("\n");
+        msg.BodyPreview.Should().NotContain("\r");
+    }
+
+    [Fact]
+    public void MessageInfo_ContainsAllProperties()
+    {
+        // Arrange
+        var enqueuedTime = DateTimeOffset.UtcNow;
+        var scheduledTime = DateTimeOffset.UtcNow.AddMinutes(5);
+        var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
+        var lockedUntil = DateTimeOffset.UtcNow.AddMinutes(1);
+        var props = new Dictionary<string, object> { { "custom", 123 } };
+
+        // Act
+        var msg = new MessageInfo(
+            MessageId: "msg-123",
+            CorrelationId: "corr-456",
+            ContentType: "application/json",
+            Body: "{ \"test\": true }",
+            EnqueuedTime: enqueuedTime,
+            ScheduledEnqueueTime: scheduledTime,
+            SequenceNumber: 42,
+            DeliveryCount: 3,
+            SessionId: "session-1",
+            Properties: props,
+            Subject: "Test Subject",
+            To: "destination",
+            ReplyTo: "reply-queue",
+            ReplyToSessionId: "reply-session",
+            PartitionKey: "pk-1",
+            TimeToLive: TimeSpan.FromHours(1),
+            ExpiresAt: expiresAt,
+            LockToken: "lock-token-123",
+            LockedUntil: lockedUntil,
+            DeadLetterSource: "original-queue",
+            DeadLetterReason: "MaxDeliveryCountExceeded",
+            DeadLetterErrorDescription: "Message delivery count exceeded"
+        );
+
+        // Assert
+        msg.MessageId.Should().Be("msg-123");
+        msg.CorrelationId.Should().Be("corr-456");
+        msg.ContentType.Should().Be("application/json");
+        msg.Body.Should().Be("{ \"test\": true }");
+        msg.EnqueuedTime.Should().Be(enqueuedTime);
+        msg.ScheduledEnqueueTime.Should().Be(scheduledTime);
+        msg.SequenceNumber.Should().Be(42);
+        msg.DeliveryCount.Should().Be(3);
+        msg.SessionId.Should().Be("session-1");
+        msg.Properties.Should().ContainKey("custom");
+        msg.Subject.Should().Be("Test Subject");
+        msg.To.Should().Be("destination");
+        msg.ReplyTo.Should().Be("reply-queue");
+        msg.ReplyToSessionId.Should().Be("reply-session");
+        msg.PartitionKey.Should().Be("pk-1");
+        msg.TimeToLive.Should().Be(TimeSpan.FromHours(1));
+        msg.ExpiresAt.Should().Be(expiresAt);
+        msg.LockToken.Should().Be("lock-token-123");
+        msg.LockedUntil.Should().Be(lockedUntil);
+        msg.DeadLetterSource.Should().Be("original-queue");
+        msg.DeadLetterReason.Should().Be("MaxDeliveryCountExceeded");
+        msg.DeadLetterErrorDescription.Should().Be("Message delivery count exceeded");
+    }
+}
+
+public class TopicInfoTests
+{
+    [Fact]
+    public void TopicInfo_DefaultConstructor_InitializesWithDefaults()
+    {
+        // Arrange & Act
+        var topic = new TopicInfo();
+
+        // Assert
+        topic.Name.Should().BeEmpty();
+        topic.SizeInBytes.Should().Be(0);
+        topic.SubscriptionCount.Should().Be(0);
+        topic.Subscriptions.Should().BeEmpty();
+        topic.SubscriptionsLoaded.Should().BeFalse();
+        topic.IsLoadingSubscriptions.Should().BeFalse();
+    }
+
+    [Fact]
+    public void TopicInfo_ParameterizedConstructor_SetsAllProperties()
+    {
+        // Arrange
+        var accessedAt = DateTimeOffset.UtcNow;
+        var ttl = TimeSpan.FromDays(7);
+
+        // Act
+        var topic = new TopicInfo("my-topic", 2048, 5, accessedAt, ttl);
+
+        // Assert
+        topic.Name.Should().Be("my-topic");
+        topic.SizeInBytes.Should().Be(2048);
+        topic.SubscriptionCount.Should().Be(5);
+        topic.AccessedAt.Should().Be(accessedAt);
+        topic.DefaultMessageTtl.Should().Be(ttl);
+    }
+
+    [Fact]
+    public void TopicInfo_DisplayStatus_WhenLoadingSubscriptions_ReturnsLoading()
+    {
+        // Arrange
+        var topic = new TopicInfo("my-topic", 1024, 3, null, TimeSpan.FromDays(1))
+        {
+            IsLoadingSubscriptions = true
+        };
+
+        // Act & Assert
+        topic.DisplayStatus.Should().Be("Loading...");
+    }
+
+    [Fact]
+    public void TopicInfo_DisplayStatus_WhenSubscriptionsLoaded_ReturnsCount()
+    {
+        // Arrange
+        var topic = new TopicInfo("my-topic", 1024, 3, null, TimeSpan.FromDays(1))
+        {
+            SubscriptionsLoaded = true
+        };
+        topic.Subscriptions.Add(new SubscriptionInfo("sub1", "my-topic", 10, 10, 0, null, false));
+        topic.Subscriptions.Add(new SubscriptionInfo("sub2", "my-topic", 20, 20, 0, null, false));
+
+        // Act & Assert
+        topic.DisplayStatus.Should().Be("2 subscription(s)");
+    }
+
+    [Fact]
+    public void TopicInfo_DisplayStatus_WhenNotLoaded_ReturnsClickToExpand()
+    {
+        // Arrange
+        var topic = new TopicInfo("my-topic", 1024, 3, null, TimeSpan.FromDays(1));
+
+        // Act & Assert
+        topic.DisplayStatus.Should().Be("Click to expand");
+    }
+
+    [Fact]
+    public void TopicInfo_SettingIsLoadingSubscriptions_NotifiesPropertyChanged()
+    {
+        // Arrange
+        var topic = new TopicInfo("my-topic", 1024, 3, null, TimeSpan.FromDays(1));
+        var propertyChangedEvents = new List<string>();
+        topic.PropertyChanged += (_, e) => propertyChangedEvents.Add(e.PropertyName!);
+
+        // Act
+        topic.IsLoadingSubscriptions = true;
+
+        // Assert
+        propertyChangedEvents.Should().Contain("IsLoadingSubscriptions");
+        propertyChangedEvents.Should().Contain("DisplayStatus");
+    }
+
+    [Fact]
+    public void TopicInfo_SettingSubscriptionsLoaded_NotifiesPropertyChanged()
+    {
+        // Arrange
+        var topic = new TopicInfo("my-topic", 1024, 3, null, TimeSpan.FromDays(1));
+        var propertyChangedEvents = new List<string>();
+        topic.PropertyChanged += (_, e) => propertyChangedEvents.Add(e.PropertyName!);
+
+        // Act
+        topic.SubscriptionsLoaded = true;
+
+        // Assert
+        propertyChangedEvents.Should().Contain("SubscriptionsLoaded");
+        propertyChangedEvents.Should().Contain("DisplayStatus");
+    }
+}
+
+public class LiveStreamMessageTests
+{
+    [Fact]
+    public void LiveStreamMessage_WithSameValues_AreEqual()
+    {
+        // Arrange
+        var receivedAt = DateTimeOffset.UtcNow;
+        var props = new Dictionary<string, object> { { "key", "value" } };
+
+        var msg1 = new LiveStreamMessage("msg-1", "corr-1", "application/json", "body", receivedAt, "queue1", "Queue", null, 1, null, props);
+        var msg2 = new LiveStreamMessage("msg-1", "corr-1", "application/json", "body", receivedAt, "queue1", "Queue", null, 1, null, props);
+
+        // Assert
+        msg1.Should().Be(msg2);
+    }
+
+    [Fact]
+    public void LiveStreamMessage_ForQueue_HasCorrectEntityType()
+    {
+        // Arrange & Act
+        var msg = new LiveStreamMessage(
+            "msg-1", null, null, "body", DateTimeOffset.UtcNow,
+            "my-queue", "Queue", null, 1, null, new Dictionary<string, object>());
+
+        // Assert
+        msg.EntityType.Should().Be("Queue");
+        msg.EntityName.Should().Be("my-queue");
+        msg.TopicName.Should().BeNull();
+    }
+
+    [Fact]
+    public void LiveStreamMessage_ForSubscription_HasCorrectEntityTypeAndTopic()
+    {
+        // Arrange & Act
+        var msg = new LiveStreamMessage(
+            "msg-1", null, null, "body", DateTimeOffset.UtcNow,
+            "my-subscription", "Subscription", "my-topic", 1, null, new Dictionary<string, object>());
+
+        // Assert
+        msg.EntityType.Should().Be("Subscription");
+        msg.EntityName.Should().Be("my-subscription");
+        msg.TopicName.Should().Be("my-topic");
+    }
+
+    [Fact]
+    public void LiveStreamMessage_ContainsAllProperties()
+    {
+        // Arrange
+        var receivedAt = DateTimeOffset.UtcNow;
+        var props = new Dictionary<string, object> { { "custom", "value" }, { "number", 42 } };
+
+        // Act
+        var msg = new LiveStreamMessage(
+            MessageId: "msg-123",
+            CorrelationId: "corr-456",
+            ContentType: "application/json",
+            Body: "{ \"test\": true }",
+            ReceivedAt: receivedAt,
+            EntityName: "my-queue",
+            EntityType: "Queue",
+            TopicName: null,
+            SequenceNumber: 100,
+            SessionId: "session-1",
+            Properties: props
+        );
+
+        // Assert
+        msg.MessageId.Should().Be("msg-123");
+        msg.CorrelationId.Should().Be("corr-456");
+        msg.ContentType.Should().Be("application/json");
+        msg.Body.Should().Be("{ \"test\": true }");
+        msg.ReceivedAt.Should().Be(receivedAt);
+        msg.EntityName.Should().Be("my-queue");
+        msg.EntityType.Should().Be("Queue");
+        msg.SequenceNumber.Should().Be(100);
+        msg.SessionId.Should().Be("session-1");
+        msg.Properties.Should().HaveCount(2);
+    }
+}
+
