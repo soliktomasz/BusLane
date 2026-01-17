@@ -69,7 +69,7 @@ A modern, cross-platform Azure Service Bus management tool built with Avalonia U
 
 ## Screenshots
 
-*Coming soon*
+![BusLane Main Screen](docs/MainScreen.png)
 
 ## Prerequisites
 
