@@ -1089,7 +1089,23 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task LogoutAsync() => await Connection.LogoutAsync();
 
     [RelayCommand]
-    private async Task OpenConnectionLibraryAsync() => await Connection.OpenConnectionLibraryAsync();
+    private async Task OpenConnectionLibraryAsync()
+    {
+        Connection.ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
+            _connectionStorage,
+            _operationsFactory,
+            async conn =>
+            {
+                Connection.ShowConnectionLibrary = false;
+                Connection.ConnectionLibraryViewModel = null;
+                await OpenTabForConnectionAsync(conn);
+            },
+            msg => StatusMessage = msg,
+            Connection.RefreshFavoriteConnectionsAsync
+        );
+        await Connection.ConnectionLibraryViewModel.LoadConnectionsAsync();
+        Connection.ShowConnectionLibrary = true;
+    }
 
     [RelayCommand]
     private void CloseConnectionLibrary() => Connection.CloseConnectionLibrary();

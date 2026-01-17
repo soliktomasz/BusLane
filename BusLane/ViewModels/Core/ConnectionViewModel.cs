@@ -207,7 +207,7 @@ public partial class ConnectionViewModel : ViewModelBase
         ConnectionLibraryViewModel = null;
     }
 
-    private async Task RefreshFavoriteConnectionsAsync()
+    public async Task RefreshFavoriteConnectionsAsync()
     {
         FavoriteConnections.Clear();
         var connections = await _connectionStorage.GetConnectionsAsync();
