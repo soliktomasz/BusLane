@@ -248,47 +248,47 @@ public partial class MainWindow : Window
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab1))
         {
-            vm.SwitchToTabByIndexCommand.Execute(0);
+            vm.SwitchToTabByIndexCommand.Execute(1);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab2))
         {
-            vm.SwitchToTabByIndexCommand.Execute(1);
+            vm.SwitchToTabByIndexCommand.Execute(2);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab3))
         {
-            vm.SwitchToTabByIndexCommand.Execute(2);
+            vm.SwitchToTabByIndexCommand.Execute(3);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab4))
         {
-            vm.SwitchToTabByIndexCommand.Execute(3);
+            vm.SwitchToTabByIndexCommand.Execute(4);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab5))
         {
-            vm.SwitchToTabByIndexCommand.Execute(4);
+            vm.SwitchToTabByIndexCommand.Execute(5);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab6))
         {
-            vm.SwitchToTabByIndexCommand.Execute(5);
+            vm.SwitchToTabByIndexCommand.Execute(6);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab7))
         {
-            vm.SwitchToTabByIndexCommand.Execute(6);
+            vm.SwitchToTabByIndexCommand.Execute(7);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab8))
         {
-            vm.SwitchToTabByIndexCommand.Execute(7);
+            vm.SwitchToTabByIndexCommand.Execute(8);
             e.Handled = true;
         }
         else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab9))
         {
-            vm.SwitchToTabByIndexCommand.Execute(8);
+            vm.SwitchToTabByIndexCommand.Execute(9);
             e.Handled = true;
         }
         // Help
