@@ -344,45 +344,26 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SelectNamespaceAsync(ServiceBusNamespace ns)
     {
-        Navigation.SelectedNamespace = ns;
-
         // Close the namespace selection panel
         Connection.CloseNamespacePanel();
 
-        // Create operations for this namespace using Azure credentials
-        if (_auth.Credential != null)
+        // Create a new tab for this namespace
+        await OpenTabForNamespaceAsync(ns);
+
+        // Also set legacy Navigation.SelectedNamespace for backward compatibility
+        Navigation.SelectedNamespace = ns;
+
+        // Evaluate alerts for the new tab's entities
+        if (ActiveTab != null)
         {
-            var ops = _operationsFactory.CreateFromAzureCredential(ns.Endpoint, ns.Id, _auth.Credential);
-            SetOperations(ops);
-        }
-
-        IsLoading = true;
-        StatusMessage = $"Loading {ns.Name}...";
-
-        try
-        {
-            Navigation.ClearEntities();
-            MessageOps.Clear();
-
-            if (_operations != null)
+            try
             {
-                foreach (var q in await _operations.GetQueuesAsync())
-                    Navigation.Queues.Add(q);
-
-                foreach (var t in await _operations.GetTopicsAsync())
-                    Navigation.Topics.Add(t);
+                await _alertService.EvaluateAlertsAsync(ActiveTab.Navigation.Queues, ActiveTab.Navigation.TopicSubscriptions);
             }
-
-            StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
-            await _alertService.EvaluateAlertsAsync(Navigation.Queues, Navigation.TopicSubscriptions);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
+            catch (Exception ex)
+            {
+                StatusMessage = $"Alert evaluation failed: {ex.Message}";
+            }
         }
     }
 
@@ -1090,15 +1071,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectToSavedConnectionAsync(SavedConnection connection)
     {
-        IsLoading = true;
-        try
-        {
-            await Connection.ConnectToSavedConnectionAsync(connection);
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        Connection.CloseConnectionLibrary();
+        await OpenTabForConnectionAsync(connection);
     }
 
     [RelayCommand]
