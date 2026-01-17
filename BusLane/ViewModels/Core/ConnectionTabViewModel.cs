@@ -220,6 +220,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     }
 
     // Minimal implementation for parameterless constructor
+#pragma warning disable CS0067 // Event is never used (required by interface but not needed in dummy implementation)
     private class DummyPreferencesService : IPreferencesService
     {
         public bool ConfirmBeforeDelete { get; set; } = true;
@@ -237,4 +238,5 @@ public partial class ConnectionTabViewModel : ViewModelBase
         public void Save() { }
         public void Load() { }
     }
+#pragma warning restore CS0067
 }
