@@ -67,14 +67,14 @@
 
             <!-- Content when namespace selected (Azure mode) -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding CurrentNavigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  IsVisible="{Binding IsActiveTabAzureMode}"
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.Name}" Classes="title"/>
-                        <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding ActiveTab.Namespace.Name}" Classes="title"/>
+                        <TextBlock Text="{Binding ActiveTab.Namespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
                     </StackPanel>
                     <Button Classes="secondary small" Content="Refresh"
                             Command="{Binding RefreshCommand}"
@@ -94,21 +94,21 @@
 
             <!-- Content when connected via connection string -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding Connection.ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  IsVisible="{Binding IsActiveTabConnectionStringMode}"
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="{Binding Connection.ActiveConnection.Name}" Classes="title"/>
+                        <TextBlock Text="{Binding ActiveTab.SavedConnection.Name}" Classes="title"/>
                         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
                             <Border Classes="badge-info" Padding="8,4">
-                                <TextBlock Text="{Binding Connection.ActiveConnection.TypeDisplayName}" FontSize="12" Foreground="{DynamicResource AccentBrand}"/>
+                                <TextBlock Text="{Binding ActiveTab.SavedConnection.TypeDisplayName}" FontSize="12" Foreground="{DynamicResource AccentBrand}"/>
                             </Border>
-                            <TextBlock Text="{Binding Connection.ActiveConnection.EntityName}" Classes="caption" VerticalAlignment="Center"
-                                       IsVisible="{Binding Connection.ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Text="{Binding Connection.ActiveConnection.Endpoint}" Classes="caption" VerticalAlignment="Center"
-                                       IsVisible="{Binding Connection.ActiveConnection.IsNamespaceLevel}"/>
+                            <TextBlock Text="{Binding ActiveTab.SavedConnection.EntityName}" Classes="caption" VerticalAlignment="Center"
+                                       IsVisible="{Binding ActiveTab.SavedConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Text="{Binding ActiveTab.SavedConnection.Endpoint}" Classes="caption" VerticalAlignment="Center"
+                                       IsVisible="{Binding ActiveTab.SavedConnection.IsNamespaceLevel}"/>
                         </StackPanel>
                     </StackPanel>
                     <Button Classes="secondary small" Content="Refresh"

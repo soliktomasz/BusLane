@@ -60,10 +60,34 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
     [NotifyPropertyChangedFor(nameof(CurrentNavigation))]
     [NotifyPropertyChangedFor(nameof(CurrentMessageOps))]
+    [NotifyPropertyChangedFor(nameof(HasActiveConnectionTab))]
+    [NotifyPropertyChangedFor(nameof(IsActiveTabAzureMode))]
+    [NotifyPropertyChangedFor(nameof(IsActiveTabConnectionStringMode))]
+    [NotifyPropertyChangedFor(nameof(ShowWelcome))]
     private ConnectionTabViewModel? _activeTab;
 
     public bool HasActiveTabs => ConnectionTabs.Count > 0;
     public string? ShellStatusMessage => ActiveTab?.StatusMessage ?? StatusMessage;
+    
+    /// <summary>
+    /// Gets whether there's an active tab that is connected.
+    /// </summary>
+    public bool HasActiveConnectionTab => ActiveTab?.IsConnected == true;
+    
+    /// <summary>
+    /// Gets whether the active tab is connected via Azure credentials (namespace mode).
+    /// </summary>
+    public bool IsActiveTabAzureMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.AzureAccount;
+    
+    /// <summary>
+    /// Gets whether the active tab is connected via connection string.
+    /// </summary>
+    public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
+    
+    /// <summary>
+    /// Gets whether to show the welcome screen (no active connection).
+    /// </summary>
+    public bool ShowWelcome => !Connection.IsAuthenticated && Connection.ActiveConnection == null && !HasActiveConnectionTab;
 
     /// <summary>
     /// Gets the navigation state for the active tab, or the legacy navigation if no tab is active.
@@ -1238,15 +1262,58 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    partial void OnActiveTabChanged(ConnectionTabViewModel? value)
+    // Track the currently subscribed tab for property change notifications
+    private ConnectionTabViewModel? _subscribedTab;
+    
+    partial void OnActiveTabChanged(ConnectionTabViewModel? oldValue, ConnectionTabViewModel? newValue)
     {
+        // Unsubscribe from old tab's property changes
+        if (_subscribedTab != null)
+        {
+            _subscribedTab.PropertyChanged -= OnActiveTabPropertyChanged;
+            _subscribedTab = null;
+        }
+        
+        // Subscribe to new tab's property changes
+        if (newValue != null)
+        {
+            newValue.PropertyChanged += OnActiveTabPropertyChanged;
+            _subscribedTab = newValue;
+        }
+        
         OnPropertyChanged(nameof(ShellStatusMessage));
+        
+        // Notify computed properties that depend on active tab state
+        NotifyActiveTabDependentProperties();
 
         // Update the legacy _operations reference for backward compatibility
-        SetOperations(value?.Operations);
+        SetOperations(newValue?.Operations);
 
         // Save session state when active tab changes
         SaveTabSession();
+    }
+    
+    private void OnActiveTabPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // When the active tab's IsConnected or Mode changes, notify computed properties
+        if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected) or nameof(ConnectionTabViewModel.Mode))
+        {
+            NotifyActiveTabDependentProperties();
+        }
+        
+        // Also notify for SavedConnection and Namespace so bindings update properly
+        if (e.PropertyName is nameof(ConnectionTabViewModel.SavedConnection) or nameof(ConnectionTabViewModel.Namespace))
+        {
+            OnPropertyChanged(nameof(ActiveTab));
+        }
+    }
+    
+    private void NotifyActiveTabDependentProperties()
+    {
+        OnPropertyChanged(nameof(HasActiveConnectionTab));
+        OnPropertyChanged(nameof(IsActiveTabAzureMode));
+        OnPropertyChanged(nameof(IsActiveTabConnectionStringMode));
+        OnPropertyChanged(nameof(ShowWelcome));
     }
 
     /// <summary>

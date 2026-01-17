@@ -32,7 +32,11 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
     // Connection resources (set after connection)
     private IServiceBusOperations? _operations;
+    
+    [ObservableProperty]
     private SavedConnection? _savedConnection;
+    
+    [ObservableProperty]
     private ServiceBusNamespace? _namespace;
 
     public ConnectionTabViewModel(string tabId, string tabTitle, string tabSubtitle)
@@ -68,15 +72,6 @@ public partial class ConnectionTabViewModel : ViewModelBase
     /// </summary>
     public IServiceBusOperations? Operations => _operations;
 
-    /// <summary>
-    /// Gets the saved connection if connected via connection string.
-    /// </summary>
-    public SavedConnection? SavedConnection => _savedConnection;
-
-    /// <summary>
-    /// Gets the namespace if connected via Azure credentials.
-    /// </summary>
-    public ServiceBusNamespace? Namespace => _namespace;
 
     /// <summary>
     /// Connects to a Service Bus namespace using a saved connection string.
@@ -90,7 +85,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
         try
         {
-            _savedConnection = connection;
+            SavedConnection = connection;
             _operations = operationsFactory.CreateFromConnectionString(connection.ConnectionString);
             Mode = ConnectionMode.ConnectionString;
 
@@ -106,7 +101,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         {
             StatusMessage = $"Connection failed: {ex.Message}";
             _operations = null;
-            _savedConnection = null;
+            SavedConnection = null;
             Mode = ConnectionMode.None;
             throw;
         }
@@ -129,7 +124,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
         try
         {
-            _namespace = ns;
+            Namespace = ns;
             _operations = operationsFactory.CreateFromAzureCredential(ns.Endpoint, ns.Id, credential);
             Mode = ConnectionMode.AzureAccount;
 
@@ -145,7 +140,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         {
             StatusMessage = $"Connection failed: {ex.Message}";
             _operations = null;
-            _namespace = null;
+            Namespace = null;
             Mode = ConnectionMode.None;
             throw;
         }
@@ -161,8 +156,8 @@ public partial class ConnectionTabViewModel : ViewModelBase
     public Task DisconnectAsync()
     {
         _operations = null;
-        _savedConnection = null;
-        _namespace = null;
+        SavedConnection = null;
+        Namespace = null;
         Mode = ConnectionMode.None;
         IsConnected = false;
 
