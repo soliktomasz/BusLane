@@ -40,7 +40,7 @@
                                           ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)"
                                           Padding="8,6">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12"/>
+                                    <LucideIcon Kind="Check" Size="12"/>
                                     <TextBlock Text="Select"/>
                                 </StackPanel>
                             </ToggleButton>
@@ -88,7 +88,7 @@
                                         Padding="12,6"
                                         ToolTip.Tip="Resend selected messages">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <PathIcon Data="{StaticResource IconSend}" Width="12" Height="12"/>
+                                        <LucideIcon Kind="Send" Size="12"/>
                                         <TextBlock Text="Resend"/>
                                     </StackPanel>
                                 </Button>
@@ -98,7 +98,7 @@
                                         Padding="12,6"
                                         ToolTip.Tip="Resubmit selected messages from dead letter queue">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <PathIcon Data="{StaticResource IconRefresh}" Width="12" Height="12"/>
+                                        <LucideIcon Kind="RefreshCw" Size="12"/>
                                         <TextBlock Text="Resubmit"/>
                                     </StackPanel>
                                 </Button>
@@ -107,7 +107,7 @@
                                         Padding="12,6"
                                         ToolTip.Tip="Delete selected messages">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
+                                        <LucideIcon Kind="X" Size="12"/>
                                         <TextBlock Text="Delete"/>
                                     </StackPanel>
                                 </Button>
@@ -121,9 +121,9 @@
                             CornerRadius="6"
                             Padding="8,6">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <PathIcon Grid.Column="0"
-                                      Data="{StaticResource IconSearch}"
-                                      Width="14" Height="14"
+                            <LucideIcon Grid.Column="0"
+                                      Kind="Search"
+                                      Size="14"
                                       Foreground="{DynamicResource MutedForeground}"
                                       Margin="4,0,8,0"
                                       VerticalAlignment="Center"/>
@@ -143,7 +143,7 @@
                                     IsVisible="{Binding CurrentMessageOps.MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                     Padding="4"
                                     ToolTip.Tip="Clear search">
-                                <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
+                                <LucideIcon Kind="X" Size="12"/>
                             </Button>
                         </Grid>
                     </Border>
@@ -205,14 +205,14 @@
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14"/>
+                                                        <LucideIcon Kind="Send" Size="14"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Clone"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
+                                                        <LucideIcon Kind="Pencil" Size="14"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>
@@ -342,14 +342,14 @@
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <PathIcon Data="{StaticResource IconSend}" Width="14" Height="14"/>
+                                                        <LucideIcon Kind="Send" Size="14"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Clone"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <PathIcon Data="{StaticResource IconEdit}" Width="14" Height="14"/>
+                                                        <LucideIcon Kind="Pencil" Size="14"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>

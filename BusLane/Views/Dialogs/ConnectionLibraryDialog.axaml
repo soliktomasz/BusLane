@@ -31,8 +31,7 @@
                                 CornerRadius="12"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,16,0">
-                            <PathIcon Data="{StaticResource IconConnection}"
-                                      Width="24" Height="24"
+                            <LucideIcon Kind="Cable" Size="24"
                                       Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
@@ -44,7 +43,7 @@
                                 Padding="8"
                                 VerticalAlignment="Top"
                                 Command="{Binding CloseConnectionLibraryCommand}">
-                            <PathIcon Data="{StaticResource IconClose}" Width="16" Height="16"/>
+                            <LucideIcon Kind="X" Size="16"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -95,7 +94,7 @@
                                         <Button Classes="primary"
                                                 Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="{StaticResource IconPlus}" Width="16" Height="16"/>
+                                                <LucideIcon Kind="Plus" Size="16"/>
                                                 <TextBlock Text="Add Connection"/>
                                             </StackPanel>
                                         </Button>
@@ -103,7 +102,7 @@
                                                 Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
                                                 IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <PathIcon Data="{StaticResource IconDelete}" Width="14" Height="14"/>
+                                                <LucideIcon Kind="Trash2" Size="14"/>
                                                 <TextBlock Text="Clear All"/>
                                             </StackPanel>
                                         </Button>
@@ -126,12 +125,10 @@
                                                     CornerRadius="6"
                                                     Background="{DynamicResource SurfaceBrand}">
                                                 <Panel>
-                                                    <PathIcon Data="{StaticResource IconEdit}"
-                                                              Width="16" Height="16"
+                                                    <LucideIcon Kind="Pencil" Size="16"
                                                               Foreground="{DynamicResource AccentBrand}"
                                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection}"/>
-                                                    <PathIcon Data="{StaticResource IconPlus}"
-                                                              Width="16" Height="16"
+                                                    <LucideIcon Kind="Plus" Size="16"
                                                               Foreground="{DynamicResource AccentBrand}"
                                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                                                 </Panel>
@@ -191,7 +188,7 @@
                                                             IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"
                                                             VerticalAlignment="Top">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <PathIcon Data="{StaticResource IconTestConnection}" Width="16" Height="16"/>
+                                                            <LucideIcon Kind="PlugZap" Size="16"/>
                                                             <TextBlock Text="Test" IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"/>
                                                             <TextBlock Text="Testing..." IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection}"/>
                                                         </StackPanel>
@@ -208,8 +205,7 @@
                                                     <Border Width="28" Height="28"
                                                             CornerRadius="14"
                                                             Background="{DynamicResource TextSuccess}">
-                                                        <PathIcon Data="{StaticResource IconCheck}"
-                                                                  Width="14" Height="14"
+                                                        <LucideIcon Kind="Check" Size="14"
                                                                   Foreground="{DynamicResource TextOnBrand}"/>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center" Spacing="2">
@@ -234,8 +230,7 @@
                                                     <Border Width="28" Height="28"
                                                             CornerRadius="14"
                                                             Background="{DynamicResource TextDanger}">
-                                                        <PathIcon Data="{StaticResource IconWarning}"
-                                                                  Width="14" Height="14"
+                                                        <LucideIcon Kind="TriangleAlert" Size="14"
                                                                   Foreground="{DynamicResource TextOnBrand}"/>
                                                     </Border>
                                                     <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}"
@@ -257,7 +252,7 @@
                                                 <Button Classes="secondary"
                                                         Command="{Binding Connection.ConnectionLibraryViewModel.CancelAddConnectionCommand}">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                                                        <LucideIcon Kind="X" Size="14"/>
                                                         <TextBlock Text="Cancel"/>
                                                     </StackPanel>
                                                 </Button>
@@ -265,7 +260,7 @@
                                                         Command="{Binding Connection.ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
                                                         IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <PathIcon Data="{StaticResource IconSave}" Width="14" Height="14"/>
+                                                        <LucideIcon Kind="Save" Size="14"/>
                                                         <Panel>
                                                             <TextBlock Text="Save Connection"
                                                                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
@@ -294,8 +289,7 @@
                                             <Border Width="28" Height="28"
                                                     CornerRadius="6"
                                                     Background="{DynamicResource SurfaceBrand}">
-                                                <PathIcon Data="{StaticResource IconConnection}"
-                                                          Width="16" Height="16"
+                                                <LucideIcon Kind="Cable" Size="16"
                                                           Foreground="{DynamicResource AccentBrand}"/>
                                             </Border>
                                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
@@ -321,8 +315,7 @@
                                                     HorizontalAlignment="Center"
                                                     BorderThickness="2"
                                                     BorderBrush="{DynamicResource BorderDefault}">
-                                                <PathIcon Data="{StaticResource IconConnection}"
-                                                          Width="28" Height="28"
+                                                <LucideIcon Kind="Cable" Size="28"
                                                           Foreground="{DynamicResource SubtleForeground}"/>
                                             </Border>
                                             <TextBlock Text="No connections saved"
@@ -355,8 +348,7 @@
                                                                 Background="{DynamicResource SurfaceBrand}"
                                                                 Margin="0,0,16,0"
                                                                 VerticalAlignment="Center">
-                                                            <PathIcon Data="{StaticResource IconConnection}"
-                                                                      Width="20" Height="20"
+                                                            <LucideIcon Kind="Cable" Size="20"
                                                                       Foreground="{DynamicResource AccentBrand}"/>
                                                         </Border>
 
@@ -366,8 +358,7 @@
                                                                 <TextBlock Text="{Binding Name}"
                                                                            FontWeight="SemiBold"
                                                                            FontSize="14"/>
-                                                                <PathIcon Data="{StaticResource IconStarFilled}"
-                                                                          Width="14" Height="14"
+                                                                <LucideIcon Kind="Star" Size="14"
                                                                           Foreground="{DynamicResource TextWarning}"
                                                                           IsVisible="{Binding IsFavorite}"
                                                                           VerticalAlignment="Center"/>
@@ -406,8 +397,8 @@
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
                                                                 <Panel>
-                                                                    <PathIcon Data="{StaticResource IconStarOutline}" Width="16" Height="16" IsVisible="{Binding !IsFavorite}"/>
-                                                                    <PathIcon Data="{StaticResource IconStarFilled}" Width="16" Height="16" Foreground="{DynamicResource TextWarning}" IsVisible="{Binding IsFavorite}"/>
+                                                                    <LucideIcon Kind="Star" Size="16" IsVisible="{Binding !IsFavorite}"/>
+                                                                    <LucideIcon Kind="Star" Size="16" Foreground="{DynamicResource TextWarning}" IsVisible="{Binding IsFavorite}"/>
                                                                 </Panel>
                                                             </Button>
                                                             <Button Classes="subtle small"
@@ -415,20 +406,20 @@
                                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.StartEditConnectionCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
-                                                                <PathIcon Data="{StaticResource IconEdit}" Width="16" Height="16"/>
+                                                                <LucideIcon Kind="Pencil" Size="16"/>
                                                             </Button>
                                                             <Button Classes="danger-subtle small"
                                                                     ToolTip.Tip="Delete"
                                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.DeleteConnectionCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
-                                                                <PathIcon Data="{StaticResource IconDelete}" Width="16" Height="16"/>
+                                                                <LucideIcon Kind="Trash2" Size="16"/>
                                                             </Button>
                                                             <Button Classes="primary small"
                                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.SelectConnectionCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                    <PathIcon Data="{StaticResource IconStream}" Width="14" Height="14"/>
+                                                                    <LucideIcon Kind="Radio" Size="14"/>
                                                                     <TextBlock Text="Connect"/>
                                                                 </StackPanel>
                                                             </Button>

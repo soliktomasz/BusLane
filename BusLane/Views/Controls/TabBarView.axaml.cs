@@ -11,19 +11,19 @@ public partial class TabBarView : UserControl
     {
         InitializeComponent();
     }
-    
+
     private void TabBorder_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         // Only handle left mouse button clicks
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
-            
-        if (sender is Border border && border.Tag is string tabId)
+
+        if (sender is Border border && border.DataContext is ViewModels.Core.ConnectionTabViewModel tabVm)
         {
             if (DataContext is MainWindowViewModel vm)
             {
-                vm.SwitchToTab(tabId);
-                e.Handled = true;
+                vm.SwitchToTab(tabVm.TabId);
+                // Note: Do NOT set e.Handled = true here as it interferes with cursor state updates
             }
         }
     }

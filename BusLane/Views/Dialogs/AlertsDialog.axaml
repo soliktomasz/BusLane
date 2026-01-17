@@ -25,8 +25,7 @@
                                 CornerRadius="12"
                                 Background="{DynamicResource SurfaceDanger}"
                                 Margin="0,0,16,0">
-                            <PathIcon Data="{StaticResource IconBell}"
-                                      Width="24" Height="24"
+                            <LucideIcon Kind="Bell" Size="24"
                                       Foreground="{DynamicResource TextDanger}"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
@@ -44,7 +43,7 @@
                                 Padding="8"
                                 VerticalAlignment="Top"
                                 Command="{Binding CloseCommand}">
-                            <PathIcon Data="{StaticResource IconClose}" Width="16" Height="16"/>
+                            <LucideIcon Kind="X" Size="16"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -80,14 +79,14 @@
                                             <Button Classes="primary small"
                                                     Command="{Binding AcknowledgeAllAlertsCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <PathIcon Data="{StaticResource IconCheck}" Width="14" Height="14"/>
+                                                    <LucideIcon Kind="Check" Size="14"/>
                                                     <TextBlock Text="Acknowledge All"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Classes="subtle small"
                                                     Command="{Binding ClearAcknowledgedAlertsCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <PathIcon Data="{StaticResource IconDelete}" Width="14" Height="14"/>
+                                                    <LucideIcon Kind="Trash2" Size="14"/>
                                                     <TextBlock Text="Clear Acknowledged"/>
                                                 </StackPanel>
                                             </Button>
@@ -108,8 +107,7 @@
                                                 <Border Width="28" Height="28"
                                                         CornerRadius="6"
                                                         Background="{DynamicResource SurfaceWarning}">
-                                                    <PathIcon Data="{StaticResource IconWarning}"
-                                                              Width="16" Height="16"
+                                                    <LucideIcon Kind="TriangleAlert" Size="16"
                                                               Foreground="{DynamicResource TextWarning}"/>
                                                 </Border>
                                                 <TextBlock Text="Triggered Alerts" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
@@ -128,8 +126,7 @@
                                                         CornerRadius="32"
                                                         Background="{DynamicResource SurfaceSuccess}"
                                                         HorizontalAlignment="Center">
-                                                    <PathIcon Data="{StaticResource IconCheckCircle}"
-                                                              Width="32" Height="32"
+                                                    <LucideIcon Kind="CircleCheck" Size="32"
                                                               Foreground="{DynamicResource TextSuccess}"/>
                                                 </Border>
                                                 <TextBlock Text="All clear"
@@ -164,8 +161,7 @@
                                                                     Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}"
                                                                     Margin="0,0,16,0"
                                                                     VerticalAlignment="Top">
-                                                                <PathIcon Data="{StaticResource IconBell}"
-                                                                          Width="20" Height="20"
+                                                                <LucideIcon Kind="Bell" Size="20"
                                                                           Foreground="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
                                                             </Border>
 
@@ -219,7 +215,7 @@
                                                                     IsVisible="{Binding !IsAcknowledged}"
                                                                     VerticalAlignment="Center">
                                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                    <PathIcon Data="{StaticResource IconCheck}" Width="14" Height="14"/>
+                                                                    <LucideIcon Kind="Check" Size="14"/>
                                                                     <TextBlock Text="Acknowledge"/>
                                                                 </StackPanel>
                                                             </Button>
@@ -229,7 +225,7 @@
                                                                     IsVisible="{Binding IsAcknowledged}"
                                                                     VerticalAlignment="Center">
                                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12"/>
+                                                                    <LucideIcon Kind="Check" Size="12"/>
                                                                     <TextBlock Text="Done"/>
                                                                 </StackPanel>
                                                             </Border>
@@ -252,7 +248,7 @@
                                         <Button Classes="primary" HorizontalAlignment="Left"
                                                 Command="{Binding ShowAddRuleCommand}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="{StaticResource IconPlus}" Width="16" Height="16"/>
+                                                <LucideIcon Kind="Plus" Size="16"/>
                                                 <TextBlock Text="Add Alert Rule"/>
                                             </StackPanel>
                                         </Button>
@@ -274,12 +270,10 @@
                                                         CornerRadius="6"
                                                         Background="{DynamicResource SurfaceBrand}">
                                                     <Panel>
-                                                        <PathIcon Data="{StaticResource IconEdit}"
-                                                                  Width="16" Height="16"
+                                                        <LucideIcon Kind="Pencil" Size="16"
                                                                   Foreground="{DynamicResource AccentBrand}"
                                                                   IsVisible="{Binding IsEditingRule}"/>
-                                                        <PathIcon Data="{StaticResource IconPlus}"
-                                                                  Width="16" Height="16"
+                                                        <LucideIcon Kind="Plus" Size="16"
                                                                   Foreground="{DynamicResource AccentBrand}"
                                                                   IsVisible="{Binding !IsEditingRule}"/>
                                                     </Panel>
@@ -351,14 +345,14 @@
                                                         <Button Classes="secondary small"
                                                                 Command="{Binding CancelEditCommand}">
                                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                                                                <LucideIcon Kind="X" Size="14"/>
                                                                 <TextBlock Text="Cancel"/>
                                                             </StackPanel>
                                                         </Button>
                                                         <Button Classes="primary small"
                                                                 Command="{Binding SaveRuleCommand}">
                                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <PathIcon Data="{StaticResource IconSave}" Width="14" Height="14"/>
+                                                                <LucideIcon Kind="Save" Size="14"/>
                                                                 <TextBlock Text="Save Rule"/>
                                                             </StackPanel>
                                                         </Button>
@@ -383,8 +377,7 @@
                                                 <Border Width="28" Height="28"
                                                         CornerRadius="6"
                                                         Background="{DynamicResource SurfaceBrand}">
-                                                    <PathIcon Data="{StaticResource IconSubscription}"
-                                                              Width="16" Height="16"
+                                                    <LucideIcon Kind="Inbox" Size="16"
                                                               Foreground="{DynamicResource AccentBrand}"/>
                                                 </Border>
                                                 <TextBlock Text="Configured Rules" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
@@ -405,8 +398,7 @@
                                                         HorizontalAlignment="Center"
                                                         BorderThickness="2"
                                                         BorderBrush="{DynamicResource BorderDefault}">
-                                                    <PathIcon Data="{StaticResource IconSubscription}"
-                                                              Width="28" Height="28"
+                                                    <LucideIcon Kind="Inbox" Size="28"
                                                               Foreground="{DynamicResource SubtleForeground}"/>
                                                 </Border>
                                                 <TextBlock Text="No rules configured"
@@ -478,21 +470,21 @@
                                                                         Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).TestRuleCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Padding="8">
-                                                                    <PathIcon Data="{StaticResource IconStream}" Width="16" Height="16"/>
+                                                                    <LucideIcon Kind="Radio" Size="16"/>
                                                                 </Button>
                                                                 <Button Classes="subtle small"
                                                                         ToolTip.Tip="Edit rule"
                                                                         Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).ShowEditRuleCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Padding="8">
-                                                                    <PathIcon Data="{StaticResource IconEdit}" Width="16" Height="16"/>
+                                                                    <LucideIcon Kind="Pencil" Size="16"/>
                                                                 </Button>
                                                                 <Button Classes="danger-subtle small"
                                                                         ToolTip.Tip="Delete rule"
                                                                         Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).DeleteRuleCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Padding="8">
-                                                                    <PathIcon Data="{StaticResource IconDelete}" Width="16" Height="16"/>
+                                                                    <LucideIcon Kind="Trash2" Size="16"/>
                                                                 </Button>
                                                             </StackPanel>
                                                         </Grid>

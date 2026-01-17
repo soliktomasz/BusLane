@@ -114,7 +114,7 @@
                                     ToolTip.Tip="Save as template"
                                     Command="{Binding SendMessageViewModel.ShowSaveCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <PathIcon Data="{StaticResource IconSave}" Width="14" Height="14"/>
+                                    <LucideIcon Kind="Save" Size="14"/>
                                     <TextBlock Text="Save" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -122,12 +122,12 @@
                             <Button Classes="toolbar" 
                                     ToolTip.Tip="Clear all fields"
                                     Command="{Binding SendMessageViewModel.ClearFormCommand}">
-                                <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14"/>
+                                <LucideIcon Kind="RefreshCw" Size="14"/>
                             </Button>
                             <Button Classes="icon" 
                                     ToolTip.Tip="Close"
                                     Command="{Binding CancelSendMessageCommand}">
-                                <PathIcon Data="{StaticResource IconClose}" Width="14" Height="14"/>
+                                <LucideIcon Kind="X" Size="14"/>
                             </Button>
                         </StackPanel>
                     </Grid>
@@ -139,7 +139,7 @@
                         Margin="24,16,24,0"
                         IsVisible="{Binding SendMessageViewModel.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <Grid ColumnDefinitions="Auto,*">
-                        <PathIcon Data="{StaticResource IconWarning}" Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource TextDanger}"/>
+                        <LucideIcon Kind="TriangleAlert" Size="16" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource TextDanger}"/>
                         <TextBlock Grid.Column="1" 
                                    Text="{Binding SendMessageViewModel.ErrorMessage}" 
                                    Foreground="{DynamicResource TextDanger}"
@@ -214,7 +214,7 @@
                             <Expander IsExpanded="True" HorizontalAlignment="Stretch">
                                 <Expander.Header>
                                     <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <PathIcon Data="{StaticResource IconSettings}" Width="16" Height="16" VerticalAlignment="Center"/>
+                                        <LucideIcon Kind="Settings" Size="16" VerticalAlignment="Center"/>
                                         <StackPanel>
                                             <TextBlock Text="Message Properties" FontWeight="SemiBold" FontSize="14"/>
                                             <TextBlock Text="Content type, IDs, routing" Classes="caption" FontSize="11"/>
