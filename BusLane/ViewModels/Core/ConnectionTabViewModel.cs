@@ -236,6 +236,8 @@ public partial class ConnectionTabViewModel : ViewModelBase
         public bool EnableMessagePreview { get; set; } = true;
         public bool ShowNavigationPanel { get; set; } = true;
         public string Theme { get; set; } = "System";
+        public bool RestoreTabsOnStartup { get; set; } = true;
+        public string OpenTabsJson { get; set; } = "[]";
         public event EventHandler? PreferencesChanged;
         public void Save() { }
         public void Load() { }
