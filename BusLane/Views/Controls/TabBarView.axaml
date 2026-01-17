@@ -25,33 +25,34 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="core:ConnectionTabViewModel">
-                            <Button Classes="tab-button"
-                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).SwitchToTabCommand}"
-                                    CommandParameter="{Binding TabId}"
+                            <Border Classes="tab-border"
                                     Padding="12,8"
                                     MinWidth="120"
-                                    MaxWidth="200">
-                                <Button.Background>
+                                    MaxWidth="200"
+                                    PointerPressed="TabBorder_PointerPressed"
+                                    Tag="{Binding TabId}"
+                                    Cursor="Hand">
+                                <Border.Background>
                                     <MultiBinding Converter="{x:Static converters:TabActiveConverter.Instance}">
                                         <Binding Path="TabId"/>
                                         <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
                                     </MultiBinding>
-                                </Button.Background>
-                                <Button.BorderBrush>
+                                </Border.Background>
+                                <Border.BorderBrush>
                                     <MultiBinding Converter="{x:Static converters:TabActiveBorderConverter.Instance}">
                                         <Binding Path="TabId"/>
                                         <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
                                     </MultiBinding>
-                                </Button.BorderBrush>
-                                <Button.Styles>
-                                    <Style Selector="Button.tab-button">
+                                </Border.BorderBrush>
+                                <Border.Styles>
+                                    <Style Selector="Border.tab-border">
                                         <Setter Property="BorderThickness" Value="0,0,0,2"/>
                                         <Setter Property="CornerRadius" Value="6,6,0,0"/>
                                     </Style>
-                                    <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter">
+                                    <Style Selector="Border.tab-border:pointerover">
                                         <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
                                     </Style>
-                                </Button.Styles>
+                                </Border.Styles>
 
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <!-- Connection Status Indicator -->
@@ -91,7 +92,7 @@
                                         <PathIcon Data="{StaticResource IconClose}" Width="10" Height="10"/>
                                     </Button>
                                 </Grid>
-                            </Button>
+                            </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

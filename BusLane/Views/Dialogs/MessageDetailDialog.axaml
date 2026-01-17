@@ -5,7 +5,8 @@
              x:Class="BusLane.Views.Dialogs.MessageDetailDialog"
              x:DataType="vm:MainWindowViewModel">
 
-    <Border Classes="modal-overlay"
+    <Border x:Name="ModalOverlay"
+            Classes="modal-overlay"
             IsVisible="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
         <Border Background="{DynamicResource CardBackground}"
                 CornerRadius="8"
@@ -72,7 +73,7 @@
                 </Border>
 
                 <!-- Content -->
-                <ScrollViewer>
+                <ScrollViewer x:Name="ContentScrollViewer">
                     <StackPanel Spacing="16" Margin="20,20,20,40">
                         <!-- Dead Letter Alert -->
                         <Border Classes="infobar-error"

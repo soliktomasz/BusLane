@@ -396,37 +396,39 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SelectQueueAsync(QueueInfo queue)
     {
-        Navigation.SelectedQueue = queue;
-        Navigation.SelectedTopic = null;
-        Navigation.SelectedSubscription = null;
-        Navigation.SelectedEntity = queue;
-        Navigation.TopicSubscriptions.Clear();
-        await MessageOps.LoadMessagesAsync();
+        CurrentNavigation.SelectedQueue = queue;
+        CurrentNavigation.SelectedTopic = null;
+        CurrentNavigation.SelectedSubscription = null;
+        CurrentNavigation.SelectedEntity = queue;
+        CurrentNavigation.TopicSubscriptions.Clear();
+        await CurrentMessageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
     private async Task SelectTopicAsync(TopicInfo topic)
     {
-        if (_operations == null) return;
+        // Use active tab's operations if available, otherwise fall back to main operations
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (operations == null) return;
 
-        Navigation.SelectedTopic = topic;
-        Navigation.SelectedQueue = null;
-        Navigation.SelectedSubscription = null;
-        Navigation.SelectedEntity = topic;
-        MessageOps.Clear();
-        Navigation.TopicSubscriptions.Clear();
+        CurrentNavigation.SelectedTopic = topic;
+        CurrentNavigation.SelectedQueue = null;
+        CurrentNavigation.SelectedSubscription = null;
+        CurrentNavigation.SelectedEntity = topic;
+        CurrentMessageOps.Clear();
+        CurrentNavigation.TopicSubscriptions.Clear();
 
         IsLoading = true;
         StatusMessage = $"Loading subscriptions for {topic.Name}...";
 
         try
         {
-            var subs = await _operations.GetSubscriptionsAsync(topic.Name);
+            var subs = await operations.GetSubscriptionsAsync(topic.Name);
             foreach (var sub in subs)
-                Navigation.TopicSubscriptions.Add(sub);
+                CurrentNavigation.TopicSubscriptions.Add(sub);
 
-            StatusMessage = $"{Navigation.TopicSubscriptions.Count} subscription(s)";
-            await _alertService.EvaluateAlertsAsync(Navigation.Queues, Navigation.TopicSubscriptions);
+            StatusMessage = $"{CurrentNavigation.TopicSubscriptions.Count} subscription(s)";
+            await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
         }
         catch (Exception ex)
         {
@@ -441,22 +443,24 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SelectSubscriptionAsync(SubscriptionInfo sub)
     {
-        Navigation.SelectedSubscription = sub;
-        Navigation.SelectedQueue = null;
-        Navigation.SelectedEntity = sub;
-        await MessageOps.LoadMessagesAsync();
+        CurrentNavigation.SelectedSubscription = sub;
+        CurrentNavigation.SelectedQueue = null;
+        CurrentNavigation.SelectedEntity = sub;
+        await CurrentMessageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
     private async Task LoadTopicSubscriptionsAsync(TopicInfo topic)
     {
-        if (topic.SubscriptionsLoaded || topic.IsLoadingSubscriptions || _operations == null) return;
+        // Use active tab's operations if available, otherwise fall back to main operations
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (topic.SubscriptionsLoaded || topic.IsLoadingSubscriptions || operations == null) return;
 
         topic.IsLoadingSubscriptions = true;
 
         try
         {
-            var subs = await _operations.GetSubscriptionsAsync(topic.Name);
+            var subs = await operations.GetSubscriptionsAsync(topic.Name);
 
             topic.Subscriptions.Clear();
             foreach (var sub in subs)
@@ -554,34 +558,34 @@ public partial class MainWindowViewModel : ViewModelBase
     #region Message Operations (delegated to MessageOps with some coordination)
 
     [RelayCommand]
-    private async Task LoadMessagesAsync() => await MessageOps.LoadMessagesAsync();
+    private async Task LoadMessagesAsync() => await CurrentMessageOps.LoadMessagesAsync();
 
     [RelayCommand]
-    private void SelectMessage(MessageInfo message) => MessageOps.SelectMessage(message);
+    private void SelectMessage(MessageInfo message) => CurrentMessageOps.SelectMessage(message);
 
     [RelayCommand]
-    private void ClearSelectedMessage() => MessageOps.ClearSelectedMessage();
+    private void ClearSelectedMessage() => CurrentMessageOps.ClearSelectedMessage();
 
     [RelayCommand]
-    private void ToggleMultiSelectMode() => MessageOps.ToggleMultiSelectMode();
+    private void ToggleMultiSelectMode() => CurrentMessageOps.ToggleMultiSelectMode();
 
     [RelayCommand]
-    private void ToggleMessageSelection(MessageInfo message) => MessageOps.ToggleMessageSelection(message);
+    private void ToggleMessageSelection(MessageInfo message) => CurrentMessageOps.ToggleMessageSelection(message);
 
     [RelayCommand]
-    private void SelectAllMessages() => MessageOps.SelectAllMessages();
+    private void SelectAllMessages() => CurrentMessageOps.SelectAllMessages();
 
     [RelayCommand]
-    private void DeselectAllMessages() => MessageOps.DeselectAllMessages();
+    private void DeselectAllMessages() => CurrentMessageOps.DeselectAllMessages();
 
     [RelayCommand]
-    private void ToggleSortOrder() => MessageOps.ToggleSortOrder();
+    private void ToggleSortOrder() => CurrentMessageOps.ToggleSortOrder();
 
     [RelayCommand]
-    private void ClearMessageSearch() => MessageOps.ClearMessageSearch();
+    private void ClearMessageSearch() => CurrentMessageOps.ClearMessageSearch();
 
     [RelayCommand]
-    private async Task CopyMessageBodyAsync() => await MessageOps.CopyMessageBodyAsync();
+    private async Task CopyMessageBodyAsync() => await CurrentMessageOps.CopyMessageBodyAsync();
 
     #endregion
 
@@ -590,11 +594,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSendMessagePopup()
     {
-        var entityName = Navigation.CurrentEntityName;
-        if (entityName == null || _operations == null) return;
+        var entityName = CurrentNavigation.CurrentEntityName;
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (entityName == null || operations == null) return;
 
         SendMessageViewModel = new SendMessageViewModel(
-            _operations,
+            operations,
             entityName,
             CloseSendMessagePopup,
             msg => StatusMessage = msg,
@@ -607,7 +612,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ShowSendMessagePopup = false;
         SendMessageViewModel = null;
-        await MessageOps.LoadMessagesAsync();
+        await CurrentMessageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
@@ -620,10 +625,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task ResendMessageAsync(MessageInfo? message = null)
     {
-        var msg = message ?? MessageOps.SelectedMessage;
-        if (msg == null || _operations == null) return;
+        var msg = message ?? CurrentMessageOps.SelectedMessage;
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (msg == null || operations == null) return;
 
-        var entityName = Navigation.CurrentEntityName;
+        var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
         IsLoading = true;
@@ -633,13 +639,13 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var properties = msg.Properties.ToDictionary(p => p.Key, p => p.Value);
 
-            await _operations.SendMessageAsync(
+            await operations.SendMessageAsync(
                 entityName, msg.Body, properties,
                 msg.ContentType, msg.CorrelationId, null, msg.SessionId, msg.Subject,
                 msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey, msg.TimeToLive, null);
 
             StatusMessage = "Message resent successfully";
-            await MessageOps.LoadMessagesAsync();
+            await CurrentMessageOps.LoadMessagesAsync();
         }
         catch (Exception ex)
         {
@@ -654,14 +660,15 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void CloneMessage(MessageInfo? message = null)
     {
-        var msg = message ?? MessageOps.SelectedMessage;
-        if (msg == null || _operations == null) return;
+        var msg = message ?? CurrentMessageOps.SelectedMessage;
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (msg == null || operations == null) return;
 
-        var entityName = Navigation.CurrentEntityName;
+        var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
         SendMessageViewModel = new SendMessageViewModel(
-            _operations,
+            operations,
             entityName,
             CloseSendMessagePopup,
             status => StatusMessage = status,
@@ -669,7 +676,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SendMessageViewModel.PopulateFromMessage(msg);
         ShowSendMessagePopup = true;
-        MessageOps.ClearSelectedMessage();
+        CurrentMessageOps.ClearSelectedMessage();
     }
 
     #endregion
