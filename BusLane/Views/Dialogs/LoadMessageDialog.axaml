@@ -41,7 +41,7 @@
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
                                     Command="{Binding SendMessageViewModel.HideLoadCommand}">
-                                <LucideIcon Kind="X" Size="14"/>
+                                <LucideIcon Kind="X" Size="16"/>
                             </Button>
                         </Grid>
                         <!-- Import/Export buttons row -->
@@ -106,7 +106,7 @@
                                     <Border Classes="property-row" Padding="14,12" Margin="0,0,0,4">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16"/>
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                                     <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}" 
                                                                Classes="caption" FontSize="11"/>

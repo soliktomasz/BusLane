@@ -40,7 +40,7 @@
                                     CommandParameter="{Binding CurrentMessageOps.SelectedMessage}"
                                     ToolTip.Tip="Export message to JSON file">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Upload" Size="14" Foreground="{DynamicResource SubtleForeground}"/>
+                                    <LucideIcon Kind="Upload" Size="16" Foreground="{DynamicResource SubtleForeground}"/>
                                     <TextBlock Text="Export"/>
                                 </StackPanel>
                             </Button>
@@ -49,7 +49,7 @@
                                     CommandParameter="{Binding CurrentMessageOps.SelectedMessage}"
                                     ToolTip.Tip="Resend this message">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Send" Size="14" Foreground="{DynamicResource SubtleForeground}"/>
+                                    <LucideIcon Kind="Send" Size="16" Foreground="{DynamicResource SubtleForeground}"/>
                                     <TextBlock Text="Resend"/>
                                 </StackPanel>
                             </Button>
@@ -58,7 +58,7 @@
                                     CommandParameter="{Binding CurrentMessageOps.SelectedMessage}"
                                     ToolTip.Tip="Clone to new message">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Copy" Size="14" Foreground="{DynamicResource SubtleForeground}"/>
+                                    <LucideIcon Kind="Copy" Size="16" Foreground="{DynamicResource SubtleForeground}"/>
                                     <TextBlock Text="Clone"/>
                                 </StackPanel>
                             </Button>

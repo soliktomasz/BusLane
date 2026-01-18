@@ -136,7 +136,7 @@
                             <Button Grid.Column="1" Classes="subtle"
                                     Command="{Binding CloseLiveStreamCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="14"/>
+                                    <LucideIcon Kind="X" Size="16"/>
                                     <TextBlock Text="Close"/>
                                 </StackPanel>
                             </Button>
@@ -157,7 +157,7 @@
                             <Button Grid.Column="1" Classes="subtle"
                                     Command="{Binding CloseChartsCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="14"/>
+                                    <LucideIcon Kind="X" Size="16"/>
                                     <TextBlock Text="Close"/>
                                 </StackPanel>
                             </Button>
@@ -219,7 +219,7 @@
                                        Classes="title-small"
                                        HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding ActiveTab.StatusMessage}"
-                                       FontSize="14"
+                                       FontSize="16"
                                        Foreground="{DynamicResource SubtleForeground}"
                                        HorizontalAlignment="Center"
                                        TextAlignment="Center"
@@ -334,12 +334,12 @@
                                 <StackPanel Spacing="12">
                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                         <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource SurfaceBrand}">
-                                            <LucideIcon Kind="Cloud" Size="18"
+                                            <LucideIcon Kind="Cloud" Size="20"
                                                       Foreground="{DynamicResource AccentBrand}"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                         <StackPanel VerticalAlignment="Center" Spacing="2">
-                                            <TextBlock Text="Azure Subscription" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="Azure Subscription" FontWeight="SemiBold" FontSize="16"/>
                                             <TextBlock Text="Select a subscription" Classes="caption" FontSize="12"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -351,7 +351,7 @@
                                               MinHeight="44">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate x:DataType="models:AzureSubscription">
-                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" FontSize="14"/>
+                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" FontSize="16"/>
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
@@ -368,7 +368,7 @@
                                                       Foreground="{DynamicResource TextOnBrand}"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
-                                        <TextBlock Text="Namespaces" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Namespaces" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <Border Grid.Column="2" Classes="badge-info" VerticalAlignment="Center" Padding="10,5">
                                         <TextBlock Text="{Binding CurrentNavigation.Namespaces.Count}" FontSize="12" FontWeight="SemiBold"/>
@@ -381,7 +381,7 @@
                                          Padding="14,12"
                                          FontSize="13">
                                     <TextBox.InnerLeftContent>
-                                        <LucideIcon Kind="Search" Size="14"
+                                        <LucideIcon Kind="Search" Size="16"
                                                   Foreground="{DynamicResource SubtleForeground}"
                                                   Margin="4,0,0,0"/>
                                     </TextBox.InnerLeftContent>
@@ -449,10 +449,10 @@
                                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
                                                                     <TextBlock Text="{Binding Name}"
                                                                                FontWeight="SemiBold"
-                                                                               FontSize="14"
+                                                                               FontSize="16"
                                                                                TextTrimming="CharacterEllipsis"/>
                                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                        <LucideIcon Kind="MapPin" Size="11"
+                                                                        <LucideIcon Kind="MapPin" Size="12"
                                                                                   Foreground="{DynamicResource SubtleForeground}"/>
                                                                         <TextBlock Text="{Binding Location}"
                                                                                    Classes="caption"
@@ -460,7 +460,7 @@
                                                                                    TextTrimming="CharacterEllipsis"/>
                                                                     </StackPanel>
                                                                     <TextBlock Text="{Binding ResourceGroup}"
-                                                                               FontSize="11"
+                                                                               FontSize="12"
                                                                                Foreground="{DynamicResource MutedForeground}"
                                                                                TextTrimming="CharacterEllipsis"/>
                                                                 </StackPanel>
@@ -487,7 +487,7 @@
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="Select a subscription above to load namespaces"
                                                    Classes="caption"
-                                                   FontSize="11"
+                                                   FontSize="12"
                                                    Foreground="{DynamicResource MutedForeground}"
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>

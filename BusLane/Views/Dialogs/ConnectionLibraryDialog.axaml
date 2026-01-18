@@ -31,7 +31,7 @@
                                 CornerRadius="12"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,16,0">
-                            <LucideIcon Kind="Cable" Size="24"
+                            <LucideIcon Kind="Cable" Size="20"
                                       Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
@@ -102,7 +102,7 @@
                                                 Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
                                                 IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Trash2" Size="14"/>
+                                                <LucideIcon Kind="Trash2" Size="16"/>
                                                 <TextBlock Text="Clear All"/>
                                             </StackPanel>
                                         </Button>
@@ -135,10 +135,10 @@
                                             </Border>
                                             <Panel>
                                                 <TextBlock Text="Add New Connection"
-                                                           FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"
+                                                           FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"
                                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
                                                 <TextBlock Text="Edit Connection"
-                                                           FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"
+                                                           FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"
                                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
                                             </Panel>
                                         </StackPanel>
@@ -205,7 +205,7 @@
                                                     <Border Width="28" Height="28"
                                                             CornerRadius="14"
                                                             Background="{DynamicResource TextSuccess}">
-                                                        <LucideIcon Kind="Check" Size="14"
+                                                        <LucideIcon Kind="Check" Size="16"
                                                                   Foreground="{DynamicResource TextOnBrand}"/>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center" Spacing="2">
@@ -230,7 +230,7 @@
                                                     <Border Width="28" Height="28"
                                                             CornerRadius="14"
                                                             Background="{DynamicResource TextDanger}">
-                                                        <LucideIcon Kind="TriangleAlert" Size="14"
+                                                        <LucideIcon Kind="TriangleAlert" Size="16"
                                                                   Foreground="{DynamicResource TextOnBrand}"/>
                                                     </Border>
                                                     <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}"
@@ -252,7 +252,7 @@
                                                 <Button Classes="secondary"
                                                         Command="{Binding Connection.ConnectionLibraryViewModel.CancelAddConnectionCommand}">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <LucideIcon Kind="X" Size="14"/>
+                                                        <LucideIcon Kind="X" Size="16"/>
                                                         <TextBlock Text="Cancel"/>
                                                     </StackPanel>
                                                 </Button>
@@ -260,7 +260,7 @@
                                                         Command="{Binding Connection.ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
                                                         IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <LucideIcon Kind="Save" Size="14"/>
+                                                        <LucideIcon Kind="Save" Size="16"/>
                                                         <Panel>
                                                             <TextBlock Text="Save Connection"
                                                                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
@@ -293,7 +293,7 @@
                                                           Foreground="{DynamicResource AccentBrand}"/>
                                             </Border>
                                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                <TextBlock Text="Saved Connections" FontWeight="SemiBold" FontSize="14"/>
+                                                <TextBlock Text="Saved Connections" FontWeight="SemiBold" FontSize="16"/>
                                                 <Border Classes="badge-info" CornerRadius="10" Padding="8,3"
                                                         IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
                                                     <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}" FontSize="12"/>
@@ -315,7 +315,7 @@
                                                     HorizontalAlignment="Center"
                                                     BorderThickness="2"
                                                     BorderBrush="{DynamicResource BorderDefault}">
-                                                <LucideIcon Kind="Cable" Size="28"
+                                                <LucideIcon Kind="Cable" Size="32"
                                                           Foreground="{DynamicResource SubtleForeground}"/>
                                             </Border>
                                             <TextBlock Text="No connections saved"
@@ -357,8 +357,8 @@
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <TextBlock Text="{Binding Name}"
                                                                            FontWeight="SemiBold"
-                                                                           FontSize="14"/>
-                                                                <LucideIcon Kind="Star" Size="14"
+                                                                           FontSize="16"/>
+                                                                <LucideIcon Kind="Star" Size="16"
                                                                           Foreground="{DynamicResource TextWarning}"
                                                                           IsVisible="{Binding IsFavorite}"
                                                                           VerticalAlignment="Center"/>
@@ -419,7 +419,7 @@
                                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.SelectConnectionCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                    <LucideIcon Kind="Radio" Size="14"/>
+                                                                    <LucideIcon Kind="Radio" Size="16"/>
                                                                     <TextBlock Text="Connect"/>
                                                                 </StackPanel>
                                                             </Button>

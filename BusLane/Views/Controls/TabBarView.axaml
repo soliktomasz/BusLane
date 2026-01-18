@@ -111,7 +111,7 @@
                                                    FontSize="12"
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding TabSubtitle}"
-                                                   FontSize="10"
+                                                   FontSize="12"
                                                    Opacity="0.7"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
@@ -125,7 +125,7 @@
                                             Margin="8,0,0,0"
                                             VerticalAlignment="Center"
                                             ToolTip.Tip="Close tab">
-                                        <LucideIcon Kind="X" Size="10"/>
+                                        <LucideIcon Kind="X" Size="12"/>
                                     </Button>
                                 </Grid>
                             </Border>

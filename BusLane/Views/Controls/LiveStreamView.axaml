@@ -116,7 +116,7 @@
                         Padding="32" Background="{DynamicResource SurfaceSubtle}" CornerRadius="12"
                         MinWidth="400">
                     <StackPanel Spacing="16" HorizontalAlignment="Center">
-                        <LucideIcon Kind="Radio" Size="48"
+                        <LucideIcon Kind="Radio" Size="32"
                                   Foreground="{DynamicResource SubtleForeground}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Select an entity to stream"
                                    FontSize="16" FontWeight="SemiBold"

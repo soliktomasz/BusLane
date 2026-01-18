@@ -54,13 +54,13 @@
                                     ToolTip.Tip="Import message from JSON file"
                                     Command="{Binding SendMessageViewModel.ImportMessagesCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Download" Size="14"/>
+                                    <LucideIcon Kind="Download" Size="16"/>
                                     <TextBlock Text="Import" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Classes="toolbar" ToolTip.Tip="Load saved template">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="FolderOpen" Size="14"/>
+                                    <LucideIcon Kind="FolderOpen" Size="16"/>
                                     <TextBlock Text="Load" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <Button.Flyout>
@@ -113,7 +113,7 @@
                                     ToolTip.Tip="Save as template"
                                     Command="{Binding SendMessageViewModel.ShowSaveCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Save" Size="14"/>
+                                    <LucideIcon Kind="Save" Size="16"/>
                                     <TextBlock Text="Save" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -121,12 +121,12 @@
                             <Button Classes="toolbar" 
                                     ToolTip.Tip="Clear all fields"
                                     Command="{Binding SendMessageViewModel.ClearFormCommand}">
-                                <LucideIcon Kind="RefreshCw" Size="14"/>
+                                <LucideIcon Kind="RefreshCw" Size="16"/>
                             </Button>
                             <Button Classes="icon" 
                                     ToolTip.Tip="Close"
                                     Command="{Binding CancelSendMessageCommand}">
-                                <LucideIcon Kind="X" Size="14"/>
+                                <LucideIcon Kind="X" Size="16"/>
                             </Button>
                         </StackPanel>
                     </Grid>
@@ -155,7 +155,7 @@
                         BorderThickness="0,1,0,0">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="Lightbulb" Size="14" VerticalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
+                            <LucideIcon Kind="Lightbulb" Size="16" VerticalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
                             <TextBlock Text="Press Ctrl+Enter to send quickly"
                                        Classes="caption"
                                        VerticalAlignment="Center"/>
@@ -173,7 +173,7 @@
                                     IsEnabled="{Binding !SendMessageViewModel.IsSending}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="Send Message" VerticalAlignment="Center"/>
-                                    <LucideIcon Kind="ArrowRight" Size="14" VerticalAlignment="Center"/>
+                                    <LucideIcon Kind="ArrowRight" Size="16" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -215,7 +215,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="Settings" Size="16" VerticalAlignment="Center"/>
                                         <StackPanel>
-                                            <TextBlock Text="Message Properties" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="Message Properties" FontWeight="SemiBold" FontSize="16"/>
                                             <TextBlock Text="Content type, IDs, routing" Classes="caption" FontSize="11"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -300,7 +300,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="Clock" Size="16" VerticalAlignment="Center"/>
                                         <StackPanel>
-                                            <TextBlock Text="Scheduling" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="Scheduling" FontWeight="SemiBold" FontSize="16"/>
                                             <TextBlock Text="TTL and scheduled delivery" Classes="caption" FontSize="11"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -331,7 +331,7 @@
                                         <LucideIcon Kind="Tag" Size="16" VerticalAlignment="Center"/>
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="Custom Properties" FontWeight="SemiBold" FontSize="14"/>
+                                                <TextBlock Text="Custom Properties" FontWeight="SemiBold" FontSize="16"/>
                                                 <Border Classes="badge-muted" Padding="6,2"
                                                         IsVisible="{Binding SendMessageViewModel.CustomProperties.Count}">
                                                     <TextBlock Text="{Binding SendMessageViewModel.CustomProperties.Count}"

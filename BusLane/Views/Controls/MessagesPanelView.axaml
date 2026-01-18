@@ -130,7 +130,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0"
                                       Kind="Search"
-                                      Size="14"
+                                      Size="16"
                                       Foreground="{DynamicResource MutedForeground}"
                                       Margin="4,0,8,0"
                                       VerticalAlignment="Center"/>
@@ -212,14 +212,14 @@
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <LucideIcon Kind="Send" Size="14"/>
+                                                        <LucideIcon Kind="Send" Size="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Clone"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <LucideIcon Kind="Pencil" Size="14"/>
+                                                        <LucideIcon Kind="Pencil" Size="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>
@@ -349,14 +349,14 @@
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <LucideIcon Kind="Send" Size="14"/>
+                                                        <LucideIcon Kind="Send" Size="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Clone"
                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
-                                                        <LucideIcon Kind="Pencil" Size="14"/>
+                                                        <LucideIcon Kind="Pencil" Size="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>

@@ -18,7 +18,7 @@
                             CornerRadius="8" 
                             Width="40" Height="40">
                         <LucideIcon Kind="Save"
-                                  Size="18"
+                                  Size="20"
                                   Foreground="{DynamicResource AccentBrand}"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center"/>

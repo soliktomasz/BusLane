@@ -17,7 +17,7 @@
                     <Button Classes="icon" 
                             HorizontalAlignment="Right"
                             Command="{Binding CloseStatusPopupCommand}">
-                        <LucideIcon Kind="X" Size="14"/>
+                        <LucideIcon Kind="X" Size="16"/>
                     </Button>
                 </Grid>
                 <Border Classes="surface-subtle" Padding="12">

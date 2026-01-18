@@ -57,7 +57,7 @@
                                         Background="{DynamicResource CardBackground}"
                                         CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="ChartBar" Size="18"
+                                        <LucideIcon Kind="ChartBar" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
                                         <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -109,7 +109,7 @@
                                         Background="{DynamicResource CardBackground}"
                                         CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="MessageSquare" Size="18"
+                                        <LucideIcon Kind="MessageSquare" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
                                         <TextBlock Text="Messages" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -161,7 +161,7 @@
                                         Background="{DynamicResource CardBackground}"
                                         CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="RefreshCw" Size="18"
+                                        <LucideIcon Kind="RefreshCw" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
                                         <TextBlock Text="Auto Refresh" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -215,7 +215,7 @@
                                         Background="{DynamicResource CardBackground}"
                                         CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="TriangleAlert" Size="18"
+                                        <LucideIcon Kind="TriangleAlert" Size="20"
                                                   Foreground="{DynamicResource TextWarning}"/>
                                         <TextBlock Text="Confirmations" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -266,7 +266,7 @@
                                         Background="{DynamicResource CardBackground}"
                                         CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="ListOrdered" Size="18"
+                                        <LucideIcon Kind="ListOrdered" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
                                         <TextBlock Text="Session" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                     </StackPanel>

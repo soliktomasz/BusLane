@@ -25,7 +25,7 @@
                                 CornerRadius="12"
                                 Background="{DynamicResource SurfaceDanger}"
                                 Margin="0,0,16,0">
-                            <LucideIcon Kind="Bell" Size="24"
+                            <LucideIcon Kind="Bell" Size="20"
                                       Foreground="{DynamicResource TextDanger}"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
@@ -79,14 +79,14 @@
                                             <Button Classes="primary small"
                                                     Command="{Binding AcknowledgeAllAlertsCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Check" Size="14"/>
+                                                    <LucideIcon Kind="Check" Size="16"/>
                                                     <TextBlock Text="Acknowledge All"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Classes="subtle small"
                                                     Command="{Binding ClearAcknowledgedAlertsCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Trash2" Size="14"/>
+                                                    <LucideIcon Kind="Trash2" Size="16"/>
                                                     <TextBlock Text="Clear Acknowledged"/>
                                                 </StackPanel>
                                             </Button>
@@ -110,7 +110,7 @@
                                                     <LucideIcon Kind="TriangleAlert" Size="16"
                                                               Foreground="{DynamicResource TextWarning}"/>
                                                 </Border>
-                                                <TextBlock Text="Triggered Alerts" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Triggered Alerts" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
 
@@ -171,7 +171,7 @@
                                                                         Spacing="10">
                                                                 <TextBlock Text="{Binding Rule.Name}"
                                                                            FontWeight="SemiBold"
-                                                                           FontSize="14"/>
+                                                                           FontSize="16"/>
                                                                 <Border CornerRadius="4" Padding="8,3"
                                                                         Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
                                                                     <TextBlock Text="{Binding Rule.Severity}"
@@ -215,7 +215,7 @@
                                                                     IsVisible="{Binding !IsAcknowledged}"
                                                                     VerticalAlignment="Center">
                                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                    <LucideIcon Kind="Check" Size="14"/>
+                                                                    <LucideIcon Kind="Check" Size="16"/>
                                                                     <TextBlock Text="Acknowledge"/>
                                                                 </StackPanel>
                                                             </Button>
@@ -265,7 +265,7 @@
                                                     </Panel>
                                                 </Border>
                                                 <TextBlock Text="{Binding FormTitle}"
-                                                           FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                                           FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
 
@@ -331,14 +331,14 @@
                                                         <Button Classes="secondary small"
                                                                 Command="{Binding CancelEditCommand}">
                                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <LucideIcon Kind="X" Size="14"/>
+                                                                <LucideIcon Kind="X" Size="16"/>
                                                                 <TextBlock Text="Cancel"/>
                                                             </StackPanel>
                                                         </Button>
                                                         <Button Classes="primary small"
                                                                 Command="{Binding SaveRuleCommand}">
                                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <LucideIcon Kind="Save" Size="14"/>
+                                                                <LucideIcon Kind="Save" Size="16"/>
                                                                 <TextBlock Text="Save Rule"/>
                                                             </StackPanel>
                                                         </Button>
@@ -367,13 +367,13 @@
                                                         <LucideIcon Kind="Inbox" Size="16"
                                                                   Foreground="{DynamicResource AccentBrand}"/>
                                                     </Border>
-                                                    <TextBlock Text="Configured Rules" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Configured Rules" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                                 <Button Grid.Column="2"
                                                         Classes="primary small"
                                                         Command="{Binding ShowAddRuleCommand}">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <LucideIcon Kind="Plus" Size="14"/>
+                                                        <LucideIcon Kind="Plus" Size="16"/>
                                                         <TextBlock Text="Add Rule"/>
                                                     </StackPanel>
                                                 </Button>
@@ -394,7 +394,7 @@
                                                         HorizontalAlignment="Center"
                                                         BorderThickness="2"
                                                         BorderBrush="{DynamicResource BorderDefault}">
-                                                    <LucideIcon Kind="Inbox" Size="28"
+                                                    <LucideIcon Kind="Inbox" Size="32"
                                                               Foreground="{DynamicResource SubtleForeground}"/>
                                                 </Border>
                                                 <TextBlock Text="No rules configured"
@@ -432,7 +432,7 @@
                                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                                     <TextBlock Text="{Binding Name}"
                                                                                FontWeight="SemiBold"
-                                                                               FontSize="14"/>
+                                                                               FontSize="16"/>
                                                                     <Border CornerRadius="4" Padding="8,3"
                                                                             Background="{Binding Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
                                                                         <TextBlock Text="{Binding Severity}"
