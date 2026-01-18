@@ -115,7 +115,7 @@
                                     IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}">
                                 <StackPanel>
                                     <!-- Form Header -->
-                                    <Border Padding="16,14"
+                                    <Border Padding="16,16"
                                             BorderBrush="{DynamicResource BorderDefault}"
                                             BorderThickness="0,0,0,1"
                                             Background="{DynamicResource CardBackground}"
@@ -280,7 +280,7 @@
                                     IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
                                 <StackPanel>
                                     <!-- Section Header -->
-                                    <Border Padding="16,14"
+                                    <Border Padding="16,16"
                                             BorderBrush="{DynamicResource BorderDefault}"
                                             BorderThickness="0,0,0,1"
                                             Background="{DynamicResource CardBackground}"

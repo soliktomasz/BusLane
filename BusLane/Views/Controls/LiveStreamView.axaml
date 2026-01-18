@@ -41,11 +41,11 @@
                                    Foreground="{DynamicResource SubtleForeground}"/>
                         <Button Classes="subtle small" Content="Clear"
                                 Command="{Binding ClearMessagesCommand}"
-                                Padding="8,6"/>
+                                Padding="8,8"/>
                         <Button Classes="danger-subtle small" Content="Stop"
                                 Command="{Binding StopStreamCommand}"
                                 IsVisible="{Binding IsStreaming}"
-                                Padding="8,6"/>
+                                Padding="8,8"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -54,7 +54,7 @@
             <Border Grid.Row="1" Background="{DynamicResource SurfaceSubtle}" Padding="16,12">
                 <Grid ColumnDefinitions="*,Auto">
                     <!-- Search/Filter -->
-                    <Border Grid.Column="0" Background="{DynamicResource InputBackground}" CornerRadius="6" Padding="8,6" Margin="0,0,12,0"
+                    <Border Grid.Column="0" Background="{DynamicResource InputBackground}" CornerRadius="6" Padding="8,8" Margin="0,0,12,0"
                             BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0" Kind="Search"
@@ -224,7 +224,7 @@
                          Padding="8">
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="models:LiveStreamMessage">
-                            <Border Padding="12,10" Margin="0,2" CornerRadius="6"
+                            <Border Padding="12,12" Margin="0,2" CornerRadius="6"
                                     Background="{DynamicResource CardBackground}"
                                     BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
                                 <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">

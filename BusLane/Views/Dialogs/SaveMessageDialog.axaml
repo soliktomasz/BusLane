@@ -34,7 +34,7 @@
                     <TextBlock Text="Template Name" Classes="field-label"/>
                     <TextBox Text="{Binding SendMessageViewModel.SaveMessageName}" 
                              Watermark="Enter a descriptive name..."
-                             Padding="12,10"/>
+                             Padding="12,12"/>
                     <TextBlock Text="Choose a name that helps you identify this template" Classes="field-hint"/>
                 </StackPanel>
                 

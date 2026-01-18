@@ -41,7 +41,7 @@
                             <ToggleButton Classes="subtle small"
                                           IsChecked="{Binding CurrentMessageOps.IsMultiSelectMode, Mode=TwoWay}"
                                           ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)"
-                                          Padding="8,6">
+                                          Padding="8,8">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <LucideIcon Kind="Check" Size="12"/>
                                     <TextBlock Text="Select"/>
@@ -51,10 +51,10 @@
                                     Content="{Binding CurrentMessageOps.SortButtonText}"
                                     Command="{Binding ToggleSortOrderCommand}"
                                     ToolTip.Tip="Toggle sort order"
-                                    Padding="8,6"/>
+                                    Padding="8,8"/>
                             <Button Classes="subtle small"
                                     Command="{Binding LoadMessagesCommand}"
-                                    Padding="8,6">
+                                    Padding="8,8">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <LucideIcon Kind="RefreshCw" Size="12"/>
                                     <TextBlock Text="Refresh"/>
@@ -64,7 +64,7 @@
                             <Button Classes="danger-subtle small"
                                     Content="Purge"
                                     Command="{Binding PurgeMessagesCommand}"
-                                    Padding="8,6"/>
+                                    Padding="8,8"/>
                         </StackPanel>
                     </Grid>
 
@@ -126,7 +126,7 @@
                     <Border Grid.Row="2"
                             Background="{DynamicResource SurfaceSubtle}"
                             CornerRadius="6"
-                            Padding="8,6">
+                            Padding="8,8">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0"
                                       Kind="Search"
@@ -204,7 +204,7 @@
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
-                                            Padding="12,10"
+                                            Padding="12,12"
                                             Margin="0,2">
                                         <Button.ContextMenu>
                                             <ContextMenu>
@@ -341,7 +341,7 @@
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
-                                            Padding="12,10"
+                                            Padding="12,12"
                                             Margin="0,2">
                                         <Button.ContextMenu>
                                             <ContextMenu>

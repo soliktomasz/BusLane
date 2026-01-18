@@ -138,7 +138,7 @@
             <Button Grid.Column="1"
                     Classes="subtle"
                     Command="{Binding OpenConnectionLibraryCommand}"
-                    Padding="8,6"
+                    Padding="8,8"
                     Margin="8,0,0,0"
                     ToolTip.Tip="Open new connection tab">
                 <StackPanel Orientation="Horizontal" Spacing="4">

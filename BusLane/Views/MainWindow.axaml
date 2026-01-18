@@ -347,7 +347,7 @@
                                     <ComboBox ItemsSource="{Binding CurrentNavigation.Subscriptions}"
                                               SelectedItem="{Binding CurrentNavigation.SelectedAzureSubscription}"
                                               HorizontalAlignment="Stretch"
-                                              Padding="14,12"
+                                              Padding="16,12"
                                               MinHeight="44">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate x:DataType="models:AzureSubscription">
@@ -378,7 +378,7 @@
                                 <!-- Search Box -->
                                 <TextBox Text="{Binding CurrentNavigation.NamespaceFilter, Mode=TwoWay}"
                                          Watermark="Search by name, location, or resource group..."
-                                         Padding="14,12"
+                                         Padding="16,12"
                                          FontSize="13">
                                     <TextBox.InnerLeftContent>
                                         <LucideIcon Kind="Search" Size="16"
@@ -426,7 +426,7 @@
                                                         </Border>
 
                                                         <!-- Namespace content -->
-                                                        <Border Grid.Column="1" Padding="12,10" CornerRadius="8">
+                                                        <Border Grid.Column="1" Padding="12,12" CornerRadius="8">
                                                             <Border.Background>
                                                                 <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                     <Binding Path="."/>

@@ -51,7 +51,7 @@
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>
                                 <!-- Section Header -->
-                                <Border Padding="16,14"
+                                <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
@@ -103,7 +103,7 @@
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>
                                 <!-- Section Header -->
-                                <Border Padding="16,14"
+                                <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
@@ -155,7 +155,7 @@
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>
                                 <!-- Section Header -->
-                                <Border Padding="16,14"
+                                <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
@@ -209,7 +209,7 @@
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>
                                 <!-- Section Header -->
-                                <Border Padding="16,14"
+                                <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
@@ -260,7 +260,7 @@
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>
                                 <!-- Section Header -->
-                                <Border Padding="16,14"
+                                <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"

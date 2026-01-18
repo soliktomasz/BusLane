@@ -78,7 +78,7 @@
                         Command="{Binding OpenConnectionLibraryCommand}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Center"
-                        Padding="12,10">
+                        Padding="12,12">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <LucideIcon Kind="Library" Size="16"/>
                         <TextBlock Text="My Connections" FontWeight="SemiBold"/>
@@ -91,7 +91,7 @@
                         IsVisible="{Binding !Connection.IsAuthenticated}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Center"
-                        Padding="12,10">
+                        Padding="12,12">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <LucideIcon Kind="Cloud" Size="16"/>
                         <TextBlock Text="Sign in with Azure"/>
@@ -104,7 +104,7 @@
                         IsVisible="{Binding Connection.IsAuthenticated}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Center"
-                        Padding="12,10">
+                        Padding="12,12">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <LucideIcon Kind="LogOut" Size="16"/>
                         <TextBlock Text="Sign Out"/>
@@ -176,7 +176,7 @@
                                     </Border>
 
                                     <!-- Connection content with selection background -->
-                                    <Border Grid.Column="1" Padding="12,10" CornerRadius="6">
+                                    <Border Grid.Column="1" Padding="12,12" CornerRadius="6">
                                         <Border.Background>
                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                 <Binding Path="."/>
@@ -225,7 +225,7 @@
                 <Button Classes="subtle"
                         Command="{Binding OpenLiveStreamCommand}"
                         HorizontalAlignment="Stretch"
-                        Padding="12,10">
+                        Padding="12,12">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <LucideIcon Kind="Radio" Size="16"/>
                         <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
@@ -236,7 +236,7 @@
                 <Button Classes="subtle"
                         Command="{Binding OpenChartsCommand}"
                         HorizontalAlignment="Stretch"
-                        Padding="12,10">
+                        Padding="12,12">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <LucideIcon Kind="ChartBar" Size="16"/>
                         <TextBlock Text="Charts" VerticalAlignment="Center"/>
@@ -247,7 +247,7 @@
                 <Button Classes="subtle"
                         Command="{Binding OpenAlertsCommand}"
                         HorizontalAlignment="Stretch"
-                        Padding="12,10">
+                        Padding="12,12">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                             <LucideIcon Kind="Bell" Size="16"/>
@@ -273,7 +273,7 @@
                 <Button Classes="subtle"
                         Command="{Binding ShowKeyboardShortcutsHelpCommand}"
                         HorizontalAlignment="Stretch"
-                        Padding="12,10"
+                        Padding="12,12"
                         ToolTip.Tip="⌘? or Ctrl+?">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <LucideIcon Kind="Keyboard" Size="16"/>
@@ -283,7 +283,7 @@
                 <Button Classes="subtle"
                         Command="{Binding OpenSettingsCommand}"
                         HorizontalAlignment="Stretch"
-                        Padding="12,10">
+                        Padding="12,12">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <LucideIcon Kind="Settings" Size="16"/>
                         <TextBlock Text="Settings" VerticalAlignment="Center"/>
@@ -351,7 +351,7 @@
                         <!-- Namespace Info -->
                         <Border Background="{DynamicResource SurfaceSubtle}"
                                 CornerRadius="8,8,0,0"
-                                Padding="14,12"
+                                Padding="16,12"
                                 BorderBrush="{DynamicResource BorderDefault}"
                                 BorderThickness="0,0,0,1">
                             <Grid ColumnDefinitions="Auto,*">
@@ -389,7 +389,7 @@
                                 Command="{Binding OpenNamespacePanelCommand}"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
-                                Padding="12,10">
+                                Padding="12,12">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <LucideIcon Kind="ArrowLeftRight" Size="16"/>
                                 <TextBlock Text="Change Namespace" FontSize="12"/>

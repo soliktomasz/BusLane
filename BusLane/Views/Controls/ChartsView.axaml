@@ -25,7 +25,7 @@
 
                         <Button Classes="subtle small"
                                 Command="{Binding RefreshChartsCommand}"
-                                Padding="8,6">
+                                Padding="8,8">
                             <StackPanel Orientation="Horizontal" Spacing="4">
                                 <LucideIcon Kind="RefreshCw" Size="12"/>
                                 <TextBlock Text="Refresh"/>

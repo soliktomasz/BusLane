@@ -98,7 +98,7 @@
                                 <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                                     <StackPanel>
                                         <!-- Section Header -->
-                                        <Border Padding="16,14"
+                                        <Border Padding="16,16"
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"
@@ -246,7 +246,7 @@
                                         IsVisible="{Binding IsAddingRule}">
                                     <StackPanel>
                                         <!-- Form Header -->
-                                        <Border Padding="16,14"
+                                        <Border Padding="16,16"
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"
@@ -354,7 +354,7 @@
                                         IsVisible="{Binding !IsAddingRule}">
                                     <StackPanel>
                                         <!-- Section Header with Add Button -->
-                                        <Border Padding="16,14"
+                                        <Border Padding="16,16"
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"

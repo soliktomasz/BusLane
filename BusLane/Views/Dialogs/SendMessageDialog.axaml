@@ -73,7 +73,7 @@
                                                         <ItemsControl ItemsSource="{Binding SendMessageViewModel.SavedMessages}">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate x:DataType="models:SavedMessage">
-                                                                    <Border Classes="property-row" Padding="10,8">
+                                                                    <Border Classes="property-row" Padding="12,8">
                                                                         <Grid ColumnDefinitions="*,Auto">
                                                                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
@@ -360,11 +360,11 @@
                                                         <TextBox Grid.Column="0" 
                                                                  Text="{Binding Key}" 
                                                                  Watermark="Enter key"
-                                                                 Padding="10,8"/>
+                                                                 Padding="12,8"/>
                                                         <TextBox Grid.Column="2" 
                                                                  Text="{Binding Value}" 
                                                                  Watermark="Enter value"
-                                                                 Padding="10,8"/>
+                                                                 Padding="12,8"/>
                                                         <Button Grid.Column="3"
                                                                 Classes="icon"
                                                                 ToolTip.Tip="Remove property"
