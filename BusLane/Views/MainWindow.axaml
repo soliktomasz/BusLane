@@ -309,7 +309,7 @@
                     VerticalAlignment="Stretch"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="0,0,1,0"
-                    BoxShadow="8 0 32 0 #30000000">
+                    BoxShadow="8 0 24 0 #32000000">
 
                 <DockPanel>
                     <!-- Panel Header -->
@@ -517,7 +517,7 @@
                     CornerRadius="12"
                     MaxWidth="900" MaxHeight="700"
                     VerticalAlignment="Center" HorizontalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 24 0 #32000000">
                 <dialogs:AlertsDialog DataContext="{Binding FeaturePanels.AlertsViewModel}"/>
             </Border>
         </Border>

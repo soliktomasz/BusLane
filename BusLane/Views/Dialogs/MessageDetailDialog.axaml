@@ -12,7 +12,7 @@
                 CornerRadius="8"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
-                BoxShadow="0 8 32 0 #40000000"
+                BoxShadow="0 8 24 0 #32000000"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch"
                 Margin="48"

@@ -275,7 +275,7 @@
                                         CornerRadius="12"
                                         BorderThickness="1"
                                         BorderBrush="{DynamicResource BorderDefault}"
-                                        BoxShadow="0 8 32 0 #40000000"
+                                        BoxShadow="0 8 24 0 #32000000"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         MinWidth="280">
@@ -420,7 +420,7 @@
                                         CornerRadius="12"
                                         BorderThickness="1"
                                         BorderBrush="{DynamicResource BorderDefault}"
-                                        BoxShadow="0 8 32 0 #40000000"
+                                        BoxShadow="0 8 24 0 #32000000"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         MinWidth="280">
