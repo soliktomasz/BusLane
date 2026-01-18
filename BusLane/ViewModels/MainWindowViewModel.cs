@@ -4,6 +4,7 @@ using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Serilog;
 
 namespace BusLane.ViewModels;
 
@@ -30,8 +31,10 @@ public enum ConnectionMode
 /// Main window view model - slim coordinator that composes specialized components.
 /// Responsibilities: coordination, UI state, and glue between components.
 /// </summary>
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IDisposable
 {
+    private bool _disposed;
+
     // Services (injected)
     private readonly IAzureAuthService _auth;
     private readonly IAzureResourceService _azureResources;
@@ -227,9 +230,9 @@ public partial class MainWindowViewModel : ViewModelBase
         Navigation.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
-                _ = LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id);
+                FireAndForget(LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id), nameof(LoadNamespacesAsync));
             else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
-                _ = MessageOps.LoadMessagesAsync();
+                FireAndForget(MessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
         };
 
         // Wire up device code authentication event
@@ -1297,6 +1300,47 @@ public partial class MainWindowViewModel : ViewModelBase
     public void OnApplicationClosing()
     {
         SaveTabSession();
+        Dispose();
+    }
+
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Safely executes an async task without awaiting, logging any exceptions.
+    /// Use this for event handlers where fire-and-forget is necessary.
+    /// </summary>
+    private static async void FireAndForget(Task task, string operationName)
+    {
+        try
+        {
+            await task;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Unhandled exception in fire-and-forget operation: {OperationName}", operationName);
+        }
+    }
+
+    #endregion
+
+    #region IDisposable
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _autoRefreshTimer?.Stop();
+        _autoRefreshTimer?.Dispose();
+        _autoRefreshTimer = null;
+
+        // Dispose operations if they implement IAsyncDisposable
+        if (_operations is IAsyncDisposable asyncDisposable)
+        {
+            asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
     }
 
     #endregion

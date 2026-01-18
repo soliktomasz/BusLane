@@ -2,7 +2,7 @@ namespace BusLane.Services.Monitoring;
 
 using BusLane.Models;
 
-public interface IMetricsService
+public interface IMetricsService : IDisposable
 {
     /// <summary>
     /// Record a metric data point

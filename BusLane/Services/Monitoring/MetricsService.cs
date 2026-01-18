@@ -7,15 +7,23 @@ using BusLane.Models;
 /// Thread-safe wrapper for a list of metric data points.
 /// Ensures all operations on the underlying list are protected by a lock.
 /// </summary>
-internal sealed class MetricDataList
+internal sealed class MetricDataList : IDisposable
 {
     private readonly List<MetricDataPoint> _list;
     private readonly System.Threading.ReaderWriterLockSlim _dataLock;
+    private bool _disposed;
 
     public MetricDataList()
     {
         _list = new List<MetricDataPoint>();
         _dataLock = new System.Threading.ReaderWriterLockSlim();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _dataLock.Dispose();
     }
 
     public void Add(MetricDataPoint dataPoint, int maxPoints)
@@ -91,12 +99,25 @@ internal sealed class MetricDataList
     }
 }
 
-public class MetricsService : IMetricsService
+public class MetricsService : IMetricsService, IDisposable
 {
     internal const int MaxPointsPerMetric = 1000;
     private readonly ConcurrentDictionary<string, MetricDataList> _metrics = new();
+    private bool _disposed;
 
     public event EventHandler<MetricDataPoint>? MetricRecorded;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        foreach (var kvp in _metrics)
+        {
+            kvp.Value.Dispose();
+        }
+        _metrics.Clear();
+    }
 
     public void RecordMetric(string entityName, string metricName, double value)
     {
