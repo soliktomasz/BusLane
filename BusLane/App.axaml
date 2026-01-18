@@ -105,7 +105,7 @@
                     <SolidColorBrush x:Key="AppBackground" Color="#1C1C1C"/>
                     <SolidColorBrush x:Key="AppForeground" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="SubtleForeground" Color="#C8C8C8"/>
-                    <SolidColorBrush x:Key="MutedForeground" Color="#8A8A8A"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#A0A0A0"/>
                     <SolidColorBrush x:Key="CardBackground" Color="#292929"/>
                     <SolidColorBrush x:Key="SidebarBackground" Color="#1C1C1C"/>
                     <SolidColorBrush x:Key="SurfaceSubtle" Color="#242424"/>
