@@ -6,11 +6,9 @@
     
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowConfirmDialog}">
-        <Border Classes="modal" 
-                VerticalAlignment="Center" 
-                HorizontalAlignment="Center"
-                MinWidth="400"
-                MaxWidth="500">
+        <Border Classes="modal modal-small"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center">
             <DockPanel>
                 <!-- Header -->
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,16">

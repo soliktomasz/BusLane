@@ -6,12 +6,9 @@
 
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowSettings}">
-        <Border Classes="modal"
+        <Border Classes="modal modal-medium"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                MinWidth="540"
-                MaxWidth="580"
-                MaxHeight="680"
                 Padding="0">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->

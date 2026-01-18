@@ -6,12 +6,9 @@
              x:DataType="vm:AlertsViewModel">
 
     <Border Classes="modal-overlay">
-        <Border Classes="modal"
+        <Border Classes="modal modal-large"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                MinWidth="640"
-                MaxWidth="720"
-                MaxHeight="700"
                 Padding="0">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header -->

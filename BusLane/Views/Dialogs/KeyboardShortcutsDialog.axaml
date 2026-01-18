@@ -5,15 +5,12 @@
              x:DataType="vm:MainWindowViewModel">
 
     <!-- Keyboard Shortcuts Help Dialog -->
-    <Border IsVisible="{Binding ShowKeyboardShortcuts}"
-            Background="{DynamicResource ModalOverlay}">
-        <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="12"
-                MaxWidth="600" MaxHeight="700"
-                MinWidth="450"
-                VerticalAlignment="Center" HorizontalAlignment="Center"
-                BoxShadow="0 8 32 0 #40000000">
-            <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowKeyboardShortcuts}">
+        <Border Classes="modal modal-medium"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
                     <StackPanel Grid.Column="0">

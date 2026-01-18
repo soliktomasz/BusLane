@@ -12,12 +12,9 @@
 
     <Border Classes="modal-overlay"
             IsVisible="{Binding Connection.ShowConnectionLibrary}">
-        <Border Classes="modal"
+        <Border Classes="modal modal-large"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                MinWidth="640"
-                MaxWidth="720"
-                MaxHeight="700"
                 Padding="0">
             <Grid RowDefinitions="Auto,Auto,*">
                 <!-- Header -->

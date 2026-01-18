@@ -655,6 +655,22 @@
         <Setter Property="MaxHeight" Value="560"/>
     </Style>
 
+    <!-- Dialog size variants - Fluent 2 standardized sizes -->
+    <Style Selector="Border.modal-small">
+        <Setter Property="MaxWidth" Value="400"/>
+        <Setter Property="MaxHeight" Value="400"/>
+    </Style>
+
+    <Style Selector="Border.modal-medium">
+        <Setter Property="MaxWidth" Value="640"/>
+        <Setter Property="MaxHeight" Value="560"/>
+    </Style>
+
+    <Style Selector="Border.modal-large">
+        <Setter Property="MaxWidth" Value="900"/>
+        <Setter Property="MaxHeight" Value="720"/>
+    </Style>
+
     <!-- Progress - Fluent 2 accent color -->
     <Style Selector="ProgressBar">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
