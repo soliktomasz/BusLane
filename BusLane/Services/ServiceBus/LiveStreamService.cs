@@ -28,6 +28,8 @@ public class LiveStreamService : ILiveStreamService
 
     private const int DefaultPeekTimeoutSeconds = 30;
     private const int DefaultPollingIntervalSeconds = 1;
+    private const int ErrorRetryDelaySeconds = 5;
+    private const int GracefulShutdownTimeoutSeconds = 5;
 
     public LiveStreamService(IPreferencesService preferencesService)
     {
@@ -213,7 +215,7 @@ public class LiveStreamService : ILiveStreamService
                     {
                         Log.Error(ex, "Error in peek stream for {EntityName}", entityName);
                         StreamError?.Invoke(this, ex);
-                        await Task.Delay(TimeSpan.FromSeconds(5), _peekCts.Token);
+                        await Task.Delay(TimeSpan.FromSeconds(ErrorRetryDelaySeconds), _peekCts.Token);
                     }
                 }
             }, _peekCts.Token);
@@ -299,7 +301,7 @@ public class LiveStreamService : ILiveStreamService
         {
             try
             {
-                await Task.WhenAny(_peekStreamTask, Task.Delay(TimeSpan.FromSeconds(5)));
+                await Task.WhenAny(_peekStreamTask, Task.Delay(TimeSpan.FromSeconds(GracefulShutdownTimeoutSeconds)));
                 if (!_peekStreamTask.IsCompleted)
                 {
                     Log.Warning("Peek stream task did not complete gracefully");

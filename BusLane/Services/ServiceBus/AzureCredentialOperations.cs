@@ -59,8 +59,8 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 q.Data.SizeInBytes ?? 0,
                 q.Data.AccessedOn,
                 q.Data.RequiresSession ?? false,
-                q.Data.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14),
-                q.Data.LockDuration ?? TimeSpan.FromMinutes(1)
+                q.Data.DefaultMessageTimeToLive ?? ServiceBusOperations.Options.DefaultMessageTimeToLive,
+                q.Data.LockDuration ?? ServiceBusOperations.Options.DefaultLockDuration
             ));
         }
         Log.Debug("Retrieved {Count} queues from {Endpoint}", queues.Count, _endpoint);
@@ -84,8 +84,8 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 q.Data.SizeInBytes ?? 0,
                 q.Data.AccessedOn,
                 q.Data.RequiresSession ?? false,
-                q.Data.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14),
-                q.Data.LockDuration ?? TimeSpan.FromMinutes(1)
+                q.Data.DefaultMessageTimeToLive ?? ServiceBusOperations.Options.DefaultMessageTimeToLive,
+                q.Data.LockDuration ?? ServiceBusOperations.Options.DefaultLockDuration
             );
         }
         catch (Exception ex)
@@ -107,7 +107,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 t.Data.SizeInBytes ?? 0,
                 t.Data.SubscriptionCount ?? 0,
                 t.Data.AccessedOn,
-                t.Data.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14)
+                t.Data.DefaultMessageTimeToLive ?? ServiceBusOperations.Options.DefaultMessageTimeToLive
             ));
         }
         return topics;
@@ -126,7 +126,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 t.Data.SizeInBytes ?? 0,
                 t.Data.SubscriptionCount ?? 0,
                 t.Data.AccessedOn,
-                t.Data.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14)
+                t.Data.DefaultMessageTimeToLive ?? ServiceBusOperations.Options.DefaultMessageTimeToLive
             );
         }
         catch (Exception ex)

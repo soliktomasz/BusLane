@@ -4,18 +4,58 @@ using Azure.Messaging.ServiceBus;
 using BusLane.Models;
 
 /// <summary>
+/// Configuration options for Service Bus batch operations.
+/// </summary>
+public record ServiceBusOperationOptions
+{
+    /// <summary>Maximum number of sessions to check when processing session-enabled entities.</summary>
+    public int MaxSessionsToCheck { get; init; } = 10;
+
+    /// <summary>Number of messages to process per batch during purge operations.</summary>
+    public int PurgeBatchSize { get; init; } = 100;
+
+    /// <summary>Timeout for receiving messages during purge operations.</summary>
+    public TimeSpan PurgeReceiveTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Number of messages to process per batch during delete operations.</summary>
+    public int DeleteBatchSize { get; init; } = 100;
+
+    /// <summary>Timeout for receiving messages during delete operations.</summary>
+    public TimeSpan DeleteReceiveTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Number of consecutive empty batches before stopping an operation.</summary>
+    public int MaxEmptyBatches { get; init; } = 3;
+
+    /// <summary>Number of messages to send per batch during resend operations.</summary>
+    public int ResendBatchSize { get; init; } = 50;
+
+    /// <summary>Default TTL for queues/topics when not specified by the service.</summary>
+    public TimeSpan DefaultMessageTimeToLive { get; init; } = TimeSpan.FromDays(14);
+
+    /// <summary>Default lock duration when not specified by the service.</summary>
+    public TimeSpan DefaultLockDuration { get; init; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>Default options instance with standard values.</summary>
+    public static ServiceBusOperationOptions Default { get; } = new();
+}
+
+/// <summary>
 /// Shared operations and utilities for Service Bus services.
 /// Used by ConnectionStringOperations and AzureCredentialOperations implementations.
 /// </summary>
 internal static class ServiceBusOperations
 {
-    public const int MaxSessionsToCheck = 10;
-    public const int PurgeBatchSize = 100;
-    public static readonly TimeSpan PurgeReceiveTimeout = TimeSpan.FromSeconds(5);
-    public const int DeleteBatchSize = 100;
-    public static readonly TimeSpan DeleteReceiveTimeout = TimeSpan.FromSeconds(5);
-    public const int MaxEmptyBatches = 3;
-    public const int ResendBatchSize = 50;
+    // Default options - these are used when no options are provided
+    public static ServiceBusOperationOptions Options { get; set; } = ServiceBusOperationOptions.Default;
+
+    // Convenience accessors for backwards compatibility
+    public static int MaxSessionsToCheck => Options.MaxSessionsToCheck;
+    public static int PurgeBatchSize => Options.PurgeBatchSize;
+    public static TimeSpan PurgeReceiveTimeout => Options.PurgeReceiveTimeout;
+    public static int DeleteBatchSize => Options.DeleteBatchSize;
+    public static TimeSpan DeleteReceiveTimeout => Options.DeleteReceiveTimeout;
+    public static int MaxEmptyBatches => Options.MaxEmptyBatches;
+    public static int ResendBatchSize => Options.ResendBatchSize;
 
     /// <summary>
     /// Maps a ServiceBusReceivedMessage to our MessageInfo model.
