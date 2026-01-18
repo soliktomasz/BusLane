@@ -715,11 +715,16 @@ public partial class MainWindowViewModel : ViewModelBase
                 "Confirm Purge",
                 BulkOps.GetPurgeConfirmationMessage(),
                 "Purge",
-                async () => await BulkOps.ExecutePurgeAsync());
+                async () =>
+                {
+                    await BulkOps.ExecutePurgeAsync();
+                    await MessageOps.LoadMessagesAsync();
+                });
         }
         else
         {
             await BulkOps.ExecutePurgeAsync();
+            await MessageOps.LoadMessagesAsync();
         }
     }
 
