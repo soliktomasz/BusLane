@@ -5,12 +5,14 @@ using System.Reactive.Subjects;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using BusLane.Models;
+using BusLane.Services.Abstractions;
 using Serilog;
 
 public class LiveStreamService : ILiveStreamService
 {
     private Subject<LiveStreamMessage> _messageSubject = new();
     private readonly object _subjectLock = new();
+    private readonly IPreferencesService _preferencesService;
     private ServiceBusClient? _client;
     private ServiceBusProcessor? _processor;
     private ServiceBusReceiver? _peekReceiver;
@@ -25,6 +27,12 @@ public class LiveStreamService : ILiveStreamService
     private bool _isPeekMode = true;
 
     private const int DefaultPeekTimeoutSeconds = 30;
+    private const int DefaultPollingIntervalSeconds = 1;
+
+    public LiveStreamService(IPreferencesService preferencesService)
+    {
+        _preferencesService = preferencesService;
+    }
 
     public IObservable<LiveStreamMessage> Messages
     {
@@ -146,7 +154,10 @@ public class LiveStreamService : ILiveStreamService
             });
 
         long lastSequenceNumber = 0;
-        var pollingInterval = TimeSpan.FromSeconds(1);
+        var pollingInterval = TimeSpan.FromSeconds(
+            _preferencesService.LiveStreamPollingIntervalSeconds > 0
+                ? _preferencesService.LiveStreamPollingIntervalSeconds
+                : DefaultPollingIntervalSeconds);
 
         try
         {
