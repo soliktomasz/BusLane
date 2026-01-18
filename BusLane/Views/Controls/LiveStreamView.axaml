@@ -39,13 +39,23 @@
                         <TextBlock Text="{Binding MessageCount, StringFormat='{}({0} messages)'}"
                                    VerticalAlignment="Center" FontSize="12"
                                    Foreground="{DynamicResource SubtleForeground}"/>
-                        <Button Classes="subtle small" Content="Clear"
+                        <Button Classes="subtle small"
                                 Command="{Binding ClearMessagesCommand}"
-                                Padding="8,8"/>
-                        <Button Classes="danger-subtle small" Content="Stop"
+                                Padding="8,8">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <LucideIcon Kind="Eraser" Size="12"/>
+                                <TextBlock Text="Clear"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="danger-subtle small"
                                 Command="{Binding StopStreamCommand}"
                                 IsVisible="{Binding IsStreaming}"
-                                Padding="8,8"/>
+                                Padding="8,8">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <LucideIcon Kind="Square" Size="12"/>
+                                <TextBlock Text="Stop"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>

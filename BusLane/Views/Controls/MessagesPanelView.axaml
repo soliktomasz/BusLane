@@ -62,9 +62,13 @@
                             </Button>
                             <Border Width="1" Background="{DynamicResource BorderDefault}" Margin="4,4"/>
                             <Button Classes="danger-subtle small"
-                                    Content="Purge"
                                     Command="{Binding PurgeMessagesCommand}"
-                                    Padding="8,8"/>
+                                    Padding="8,8">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <LucideIcon Kind="Trash2" Size="12"/>
+                                    <TextBlock Text="Purge"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
 

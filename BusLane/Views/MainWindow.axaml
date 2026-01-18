@@ -74,10 +74,15 @@
                         <TextBlock Text="{Binding ActiveTab.Namespace.Name}" Classes="title"/>
                         <TextBlock Text="{Binding ActiveTab.Namespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Button Classes="secondary small" Content="Refresh"
+                    <Button Classes="secondary small"
                             Command="{Binding RefreshCommand}"
                             HorizontalAlignment="Right"
-                            VerticalAlignment="Center"/>
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <LucideIcon Kind="RefreshCw" Size="12"/>
+                            <TextBlock Text="Refresh"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
                 <!-- Main content grid -->
@@ -109,10 +114,15 @@
                                        IsVisible="{Binding ActiveTab.SavedConnection.IsNamespaceLevel}"/>
                         </StackPanel>
                     </StackPanel>
-                    <Button Classes="secondary small" Content="Refresh"
+                    <Button Classes="secondary small"
                             Command="{Binding RefreshConnectionCommand}"
                             HorizontalAlignment="Right"
-                            VerticalAlignment="Center"/>
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <LucideIcon Kind="RefreshCw" Size="12"/>
+                            <TextBlock Text="Refresh"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
                 <!-- Main content for connection string mode -->
