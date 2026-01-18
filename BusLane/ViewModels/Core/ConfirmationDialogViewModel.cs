@@ -30,6 +30,7 @@ public partial class ConfirmationDialogViewModel : ViewModelBase
         _confirmAction = null;
     }
 
+    [RelayCommand]
     public async Task ExecuteConfirmDialogAsync()
     {
         ShowConfirmDialog = false;
@@ -40,6 +41,7 @@ public partial class ConfirmationDialogViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
     public void CancelConfirmDialog()
     {
         ShowConfirmDialog = false;

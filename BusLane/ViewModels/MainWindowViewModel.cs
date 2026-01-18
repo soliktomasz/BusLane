@@ -118,11 +118,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _showSettings;
     [ObservableProperty] private SettingsViewModel? _settingsViewModel;
 
-    // Confirmation dialog
-    [ObservableProperty] private bool _showConfirmDialog;
-    [ObservableProperty] private string _confirmDialogTitle = "";
-    [ObservableProperty] private string _confirmDialogMessage = "";
-    [ObservableProperty] private string _confirmDialogConfirmText = "Confirm";
 
     // Keyboard shortcuts dialog
     [ObservableProperty] private bool _showKeyboardShortcuts;
@@ -1026,23 +1021,6 @@ public partial class MainWindowViewModel : ViewModelBase
         await ExportOps.ExportMessageAsync(msg);
     }
 
-    #region Confirmation Dialog
-
-    [RelayCommand]
-    private async Task ExecuteConfirmDialogAsync()
-    {
-        ShowConfirmDialog = false;
-        await Confirmation.ExecuteConfirmDialogAsync();
-    }
-
-    [RelayCommand]
-    private void CancelConfirmDialog()
-    {
-        ShowConfirmDialog = false;
-        Confirmation.CancelConfirmDialog();
-    }
-
-    #endregion
 
     #region Tab Management
 
