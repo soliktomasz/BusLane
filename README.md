@@ -7,6 +7,7 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-tomaszsolik-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=000000)](https://www.buymeacoffee.com/tomaszsolik)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T51SJG3D)
 
 <p align="center">
   <a href="https://soliktomasz.github.io/BusLane/">Website</a> |
