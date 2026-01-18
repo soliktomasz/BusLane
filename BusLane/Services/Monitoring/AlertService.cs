@@ -15,12 +15,34 @@ public class AlertService : IAlertService
     // Cached JsonSerializerOptions to avoid recreation on every serialization
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
+    // Lock object for thread-safe access to mutable collections
+    private readonly object _lock = new();
+
     private readonly List<AlertRule> _rules = [];
     private readonly List<AlertEvent> _activeAlerts = [];
     private readonly HashSet<string> _triggeredAlertKeys = []; // To prevent duplicate alerts
 
-    public IReadOnlyList<AlertRule> Rules => _rules.AsReadOnly();
-    public IReadOnlyList<AlertEvent> ActiveAlerts => _activeAlerts.AsReadOnly();
+    public IReadOnlyList<AlertRule> Rules
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _rules.ToList().AsReadOnly();
+            }
+        }
+    }
+
+    public IReadOnlyList<AlertEvent> ActiveAlerts
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _activeAlerts.ToList().AsReadOnly();
+            }
+        }
+    }
 
     public event EventHandler<AlertEvent>? AlertTriggered;
     public event EventHandler? AlertsChanged;
@@ -33,15 +55,22 @@ public class AlertService : IAlertService
 
     public void AddRule(AlertRule rule)
     {
-        _rules.Add(rule);
-        SaveRules();
+        lock (_lock)
+        {
+            _rules.Add(rule);
+            SaveRulesInternal();
+        }
         AlertsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void RemoveRule(string ruleId)
     {
-        var removedCount = _rules.RemoveAll(r => r.Id == ruleId);
-        SaveRules();
+        int removedCount;
+        lock (_lock)
+        {
+            removedCount = _rules.RemoveAll(r => r.Id == ruleId);
+            SaveRulesInternal();
+        }
         AlertsChanged?.Invoke(this, EventArgs.Empty);
         if (removedCount > 0)
         {
@@ -51,18 +80,30 @@ public class AlertService : IAlertService
 
     public void UpdateRule(AlertRule rule)
     {
-        var index = _rules.FindIndex(r => r.Id == rule.Id);
-        if (index >= 0)
+        bool updated = false;
+        lock (_lock)
         {
-            _rules[index] = rule;
-            SaveRules();
+            var index = _rules.FindIndex(r => r.Id == rule.Id);
+            if (index >= 0)
+            {
+                _rules[index] = rule;
+                SaveRulesInternal();
+                updated = true;
+            }
+        }
+        if (updated)
+        {
             AlertsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public void SetRuleEnabled(string ruleId, bool enabled)
     {
-        var rule = _rules.Find(r => r.Id == ruleId);
+        AlertRule? rule;
+        lock (_lock)
+        {
+            rule = _rules.Find(r => r.Id == ruleId);
+        }
         if (rule != null)
         {
             var updatedRule = rule with { IsEnabled = enabled };
@@ -76,7 +117,14 @@ public class AlertService : IAlertService
     {
         var newAlerts = new List<AlertEvent>();
 
-        foreach (var rule in _rules.Where(r => r.IsEnabled))
+        // Take a snapshot of enabled rules to avoid holding lock during evaluation
+        List<AlertRule> enabledRules;
+        lock (_lock)
+        {
+            enabledRules = _rules.Where(r => r.IsEnabled).ToList();
+        }
+
+        foreach (var rule in enabledRules)
         {
             // Check queues
             foreach (var queue in queues)
@@ -106,20 +154,31 @@ public class AlertService : IAlertService
             }
         }
 
-        // Add new alerts and trigger events
+        // Add new alerts and trigger events (with lock for collection access)
         var triggeredAlerts = new List<AlertEvent>();
-        foreach (var alert in newAlerts)
+        var alertsToFire = new List<AlertEvent>();
+
+        lock (_lock)
         {
-            var key = GetAlertKey(alert);
-            if (!_triggeredAlertKeys.Contains(key))
+            foreach (var alert in newAlerts)
             {
-                _triggeredAlertKeys.Add(key);
-                _activeAlerts.Add(alert);
-                triggeredAlerts.Add(alert);
-                AlertTriggered?.Invoke(this, alert);
-                Log.Warning("Alert triggered: {AlertType} on {EntityName} - Current value: {CurrentValue}, Threshold: {Threshold}", 
-                    alert.Rule.Type, alert.EntityName, alert.CurrentValue, alert.Rule.Threshold);
+                var key = GetAlertKey(alert);
+                if (!_triggeredAlertKeys.Contains(key))
+                {
+                    _triggeredAlertKeys.Add(key);
+                    _activeAlerts.Add(alert);
+                    triggeredAlerts.Add(alert);
+                    alertsToFire.Add(alert);
+                }
             }
+        }
+
+        // Fire events outside lock to avoid potential deadlocks
+        foreach (var alert in alertsToFire)
+        {
+            AlertTriggered?.Invoke(this, alert);
+            Log.Warning("Alert triggered: {AlertType} on {EntityName} - Current value: {CurrentValue}, Threshold: {Threshold}",
+                alert.Rule.Type, alert.EntityName, alert.CurrentValue, alert.Rule.Threshold);
         }
 
         if (triggeredAlerts.Count > 0)
@@ -210,23 +269,34 @@ public class AlertService : IAlertService
 
     public void AcknowledgeAlert(string alertId)
     {
-        var index = _activeAlerts.FindIndex(a => a.Id == alertId);
-        if (index >= 0)
+        bool acknowledged = false;
+        lock (_lock)
         {
-            var alert = _activeAlerts[index];
-            _activeAlerts[index] = alert with { IsAcknowledged = true };
+            var index = _activeAlerts.FindIndex(a => a.Id == alertId);
+            if (index >= 0)
+            {
+                var alert = _activeAlerts[index];
+                _activeAlerts[index] = alert with { IsAcknowledged = true };
 
-            // Remove from triggered keys so it can trigger again later
-            var key = GetAlertKey(alert);
-            _triggeredAlertKeys.Remove(key);
+                // Remove from triggered keys so it can trigger again later
+                var key = GetAlertKey(alert);
+                _triggeredAlertKeys.Remove(key);
+                acknowledged = true;
+            }
+        }
 
+        if (acknowledged)
+        {
             AlertsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public void ClearAcknowledgedAlerts()
     {
-        _activeAlerts.RemoveAll(a => a.IsAcknowledged);
+        lock (_lock)
+        {
+            _activeAlerts.RemoveAll(a => a.IsAcknowledged);
+        }
         AlertsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -241,12 +311,26 @@ public class AlertService : IAlertService
             DateTimeOffset.UtcNow
         );
 
-        _activeAlerts.Add(testAlert);
+        lock (_lock)
+        {
+            _activeAlerts.Add(testAlert);
+        }
         AlertTriggered?.Invoke(this, testAlert);
         AlertsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void SaveRules()
+    {
+        lock (_lock)
+        {
+            SaveRulesInternal();
+        }
+    }
+
+    /// <summary>
+    /// Internal save method - must be called while holding the lock.
+    /// </summary>
+    private void SaveRulesInternal()
     {
         try
         {
@@ -274,38 +358,41 @@ public class AlertService : IAlertService
 
     public void LoadRules()
     {
-        try
+        lock (_lock)
         {
-            if (File.Exists(AppPaths.AlertRules))
+            try
             {
-                var json = File.ReadAllText(AppPaths.AlertRules);
-                var data = JsonSerializer.Deserialize<List<AlertRuleData>>(json);
-
-                if (data != null)
+                if (File.Exists(AppPaths.AlertRules))
                 {
-                    _rules.Clear();
-                    foreach (var item in data)
+                    var json = File.ReadAllText(AppPaths.AlertRules);
+                    var data = JsonSerializer.Deserialize<List<AlertRuleData>>(json);
+
+                    if (data != null)
                     {
-                        if (Enum.TryParse<AlertType>(item.Type, out var type) &&
-                            Enum.TryParse<AlertSeverity>(item.Severity, out var severity))
+                        _rules.Clear();
+                        foreach (var item in data)
                         {
-                            _rules.Add(new AlertRule(
-                                item.Id,
-                                item.Name,
-                                type,
-                                severity,
-                                item.Threshold,
-                                item.IsEnabled,
-                                item.EntityPattern
-                            ));
+                            if (Enum.TryParse<AlertType>(item.Type, out var type) &&
+                                Enum.TryParse<AlertSeverity>(item.Severity, out var severity))
+                            {
+                                _rules.Add(new AlertRule(
+                                    item.Id,
+                                    item.Name,
+                                    type,
+                                    severity,
+                                    item.Threshold,
+                                    item.IsEnabled,
+                                    item.EntityPattern
+                                ));
+                            }
                         }
                     }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Debug(ex, "Failed to load alert rules from {Path}, using defaults", AppPaths.AlertRules);
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Failed to load alert rules from {Path}, using defaults", AppPaths.AlertRules);
+            }
         }
     }
 
