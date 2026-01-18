@@ -9,6 +9,7 @@
         <Border Classes="modal modal-medium"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
+                MinWidth="580"
                 Padding="0">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
