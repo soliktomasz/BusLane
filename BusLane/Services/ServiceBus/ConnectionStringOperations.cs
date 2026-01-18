@@ -29,15 +29,24 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
     {
-        var queues = new List<QueueInfo>();
-
+        // First, collect all queue properties
+        var queueProperties = new List<QueueProperties>();
         await foreach (var queue in AdminClient.GetQueuesAsync(ct))
         {
-            var props = await AdminClient.GetQueueRuntimePropertiesAsync(queue.Name, ct);
-            queues.Add(MapToQueueInfo(queue, props.Value));
+            queueProperties.Add(queue);
         }
 
-        return queues;
+        if (queueProperties.Count == 0)
+            return [];
+
+        // Fetch runtime properties in parallel for better performance
+        var runtimeTasks = queueProperties.Select(q =>
+            AdminClient.GetQueueRuntimePropertiesAsync(q.Name, ct));
+        var runtimeResults = await Task.WhenAll(runtimeTasks);
+
+        // Combine properties and runtime info
+        return queueProperties.Zip(runtimeResults, (queue, runtime) =>
+            MapToQueueInfo(queue, runtime.Value)).ToList();
     }
 
     public async Task<QueueInfo?> GetQueueInfoAsync(string queueName, CancellationToken ct = default)
@@ -57,15 +66,24 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<IEnumerable<TopicInfo>> GetTopicsAsync(CancellationToken ct = default)
     {
-        var topics = new List<TopicInfo>();
-
+        // First, collect all topic properties
+        var topicProperties = new List<TopicProperties>();
         await foreach (var topic in AdminClient.GetTopicsAsync(ct))
         {
-            var props = await AdminClient.GetTopicRuntimePropertiesAsync(topic.Name, ct);
-            topics.Add(MapToTopicInfo(topic, props.Value));
+            topicProperties.Add(topic);
         }
 
-        return topics;
+        if (topicProperties.Count == 0)
+            return [];
+
+        // Fetch runtime properties in parallel for better performance
+        var runtimeTasks = topicProperties.Select(t =>
+            AdminClient.GetTopicRuntimePropertiesAsync(t.Name, ct));
+        var runtimeResults = await Task.WhenAll(runtimeTasks);
+
+        // Combine properties and runtime info
+        return topicProperties.Zip(runtimeResults, (topic, runtime) =>
+            MapToTopicInfo(topic, runtime.Value)).ToList();
     }
 
     public async Task<TopicInfo?> GetTopicInfoAsync(string topicName, CancellationToken ct = default)
@@ -85,23 +103,31 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<IEnumerable<SubscriptionInfo>> GetSubscriptionsAsync(string topicName, CancellationToken ct = default)
     {
-        var subscriptions = new List<SubscriptionInfo>();
-
+        // First, collect all subscription properties
+        var subscriptionProperties = new List<SubscriptionProperties>();
         await foreach (var sub in AdminClient.GetSubscriptionsAsync(topicName, ct))
         {
-            var props = await AdminClient.GetSubscriptionRuntimePropertiesAsync(topicName, sub.SubscriptionName, ct);
-            subscriptions.Add(new SubscriptionInfo(
-                sub.SubscriptionName,
-                topicName,
-                props.Value.TotalMessageCount,
-                props.Value.ActiveMessageCount,
-                props.Value.DeadLetterMessageCount,
-                props.Value.AccessedAt,
-                sub.RequiresSession
-            ));
+            subscriptionProperties.Add(sub);
         }
 
-        return subscriptions;
+        if (subscriptionProperties.Count == 0)
+            return [];
+
+        // Fetch runtime properties in parallel for better performance
+        var runtimeTasks = subscriptionProperties.Select(s =>
+            AdminClient.GetSubscriptionRuntimePropertiesAsync(topicName, s.SubscriptionName, ct));
+        var runtimeResults = await Task.WhenAll(runtimeTasks);
+
+        // Combine properties and runtime info
+        return subscriptionProperties.Zip(runtimeResults, (sub, runtime) => new SubscriptionInfo(
+            sub.SubscriptionName,
+            topicName,
+            runtime.Value.TotalMessageCount,
+            runtime.Value.ActiveMessageCount,
+            runtime.Value.DeadLetterMessageCount,
+            runtime.Value.AccessedAt,
+            sub.RequiresSession
+        )).ToList();
     }
 
     public async Task<NamespaceInfo?> GetNamespaceInfoAsync(CancellationToken ct = default)

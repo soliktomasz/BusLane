@@ -157,10 +157,12 @@ public class MetricsService : IMetricsService, IDisposable
     {
         var cutoff = DateTimeOffset.UtcNow - duration;
         var result = new List<MetricDataPoint>();
+        var entityPrefix = $"{entityName}:";
 
-        foreach (var kvp in _metrics)
+        // Filter keys by entity prefix to avoid checking every metric list
+        foreach (var kvp in _metrics.Where(k => k.Key.StartsWith(entityPrefix, StringComparison.Ordinal)))
         {
-            result.AddRange(kvp.Value.Where(p => p.EntityName == entityName && p.Timestamp >= cutoff));
+            result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
         }
 
         return result.OrderBy(p => p.Timestamp);
@@ -170,8 +172,10 @@ public class MetricsService : IMetricsService, IDisposable
     {
         var cutoff = DateTimeOffset.UtcNow - duration;
         var result = new List<MetricDataPoint>();
+        var metricSuffix = $":{metricName}";
 
-        foreach (var kvp in _metrics.Where(k => k.Key.EndsWith($":{metricName}")))
+        // Filter keys by metric suffix
+        foreach (var kvp in _metrics.Where(k => k.Key.EndsWith(metricSuffix, StringComparison.Ordinal)))
         {
             result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
         }

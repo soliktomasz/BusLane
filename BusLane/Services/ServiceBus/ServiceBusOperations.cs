@@ -269,17 +269,20 @@ internal static class ServiceBusOperations
         await using var sender = client.CreateSender(entityName);
 
         var sentCount = 0;
-        var messageList = messages.ToList();
+        // Avoid allocation if already a list
+        var messageList = messages as IList<MessageInfo> ?? messages.ToList();
 
         for (var i = 0; i < messageList.Count; i += ResendBatchSize)
         {
             if (ct.IsCancellationRequested) break;
 
-            var batch = messageList.Skip(i).Take(ResendBatchSize).ToList();
-            var serviceBusMessages = new List<ServiceBusMessage>();
+            // Calculate batch bounds to avoid Skip/Take allocations
+            var batchSize = Math.Min(ResendBatchSize, messageList.Count - i);
+            var serviceBusMessages = new List<ServiceBusMessage>(batchSize);
 
-            foreach (var msg in batch)
+            for (var j = 0; j < batchSize; j++)
             {
+                var msg = messageList[i + j];
                 var sbMsg = new ServiceBusMessage(msg.Body);
                 ApplyMessageProperties(sbMsg, msg.ContentType, msg.CorrelationId, null, msg.SessionId,
                     msg.Subject, msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey,
@@ -290,7 +293,7 @@ internal static class ServiceBusOperations
             try
             {
                 await sender.SendMessagesAsync(serviceBusMessages, ct);
-                sentCount += batch.Count;
+                sentCount += batchSize;
             }
             catch (ServiceBusException)
             {
@@ -329,7 +332,7 @@ internal static class ServiceBusOperations
             ReceiveMode = ServiceBusReceiveMode.PeekLock,
             SubQueue = SubQueue.DeadLetter
         };
-        
+
         await using var deadLetterReceiver = subscription != null
             ? client.CreateReceiver(entityName, subscription, receiverOptions)
             : client.CreateReceiver(entityName, receiverOptions);
@@ -337,9 +340,9 @@ internal static class ServiceBusOperations
         await using var sender = client.CreateSender(entityName);
 
         var resubmittedCount = 0;
-        var messageList = messages.ToList();
 
-        foreach (var msg in messageList)
+        // Iterate directly without materializing to list - we only enumerate once
+        foreach (var msg in messages)
         {
             if (ct.IsCancellationRequested) break;
 
