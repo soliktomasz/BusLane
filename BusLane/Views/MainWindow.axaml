@@ -133,8 +133,13 @@
                     <Border Grid.Row="0" Margin="0,0,0,16">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0" Text="Live Message Stream" Classes="title"/>
-                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close"
-                                    Command="{Binding CloseLiveStreamCommand}"/>
+                            <Button Grid.Column="1" Classes="subtle"
+                                    Command="{Binding CloseLiveStreamCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="X" Size="14"/>
+                                    <TextBlock Text="Close"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </Border>
                     <controls:LiveStreamView Grid.Row="1" DataContext="{Binding FeaturePanels.LiveStreamViewModel}"/>
@@ -149,8 +154,13 @@
                     <Border Grid.Row="0" Margin="0,0,0,16">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0" Text="Metrics &amp; Charts" Classes="title"/>
-                            <Button Grid.Column="1" Classes="subtle" Content="✕ Close"
-                                    Command="{Binding CloseChartsCommand}"/>
+                            <Button Grid.Column="1" Classes="subtle"
+                                    Command="{Binding CloseChartsCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="X" Size="14"/>
+                                    <TextBlock Text="Close"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </Border>
                     <ContentControl Grid.Row="1" Content="{Binding FeaturePanels.ChartsViewModel}">

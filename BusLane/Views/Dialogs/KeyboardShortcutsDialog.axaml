@@ -20,11 +20,12 @@
                         <TextBlock Text="Keyboard Shortcuts" Classes="title"/>
                         <TextBlock Text="Press Escape to close" Classes="caption" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Button Grid.Column="1" 
-                            Classes="subtle" 
-                            Content="✕"
+                    <Button Grid.Column="1"
+                            Classes="icon"
                             Command="{Binding CloseKeyboardShortcutsCommand}"
-                            VerticalAlignment="Top"/>
+                            VerticalAlignment="Top">
+                        <LucideIcon Kind="X" Size="16"/>
+                    </Button>
                 </Grid>
                 
                 <!-- Shortcuts List -->

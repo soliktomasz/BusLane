@@ -21,10 +21,13 @@
                             <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
                             <!-- Send Message Button (compact, inline) -->
                             <Button Classes="primary small"
-                                    Content="+ Send"
                                     Command="{Binding OpenSendMessagePopupCommand}"
                                     Padding="12,6"
                                     VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <LucideIcon Kind="Plus" Size="12"/>
+                                    <TextBlock Text="Send"/>
+                                </StackPanel>
                                 <Button.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.Or}">
                                         <Binding Path="CurrentNavigation.SelectedQueue" Converter="{x:Static ObjectConverters.IsNotNull}"/>
@@ -50,9 +53,13 @@
                                     ToolTip.Tip="Toggle sort order"
                                     Padding="8,6"/>
                             <Button Classes="subtle small"
-                                    Content="↻ Refresh"
                                     Command="{Binding LoadMessagesCommand}"
-                                    Padding="8,6"/>
+                                    Padding="8,6">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <LucideIcon Kind="RefreshCw" Size="12"/>
+                                    <TextBlock Text="Refresh"/>
+                                </StackPanel>
+                            </Button>
                             <Border Width="1" Background="{DynamicResource BorderDefault}" Margin="4,4"/>
                             <Button Classes="danger-subtle small"
                                     Content="Purge"

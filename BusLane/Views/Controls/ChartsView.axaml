@@ -23,9 +23,14 @@
 
                         <CheckBox Content="Aggregated" IsChecked="{Binding ShowAggregated}" VerticalAlignment="Center"/>
 
-                        <Button Classes="subtle small" Content="↻ Refresh"
+                        <Button Classes="subtle small"
                                 Command="{Binding RefreshChartsCommand}"
-                                Padding="8,6"/>
+                                Padding="8,6">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <LucideIcon Kind="RefreshCw" Size="12"/>
+                                <TextBlock Text="Refresh"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>

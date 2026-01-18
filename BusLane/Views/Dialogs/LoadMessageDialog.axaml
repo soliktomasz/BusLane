@@ -24,13 +24,13 @@
                     <Grid RowDefinitions="Auto,Auto">
                         <Grid Grid.Row="0">
                             <StackPanel Orientation="Horizontal" Spacing="12">
-                                <Border Background="{DynamicResource SurfaceBrand}" 
-                                        CornerRadius="8" 
+                                <Border Background="{DynamicResource SurfaceBrand}"
+                                        CornerRadius="8"
                                         Width="40" Height="40">
-                                    <TextBlock Text="📂" 
-                                               FontSize="18" 
-                                               HorizontalAlignment="Center" 
-                                               VerticalAlignment="Center"/>
+                                    <LucideIcon Kind="FolderOpen" Size="20"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Foreground="{DynamicResource AccentBrand}"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Load Template" Classes="heading"/>
@@ -50,15 +50,23 @@
                                     Spacing="8" 
                                     Margin="0,12,0,0"
                                     HorizontalAlignment="Left">
-                            <Button Classes="secondary small" 
-                                    Content="📥 Import"
+                            <Button Classes="secondary small"
                                     ToolTip.Tip="Import messages from JSON file"
-                                    Command="{Binding SendMessageViewModel.ImportMessagesCommand}"/>
-                            <Button Classes="secondary small" 
-                                    Content="📤 Export All"
+                                    Command="{Binding SendMessageViewModel.ImportMessagesCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="Download" Size="12"/>
+                                    <TextBlock Text="Import"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="secondary small"
                                     ToolTip.Tip="Export all saved messages to JSON file"
                                     Command="{Binding SendMessageViewModel.ExportMessagesCommand}"
-                                    IsEnabled="{Binding SendMessageViewModel.SavedMessages.Count}"/>
+                                    IsEnabled="{Binding SendMessageViewModel.SavedMessages.Count}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="Upload" Size="12"/>
+                                    <TextBlock Text="Export All"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -122,11 +130,11 @@
                                                         Padding="14,6"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
                                                         CommandParameter="{Binding}"/>
-                                                <Button Classes="icon" 
+                                                <Button Classes="icon"
                                                         ToolTip.Tip="Export message"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.ExportSingleMessageCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <TextBlock Text="📤" FontSize="12"/>
+                                                    <LucideIcon Kind="Upload" Size="12"/>
                                                 </Button>
                                                 <Button Classes="icon" 
                                                         ToolTip.Tip="Delete template"
