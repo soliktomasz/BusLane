@@ -126,7 +126,7 @@
     </Style>
 
     <Style Selector="Button.secondary:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <Style Selector="Button.subtle">
@@ -147,7 +147,7 @@
     </Style>
 
     <Style Selector="Button.subtle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <Style Selector="Button.danger">
@@ -191,7 +191,7 @@
     </Style>
 
     <Style Selector="Button.danger-outline:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource TextDanger}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #C50F1F"/>
     </Style>
 
     <Style Selector="Button.danger-subtle">
@@ -212,7 +212,7 @@
     </Style>
 
     <Style Selector="Button.danger-subtle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource TextDanger}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #C50F1F"/>
     </Style>
 
     <!-- Warning Button Styles -->
@@ -266,7 +266,7 @@
     </Style>
 
     <Style Selector="Button.icon:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <!-- ListBox - Fluent 2 with Virtualization Support -->
@@ -318,7 +318,7 @@
     </Style>
 
     <Style Selector="ListBoxItem:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <!-- TabControl - Fluent 2 -->
@@ -417,7 +417,7 @@
     </Style>
 
     <Style Selector="ToggleButton.pill:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <!-- Card - Fluent 2 with elevation system -->
@@ -971,7 +971,7 @@
     </Style>
 
     <Style Selector="Button.toolbar:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <!-- Property row for custom properties -->
@@ -1012,7 +1012,7 @@
     </Style>
 
     <Style Selector="Button.chip:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+        <Setter Property="BoxShadow" Value="0 0 0 2 #0078D4"/>
     </Style>
 
     <!-- InfoBar styles -->
