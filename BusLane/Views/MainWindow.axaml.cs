@@ -73,9 +73,9 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 return;
             }
-            if (vm.ShowConfirmDialog)
+            if (vm.Confirmation.ShowConfirmDialog)
             {
-                vm.CancelConfirmDialogCommand.Execute(null);
+                vm.Confirmation.CancelConfirmDialogCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
@@ -93,7 +93,7 @@ public partial class MainWindow : Window
         }
         
         // Don't process other shortcuts if a dialog is open
-        if (vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.ShowConfirmDialog)
+        if (vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.Confirmation.ShowConfirmDialog)
             return;
         
         // Navigation shortcuts

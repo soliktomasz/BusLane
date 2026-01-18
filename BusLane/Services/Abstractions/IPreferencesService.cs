@@ -14,6 +14,7 @@ public interface IPreferencesService
     bool EnableMessagePreview { get; set; }
     bool ShowNavigationPanel { get; set; }
     string Theme { get; set; }
+    int LiveStreamPollingIntervalSeconds { get; set; }
 
     // Session persistence
     bool RestoreTabsOnStartup { get; set; }

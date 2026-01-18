@@ -121,6 +121,29 @@ dotnet publish BusLane/BusLane.csproj -c Release -r osx-arm64 --self-contained
 - Use `System.Reactive` for live streaming
 - Properly dispose `IDisposable` subscriptions to prevent memory leaks
 
-### Logging
-- Use Serilog: `Log.Debug()`, `Log.Information()`, `Log.Warning()`, `Log.Error()`
-- Structured logging with message templates: `Log.Information("Resent {Count} messages to {Entity}", count, entityName);`
+## Code Refactoring Best Practices
+
+### Property & Binding Refactoring
+- When removing duplicate properties, remove **ALL** occurrences from parent ViewModel
+- Update XAML bindings to use the new location (e.g., `{Binding Confirmation.ShowConfirmDialog}`)
+- Ensure all code references (commands, event handlers, keyboard shortcuts) use new property path
+- Run `dotnet build` after property removals to catch all compilation errors
+- Update namespace declarations in XAML files when moving classes between namespaces
+
+### Thread Safety Refactoring
+- When adding locks, verify the add/update factories are also protected
+- `ConcurrentDictionary.AddOrUpdate` guarantees atomic key insertion but NOT thread-safe value access
+- Wrap list operations in dedicated thread-safe class with its own lock
+- Ensure each instance of the wrapper has its own lock object (not shared)
+
+### MVVM Component Extraction
+- When extracting properties to a child ViewModel, check all parent references
+- Update XAML `DataType` and `DataContext` bindings
+- Update command methods to delegate to child component
+- Don't create duplicate command methods - delegate existing ones instead
+
+### General Refactoring Guidelines
+- Always build after each major change to catch errors immediately
+- Test the UI flow after extracting/renaming components
+- Check keyboard shortcuts and event handlers reference the new property paths
+- Verify all dialogs, popups, and overlays reference the correct properties

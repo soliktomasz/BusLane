@@ -5,24 +5,24 @@
              x:DataType="vm:MainWindowViewModel">
     
     <Border Classes="modal-overlay"
-            IsVisible="{Binding ShowConfirmDialog}">
+            IsVisible="{Binding Confirmation.ShowConfirmDialog}">
         <Border Classes="modal modal-small"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center">
             <DockPanel>
                 <!-- Header -->
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <TextBlock Text="{Binding ConfirmDialogTitle}" Classes="heading"/>
+                    <TextBlock Text="{Binding Confirmation.ConfirmDialogTitle}" Classes="heading"/>
                     <Button Classes="icon" 
                             HorizontalAlignment="Right"
-                            Command="{Binding CancelConfirmDialogCommand}">
+                            Command="{Binding Confirmation.CancelConfirmDialogCommand}">
                         <LucideIcon Kind="X" Size="16"/>
                     </Button>
                 </Grid>
                 
                 <!-- Message -->
                 <TextBlock DockPanel.Dock="Top" 
-                           Text="{Binding ConfirmDialogMessage}" 
+                           Text="{Binding Confirmation.ConfirmDialogMessage}" 
                            TextWrapping="Wrap"
                            Margin="0,0,0,24"/>
                 
@@ -30,10 +30,10 @@
                 <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                     <Button Classes="secondary small" 
                             Content="Cancel" 
-                            Command="{Binding CancelConfirmDialogCommand}"/>
+                            Command="{Binding Confirmation.CancelConfirmDialogCommand}"/>
                     <Button Classes="danger small" 
-                            Content="{Binding ConfirmDialogConfirmText}" 
-                            Command="{Binding ExecuteConfirmDialogCommand}"/>
+                            Content="{Binding Confirmation.ConfirmDialogConfirmText}" 
+                            Command="{Binding Confirmation.ExecuteConfirmDialogCommand}"/>
                 </StackPanel>
             </DockPanel>
         </Border>

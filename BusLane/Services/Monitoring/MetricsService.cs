@@ -3,11 +3,98 @@ namespace BusLane.Services.Monitoring;
 using System.Collections.Concurrent;
 using BusLane.Models;
 
+/// <summary>
+/// Thread-safe wrapper for a list of metric data points.
+/// Ensures all operations on the underlying list are protected by a lock.
+/// </summary>
+internal sealed class MetricDataList
+{
+    private readonly List<MetricDataPoint> _list;
+    private readonly System.Threading.ReaderWriterLockSlim _dataLock;
+
+    public MetricDataList()
+    {
+        _list = new List<MetricDataPoint>();
+        _dataLock = new System.Threading.ReaderWriterLockSlim();
+    }
+
+    public void Add(MetricDataPoint dataPoint, int maxPoints)
+    {
+        _dataLock.EnterWriteLock();
+        try
+        {
+            _list.Add(dataPoint);
+            if (_list.Count > maxPoints)
+            {
+                _list.RemoveAt(0);
+            }
+        }
+        finally
+        {
+            _dataLock.ExitWriteLock();
+        }
+    }
+
+    public IReadOnlyList<MetricDataPoint> Where(System.Predicate<MetricDataPoint> predicate)
+    {
+        _dataLock.EnterReadLock();
+        try
+        {
+            return _list.FindAll(predicate);
+        }
+        finally
+        {
+            _dataLock.ExitReadLock();
+        }
+    }
+
+    public IReadOnlyList<MetricDataPoint> ToList()
+    {
+        _dataLock.EnterReadLock();
+        try
+        {
+            return _list.ToList();
+        }
+        finally
+        {
+            _dataLock.ExitReadLock();
+        }
+    }
+
+    public void RemoveAll(System.Predicate<MetricDataPoint> predicate)
+    {
+        _dataLock.EnterWriteLock();
+        try
+        {
+            _list.RemoveAll(predicate);
+        }
+        finally
+        {
+            _dataLock.ExitWriteLock();
+        }
+    }
+
+    public int Count
+    {
+        get
+        {
+            _dataLock.EnterReadLock();
+            try
+            {
+                return _list.Count;
+            }
+            finally
+            {
+                _dataLock.ExitReadLock();
+            }
+        }
+    }
+}
+
 public class MetricsService : IMetricsService
 {
-    private readonly ConcurrentDictionary<string, List<MetricDataPoint>> _metrics = new();
-    private readonly object _lock = new();
-    private const int MaxPointsPerMetric = 1000;
+    internal const int MaxPointsPerMetric = 1000;
+    private readonly ConcurrentDictionary<string, MetricDataList> _metrics = new();
 
     public event EventHandler<MetricDataPoint>? MetricRecorded;
 
@@ -18,18 +105,13 @@ public class MetricsService : IMetricsService
 
         _metrics.AddOrUpdate(
             key,
-            _ => [dataPoint],
-            (_, list) =>
-            {
-                lock (_lock)
-                {
-                    list.Add(dataPoint);
-                    // Keep only last N points
-                    if (list.Count > MaxPointsPerMetric)
-                    {
-                        list.RemoveAt(0);
-                    }
-                }
+            _ => {
+                var list = new MetricDataList();
+                list.Add(dataPoint, MaxPointsPerMetric);
+                return list;
+            },
+            (_, list) => {
+                list.Add(dataPoint, MaxPointsPerMetric);
                 return list;
             }
         );
@@ -44,10 +126,7 @@ public class MetricsService : IMetricsService
 
         if (_metrics.TryGetValue(key, out var list))
         {
-            lock (_lock)
-            {
-                return list.Where(p => p.Timestamp >= cutoff).ToList();
-            }
+            return list.Where(p => p.Timestamp >= cutoff);
         }
 
         return [];
@@ -60,10 +139,7 @@ public class MetricsService : IMetricsService
 
         foreach (var kvp in _metrics)
         {
-            lock (_lock)
-            {
-                result.AddRange(kvp.Value.Where(p => p.EntityName == entityName && p.Timestamp >= cutoff));
-            }
+            result.AddRange(kvp.Value.Where(p => p.EntityName == entityName && p.Timestamp >= cutoff));
         }
 
         return result.OrderBy(p => p.Timestamp);
@@ -76,10 +152,7 @@ public class MetricsService : IMetricsService
 
         foreach (var kvp in _metrics.Where(k => k.Key.EndsWith($":{metricName}")))
         {
-            lock (_lock)
-            {
-                result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
-            }
+            result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
         }
 
         return result.OrderBy(p => p.Timestamp);
@@ -91,13 +164,9 @@ public class MetricsService : IMetricsService
 
         foreach (var kvp in _metrics)
         {
-            lock (_lock)
-            {
-                kvp.Value.RemoveAll(p => p.Timestamp < cutoff);
-            }
+            kvp.Value.RemoveAll(p => p.Timestamp < cutoff);
         }
 
-        // Remove empty entries
         var emptyKeys = _metrics.Where(kvp => kvp.Value.Count == 0).Select(kvp => kvp.Key).ToList();
         foreach (var key in emptyKeys)
         {
