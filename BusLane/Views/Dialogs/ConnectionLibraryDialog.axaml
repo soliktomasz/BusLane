@@ -35,7 +35,7 @@
                                       Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="My Connections" Classes="title" FontSize="20"/>
+                            <TextBlock Text="My Connections" Classes="title-small"/>
                             <TextBlock Text="Manage your saved Service Bus connections" Classes="caption"/>
                         </StackPanel>
                         <Button Grid.Column="2"

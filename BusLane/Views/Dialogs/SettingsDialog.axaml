@@ -29,7 +29,7 @@
                                       Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="Settings" Classes="title" FontSize="20"/>
+                            <TextBlock Text="Settings" Classes="title-small"/>
                             <TextBlock Text="Customize your BusLane experience" Classes="caption"/>
                         </StackPanel>
                         <Button Grid.Column="2"
