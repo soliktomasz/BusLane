@@ -183,8 +183,10 @@ public class AlertService : IAlertService
         {
             return Regex.IsMatch(entityName, pattern, RegexOptions.IgnoreCase);
         }
-        catch
+        catch (ArgumentException ex)
         {
+            // Invalid regex pattern, fall back to substring match
+            Log.Debug(ex, "Invalid regex pattern '{Pattern}', falling back to substring match", pattern);
             return entityName.Contains(pattern, StringComparison.OrdinalIgnoreCase);
         }
     }
@@ -252,9 +254,9 @@ public class AlertService : IAlertService
             var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(AppPaths.AlertRules, json);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail if saving doesn't work
+            Log.Warning(ex, "Failed to save alert rules to {Path}", AppPaths.AlertRules);
         }
     }
 

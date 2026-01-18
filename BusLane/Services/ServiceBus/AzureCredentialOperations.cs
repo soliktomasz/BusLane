@@ -8,6 +8,7 @@ using Serilog;
 
 /// <summary>
 /// Service Bus operations using Azure credential (DefaultAzureCredential/InteractiveBrowserCredential) for authentication.
+/// Caches ServiceBusClient for connection pooling.
 /// </summary>
 public class AzureCredentialOperations : IAzureCredentialOperations
 {
@@ -15,6 +16,8 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     private readonly string _namespaceId;
     private readonly TokenCredential _credential;
     private readonly Func<ServiceBusNamespaceResource> _getNamespaceResource;
+    private readonly Lazy<ServiceBusClient> _client;
+    private bool _disposed;
 
     public string NamespaceId => _namespaceId;
 
@@ -33,8 +36,11 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         _namespaceId = namespaceId;
         _credential = credential;
         _getNamespaceResource = getNamespaceResource;
+        _client = new Lazy<ServiceBusClient>(() => new ServiceBusClient(_endpoint, _credential));
         Log.Debug("AzureCredentialOperations initialized for endpoint {Endpoint}", _endpoint);
     }
+
+    private ServiceBusClient Client => _client.Value;
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
     {
@@ -82,8 +88,9 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 q.Data.LockDuration ?? TimeSpan.FromMinutes(1)
             );
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug(ex, "Failed to get queue info for {QueueName}", queueName);
             return null;
         }
     }
@@ -122,8 +129,9 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 t.Data.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14)
             );
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug(ex, "Failed to get topic info for {TopicName}", topicName);
             return null;
         }
     }
@@ -154,11 +162,10 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         bool requiresSession = false, CancellationToken ct = default)
     {
         entityName = NormalizeEntityPath(entityName);
-        await using var client = CreateClient();
 
         var messages = requiresSession
-            ? await ServiceBusOperations.PeekSessionMessagesAsync(client, entityName, subscription, count, deadLetter, ct)
-            : await ServiceBusOperations.PeekStandardMessagesAsync(client, entityName, subscription, count, deadLetter, ct);
+            ? await ServiceBusOperations.PeekSessionMessagesAsync(Client, entityName, subscription, count, deadLetter, ct)
+            : await ServiceBusOperations.PeekStandardMessagesAsync(Client, entityName, subscription, count, deadLetter, ct);
 
         return messages.Select(ServiceBusOperations.MapToMessageInfo);
     }
@@ -172,8 +179,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         CancellationToken ct = default)
     {
         Log.Debug("Sending message to {EntityName} via Azure credential", entityName);
-        await using var client = CreateClient();
-        await using var sender = client.CreateSender(entityName);
+        await using var sender = Client.CreateSender(entityName);
 
         var msg = new ServiceBusMessage(body);
         ServiceBusOperations.ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
@@ -185,10 +191,9 @@ public class AzureCredentialOperations : IAzureCredentialOperations
 
     public async Task PurgeMessagesAsync(string entityName, string? subscription, bool deadLetter, CancellationToken ct = default)
     {
-        Log.Information("Purging messages from {EntityName}{Subscription} (DeadLetter: {DeadLetter})", 
+        Log.Information("Purging messages from {EntityName}{Subscription} (DeadLetter: {DeadLetter})",
             entityName, subscription != null ? $"/{subscription}" : "", deadLetter);
-        await using var client = CreateClient();
-        await ServiceBusOperations.PurgeMessagesAsync(client, entityName, subscription, deadLetter, ct);
+        await ServiceBusOperations.PurgeMessagesAsync(Client, entityName, subscription, deadLetter, ct);
         Log.Information("Purge completed for {EntityName}", entityName);
     }
 
@@ -198,8 +203,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         var sequenceList = sequenceNumbers.ToList();
         Log.Debug("Deleting {Count} messages from {EntityName}", sequenceList.Count, entityName);
-        await using var client = CreateClient();
-        var deleted = await ServiceBusOperations.DeleteMessagesAsync(client, entityName, subscription, sequenceList, deadLetter, ct);
+        var deleted = await ServiceBusOperations.DeleteMessagesAsync(Client, entityName, subscription, sequenceList, deadLetter, ct);
         Log.Information("Deleted {DeletedCount} messages from {EntityName}", deleted, entityName);
         return deleted;
     }
@@ -208,8 +212,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         var messageList = messages.ToList();
         Log.Debug("Resending {Count} messages to {EntityName}", messageList.Count, entityName);
-        await using var client = CreateClient();
-        var resent = await ServiceBusOperations.ResendMessagesAsync(client, entityName, messageList, ct);
+        var resent = await ServiceBusOperations.ResendMessagesAsync(Client, entityName, messageList, ct);
         Log.Information("Resent {ResentCount} messages to {EntityName}", resent, entityName);
         return resent;
     }
@@ -219,15 +222,23 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         var messageList = messages.ToList();
         Log.Debug("Resubmitting {Count} dead letter messages from {EntityName}", messageList.Count, entityName);
-        await using var client = CreateClient();
-        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(client, entityName, subscription, messageList, ct);
+        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(Client, entityName, subscription, messageList, ct);
         Log.Information("Resubmitted {ResubmittedCount} dead letter messages from {EntityName}", resubmitted, entityName);
         return resubmitted;
     }
 
-    #region Private Helpers
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
 
-    private ServiceBusClient CreateClient() => new(_endpoint, _credential);
+        if (_client.IsValueCreated)
+        {
+            await _client.Value.DisposeAsync();
+        }
+    }
+
+    #region Private Helpers
 
     private static string NormalizeEndpoint(string endpoint)
     {

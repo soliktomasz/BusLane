@@ -5,8 +5,9 @@ using BusLane.Models;
 /// <summary>
 /// Unified interface for all Service Bus operations.
 /// Implementations handle either connection string or Azure credential authentication.
+/// Implements IAsyncDisposable to properly clean up ServiceBusClient resources.
 /// </summary>
-public interface IServiceBusOperations
+public interface IServiceBusOperations : IAsyncDisposable
 {
     // Entity discovery
     Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default);

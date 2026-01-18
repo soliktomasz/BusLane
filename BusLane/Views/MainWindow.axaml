@@ -7,7 +7,7 @@
         xmlns:converters="using:BusLane.Converters"
         x:Class="BusLane.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Bus Lane - Service Bus Manager"
+        Title="BusLane - Service Bus Manager"
         Icon="/Assets/icon.png"
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
