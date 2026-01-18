@@ -167,9 +167,10 @@ public class LiveStreamService : ILiveStreamService
                 {
                     try
                     {
-                        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(
+                        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(DefaultPeekTimeoutSeconds));
+                        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                             _peekCts.Token,
-                            new CancellationTokenSource(TimeSpan.FromSeconds(DefaultPeekTimeoutSeconds)).Token
+                            timeoutCts.Token
                         );
 
                         var messages = await _peekReceiver.PeekMessagesAsync(10, lastSequenceNumber + 1, timeoutCts.Token);

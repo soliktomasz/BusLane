@@ -223,7 +223,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         ExportOps = new ExportOperationsViewModel(
             () => Navigation,
-            null,
+            _fileDialogService,
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
