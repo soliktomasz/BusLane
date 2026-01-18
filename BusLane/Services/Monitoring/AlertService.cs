@@ -1,5 +1,6 @@
 namespace BusLane.Services.Monitoring;
 
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using BusLane.Models;
@@ -8,6 +9,11 @@ using Serilog;
 
 public class AlertService : IAlertService
 {
+    // Cache for compiled regex patterns to avoid recompilation on every match
+    private static readonly ConcurrentDictionary<string, Regex?> RegexCache = new();
+
+    // Cached JsonSerializerOptions to avoid recreation on every serialization
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     private readonly List<AlertRule> _rules = [];
     private readonly List<AlertEvent> _activeAlerts = [];
@@ -179,16 +185,22 @@ public class AlertService : IAlertService
         if (string.IsNullOrEmpty(pattern))
             return true;
 
-        try
+        // Get or create cached compiled regex for this pattern
+        var regex = RegexCache.GetOrAdd(pattern, p =>
         {
-            return Regex.IsMatch(entityName, pattern, RegexOptions.IgnoreCase);
-        }
-        catch (ArgumentException ex)
-        {
-            // Invalid regex pattern, fall back to substring match
-            Log.Debug(ex, "Invalid regex pattern '{Pattern}', falling back to substring match", pattern);
-            return entityName.Contains(pattern, StringComparison.OrdinalIgnoreCase);
-        }
+            try
+            {
+                return new Regex(p, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
+            }
+            catch (ArgumentException ex)
+            {
+                Log.Debug(ex, "Invalid regex pattern '{Pattern}', will use substring match", p);
+                return null; // null indicates invalid pattern, use substring match
+            }
+        });
+
+        // Use compiled regex if valid, otherwise fall back to substring match
+        return regex?.IsMatch(entityName) ?? entityName.Contains(pattern, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string GetAlertKey(AlertEvent alert)
@@ -251,7 +263,7 @@ public class AlertService : IAlertService
                 EntityPattern = r.EntityPattern
             }).ToList();
 
-            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(data, JsonOptions);
             File.WriteAllText(AppPaths.AlertRules, json);
         }
         catch (Exception ex)
@@ -291,9 +303,9 @@ public class AlertService : IAlertService
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Use defaults if loading fails
+            Log.Debug(ex, "Failed to load alert rules from {Path}, using defaults", AppPaths.AlertRules);
         }
     }
 

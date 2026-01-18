@@ -54,7 +54,7 @@ public class AzureAuthService : IAzureAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load auth record: {ex.Message}");
+            Log.Warning(ex, "Failed to load auth record from {Path}", _authRecordPath);
         }
         return null;
     }
@@ -65,11 +65,11 @@ public class AzureAuthService : IAzureAuthService
         {
             using var stream = File.Create(_authRecordPath);
             record.Serialize(stream);
-            Console.WriteLine("Authentication record saved");
+            Log.Debug("Authentication record saved to {Path}", _authRecordPath);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to save auth record: {ex.Message}");
+            Log.Warning(ex, "Failed to save auth record to {Path}", _authRecordPath);
         }
     }
 
@@ -116,7 +116,7 @@ public class AzureAuthService : IAzureAuthService
                     deviceCodeInfo.VerificationUri.ToString(),
                     deviceCodeInfo.Message);
                 DeviceCodeRequired?.Invoke(this, info);
-                Console.WriteLine(deviceCodeInfo.Message);
+                Log.Information("Device code authentication required: {Message}", deviceCodeInfo.Message);
                 return Task.CompletedTask;
             }
         };
@@ -207,8 +207,7 @@ public class AzureAuthService : IAzureAuthService
         }
         catch (Exception browserEx)
         {
-            Console.WriteLine($"Browser login failed: {browserEx.Message}");
-            Console.WriteLine("Falling back to device code authentication...");
+            Log.Debug(browserEx, "Browser login failed, falling back to device code authentication");
 
             // Fallback to device code authentication
             try
@@ -230,7 +229,7 @@ public class AzureAuthService : IAzureAuthService
             }
             catch (Exception deviceCodeEx)
             {
-                Console.WriteLine($"Device code login failed: {deviceCodeEx.Message}");
+                Log.Error(deviceCodeEx, "Device code login failed");
                 IsAuthenticated = false;
                 AuthenticationChanged?.Invoke(this, false);
                 return false;

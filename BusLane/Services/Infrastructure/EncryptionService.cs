@@ -2,6 +2,7 @@ namespace BusLane.Services.Infrastructure;
 
 using System.Security.Cryptography;
 using System.Text;
+using Serilog;
 
 /// <summary>
 /// Provides AES-256 encryption for sensitive data with a machine-specific key.
@@ -111,7 +112,7 @@ public class EncryptionService : IEncryptionService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Encryption failed: {ex.Message}");
+            Log.Error(ex, "Encryption failed");
             throw new CryptographicException("Failed to encrypt data", ex);
         }
     }
@@ -167,7 +168,7 @@ public class EncryptionService : IEncryptionService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Decryption failed: {ex.Message}");
+            Log.Debug(ex, "Decryption failed - data may be corrupted or encrypted with different key");
             return null;
         }
     }

@@ -7,6 +7,13 @@ using Serilog;
 
 public class ConnectionStorageService : IConnectionStorageService
 {
+    // Cached JsonSerializerOptions to avoid recreation on every serialization
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly IEncryptionService _encryptionService;
     private List<SavedConnection> _connections = [];
 
@@ -63,7 +70,7 @@ public class ConnectionStorageService : IConnectionStorageService
         try
         {
             var json = await File.ReadAllTextAsync(AppPaths.Connections);
-            var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, GetJsonOptions()) ?? [];
+            var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, JsonOptions) ?? [];
 
             _connections = storedConnections
                 .Select(stored =>
@@ -98,16 +105,19 @@ public class ConnectionStorageService : IConnectionStorageService
                 .Cast<SavedConnection>()
                 .ToList();
         }
-        catch
+        catch (Exception ex)
         {
             // Try loading legacy format (unencrypted SavedConnection)
+            Log.Debug(ex, "Failed to load connections in encrypted format, trying legacy format");
             try
             {
                 var json = await File.ReadAllTextAsync(AppPaths.Connections);
-                _connections = JsonSerializer.Deserialize<List<SavedConnection>>(json, GetJsonOptions()) ?? [];
+                _connections = JsonSerializer.Deserialize<List<SavedConnection>>(json, JsonOptions) ?? [];
+                Log.Information("Loaded {Count} connections from legacy format", _connections.Count);
             }
-            catch
+            catch (Exception legacyEx)
             {
+                Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
                 _connections = [];
             }
         }
@@ -129,14 +139,8 @@ public class ConnectionStorageService : IConnectionStorageService
             ))
             .ToList();
 
-        var json = JsonSerializer.Serialize(storedConnections, GetJsonOptions());
+        var json = JsonSerializer.Serialize(storedConnections, JsonOptions);
         await File.WriteAllTextAsync(AppPaths.Connections, json);
     }
-
-    private static JsonSerializerOptions GetJsonOptions() => new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 }
 
