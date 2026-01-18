@@ -85,6 +85,10 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
 
+    <Style Selector="Button.primary:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 #FFFFFF"/>
+    </Style>
+
     <Style Selector="Button.secondary">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
@@ -107,6 +111,10 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
     </Style>
 
+    <Style Selector="Button.secondary:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+    </Style>
+
     <Style Selector="Button.subtle">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
@@ -122,6 +130,10 @@
 
     <Style Selector="Button.subtle:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+    </Style>
+
+    <Style Selector="Button.subtle:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
     </Style>
 
     <Style Selector="Button.danger">
@@ -145,6 +157,10 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
 
+    <Style Selector="Button.danger:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 #FFFFFF"/>
+    </Style>
+
     <Style Selector="Button.danger-outline">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
@@ -158,6 +174,10 @@
     <Style Selector="Button.danger-outline:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+    </Style>
+
+    <Style Selector="Button.danger-outline:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource TextDanger}"/>
     </Style>
 
     <Style Selector="Button.danger-subtle">
@@ -175,6 +195,10 @@
 
     <Style Selector="Button.danger-subtle:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+    </Style>
+
+    <Style Selector="Button.danger-subtle:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource TextDanger}"/>
     </Style>
 
     <!-- Warning Button Styles -->
@@ -199,6 +223,10 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
 
+    <Style Selector="Button.warning:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 #FFFFFF"/>
+    </Style>
+
     <Style Selector="Button.small">
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontSize" Value="12"/>
@@ -221,6 +249,10 @@
 
     <Style Selector="Button.icon:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+    </Style>
+
+    <Style Selector="Button.icon:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
     </Style>
 
     <!-- ListBox - Fluent 2 with Virtualization Support -->
@@ -271,6 +303,10 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrandHover}"/>
     </Style>
 
+    <Style Selector="ListBoxItem:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+    </Style>
+
     <!-- TabControl - Fluent 2 -->
     <Style Selector="TabControl">
         <Setter Property="Background" Value="Transparent"/>
@@ -297,6 +333,10 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="TabItem:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
     </Style>
 
     <!-- Input Controls - Fluent 2 -->
@@ -360,6 +400,10 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+
+    <Style Selector="ToggleButton.pill:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
     </Style>
 
     <!-- Card - Fluent 2 with elevation system -->
@@ -531,6 +575,10 @@
 
     <Style Selector="RadioButton.tab-button:checked /template/ Border#PART_Border">
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+
+    <Style Selector="RadioButton.tab-button:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
     </Style>
 
     <!-- Separator - Fluent 2 -->
@@ -841,6 +889,10 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
     </Style>
 
+    <Style Selector="RadioButton.tab-item:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource TabItemHover}"/>
+    </Style>
+
     <!-- Field group header -->
     <Style Selector="TextBlock.field-group-header">
         <Setter Property="FontSize" Value="11"/>
@@ -904,6 +956,10 @@
         <Setter Property="Background" Value="{DynamicResource ToolbarPressed}"/>
     </Style>
 
+    <Style Selector="Button.toolbar:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
+    </Style>
+
     <!-- Property row for custom properties -->
     <Style Selector="Border.property-row">
         <Setter Property="Background" Value="{DynamicResource PropertyRowBackground}"/>
@@ -939,6 +995,10 @@
 
     <Style Selector="Button.chip:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ChipHover}"/>
+    </Style>
+
+    <Style Selector="Button.chip:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2 {DynamicResource AccentBrand}"/>
     </Style>
 
     <!-- InfoBar styles -->
