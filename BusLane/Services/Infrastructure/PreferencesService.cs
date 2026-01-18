@@ -18,6 +18,7 @@ public class PreferencesService : IPreferencesService
     public bool EnableMessagePreview { get; set; } = true;
     public bool ShowNavigationPanel { get; set; } = true;
     public string Theme { get; set; } = "Light";
+    public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
 
     // Session persistence
     public bool RestoreTabsOnStartup { get; set; } = true;
@@ -49,6 +50,7 @@ public class PreferencesService : IPreferencesService
                     EnableMessagePreview = data.EnableMessagePreview;
                     ShowNavigationPanel = data.ShowNavigationPanel;
                     Theme = data.Theme ?? "Light";
+                    LiveStreamPollingIntervalSeconds = data.LiveStreamPollingIntervalSeconds;
                     RestoreTabsOnStartup = data.RestoreTabsOnStartup;
                     OpenTabsJson = data.OpenTabsJson ?? "[]";
                 }
@@ -77,6 +79,7 @@ public class PreferencesService : IPreferencesService
                 EnableMessagePreview = EnableMessagePreview,
                 ShowNavigationPanel = ShowNavigationPanel,
                 Theme = Theme,
+                LiveStreamPollingIntervalSeconds = LiveStreamPollingIntervalSeconds,
                 RestoreTabsOnStartup = RestoreTabsOnStartup,
                 OpenTabsJson = OpenTabsJson
             };
@@ -106,6 +109,7 @@ public class PreferencesService : IPreferencesService
         public bool EnableMessagePreview { get; set; }
         public bool ShowNavigationPanel { get; set; } = true;
         public string? Theme { get; set; }
+        public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string? OpenTabsJson { get; set; }
     }

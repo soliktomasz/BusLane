@@ -52,8 +52,14 @@ public partial class MainWindowViewModel : ViewModelBase
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
 
-    // Tab management
-    public ObservableCollection<ConnectionTabViewModel> ConnectionTabs { get; } = new();
+    // Refactored components
+    public TabManagementViewModel Tabs { get; }
+    public MessageBulkOperationsViewModel BulkOps { get; }
+    public ExportOperationsViewModel ExportOps { get; }
+    public ConfirmationDialogViewModel Confirmation { get; }
+
+    // Tab management (delegated to Tabs component)
+    public ObservableCollection<ConnectionTabViewModel> ConnectionTabs => Tabs.ConnectionTabs;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveTabs))]
@@ -117,7 +123,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _confirmDialogTitle = "";
     [ObservableProperty] private string _confirmDialogMessage = "";
     [ObservableProperty] private string _confirmDialogConfirmText = "Confirm";
-    private Func<Task>? _confirmDialogAction;
 
     // Keyboard shortcuts dialog
     [ObservableProperty] private bool _showKeyboardShortcuts;
@@ -201,6 +206,27 @@ public partial class MainWindowViewModel : ViewModelBase
             () => Navigation.SelectedQueue,
             () => Navigation.SelectedSubscription,
             msg => StatusMessage = msg);
+
+        // Initialize refactored components
+        Tabs = new TabManagementViewModel(
+            operationsFactory,
+            preferencesService,
+            connectionStorage,
+            auth,
+            tab => ActiveTab = tab);
+
+        BulkOps = new MessageBulkOperationsViewModel(
+            () => _operations,
+            Navigation,
+            preferencesService,
+            msg => StatusMessage = msg);
+
+        ExportOps = new ExportOperationsViewModel(
+            () => Navigation,
+            null,
+            msg => StatusMessage = msg);
+
+        Confirmation = new ConfirmationDialogViewModel();
 
         // Wire up property change handlers for cross-component dependencies
         Navigation.PropertyChanged += (_, e) =>
@@ -321,7 +347,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             await Connection.InitializeAsync();
-            await RestoreTabSessionAsync();
+            await Tabs.RestoreTabSessionAsync();
         }
         finally
         {
@@ -370,16 +396,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SelectNamespaceAsync(ServiceBusNamespace ns)
     {
-        // Close the namespace selection panel
         Connection.CloseNamespacePanel();
-
-        // Create a new tab for this namespace
-        await OpenTabForNamespaceAsync(ns);
-
-        // Also set legacy Navigation.SelectedNamespace for backward compatibility
+        await Tabs.OpenTabForNamespaceAsync(ns);
         Navigation.SelectedNamespace = ns;
 
-        // Evaluate alerts for the new tab's entities
         if (ActiveTab != null)
         {
             try
@@ -681,69 +701,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     #endregion
 
-    #region Export
-
-    private static readonly Avalonia.Platform.Storage.FilePickerFileType JsonFileType = new("JSON Files")
-    {
-        Patterns = new[] { "*.json" },
-        MimeTypes = new[] { "application/json" }
-    };
-
-    [RelayCommand]
-    private async Task ExportMessageAsync(MessageInfo? message = null)
-    {
-        var msg = message ?? MessageOps.SelectedMessage;
-        if (msg == null || _fileDialogService == null)
-        {
-            StatusMessage = _fileDialogService == null ? "File dialog service not available" : "No message selected";
-            return;
-        }
-
-        try
-        {
-            var safeName = string.Join("_", (msg.MessageId ?? "message").Split(Path.GetInvalidFileNameChars()));
-            var defaultFileName = $"Message_{safeName}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
-            var filePath = await _fileDialogService.SaveFileAsync("Export Message", defaultFileName, new[] { JsonFileType });
-
-            if (string.IsNullOrEmpty(filePath)) return;
-
-            var exportMessage = new SavedMessage
-            {
-                Name = $"Exported: {msg.MessageId}",
-                Body = msg.Body,
-                ContentType = msg.ContentType,
-                CorrelationId = msg.CorrelationId,
-                MessageId = msg.MessageId,
-                SessionId = msg.SessionId,
-                Subject = msg.Subject,
-                To = msg.To,
-                ReplyTo = msg.ReplyTo,
-                ReplyToSessionId = msg.ReplyToSessionId,
-                PartitionKey = msg.PartitionKey,
-                TimeToLive = msg.TimeToLive,
-                ScheduledEnqueueTime = msg.ScheduledEnqueueTime,
-                CustomProperties = msg.Properties?.ToDictionary(p => p.Key, p => p.Value?.ToString() ?? "") ?? new Dictionary<string, string>(),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var exportContainer = new MessageExportContainer
-            {
-                Description = $"Exported message from {Navigation.SelectedQueue?.Name ?? Navigation.SelectedSubscription?.Name}",
-                Messages = new List<SavedMessage> { exportMessage }
-            };
-
-            var json = System.Text.Json.JsonSerializer.Serialize(exportContainer, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(filePath, json);
-            StatusMessage = $"Exported message to {Path.GetFileName(filePath)}";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Failed to export message: {ex.Message}";
-        }
-    }
-
-    #endregion
-
     #region Purge & Bulk Operations
 
     [RelayCommand]
@@ -752,44 +709,17 @@ public partial class MainWindowViewModel : ViewModelBase
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null || _operations == null) return;
 
-        var subscription = Navigation.CurrentSubscriptionName;
-
-        if (_preferencesService.ConfirmBeforePurge)
+        if (await BulkOps.ShouldConfirmPurgeAsync())
         {
-            var queueType = Navigation.ShowDeadLetter ? "dead letter queue" : "queue";
-            var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
-            ShowConfirmation(
+            Confirmation.ShowConfirmation(
                 "Confirm Purge",
-                $"Are you sure you want to purge all messages from the {queueType} of '{targetName}'? This action cannot be undone.",
+                BulkOps.GetPurgeConfirmationMessage(),
                 "Purge",
-                async () => await ExecutePurgeAsync(entityName, subscription));
+                async () => await BulkOps.ExecutePurgeAsync());
         }
         else
         {
-            await ExecutePurgeAsync(entityName, subscription);
-        }
-    }
-
-    private async Task ExecutePurgeAsync(string entityName, string? subscription)
-    {
-        if (_operations == null) return;
-
-        IsLoading = true;
-        StatusMessage = "Purging messages...";
-
-        try
-        {
-            await _operations.PurgeMessagesAsync(entityName, subscription, Navigation.ShowDeadLetter);
-            StatusMessage = "Purge complete";
-            await MessageOps.LoadMessagesAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
+            await BulkOps.ExecutePurgeAsync();
         }
     }
 
@@ -803,44 +733,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var count = MessageOps.SelectedMessagesCount;
 
-        if (_preferencesService.ConfirmBeforePurge)
+        if (await BulkOps.ShouldConfirmBulkResendAsync())
         {
-            ShowConfirmation(
+            Confirmation.ShowConfirmation(
                 "Confirm Bulk Resend",
-                $"Are you sure you want to resend {count} message(s) to '{entityName}'?",
+                BulkOps.GetBulkResendConfirmationMessage(count),
                 "Resend",
-                async () => await ExecuteBulkResendAsync(entityName));
+                async () =>
+                {
+                    await BulkOps.ExecuteBulkResendAsync(MessageOps.SelectedMessages);
+                    MessageOps.SelectedMessages.Clear();
+                    await MessageOps.LoadMessagesAsync();
+                });
         }
         else
         {
-            await ExecuteBulkResendAsync(entityName);
-        }
-    }
-
-    private async Task ExecuteBulkResendAsync(string entityName)
-    {
-        if (_operations == null) return;
-
-        IsLoading = true;
-        var count = MessageOps.SelectedMessagesCount;
-        StatusMessage = $"Resending {count} message(s)...";
-
-        try
-        {
-            var messagesToResend = MessageOps.SelectedMessages.ToList();
-            var sentCount = await _operations.ResendMessagesAsync(entityName, messagesToResend);
-
-            StatusMessage = $"Successfully resent {sentCount} of {count} message(s)";
+            await BulkOps.ExecuteBulkResendAsync(MessageOps.SelectedMessages);
             MessageOps.SelectedMessages.Clear();
             await MessageOps.LoadMessagesAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error resending messages: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
         }
     }
 
@@ -852,42 +762,18 @@ public partial class MainWindowViewModel : ViewModelBase
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var subscription = Navigation.CurrentSubscriptionName;
         var count = MessageOps.SelectedMessagesCount;
-        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
 
-        ShowConfirmation(
+        Confirmation.ShowConfirmation(
             "Confirm Bulk Delete",
-            $"Are you sure you want to delete {count} message(s) from '{targetName}'? This action cannot be undone.",
+            BulkOps.GetBulkDeleteConfirmationMessage(count),
             "Delete",
-            async () => await ExecuteBulkDeleteAsync(entityName, subscription));
-    }
-
-    private async Task ExecuteBulkDeleteAsync(string entityName, string? subscription)
-    {
-        if (_operations == null) return;
-
-        IsLoading = true;
-        var count = MessageOps.SelectedMessagesCount;
-        StatusMessage = $"Deleting {count} message(s)...";
-
-        try
-        {
-            var sequenceNumbers = MessageOps.SelectedMessages.Select(m => m.SequenceNumber).ToList();
-            var deletedCount = await _operations.DeleteMessagesAsync(entityName, subscription, sequenceNumbers, Navigation.ShowDeadLetter);
-
-            StatusMessage = $"Successfully deleted {deletedCount} of {count} message(s)";
-            MessageOps.SelectedMessages.Clear();
-            await MessageOps.LoadMessagesAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error deleting messages: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+            async () =>
+            {
+                await BulkOps.ExecuteBulkDeleteAsync(MessageOps.SelectedMessages);
+                MessageOps.SelectedMessages.Clear();
+                await MessageOps.LoadMessagesAsync();
+            });
     }
 
     [RelayCommand]
@@ -898,42 +784,18 @@ public partial class MainWindowViewModel : ViewModelBase
         var entityName = Navigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var subscription = Navigation.CurrentSubscriptionName;
         var count = MessageOps.SelectedMessagesCount;
-        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
 
-        ShowConfirmation(
+        Confirmation.ShowConfirmation(
             "Confirm Resubmit Dead Letters",
-            $"Are you sure you want to resubmit {count} message(s) from the dead letter queue back to '{targetName}'?",
+            BulkOps.GetResubmitDeadLettersConfirmationMessage(count),
             "Resubmit",
-            async () => await ExecuteResubmitDeadLettersAsync(entityName, subscription));
-    }
-
-    private async Task ExecuteResubmitDeadLettersAsync(string entityName, string? subscription)
-    {
-        if (_operations == null) return;
-
-        IsLoading = true;
-        var count = MessageOps.SelectedMessagesCount;
-        StatusMessage = $"Resubmitting {count} dead letter message(s)...";
-
-        try
-        {
-            var messagesToResubmit = MessageOps.SelectedMessages.ToList();
-            var resubmittedCount = await _operations.ResubmitDeadLetterMessagesAsync(entityName, subscription, messagesToResubmit);
-
-            StatusMessage = $"Successfully resubmitted {resubmittedCount} of {count} message(s)";
-            MessageOps.SelectedMessages.Clear();
-            await MessageOps.LoadMessagesAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error resubmitting messages: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+            async () =>
+            {
+                await BulkOps.ExecuteResubmitDeadLettersAsync(MessageOps.SelectedMessages);
+                MessageOps.SelectedMessages.Clear();
+                await MessageOps.LoadMessagesAsync();
+            });
     }
 
     #endregion
@@ -1105,7 +967,7 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 Connection.ShowConnectionLibrary = false;
                 Connection.ConnectionLibraryViewModel = null;
-                await OpenTabForConnectionAsync(conn);
+                await Tabs.OpenTabForConnectionAsync(conn);
             },
             msg => StatusMessage = msg,
             Connection.RefreshFavoriteConnectionsAsync
@@ -1121,7 +983,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task ConnectToSavedConnectionAsync(SavedConnection connection)
     {
         Connection.CloseConnectionLibrary();
-        await OpenTabForConnectionAsync(connection);
+        await Tabs.OpenTabForConnectionAsync(connection);
     }
 
     [RelayCommand]
@@ -1146,33 +1008,33 @@ public partial class MainWindowViewModel : ViewModelBase
 
     #endregion
 
-    #region Confirmation Dialog
-
-    private void ShowConfirmation(string title, string message, string confirmText, Func<Task> action)
+    [RelayCommand]
+    private async Task ExportMessageAsync(MessageInfo? message = null)
     {
-        ConfirmDialogTitle = title;
-        ConfirmDialogMessage = message;
-        ConfirmDialogConfirmText = confirmText;
-        _confirmDialogAction = action;
-        ShowConfirmDialog = true;
+        var msg = message ?? MessageOps.SelectedMessage;
+        if (msg == null)
+        {
+            StatusMessage = "No message selected";
+            return;
+        }
+
+        await ExportOps.ExportMessageAsync(msg);
     }
+
+    #region Confirmation Dialog
 
     [RelayCommand]
     private async Task ExecuteConfirmDialogAsync()
     {
         ShowConfirmDialog = false;
-        if (_confirmDialogAction != null)
-        {
-            await _confirmDialogAction();
-            _confirmDialogAction = null;
-        }
+        await Confirmation.ExecuteConfirmDialogAsync();
     }
 
     [RelayCommand]
     private void CancelConfirmDialog()
     {
         ShowConfirmDialog = false;
-        _confirmDialogAction = null;
+        Confirmation.CancelConfirmDialog();
     }
 
     #endregion

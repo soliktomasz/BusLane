@@ -6,7 +6,7 @@ using BusLane.Models;
 public class MetricsService : IMetricsService
 {
     private readonly ConcurrentDictionary<string, List<MetricDataPoint>> _metrics = new();
-    private readonly object _lock = new();
+    private readonly System.Threading.ReaderWriterLockSlim _lock = new();
     private const int MaxPointsPerMetric = 1000;
 
     public event EventHandler<MetricDataPoint>? MetricRecorded;
@@ -18,17 +18,21 @@ public class MetricsService : IMetricsService
 
         _metrics.AddOrUpdate(
             key,
-            _ => [dataPoint],
+            _ => new List<MetricDataPoint> { dataPoint },
             (_, list) =>
             {
-                lock (_lock)
+                _lock.EnterWriteLock();
+                try
                 {
                     list.Add(dataPoint);
-                    // Keep only last N points
                     if (list.Count > MaxPointsPerMetric)
                     {
                         list.RemoveAt(0);
                     }
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
                 }
                 return list;
             }
@@ -44,9 +48,14 @@ public class MetricsService : IMetricsService
 
         if (_metrics.TryGetValue(key, out var list))
         {
-            lock (_lock)
+            _lock.EnterReadLock();
+            try
             {
                 return list.Where(p => p.Timestamp >= cutoff).ToList();
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
         }
 
@@ -60,9 +69,14 @@ public class MetricsService : IMetricsService
 
         foreach (var kvp in _metrics)
         {
-            lock (_lock)
+            _lock.EnterReadLock();
+            try
             {
                 result.AddRange(kvp.Value.Where(p => p.EntityName == entityName && p.Timestamp >= cutoff));
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
         }
 
@@ -76,9 +90,14 @@ public class MetricsService : IMetricsService
 
         foreach (var kvp in _metrics.Where(k => k.Key.EndsWith($":{metricName}")))
         {
-            lock (_lock)
+            _lock.EnterReadLock();
+            try
             {
                 result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
         }
 
@@ -91,13 +110,17 @@ public class MetricsService : IMetricsService
 
         foreach (var kvp in _metrics)
         {
-            lock (_lock)
+            _lock.EnterWriteLock();
+            try
             {
                 kvp.Value.RemoveAll(p => p.Timestamp < cutoff);
             }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
-        // Remove empty entries
         var emptyKeys = _metrics.Where(kvp => kvp.Value.Count == 0).Select(kvp => kvp.Key).ToList();
         foreach (var key in emptyKeys)
         {

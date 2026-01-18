@@ -220,7 +220,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     }
 
     // Minimal implementation for parameterless constructor
-#pragma warning disable CS0067 // Event is never used (required by interface but not needed in dummy implementation)
+    #pragma warning disable CS0067 // Event is never used (required by interface but not needed in dummy implementation)
     private class DummyPreferencesService : IPreferencesService
     {
         public bool ConfirmBeforeDelete { get; set; } = true;
@@ -232,6 +232,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         public bool EnableMessagePreview { get; set; } = true;
         public bool ShowNavigationPanel { get; set; } = true;
         public string Theme { get; set; } = "System";
+        public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string OpenTabsJson { get; set; } = "[]";
         public event EventHandler? PreferencesChanged;
