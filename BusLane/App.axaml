@@ -78,8 +78,8 @@
                     <SolidColorBrush x:Key="SelectedBackground" Color="#EBF3FC"/>
                     <SolidColorBrush x:Key="SelectedBorder" Color="#0F6CBD"/>
 
-                    <!-- Overlay and inputs -->
-                    <SolidColorBrush x:Key="ModalOverlay" Color="#66000000"/>
+                    <!-- Overlay and inputs - 50%/60% for consistent stepped opacity -->
+                    <SolidColorBrush x:Key="ModalOverlay" Color="#80000000"/>
                     <SolidColorBrush x:Key="LoadingOverlay" Color="#99000000"/>
                     <SolidColorBrush x:Key="InputBackground" Color="#FFFFFF"/>
 
@@ -151,9 +151,9 @@
                     <SolidColorBrush x:Key="SelectedBackground" Color="#0F2D40"/>
                     <SolidColorBrush x:Key="SelectedBorder" Color="#60CDFF"/>
 
-                    <!-- Overlay and inputs -->
-                    <SolidColorBrush x:Key="ModalOverlay" Color="#B3000000"/>
-                    <SolidColorBrush x:Key="LoadingOverlay" Color="#CC000000"/>
+                    <!-- Overlay and inputs - 60%/70% for consistent stepped opacity -->
+                    <SolidColorBrush x:Key="ModalOverlay" Color="#99000000"/>
+                    <SolidColorBrush x:Key="LoadingOverlay" Color="#B3000000"/>
                     <SolidColorBrush x:Key="InputBackground" Color="#333333"/>
 
                     <!-- Tab, toolbar, and utility surfaces -->
