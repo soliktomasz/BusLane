@@ -173,7 +173,7 @@ public class LiveStreamService : ILiveStreamService
                             timeoutCts.Token
                         );
 
-                        var messages = await _peekReceiver.PeekMessagesAsync(10, lastSequenceNumber + 1, timeoutCts.Token);
+                        var messages = await _peekReceiver.PeekMessagesAsync(10, lastSequenceNumber + 1, linkedCts.Token);
 
                         foreach (var msg in messages)
                         {
