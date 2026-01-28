@@ -214,8 +214,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             tab => ActiveTab = tab);
 
         BulkOps = new MessageBulkOperationsViewModel(
-            () => _operations,
-            Navigation,
+            () => ActiveTab?.Operations ?? _operations,
+            () => CurrentNavigation,
             preferencesService,
             msg => StatusMessage = msg);
 
@@ -704,8 +704,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task PurgeMessagesAsync()
     {
-        var entityName = Navigation.CurrentEntityName;
-        if (entityName == null || _operations == null) return;
+        var entityName = CurrentNavigation.CurrentEntityName;
+        if (entityName == null) return;
 
         if (await BulkOps.ShouldConfirmPurgeAsync())
         {
@@ -716,25 +716,25 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
                 async () =>
                 {
                     await BulkOps.ExecutePurgeAsync();
-                    await MessageOps.LoadMessagesAsync();
+                    await CurrentMessageOps.LoadMessagesAsync();
                 });
         }
         else
         {
             await BulkOps.ExecutePurgeAsync();
-            await MessageOps.LoadMessagesAsync();
+            await CurrentMessageOps.LoadMessagesAsync();
         }
     }
 
     [RelayCommand]
     private async Task BulkResendMessagesAsync()
     {
-        if (!MessageOps.HasSelectedMessages || _operations == null) return;
+        if (!CurrentMessageOps.HasSelectedMessages) return;
 
-        var entityName = Navigation.CurrentEntityName;
+        var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = MessageOps.SelectedMessagesCount;
+        var count = CurrentMessageOps.SelectedMessagesCount;
 
         if (await BulkOps.ShouldConfirmBulkResendAsync())
         {
@@ -744,28 +744,28 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
                 "Resend",
                 async () =>
                 {
-                    await BulkOps.ExecuteBulkResendAsync(MessageOps.SelectedMessages);
-                    MessageOps.SelectedMessages.Clear();
-                    await MessageOps.LoadMessagesAsync();
+                    await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
+                    CurrentMessageOps.SelectedMessages.Clear();
+                    await CurrentMessageOps.LoadMessagesAsync();
                 });
         }
         else
         {
-            await BulkOps.ExecuteBulkResendAsync(MessageOps.SelectedMessages);
-            MessageOps.SelectedMessages.Clear();
-            await MessageOps.LoadMessagesAsync();
+            await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
+            CurrentMessageOps.SelectedMessages.Clear();
+            await CurrentMessageOps.LoadMessagesAsync();
         }
     }
 
     [RelayCommand]
     private void BulkDeleteMessagesAsync()
     {
-        if (!MessageOps.HasSelectedMessages || _operations == null) return;
+        if (!CurrentMessageOps.HasSelectedMessages) return;
 
-        var entityName = Navigation.CurrentEntityName;
+        var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = MessageOps.SelectedMessagesCount;
+        var count = CurrentMessageOps.SelectedMessagesCount;
 
         Confirmation.ShowConfirmation(
             "Confirm Bulk Delete",
@@ -773,21 +773,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             "Delete",
             async () =>
             {
-                await BulkOps.ExecuteBulkDeleteAsync(MessageOps.SelectedMessages);
-                MessageOps.SelectedMessages.Clear();
-                await MessageOps.LoadMessagesAsync();
+                await BulkOps.ExecuteBulkDeleteAsync(CurrentMessageOps.SelectedMessages);
+                CurrentMessageOps.SelectedMessages.Clear();
+                await CurrentMessageOps.LoadMessagesAsync();
             });
     }
 
     [RelayCommand]
     private void ResubmitDeadLetterMessagesAsync()
     {
-        if (!MessageOps.HasSelectedMessages || !Navigation.ShowDeadLetter || _operations == null) return;
+        if (!CurrentMessageOps.HasSelectedMessages || !CurrentNavigation.ShowDeadLetter) return;
 
-        var entityName = Navigation.CurrentEntityName;
+        var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = MessageOps.SelectedMessagesCount;
+        var count = CurrentMessageOps.SelectedMessagesCount;
 
         Confirmation.ShowConfirmation(
             "Confirm Resubmit Dead Letters",
@@ -795,9 +795,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             "Resubmit",
             async () =>
             {
-                await BulkOps.ExecuteResubmitDeadLettersAsync(MessageOps.SelectedMessages);
-                MessageOps.SelectedMessages.Clear();
-                await MessageOps.LoadMessagesAsync();
+                await BulkOps.ExecuteResubmitDeadLettersAsync(CurrentMessageOps.SelectedMessages);
+                CurrentMessageOps.SelectedMessages.Clear();
+                await CurrentMessageOps.LoadMessagesAsync();
             });
     }
 
@@ -907,8 +907,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task ToggleDeadLetterViewAsync()
     {
-        Navigation.ShowDeadLetter = !Navigation.ShowDeadLetter;
-        await MessageOps.LoadMessagesAsync();
+        CurrentNavigation.ShowDeadLetter = !CurrentNavigation.ShowDeadLetter;
+        await CurrentMessageOps.LoadMessagesAsync();
     }
 
     #endregion
@@ -1142,13 +1142,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         if (_subscribedTab != null)
         {
             _subscribedTab.PropertyChanged -= OnActiveTabPropertyChanged;
+            _subscribedTab.Navigation.PropertyChanged -= OnActiveTabNavigationPropertyChanged;
             _subscribedTab = null;
         }
-        
+
         // Subscribe to new tab's property changes
         if (newValue != null)
         {
             newValue.PropertyChanged += OnActiveTabPropertyChanged;
+            newValue.Navigation.PropertyChanged += OnActiveTabNavigationPropertyChanged;
             _subscribedTab = newValue;
         }
         
@@ -1164,6 +1166,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         SaveTabSession();
     }
     
+    private void OnActiveTabNavigationPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(NavigationState.ShowDeadLetter))
+        {
+            FireAndForget(CurrentMessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
+        }
+    }
+
     private void OnActiveTabPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // When the active tab's IsConnected or Mode changes, notify computed properties

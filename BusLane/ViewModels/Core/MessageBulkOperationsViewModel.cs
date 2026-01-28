@@ -13,7 +13,7 @@ namespace BusLane.ViewModels.Core;
 public partial class MessageBulkOperationsViewModel : ViewModelBase
 {
     private readonly Func<IServiceBusOperations?> _getOperations;
-    private readonly NavigationState _navigation;
+    private readonly Func<NavigationState> _getNavigation;
     private readonly IPreferencesService _preferencesService;
     private readonly Action<string> _setStatus;
 
@@ -21,12 +21,12 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
     public MessageBulkOperationsViewModel(
         Func<IServiceBusOperations?> getOperations,
-        NavigationState navigation,
+        Func<NavigationState> getNavigation,
         IPreferencesService preferencesService,
         Action<string> setStatus)
     {
         _getOperations = getOperations;
-        _navigation = navigation;
+        _getNavigation = getNavigation;
         _preferencesService = preferencesService;
         _setStatus = setStatus;
     }
@@ -41,9 +41,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
     public string GetPurgeConfirmationMessage()
     {
-        var entityName = _navigation.CurrentEntityName ?? "";
-        var subscription = _navigation.CurrentSubscriptionName;
-        var queueType = _navigation.ShowDeadLetter ? "dead letter queue" : "queue";
+        var entityName = _getNavigation().CurrentEntityName ?? "";
+        var subscription = _getNavigation().CurrentSubscriptionName;
+        var queueType = _getNavigation().ShowDeadLetter ? "dead letter queue" : "queue";
         var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
         return $"Are you sure you want to purge all messages from {queueType} of '{targetName}'? This action cannot be undone.";
     }
@@ -53,17 +53,17 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var operations = _getOperations();
         if (operations == null) return;
 
-        var entityName = _navigation.CurrentEntityName;
+        var entityName = _getNavigation().CurrentEntityName;
         if (entityName == null) return;
 
-        var subscription = _navigation.CurrentSubscriptionName;
+        var subscription = _getNavigation().CurrentSubscriptionName;
 
         IsLoading = true;
         _setStatus("Purging messages...");
 
         try
         {
-            await operations.PurgeMessagesAsync(entityName, subscription, _navigation.ShowDeadLetter);
+            await operations.PurgeMessagesAsync(entityName, subscription, _getNavigation().ShowDeadLetter);
             _setStatus("Purge complete");
         }
         catch (Exception ex)
@@ -86,7 +86,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
     public string GetBulkResendConfirmationMessage(int count)
     {
-        var entityName = _navigation.CurrentEntityName ?? "";
+        var entityName = _getNavigation().CurrentEntityName ?? "";
         return $"Are you sure you want to resend {count} message(s) to '{entityName}'?";
     }
 
@@ -95,7 +95,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var operations = _getOperations();
         if (operations == null || selectedMessages.Count == 0) return 0;
 
-        var entityName = _navigation.CurrentEntityName;
+        var entityName = _getNavigation().CurrentEntityName;
         if (entityName == null) return 0;
 
         IsLoading = true;
@@ -126,8 +126,8 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// </summary>
     public string GetBulkDeleteConfirmationMessage(int count)
     {
-        var entityName = _navigation.CurrentEntityName ?? "";
-        var subscription = _navigation.CurrentSubscriptionName;
+        var entityName = _getNavigation().CurrentEntityName ?? "";
+        var subscription = _getNavigation().CurrentSubscriptionName;
         var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
         return $"Are you sure you want to delete {count} message(s) from '{targetName}'? This action cannot be undone.";
     }
@@ -137,10 +137,10 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var operations = _getOperations();
         if (operations == null || selectedMessages.Count == 0) return 0;
 
-        var entityName = _navigation.CurrentEntityName;
+        var entityName = _getNavigation().CurrentEntityName;
         if (entityName == null) return 0;
 
-        var subscription = _navigation.CurrentSubscriptionName;
+        var subscription = _getNavigation().CurrentSubscriptionName;
 
         IsLoading = true;
         var count = selectedMessages.Count;
@@ -149,7 +149,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         try
         {
             var sequenceNumbers = selectedMessages.Select(m => m.SequenceNumber).ToList();
-            var deletedCount = await operations.DeleteMessagesAsync(entityName, subscription, sequenceNumbers, _navigation.ShowDeadLetter);
+            var deletedCount = await operations.DeleteMessagesAsync(entityName, subscription, sequenceNumbers, _getNavigation().ShowDeadLetter);
 
             _setStatus($"Successfully deleted {deletedCount} of {count} message(s)");
             return deletedCount;
@@ -170,8 +170,8 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// </summary>
     public string GetResubmitDeadLettersConfirmationMessage(int count)
     {
-        var entityName = _navigation.CurrentEntityName ?? "";
-        var subscription = _navigation.CurrentSubscriptionName;
+        var entityName = _getNavigation().CurrentEntityName ?? "";
+        var subscription = _getNavigation().CurrentSubscriptionName;
         var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
         return $"Are you sure you want to resubmit {count} message(s) from the dead letter queue back to '{targetName}'?";
     }
@@ -179,12 +179,12 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     public async Task<int> ExecuteResubmitDeadLettersAsync(ObservableCollection<MessageInfo> selectedMessages)
     {
         var operations = _getOperations();
-        if (operations == null || selectedMessages.Count == 0 || !_navigation.ShowDeadLetter) return 0;
+        if (operations == null || selectedMessages.Count == 0 || !_getNavigation().ShowDeadLetter) return 0;
 
-        var entityName = _navigation.CurrentEntityName;
+        var entityName = _getNavigation().CurrentEntityName;
         if (entityName == null) return 0;
 
-        var subscription = _navigation.CurrentSubscriptionName;
+        var subscription = _getNavigation().CurrentSubscriptionName;
 
         IsLoading = true;
         var count = selectedMessages.Count;
