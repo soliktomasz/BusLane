@@ -198,6 +198,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         MessageOps = new MessageOperationsViewModel(
             () => _operations,
             preferencesService,
+            _logSink,
             () => Navigation.CurrentEntityName,
             () => Navigation.CurrentSubscriptionName,
             () => Navigation.CurrentEntityRequiresSession,
@@ -220,12 +221,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             preferencesService,
             connectionStorage,
             auth,
+            _logSink,
             tab => ActiveTab = tab);
 
         BulkOps = new MessageBulkOperationsViewModel(
             () => ActiveTab?.Operations ?? _operations,
             () => CurrentNavigation,
             preferencesService,
+            _logSink,
             msg => StatusMessage = msg);
 
         ExportOps = new ExportOperationsViewModel(
@@ -1049,7 +1052,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             Guid.NewGuid().ToString(),
             connection.Name,
             connection.Endpoint ?? "",
-            _preferencesService);
+            _preferencesService,
+            _logSink);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
@@ -1077,7 +1081,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             Guid.NewGuid().ToString(),
             ns.Name,
             ns.Endpoint,
-            _preferencesService);
+            _preferencesService,
+            _logSink);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
