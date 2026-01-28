@@ -199,54 +199,47 @@
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:TopicInfo">
-                                    <Expander Margin="0,1" IsExpanded="False" Expanding="OnTopicExpanderExpanding">
+                                    <Expander Margin="0,1" IsExpanded="{Binding IsExpanded}" Expanding="OnTopicExpanderExpanding">
                                         <Expander.Header>
-                                            <Button Classes="subtle"
-                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectTopicForConnectionCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    HorizontalAlignment="Stretch"
-                                                    HorizontalContentAlignment="Stretch"
-                                                    Padding="0">
-                                                <Grid ColumnDefinitions="3,*">
-                                                    <!-- Selection indicator -->
-                                                    <Border Grid.Column="0"
-                                                            Background="{DynamicResource TextSuccess}"
-                                                            CornerRadius="2"
-                                                            Margin="0,6">
-                                                        <Border.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
-                                                                <Binding Path="."/>
-                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentNavigation.SelectedTopic"/>
-                                                            </MultiBinding>
-                                                        </Border.IsVisible>
-                                                    </Border>
+                                            <Grid ColumnDefinitions="3,*" PointerPressed="OnTopicHeaderTapped">
+                                                <!-- Selection indicator -->
+                                                <Border Grid.Column="0"
+                                                        Background="{DynamicResource TextSuccess}"
+                                                        CornerRadius="2"
+                                                        Margin="0,6">
+                                                    <Border.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                            <Binding Path="."/>
+                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentNavigation.SelectedTopic"/>
+                                                        </MultiBinding>
+                                                    </Border.IsVisible>
+                                                </Border>
 
-                                                    <!-- Content -->
-                                                    <Border Grid.Column="1" Padding="12,8" CornerRadius="4" Margin="4,0,0,0">
-                                                        <Border.Background>
-                                                            <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
-                                                                <Binding Path="."/>
-                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentNavigation.SelectedTopic"/>
-                                                            </MultiBinding>
-                                                        </Border.Background>
-                                                        <Grid ColumnDefinitions="Auto,*">
-                                                            <!-- Icon -->
-                                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="4"
-                                                                    Background="{DynamicResource TextSuccess}" Margin="0,0,10,0">
-                                                                <TextBlock Text="T" FontWeight="SemiBold" FontSize="12"
-                                                                           Foreground="{DynamicResource TextOnBrand}"
-                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                                                                <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Medium"
-                                                                           TextTrimming="CharacterEllipsis"/>
-                                                                <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscriptions'}"
-                                                                           FontSize="10" Foreground="{DynamicResource SubtleForeground}"/>
-                                                            </StackPanel>
-                                                        </Grid>
-                                                    </Border>
-                                                </Grid>
-                                            </Button>
+                                                <!-- Content -->
+                                                <Border Grid.Column="1" Padding="12,8" CornerRadius="4" Margin="4,0,0,0">
+                                                    <Border.Background>
+                                                        <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                            <Binding Path="."/>
+                                                            <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentNavigation.SelectedTopic"/>
+                                                        </MultiBinding>
+                                                    </Border.Background>
+                                                    <Grid ColumnDefinitions="Auto,*">
+                                                        <!-- Icon -->
+                                                        <Border Grid.Column="0" Width="28" Height="28" CornerRadius="4"
+                                                                Background="{DynamicResource TextSuccess}" Margin="0,0,10,0">
+                                                            <TextBlock Text="T" FontWeight="SemiBold" FontSize="12"
+                                                                       Foreground="{DynamicResource TextOnBrand}"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Medium"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding SubscriptionCount, StringFormat='{}{0} subscriptions'}"
+                                                                       FontSize="10" Foreground="{DynamicResource SubtleForeground}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
                                         </Expander.Header>
 
                                         <!-- Subscriptions -->

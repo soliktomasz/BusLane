@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using BusLane.Models;
 using BusLane.ViewModels;
@@ -11,7 +12,7 @@ public partial class EntityTreeView : UserControl
     {
         InitializeComponent();
     }
-    
+
     public void OnTopicExpanderExpanding(object? sender, CancelRoutedEventArgs e)
     {
         if (sender is Expander expander && expander.DataContext is TopicInfo topic)
@@ -22,6 +23,21 @@ public partial class EntityTreeView : UserControl
             {
                 // Fire and forget - load subscriptions when expander opens
                 _ = vm.LoadTopicSubscriptionsCommand.ExecuteAsync(topic);
+            }
+        }
+    }
+
+    private void OnTopicHeaderTapped(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Grid grid && grid.DataContext is TopicInfo topic)
+        {
+            var mainWindow = TopLevel.GetTopLevel(this);
+            if (mainWindow?.DataContext is MainWindowViewModel vm)
+            {
+                // Select the topic
+                vm.SelectTopicForConnectionCommand.Execute(topic);
+                // Toggle expansion
+                topic.IsExpanded = !topic.IsExpanded;
             }
         }
     }

@@ -35,6 +35,12 @@ public partial class TopicInfo : ObservableObject
     private bool _isLoadingSubscriptions;
 
     /// <summary>
+    /// Indicates whether the topic is expanded to show subscriptions.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    /// <summary>
     /// Display status text based on loading state.
     /// </summary>
     public string DisplayStatus => IsLoadingSubscriptions
