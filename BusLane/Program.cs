@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.ReactiveUI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Models.Logging;
 using Serilog;
 using Serilog.Events;
 
@@ -107,6 +108,7 @@ class Program
         services.AddSingleton<IPreferencesService, PreferencesService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
+        services.AddSingleton<ILogSink, LogSink>();
         
         // Auth services
         services.AddSingleton<IAzureAuthService, AzureAuthService>();
@@ -138,7 +140,8 @@ class Program
             sp.GetRequiredService<IMetricsService>(),
             sp.GetRequiredService<IAlertService>(),
             sp.GetRequiredService<INotificationService>(),
-            sp.GetRequiredService<IKeyboardShortcutService>()
+            sp.GetRequiredService<IKeyboardShortcutService>(),
+            sp.GetRequiredService<ILogSink>()
         ));
 
         // Other ViewModels

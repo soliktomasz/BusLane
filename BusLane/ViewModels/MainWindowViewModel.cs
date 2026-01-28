@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -44,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
 
     // Current operations instance - unified interface for all Service Bus operations
@@ -54,6 +56,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     public MessageOperationsViewModel MessageOps { get; }
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
+    public LogViewerViewModel LogViewer { get; }
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -131,6 +134,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _deviceCodeUrl = "";
     [ObservableProperty] private string _deviceCodeMessage = "";
 
+    // Log viewer panel
+    [ObservableProperty] private bool _isLogViewerVisible;
+
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
@@ -163,6 +169,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         IAlertService alertService,
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
+        ILogSink logSink,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -173,10 +180,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _alertService = alertService;
         _preferencesService = preferencesService;
         _keyboardShortcutService = keyboardShortcutService;
+        _logSink = logSink;
         _fileDialogService = fileDialogService;
 
         // Initialize composed components
         Navigation = new NavigationState();
+        LogViewer = new LogViewerViewModel(logSink);
 
         Connection = new ConnectionViewModel(
             auth,
@@ -864,6 +873,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     [RelayCommand]
     private void CloseDeviceCodeDialog() => ShowDeviceCodeDialog = false;
+
+    [RelayCommand]
+    private void ToggleLogViewer() => IsLogViewerVisible = !IsLogViewerVisible;
 
     [RelayCommand]
     private async Task CopyDeviceCodeAsync()

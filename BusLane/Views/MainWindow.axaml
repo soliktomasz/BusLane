@@ -5,8 +5,10 @@
         xmlns:controls="using:BusLane.Views.Controls"
         xmlns:dialogs="using:BusLane.Views.Dialogs"
         xmlns:converters="using:BusLane.Converters"
+        xmlns:ct="clr-namespace:CommunityToolkit.Mvvm.Input;assembly=CommunityToolkit.Mvvm"
         x:Class="BusLane.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        x:Name="MainWindowControl"
         Title="BusLane - Service Bus Manager"
         Icon="/Assets/icon.png"
         Width="1280" Height="800"
@@ -521,6 +523,59 @@
                 <dialogs:AlertsDialog DataContext="{Binding FeaturePanels.AlertsViewModel}"/>
             </Border>
         </Border>
+
+        <!-- Log Viewer Slide-out Panel (right side) -->
+        <Border Grid.Column="0" Grid.ColumnSpan="3"
+                IsVisible="{Binding IsLogViewerVisible}"
+                Background="{DynamicResource ModalOverlay}">
+            <Button Background="Transparent"
+                    BorderThickness="0"
+                    Command="{Binding ToggleLogViewerCommand}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Cursor="Arrow">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Border>
+
+        <!-- Log Viewer Panel (slides in from right) -->
+        <Grid Grid.Column="0" Grid.ColumnSpan="3"
+              IsVisible="{Binding IsLogViewerVisible}"
+              HorizontalAlignment="Right">
+            <Grid.RenderTransform>
+                <TranslateTransform X="0"/>
+            </Grid.RenderTransform>
+            <Grid.Styles>
+                <Style Selector="Grid">
+                    <Style.Animations>
+                        <Animation Duration="0:0:0.2" FillMode="Forward">
+                            <KeyFrame Cue="0%">
+                                <Setter Property="RenderTransform" Value="TranslateTransform(400, 0)"/>
+                            </KeyFrame>
+                            <KeyFrame Cue="100%">
+                                <Setter Property="RenderTransform" Value="TranslateTransform(0, 0)"/>
+                            </KeyFrame>
+                        </Animation>
+                    </Style.Animations>
+                </Style>
+            </Grid.Styles>
+            <Border Width="400"
+                    HorizontalAlignment="Right"
+                    Background="{DynamicResource CardBackground}"
+                    BorderBrush="{DynamicResource BorderDefault}"
+                    BorderThickness="1,0,0,0"
+                    BoxShadow="-8 0 24 0 #32000000">
+                <controls:LogViewerPanel DataContext="{Binding LogViewer}">
+                    <controls:LogViewerPanel.CloseCommand>
+                        <Binding Path="$parent[Window].DataContext.ToggleLogViewerCommand"/>
+                    </controls:LogViewerPanel.CloseCommand>
+                </controls:LogViewerPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
 

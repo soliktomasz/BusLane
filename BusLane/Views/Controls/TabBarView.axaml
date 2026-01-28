@@ -146,6 +146,16 @@
                     <TextBlock Text="New Tab" FontSize="12"/>
                 </StackPanel>
             </Button>
+
+            <!-- Log Viewer Toggle Button -->
+            <ToggleButton Grid.Column="1"
+                          Classes="subtle"
+                          IsChecked="{Binding IsLogViewerVisible}"
+                          Padding="8,8"
+                          Margin="8,0,0,0"
+                          ToolTip.Tip="Toggle activity log">
+                <LucideIcon Kind="ScrollText" Size="12"/>
+            </ToggleButton>
         </Grid>
     </Border>
 </UserControl>
