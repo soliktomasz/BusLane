@@ -85,7 +85,7 @@
                                             </Style>
                                         </Border.Styles>
                                     </Border>
-                                    
+
                                     <!-- Connection Status Indicator (shown when connected and not loading) -->
                                     <Ellipse Grid.Column="0"
                                              Width="8" Height="8"
@@ -134,28 +134,27 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- New Tab Button -->
-            <Button Grid.Column="1"
-                    Classes="subtle"
-                    Command="{Binding OpenConnectionLibraryCommand}"
-                    Padding="8,8"
-                    Margin="8,0,0,0"
-                    ToolTip.Tip="Open new connection tab">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <LucideIcon Kind="Plus" Size="12"/>
-                    <TextBlock Text="New Tab" FontSize="12"/>
-                </StackPanel>
-            </Button>
+            <!-- Action Buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <!-- Log Viewer Toggle Button -->
+                <ToggleButton Classes="subtle icon-button"
+                              IsChecked="{Binding IsLogViewerVisible}"
+                              Padding="6"
+                              ToolTip.Tip="Toggle activity log">
+                    <LucideIcon Kind="ScrollText" Size="14"/>
+                </ToggleButton>
 
-            <!-- Log Viewer Toggle Button -->
-            <ToggleButton Grid.Column="1"
-                          Classes="subtle"
-                          IsChecked="{Binding IsLogViewerVisible}"
-                          Padding="8,8"
-                          Margin="8,0,0,0"
-                          ToolTip.Tip="Toggle activity log">
-                <LucideIcon Kind="ScrollText" Size="12"/>
-            </ToggleButton>
+                <!-- New Tab Button -->
+                <Button Classes="subtle icon-button"
+                        Command="{Binding OpenConnectionLibraryCommand}"
+                        Padding="6"
+                        ToolTip.Tip="Open new connection tab">
+                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <LucideIcon Kind="Plus" Size="14"/>
+                        <TextBlock Text="New Tab" FontSize="11"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
         </Grid>
     </Border>
 </UserControl>

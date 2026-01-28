@@ -543,33 +543,52 @@
         </Border>
 
         <!-- Log Viewer Panel (slides in from right) -->
+        <Border Grid.Column="0" Grid.ColumnSpan="3"
+                Background="{DynamicResource ModalOverlay}"
+                IsVisible="{Binding IsLogViewerVisible}">
+            <Button Background="Transparent"
+                    BorderThickness="0"
+                    Command="{Binding ToggleLogViewerCommand}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Cursor="Arrow">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Border>
+
+        <!-- Slide-in panel container -->
         <Grid Grid.Column="0" Grid.ColumnSpan="3"
-              IsVisible="{Binding IsLogViewerVisible}"
-              HorizontalAlignment="Right">
-            <Grid.RenderTransform>
-                <TranslateTransform X="0"/>
-            </Grid.RenderTransform>
-            <Grid.Styles>
-                <Style Selector="Grid">
-                    <Style.Animations>
-                        <Animation Duration="0:0:0.2" FillMode="Forward">
-                            <KeyFrame Cue="0%">
-                                <Setter Property="RenderTransform" Value="TranslateTransform(400, 0)"/>
-                            </KeyFrame>
-                            <KeyFrame Cue="100%">
-                                <Setter Property="RenderTransform" Value="TranslateTransform(0, 0)"/>
-                            </KeyFrame>
-                        </Animation>
-                    </Style.Animations>
-                </Style>
-            </Grid.Styles>
+              HorizontalAlignment="Right"
+              VerticalAlignment="Stretch">
             <Border Width="400"
                     HorizontalAlignment="Right"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="1,0,0,0"
-                    BoxShadow="-8 0 24 0 #32000000">
-                <controls:LogViewerPanel DataContext="{Binding LogViewer}">
+                    BoxShadow="-8 0 24 0 #32000000"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsLogViewerVisible}">
+                <Border.Styles>
+                    <Style Selector="Border">
+                        <Setter Property="Opacity" Value="0"/>
+                        <Style.Animations>
+                            <Animation Duration="0:0:0.15" FillMode="Forward">
+                                <KeyFrame Cue="0%">
+                                    <Setter Property="Opacity" Value="0"/>
+                                </KeyFrame>
+                                <KeyFrame Cue="100%">
+                                    <Setter Property="Opacity" Value="1"/>
+                                </KeyFrame>
+                            </Animation>
+                        </Style.Animations>
+                    </Style>
+                </Border.Styles>
+                <controls:LogViewerPanel DataContext="{Binding LogViewer}"
+                                         VerticalAlignment="Stretch">
                     <controls:LogViewerPanel.CloseCommand>
                         <Binding Path="$parent[Window].DataContext.ToggleLogViewerCommand"/>
                     </controls:LogViewerPanel.CloseCommand>

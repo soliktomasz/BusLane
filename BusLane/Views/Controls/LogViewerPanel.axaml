@@ -10,7 +10,7 @@
     <UserControl.Styles>
         <!-- Log entry styles based on level -->
         <Style Selector="Border.log-entry">
-            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Padding" Value="10,6"/>
             <Setter Property="Margin" Value="0,2"/>
             <Setter Property="CornerRadius" Value="6"/>
         </Style>
@@ -65,46 +65,47 @@
                     Background="{DynamicResource SurfaceSubtle}"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="0,0,0,1"
-                    Padding="16,12">
-                <Grid ColumnDefinitions="*,Auto">
+                    Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="Activity Log" Classes="title-small"/>
-                        <Border Classes="badge-info" Padding="6,3">
+                        <LucideIcon Kind="ScrollText" Size="16" Foreground="{DynamicResource AccentBrand}"/>
+                        <TextBlock Text="Activity Log" Classes="heading"/>
+                        <Border Classes="badge-info" Padding="4,2">
                             <TextBlock Text="{Binding ShowingLogCount, StringFormat='{}{0}'}"
-                                       FontSize="11" FontWeight="SemiBold"/>
+                                       FontSize="10" FontWeight="SemiBold"/>
                         </Border>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                         <!-- Auto-scroll toggle -->
-                        <ToggleButton Classes="subtle small"
+                        <ToggleButton Classes="icon-button"
                                       IsChecked="{Binding IsAutoScrollEnabled}"
                                       ToolTip.Tip="Auto-scroll to new logs"
-                                      Padding="8">
-                            <LucideIcon Kind="ArrowDownToLine" Size="14"/>
+                                      Padding="6">
+                            <LucideIcon Kind="ArrowDownToLine" Size="13"/>
                         </ToggleButton>
 
                         <!-- Copy all button -->
-                        <Button Classes="subtle small"
+                        <Button Classes="icon-button"
                                 Command="{Binding CopyAllCommand}"
                                 ToolTip.Tip="Copy all logs"
-                                Padding="8">
-                            <LucideIcon Kind="Copy" Size="14"/>
+                                Padding="6">
+                            <LucideIcon Kind="Copy" Size="13"/>
                         </Button>
 
                         <!-- Clear button -->
-                        <Button Classes="subtle small"
+                        <Button Classes="icon-button"
                                 Command="{Binding ClearLogsCommand}"
                                 ToolTip.Tip="Clear all logs"
-                                Padding="8">
-                            <LucideIcon Kind="Trash2" Size="14"/>
+                                Padding="6">
+                            <LucideIcon Kind="Trash2" Size="13"/>
                         </Button>
 
                         <!-- Close button -->
-                        <Button Classes="subtle small"
+                        <Button Classes="icon-button"
                                 Command="{Binding #LogViewerControl.CloseCommand}"
                                 ToolTip.Tip="Close panel"
-                                Padding="8">
-                            <LucideIcon Kind="X" Size="14"/>
+                                Padding="6">
+                            <LucideIcon Kind="X" Size="13"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -115,28 +116,28 @@
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="0,0,0,1"
-                    Padding="12,8">
+                    Padding="8,6">
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" VerticalAlignment="Center">
                     <!-- Search box -->
                     <Border Grid.Column="0"
                             Background="{DynamicResource SurfaceSubtle}"
-                            CornerRadius="6"
-                            Padding="8,6"
-                            Margin="0,0,8,0">
+                            CornerRadius="4"
+                            Padding="6,4"
+                            Margin="0,0,6,0">
                         <Grid ColumnDefinitions="Auto,*">
                             <LucideIcon Grid.Column="0"
                                       Kind="Search"
-                                      Size="14"
+                                      Size="12"
                                       Foreground="{DynamicResource MutedForeground}"
-                                      Margin="4,0,6,0"
+                                      Margin="4,0,4,0"
                                       VerticalAlignment="Center"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchText, Mode=TwoWay}"
-                                     Watermark="Search logs..."
+                                     Watermark="Search..."
                                      Background="Transparent"
                                      BorderThickness="0"
                                      Padding="0"
-                                     FontSize="12"
+                                     FontSize="11"
                                      VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
@@ -145,31 +146,28 @@
                     <ComboBox Grid.Column="1"
                               ItemsSource="{Binding LevelFilterOptions}"
                               SelectedItem="{Binding SelectedLevelFilter}"
-                              Width="100"
-                              Margin="4,0"
-                              Padding="8,6"
-                              FontSize="12"/>
+                              Width="85"
+                              Margin="4,0,0,0"
+                              Padding="6,4"
+                              FontSize="11"/>
 
                     <!-- Source filter -->
                     <ComboBox Grid.Column="2"
                               ItemsSource="{Binding SourceFilterOptions}"
                               SelectedItem="{Binding SelectedSourceFilter}"
-                              Width="110"
-                              Margin="4,0"
-                              Padding="8,6"
-                              FontSize="12"/>
+                              Width="90"
+                              Margin="4,0,0,0"
+                              Padding="6,4"
+                              FontSize="11"/>
 
                     <!-- Debug mode toggle -->
                     <ToggleButton Grid.Column="3"
-                                  Classes="subtle small"
+                                  Classes="icon-button"
                                   IsChecked="{Binding IsDebugModeEnabled}"
                                   ToolTip.Tip="Show debug logs"
-                                  Margin="8,0,0,0"
-                                  Padding="8,6">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <LucideIcon Kind="Bug" Size="12"/>
-                            <TextBlock Text="Debug" FontSize="12"/>
-                        </StackPanel>
+                                  Margin="6,0,0,0"
+                                  Padding="5">
+                        <LucideIcon Kind="Bug" Size="12"/>
                     </ToggleButton>
                 </Grid>
             </Border>
@@ -178,7 +176,7 @@
             <Grid Grid.Row="2">
                 <ListBox ItemsSource="{Binding FilteredLogs}"
                          Background="Transparent"
-                         Padding="8"
+                         Padding="6,4"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          x:Name="LogListBox">
                     <ListBox.Styles>
@@ -219,16 +217,16 @@
                                     <TextBlock Grid.Column="0"
                                                Text="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}"
                                                Classes="caption"
-                                               FontSize="10"
+                                               FontSize="9"
                                                Foreground="{DynamicResource MutedForeground}"
                                                VerticalAlignment="Center"
-                                               Margin="0,0,8,0"/>
+                                               Margin="0,0,6,0"/>
 
                                     <!-- Source & Level badges -->
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <Border Classes="badge-muted" Padding="4,2">
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <Border Classes="badge-muted" Padding="3,1">
                                             <TextBlock Text="{Binding Source, Converter={x:Static converters:LogSourceToStringConverter.Instance}}"
-                                                       FontSize="9" FontWeight="SemiBold"
+                                                       FontSize="8" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource SubtleForeground}"/>
                                         </Border>
                                         <TextBlock Text="{Binding Level}"
@@ -237,11 +235,11 @@
 
                                     <!-- Copy button -->
                                     <Button Grid.Column="2"
-                                            Classes="subtle small"
+                                            Classes="icon-button"
                                             Command="{Binding $parent[UserControl].((vm:LogViewerViewModel)DataContext).CopyEntryCommand}"
                                             CommandParameter="{Binding}"
                                             Padding="4"
-                                            Margin="8,0,0,0"
+                                            Margin="6,0,0,0"
                                             VerticalAlignment="Center"
                                             ToolTip.Tip="Copy">
                                         <LucideIcon Kind="Copy" Size="10"/>
@@ -250,17 +248,17 @@
                                     <!-- Message -->
                                     <TextBlock Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1"
                                                Text="{Binding Message}"
-                                               FontSize="12"
-                                               Margin="0,4,0,0"
+                                               FontSize="11"
+                                               Margin="0,2,0,0"
                                                TextWrapping="Wrap"/>
 
                                     <!-- Details (if present) -->
                                     <TextBlock Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2"
                                                Text="{Binding Details}"
-                                               FontSize="11"
+                                               FontSize="10"
                                                Foreground="{DynamicResource SubtleForeground}"
                                                IsVisible="{Binding Details, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                               Margin="0,4,0,0"
+                                               Margin="0,2,0,0"
                                                TextWrapping="Wrap"/>
                                 </Grid>
                             </Border>
@@ -271,13 +269,14 @@
                 <!-- Empty state -->
                 <Border Background="{DynamicResource CardBackground}"
                         IsVisible="{Binding !FilteredLogs.Count}"
-                        Padding="32">
-                    <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <LucideIcon Kind="ScrollText" Size="32"
+                        Padding="24">
+                    <StackPanel HorizontalAlignment="Center" Spacing="6">
+                        <LucideIcon Kind="ScrollText" Size="24"
                                   Foreground="{DynamicResource SubtleForeground}"
                                   HorizontalAlignment="Center"/>
                         <TextBlock Text="No logs"
-                                   Classes="title-small"
+                                   Classes="heading"
+                                   FontSize="14"
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="Activity will appear here"
                                    Classes="caption"
