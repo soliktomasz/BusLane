@@ -66,6 +66,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     public ICommand CopyAllCommand { get; }
     public ICommand ToggleAutoScrollCommand { get; }
     public ICommand CopyEntryCommand { get; }
+    public ICommand ClearSearchCommand { get; }
 
     public LogViewerViewModel(ILogSink logSink)
     {
@@ -74,6 +75,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         CopyAllCommand = new AsyncRelayCommand(CopyAllAsync);
         ToggleAutoScrollCommand = new RelayCommand(() => IsAutoScrollEnabled = !IsAutoScrollEnabled);
         CopyEntryCommand = new RelayCommand<LogEntry>(CopyEntry);
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
 
         // Initial load
         RefreshLogs();

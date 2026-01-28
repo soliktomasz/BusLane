@@ -8,6 +8,21 @@
              Name="LogViewerControl">
 
     <UserControl.Styles>
+        <!-- Search box styles -->
+        <Style Selector="Border.search-box">
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+        </Style>
+
+        <Style Selector="Border.search-box:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource SubtleForeground}"/>
+        </Style>
+
+        <Style Selector="Border.search-box:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+            <Setter Property="BorderThickness" Value="1,1,1,2"/>
+        </Style>
+
         <!-- Log entry styles based on level -->
         <Style Selector="Border.log-entry">
             <Setter Property="Padding" Value="10,6"/>
@@ -120,25 +135,39 @@
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto" VerticalAlignment="Center">
                     <!-- Search box -->
                     <Border Grid.Column="0"
-                            Background="{DynamicResource SurfaceSubtle}"
-                            CornerRadius="4"
-                            Padding="6,4"
+                            Classes="search-box"
+                            Background="{DynamicResource InputBackground}"
+                            CornerRadius="6"
+                            Padding="0"
                             Margin="0,0,6,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <LucideIcon Grid.Column="0"
-                                      Kind="Search"
-                                      Size="12"
-                                      Foreground="{DynamicResource MutedForeground}"
-                                      Margin="4,0,4,0"
-                                      VerticalAlignment="Center"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0"
+                                    Width="28"
+                                    Background="Transparent"
+                                    Padding="0">
+                                <LucideIcon Kind="Search"
+                                          Size="12"
+                                          Foreground="{DynamicResource MutedForeground}"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"/>
+                            </Border>
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchText, Mode=TwoWay}"
-                                     Watermark="Search..."
+                                     Watermark="Search logs..."
                                      Background="Transparent"
                                      BorderThickness="0"
-                                     Padding="0"
+                                     Padding="6,6"
                                      FontSize="11"
                                      VerticalAlignment="Center"/>
+                            <Button Grid.Column="2"
+                                    Classes="icon-button"
+                                    Command="{Binding $parent[UserControl].((vm:LogViewerViewModel)DataContext).ClearSearchCommand}"
+                                    IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Padding="4"
+                                    Margin="0,0,2,0"
+                                    ToolTip.Tip="Clear search">
+                                <LucideIcon Kind="X" Size="10"/>
+                            </Button>
                         </Grid>
                     </Border>
 
