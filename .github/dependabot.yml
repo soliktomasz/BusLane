@@ -10,6 +10,13 @@ updates:
     labels:
       - "dependencies"
       - "nuget"
+    groups:
+      nuget-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
