@@ -22,6 +22,7 @@ public partial class ConnectionViewModel : ViewModelBase
     private readonly Action<string> _setStatus;
     private readonly Func<Task> _onConnected;
     private readonly Func<Task> _onDisconnected;
+    private readonly Action<bool> _setNamespacePanelOpen;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
@@ -34,23 +35,12 @@ public partial class ConnectionViewModel : ViewModelBase
     [ObservableProperty] private SavedConnection? _activeConnection;
     [ObservableProperty] private bool _showConnectionLibrary;
     [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
-    [ObservableProperty] private bool _isNamespacePanelOpen;
 
     public ObservableCollection<SavedConnection> SavedConnections { get; } = [];
     public ObservableCollection<SavedConnection> FavoriteConnections { get; } = [];
 
     public bool ShowAzureSections => IsAuthenticated && CurrentMode == ConnectionMode.AzureAccount;
     public bool HasFavoriteConnections => FavoriteConnections.Count > 0;
-
-    /// <summary>
-    /// Opens the namespace selection panel.
-    /// </summary>
-    public void OpenNamespacePanel() => IsNamespacePanelOpen = true;
-
-    /// <summary>
-    /// Closes the namespace selection panel.
-    /// </summary>
-    public void CloseNamespacePanel() => IsNamespacePanelOpen = false;
 
     /// <summary>
     /// Gets the current connection string (null if in Azure account mode).
@@ -70,7 +60,8 @@ public partial class ConnectionViewModel : ViewModelBase
         ILogSink logSink,
         Action<string> setStatus,
         Func<Task> onConnected,
-        Func<Task> onDisconnected)
+        Func<Task> onDisconnected,
+        Action<bool> setNamespacePanelOpen)
     {
         _auth = auth;
         _connectionStorage = connectionStorage;
@@ -79,6 +70,7 @@ public partial class ConnectionViewModel : ViewModelBase
         _setStatus = setStatus;
         _onConnected = onConnected;
         _onDisconnected = onDisconnected;
+        _setNamespacePanelOpen = setNamespacePanelOpen;
 
         _auth.AuthenticationChanged += (_, authenticated) => IsAuthenticated = authenticated;
         FavoriteConnections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFavoriteConnections));
@@ -100,7 +92,7 @@ public partial class ConnectionViewModel : ViewModelBase
         if (await _auth.TrySilentLoginAsync())
         {
             CurrentMode = ConnectionMode.AzureAccount;
-            IsNamespacePanelOpen = true;
+            _setNamespacePanelOpen(true);
             _setStatus("Restored Azure session");
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
@@ -157,7 +149,7 @@ public partial class ConnectionViewModel : ViewModelBase
             {
                 CurrentMode = ConnectionMode.AzureAccount;
                 ActiveConnection = null;
-                IsNamespacePanelOpen = true;
+                _setNamespacePanelOpen(true);
                 _setStatus("Ready");
                 _logSink.Log(new LogEntry(
                     DateTime.UtcNow,
@@ -201,7 +193,7 @@ public partial class ConnectionViewModel : ViewModelBase
         await _auth.LogoutAsync();
         CurrentMode = ConnectionMode.None;
         ActiveConnection = null;
-        IsNamespacePanelOpen = false;
+        _setNamespacePanelOpen(false);
         await _onDisconnected();
         _setStatus("Disconnected");
         _logSink.Log(new LogEntry(

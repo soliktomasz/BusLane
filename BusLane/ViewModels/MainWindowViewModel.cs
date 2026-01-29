@@ -57,6 +57,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
     public LogViewerViewModel LogViewer { get; }
+    public NamespaceSelectionViewModel NamespaceSelection { get; }
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -187,6 +188,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Navigation = new NavigationState();
         LogViewer = new LogViewerViewModel(logSink);
 
+        NamespaceSelection = new NamespaceSelectionViewModel(
+            Navigation,
+            SelectNamespaceAsync);
+
         Connection = new ConnectionViewModel(
             auth,
             connectionStorage,
@@ -194,7 +199,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             _logSink,
             msg => StatusMessage = msg,
             OnConnectedAsync,
-            OnDisconnectedAsync);
+            OnDisconnectedAsync,
+            open => { if (open) NamespaceSelection.Open(); else NamespaceSelection.Close(); });
 
         MessageOps = new MessageOperationsViewModel(
             () => _operations,
@@ -407,7 +413,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task SelectNamespaceAsync(ServiceBusNamespace ns)
     {
-        Connection.CloseNamespacePanel();
         await Tabs.OpenTabForNamespaceAsync(ns);
         Navigation.SelectedNamespace = ns;
 
@@ -847,10 +852,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    private void OpenNamespacePanel() => Connection.OpenNamespacePanel();
+    private void OpenNamespacePanel() => NamespaceSelection.Open();
 
     [RelayCommand]
-    private void CloseNamespacePanel() => Connection.CloseNamespacePanel();
+    private void CloseNamespacePanel() => NamespaceSelection.Close();
 
     [RelayCommand]
     private void CloseStatusPopup() => ShowStatusPopup = false;
