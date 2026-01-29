@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,11 +15,20 @@ public partial class MessageOperationsViewModel : ViewModelBase
 {
     private readonly Func<IServiceBusOperations?> _getOperations;
     private readonly IPreferencesService _preferencesService;
+    private readonly ILogSink _logSink;
     private readonly Func<string?> _getEntityName;
     private readonly Func<string?> _getSubscriptionName;
     private readonly Func<bool> _getRequiresSession;
     private readonly Func<bool> _getShowDeadLetter;
     private readonly Action<string> _setStatus;
+
+    private string GetEntityDisplayName()
+    {
+        var entityName = _getEntityName() ?? "Unknown";
+        var subscription = _getSubscriptionName();
+        var dlq = _getShowDeadLetter() ? " (DLQ)" : "";
+        return subscription != null ? $"{entityName}/{subscription}{dlq}" : $"{entityName}{dlq}";
+    }
 
     [ObservableProperty] private bool _isLoadingMessages;
     [ObservableProperty]
@@ -114,6 +124,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public MessageOperationsViewModel(
         Func<IServiceBusOperations?> getOperations,
         IPreferencesService preferencesService,
+        ILogSink logSink,
         Func<string?> getEntityName,
         Func<string?> getSubscriptionName,
         Func<bool> getRequiresSession,
@@ -122,6 +133,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     {
         _getOperations = getOperations;
         _preferencesService = preferencesService;
+        _logSink = logSink;
         _getEntityName = getEntityName;
         _getSubscriptionName = getSubscriptionName;
         _getRequiresSession = getRequiresSession;
@@ -182,11 +194,15 @@ public partial class MessageOperationsViewModel : ViewModelBase
         var subscription = _getSubscriptionName();
         var requiresSession = _getRequiresSession();
         var showDeadLetter = _getShowDeadLetter();
+        var entityDisplay = GetEntityDisplayName();
 
         IsLoadingMessages = true;
         _setStatus("Loading messages...");
-        MessageSearchText = "";
-        SelectedMessages.Clear();
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.ServiceBus,
+            LogLevel.Info,
+            $"Loading messages from {entityDisplay}..."));
 
         try
         {
@@ -203,18 +219,44 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
             ApplyMessageFilter();
             _setStatus($"{Messages.Count} message(s)");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Info,
+                $"Loaded {Messages.Count} messages from {entityDisplay}"));
         }
         catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx) when (sbEx.Reason == Azure.Messaging.ServiceBus.ServiceBusFailureReason.MessagingEntityNotFound)
         {
-            _setStatus($"Error: Entity '{entityName}' not found. Ensure you have 'Azure Service Bus Data Receiver' role assigned.");
+            var errorMsg = $"Entity '{entityName}' not found";
+            _setStatus($"Error: {errorMsg}. Ensure you have 'Azure Service Bus Data Receiver' role assigned.");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                sbEx.Message));
         }
         catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx)
         {
+            var errorMsg = $"Failed to load messages: {sbEx.Reason}";
             _setStatus($"Error: {sbEx.Reason} - {sbEx.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                sbEx.Message));
         }
         catch (Exception ex)
         {
+            var errorMsg = $"Failed to load messages";
             _setStatus($"Error: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
         }
         finally
         {

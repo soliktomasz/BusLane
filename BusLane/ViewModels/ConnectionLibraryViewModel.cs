@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,6 +14,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 {
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IServiceBusOperationsFactory _operationsFactory;
+    private readonly ILogSink _logSink;
     private readonly Action<SavedConnection> _onConnectionSelected;
     private readonly Action<string> _onStatusUpdate;
     private readonly Func<Task>? _onFavoritesChanged;
@@ -46,12 +48,14 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     public ConnectionLibraryViewModel(
         IConnectionStorageService connectionStorage,
         IServiceBusOperationsFactory operationsFactory,
+        ILogSink logSink,
         Action<SavedConnection> onConnectionSelected,
         Action<string> onStatusUpdate,
         Func<Task>? onFavoritesChanged = null)
     {
         _connectionStorage = connectionStorage;
         _operationsFactory = operationsFactory;
+        _logSink = logSink;
         _onConnectionSelected = onConnectionSelected;
         _onStatusUpdate = onStatusUpdate;
         _onFavoritesChanged = onFavoritesChanged;
@@ -145,14 +149,27 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         ValidationMessage = "Validating connection...";
         DetectedInfo = null;
 
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Validating connection '{NewConnectionName}'..."));
+
         try
         {
             var ops = _operationsFactory.CreateFromConnectionString(NewConnectionString);
-            var (isValid, _, _, errorMessage) = await ops.ValidateAsync();
+            var (isValid, _, endpoint, errorMessage) = await ops.ValidateAsync();
 
             if (!isValid)
             {
                 ValidationMessage = $"Invalid connection: {errorMessage}";
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Error,
+                    $"Connection validation failed for '{NewConnectionName}'",
+                    errorMessage));
+                IsValidating = false;
                 return;
             }
 
@@ -187,6 +204,11 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 }
                 UpdateFilteredConnections();
                 _onStatusUpdate($"Connection '{NewConnectionName}' updated successfully");
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Info,
+                    $"Updated connection '{NewConnectionName}' ({endpoint})"));
             }
             else
             {
@@ -206,6 +228,11 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 SavedConnections.Insert(0, connection);
                 UpdateFilteredConnections();
                 _onStatusUpdate($"Connection '{NewConnectionName}' saved successfully");
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Info,
+                    $"Added new connection '{NewConnectionName}' ({endpoint})"));
             }
 
             IsAddingConnection = false;
@@ -222,6 +249,12 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         catch (Exception ex)
         {
             ValidationMessage = $"Error: {ex.Message}";
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                $"Failed to save connection '{NewConnectionName}'",
+                ex.Message));
         }
         finally
         {
@@ -252,6 +285,13 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             {
                 CheckConnectionResult = $"Connection failed: {errorMessage}";
                 CheckConnectionSuccess = false;
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Error,
+                    "Connection check failed",
+                    errorMessage));
+                IsCheckingConnection = false;
                 return;
             }
 
@@ -267,11 +307,22 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 CheckConnectionResult = "Connection successful!";
             }
             CheckConnectionSuccess = true;
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Connection check successful: {endpoint}"));
         }
         catch (Exception ex)
         {
             CheckConnectionResult = $"Connection failed: {ex.Message}";
             CheckConnectionSuccess = false;
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                "Connection check failed",
+                ex.Message));
         }
         finally
         {
@@ -282,19 +333,42 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     [RelayCommand]
     private async Task DeleteConnectionAsync(SavedConnection connection)
     {
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Warning,
+            $"Deleting connection '{connection.Name}'"));
+
         await _connectionStorage.DeleteConnectionAsync(connection.Id);
         SavedConnections.Remove(connection);
         UpdateFilteredConnections();
         _onStatusUpdate($"Connection '{connection.Name}' deleted");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Deleted connection '{connection.Name}'"));
     }
 
     [RelayCommand]
     private async Task ClearAllConnectionsAsync()
     {
+        var count = SavedConnections.Count;
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Warning,
+            $"Clearing all {count} saved connection(s)"));
+
         await _connectionStorage.ClearAllConnectionsAsync();
         SavedConnections.Clear();
         UpdateFilteredConnections();
         _onStatusUpdate("All connections cleared");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Cleared {count} connection(s)"));
     }
 
     [RelayCommand]
@@ -322,8 +396,16 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             await _onFavoritesChanged();
         }
 
-        _onStatusUpdate(updatedConnection.IsFavorite
+        var isFavorite = updatedConnection.IsFavorite;
+        _onStatusUpdate(isFavorite
             ? $"'{connection.Name}' added to favorites"
             : $"'{connection.Name}' removed from favorites");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            isFavorite
+                ? $"Added '{connection.Name}' to favorites"
+                : $"Removed '{connection.Name}' from favorites"));
     }
 }

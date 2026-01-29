@@ -1,5 +1,6 @@
 // BusLane.Tests/ViewModels/Core/ConnectionTabViewModelTests.cs
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
 using BusLane.ViewModels;
@@ -11,6 +12,13 @@ namespace BusLane.Tests.ViewModels.Core;
 
 public class ConnectionTabViewModelTests
 {
+    private static ILogSink CreateMockLogSink()
+    {
+        var logSink = Substitute.For<ILogSink>();
+        logSink.GetLogs().Returns(new List<LogEntry>());
+        return logSink;
+    }
+
     [Fact]
     public void Constructor_SetsTabIdAndTitle()
     {
@@ -50,13 +58,15 @@ public class ConnectionTabViewModelTests
     {
         // Arrange
         var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
 
         // Act
         var tab = new ConnectionTabViewModel(
             "test-id",
             "Test Tab",
             "test.servicebus.windows.net",
-            preferencesService);
+            preferencesService,
+            logSink);
 
         // Assert
         tab.MessageOps.Should().NotBeNull();
@@ -67,6 +77,7 @@ public class ConnectionTabViewModelTests
     {
         // Arrange
         var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
         var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
         var operations = Substitute.For<IConnectionStringOperations>();
 
@@ -82,7 +93,7 @@ public class ConnectionTabViewModelTests
             Type = ConnectionType.Namespace
         };
 
-        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService);
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
 
         // Act
         await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
@@ -98,6 +109,7 @@ public class ConnectionTabViewModelTests
     {
         // Arrange
         var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
         var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
         var operations = Substitute.For<IConnectionStringOperations>();
 
@@ -113,7 +125,7 @@ public class ConnectionTabViewModelTests
             Type = ConnectionType.Namespace
         };
 
-        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService);
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
         await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
 
         // Act

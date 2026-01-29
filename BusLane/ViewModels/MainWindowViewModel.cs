@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -44,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
 
     // Current operations instance - unified interface for all Service Bus operations
@@ -54,6 +56,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     public MessageOperationsViewModel MessageOps { get; }
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
+    public LogViewerViewModel LogViewer { get; }
+    public NamespaceSelectionViewModel NamespaceSelection { get; }
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -163,6 +167,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         IAlertService alertService,
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
+        ILogSink logSink,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -173,22 +178,31 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _alertService = alertService;
         _preferencesService = preferencesService;
         _keyboardShortcutService = keyboardShortcutService;
+        _logSink = logSink;
         _fileDialogService = fileDialogService;
 
         // Initialize composed components
         Navigation = new NavigationState();
+        LogViewer = new LogViewerViewModel(logSink);
+
+        NamespaceSelection = new NamespaceSelectionViewModel(
+            Navigation,
+            SelectNamespaceAsync);
 
         Connection = new ConnectionViewModel(
             auth,
             connectionStorage,
             operationsFactory,
+            _logSink,
             msg => StatusMessage = msg,
             OnConnectedAsync,
-            OnDisconnectedAsync);
+            OnDisconnectedAsync,
+            open => { if (open) NamespaceSelection.Open(); else NamespaceSelection.Close(); });
 
         MessageOps = new MessageOperationsViewModel(
             () => _operations,
             preferencesService,
+            _logSink,
             () => Navigation.CurrentEntityName,
             () => Navigation.CurrentSubscriptionName,
             () => Navigation.CurrentEntityRequiresSession,
@@ -211,12 +225,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             preferencesService,
             connectionStorage,
             auth,
+            _logSink,
             tab => ActiveTab = tab);
 
         BulkOps = new MessageBulkOperationsViewModel(
             () => ActiveTab?.Operations ?? _operations,
             () => CurrentNavigation,
             preferencesService,
+            _logSink,
             msg => StatusMessage = msg);
 
         ExportOps = new ExportOperationsViewModel(
@@ -394,7 +410,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task SelectNamespaceAsync(ServiceBusNamespace ns)
     {
-        Connection.CloseNamespacePanel();
         await Tabs.OpenTabForNamespaceAsync(ns);
         Navigation.SelectedNamespace = ns;
 
@@ -834,10 +849,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    private void OpenNamespacePanel() => Connection.OpenNamespacePanel();
+    private void OpenNamespacePanel() => NamespaceSelection.Open();
 
     [RelayCommand]
-    private void CloseNamespacePanel() => Connection.CloseNamespacePanel();
+    private void CloseNamespacePanel() => NamespaceSelection.Close();
 
     [RelayCommand]
     private void CloseStatusPopup() => ShowStatusPopup = false;
@@ -864,6 +879,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     [RelayCommand]
     private void CloseDeviceCodeDialog() => ShowDeviceCodeDialog = false;
+
+    [RelayCommand]
+    private void ToggleLogViewer() => LogViewer.Toggle();
 
     [RelayCommand]
     private async Task CopyDeviceCodeAsync()
@@ -966,6 +984,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Connection.ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
             _connectionStorage,
             _operationsFactory,
+            _logSink,
             async conn =>
             {
                 Connection.ShowConnectionLibrary = false;
@@ -1037,7 +1056,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             Guid.NewGuid().ToString(),
             connection.Name,
             connection.Endpoint ?? "",
-            _preferencesService);
+            _preferencesService,
+            _logSink);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
@@ -1065,7 +1085,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             Guid.NewGuid().ToString(),
             ns.Name,
             ns.Endpoint,
-            _preferencesService);
+            _preferencesService,
+            _logSink);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
@@ -1345,6 +1366,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _autoRefreshTimer?.Stop();
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;
+
+        // Dispose the log viewer to unsubscribe from events
+        LogViewer?.Dispose();
 
         // Dispose operations if they implement IAsyncDisposable
         if (_operations is IAsyncDisposable asyncDisposable)

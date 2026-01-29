@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Auth;
 using BusLane.Services.ServiceBus;
@@ -17,6 +18,7 @@ public partial class TabManagementViewModel : ViewModelBase
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IAzureAuthService _auth;
+    private readonly ILogSink _logSink;
     private readonly Action<ConnectionTabViewModel?> _activeTabChanged;
 
     public ObservableCollection<ConnectionTabViewModel> ConnectionTabs { get; } = new();
@@ -32,12 +34,14 @@ public partial class TabManagementViewModel : ViewModelBase
         IPreferencesService preferencesService,
         IConnectionStorageService connectionStorage,
         IAzureAuthService auth,
+        ILogSink logSink,
         Action<ConnectionTabViewModel?> activeTabChanged)
     {
         _operationsFactory = operationsFactory;
         _preferencesService = preferencesService;
         _connectionStorage = connectionStorage;
         _auth = auth;
+        _logSink = logSink;
         _activeTabChanged = activeTabChanged;
     }
 
@@ -50,7 +54,8 @@ public partial class TabManagementViewModel : ViewModelBase
             Guid.NewGuid().ToString(),
             connection.Name,
             connection.Endpoint ?? "",
-            _preferencesService);
+            _preferencesService,
+            _logSink);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
@@ -77,7 +82,8 @@ public partial class TabManagementViewModel : ViewModelBase
             Guid.NewGuid().ToString(),
             ns.Name,
             ns.Endpoint,
-            _preferencesService);
+            _preferencesService,
+            _logSink);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;

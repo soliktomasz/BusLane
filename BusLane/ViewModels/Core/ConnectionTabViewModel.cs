@@ -1,6 +1,7 @@
 // BusLane/ViewModels/Core/ConnectionTabViewModel.cs
 using Azure.Core;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,6 +15,7 @@ namespace BusLane.ViewModels.Core;
 public partial class ConnectionTabViewModel : ViewModelBase
 {
     private readonly IPreferencesService _preferencesService;
+    private readonly ILogSink _logSink;
 
     // Identity
     [ObservableProperty] private string _tabId;
@@ -32,15 +34,15 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
     // Connection resources (set after connection)
     private IServiceBusOperations? _operations;
-    
+
     [ObservableProperty]
     private SavedConnection? _savedConnection;
-    
+
     [ObservableProperty]
     private ServiceBusNamespace? _namespace;
 
     public ConnectionTabViewModel(string tabId, string tabTitle, string tabSubtitle)
-        : this(tabId, tabTitle, tabSubtitle, null!)
+        : this(tabId, tabTitle, tabSubtitle, null!, null!)
     {
     }
 
@@ -48,18 +50,21 @@ public partial class ConnectionTabViewModel : ViewModelBase
         string tabId,
         string tabTitle,
         string tabSubtitle,
-        IPreferencesService preferencesService)
+        IPreferencesService preferencesService,
+        ILogSink logSink)
     {
         _tabId = tabId;
         _tabTitle = tabTitle;
         _tabSubtitle = tabSubtitle;
         _preferencesService = preferencesService;
+        _logSink = logSink;
 
         Navigation = new NavigationState();
 
         MessageOps = new MessageOperationsViewModel(
             () => _operations,
             preferencesService ?? new DummyPreferencesService(),
+            logSink,
             () => Navigation.CurrentEntityName,
             () => Navigation.CurrentSubscriptionName,
             () => Navigation.CurrentEntityRequiresSession,

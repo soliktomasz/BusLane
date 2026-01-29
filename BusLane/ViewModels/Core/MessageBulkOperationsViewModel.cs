@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,19 +16,31 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     private readonly Func<IServiceBusOperations?> _getOperations;
     private readonly Func<NavigationState> _getNavigation;
     private readonly IPreferencesService _preferencesService;
+    private readonly ILogSink _logSink;
     private readonly Action<string> _setStatus;
 
     [ObservableProperty] private bool _isLoading;
+
+    private string GetEntityDisplayName()
+    {
+        var nav = _getNavigation();
+        var entityName = nav.CurrentEntityName ?? "Unknown";
+        var subscription = nav.CurrentSubscriptionName;
+        var dlq = nav.ShowDeadLetter ? " (DLQ)" : "";
+        return subscription != null ? $"{entityName}/{subscription}{dlq}" : $"{entityName}{dlq}";
+    }
 
     public MessageBulkOperationsViewModel(
         Func<IServiceBusOperations?> getOperations,
         Func<NavigationState> getNavigation,
         IPreferencesService preferencesService,
+        ILogSink logSink,
         Action<string> setStatus)
     {
         _getOperations = getOperations;
         _getNavigation = getNavigation;
         _preferencesService = preferencesService;
+        _logSink = logSink;
         _setStatus = setStatus;
     }
 
@@ -57,18 +70,36 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         if (entityName == null) return;
 
         var subscription = _getNavigation().CurrentSubscriptionName;
+        var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
         _setStatus("Purging messages...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.ServiceBus,
+            LogLevel.Warning,
+            $"Purging messages from {entityDisplay}..."));
 
         try
         {
             await operations.PurgeMessagesAsync(entityName, subscription, _getNavigation().ShowDeadLetter);
             _setStatus("Purge complete");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Info,
+                $"Purged messages from {entityDisplay}"));
         }
         catch (Exception ex)
         {
+            var errorMsg = $"Failed to purge messages from {entityDisplay}";
             _setStatus($"Error: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
         }
         finally
         {
@@ -98,9 +129,16 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var entityName = _getNavigation().CurrentEntityName;
         if (entityName == null) return 0;
 
+        var entityDisplay = GetEntityDisplayName();
+
         IsLoading = true;
         var count = selectedMessages.Count;
         _setStatus($"Resending {count} message(s)...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.ServiceBus,
+            LogLevel.Info,
+            $"Resending {count} message(s) to {entityDisplay}..."));
 
         try
         {
@@ -108,11 +146,23 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             var sentCount = await operations.ResendMessagesAsync(entityName, messagesToResend);
 
             _setStatus($"Successfully resent {sentCount} of {count} message(s)");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Info,
+                $"Resent {sentCount}/{count} messages to {entityDisplay}"));
             return sentCount;
         }
         catch (Exception ex)
         {
+            var errorMsg = $"Failed to resend messages to {entityDisplay}";
             _setStatus($"Error resending messages: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
             return 0;
         }
         finally
@@ -141,10 +191,16 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         if (entityName == null) return 0;
 
         var subscription = _getNavigation().CurrentSubscriptionName;
+        var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
         var count = selectedMessages.Count;
         _setStatus($"Deleting {count} message(s)...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.ServiceBus,
+            LogLevel.Warning,
+            $"Deleting {count} message(s) from {entityDisplay}..."));
 
         try
         {
@@ -152,11 +208,23 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             var deletedCount = await operations.DeleteMessagesAsync(entityName, subscription, sequenceNumbers, _getNavigation().ShowDeadLetter);
 
             _setStatus($"Successfully deleted {deletedCount} of {count} message(s)");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Info,
+                $"Deleted {deletedCount}/{count} messages from {entityDisplay}"));
             return deletedCount;
         }
         catch (Exception ex)
         {
+            var errorMsg = $"Failed to delete messages from {entityDisplay}";
             _setStatus($"Error deleting messages: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
             return 0;
         }
         finally
@@ -185,10 +253,16 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         if (entityName == null) return 0;
 
         var subscription = _getNavigation().CurrentSubscriptionName;
+        var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
         var count = selectedMessages.Count;
         _setStatus($"Resubmitting {count} dead letter message(s)...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.ServiceBus,
+            LogLevel.Info,
+            $"Resubmitting {count} dead letter message(s) from {entityDisplay}..."));
 
         try
         {
@@ -196,11 +270,23 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             var resubmittedCount = await operations.ResubmitDeadLetterMessagesAsync(entityName, subscription, messagesToResubmit);
 
             _setStatus($"Successfully resubmitted {resubmittedCount} of {count} message(s)");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Info,
+                $"Resubmitted {resubmittedCount}/{count} dead letter messages to {entityDisplay}"));
             return resubmittedCount;
         }
         catch (Exception ex)
         {
+            var errorMsg = $"Failed to resubmit dead letters to {entityDisplay}";
             _setStatus($"Error resubmitting messages: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
             return 0;
         }
         finally
