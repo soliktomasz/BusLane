@@ -20,6 +20,9 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     private readonly List<LogEntry> _allLogs = new();
 
     [ObservableProperty]
+    private bool _isOpen;
+
+    [ObservableProperty]
     private bool _isAutoScrollEnabled = true;
 
     [ObservableProperty]
@@ -67,6 +70,22 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     public ICommand ToggleAutoScrollCommand { get; }
     public ICommand CopyEntryCommand { get; }
     public ICommand ClearSearchCommand { get; }
+
+    /// <summary>
+    /// Opens the log viewer panel.
+    /// </summary>
+    public void Open() => IsOpen = true;
+
+    /// <summary>
+    /// Closes the log viewer panel.
+    /// </summary>
+    [RelayCommand]
+    public void Close() => IsOpen = false;
+
+    /// <summary>
+    /// Toggles the log viewer panel visibility.
+    /// </summary>
+    public void Toggle() => IsOpen = !IsOpen;
 
     public LogViewerViewModel(ILogSink logSink)
     {

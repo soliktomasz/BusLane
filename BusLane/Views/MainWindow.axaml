@@ -272,7 +272,7 @@
                     <!-- Log Viewer Toggle Button -->
                     <ToggleButton Grid.Column="2"
                                   Classes="subtle icon-button"
-                                  IsChecked="{Binding IsLogViewerVisible}"
+                                  IsChecked="{Binding LogViewer.IsOpen}"
                                   Padding="6"
                                   Margin="8,0,0,0"
                                   ToolTip.Tip="Toggle activity log">
@@ -312,77 +312,9 @@
             </Border>
         </Border>
 
-        <!-- Log Viewer Slide-out Panel (right side) -->
-        <Border Grid.Column="0" Grid.ColumnSpan="3"
-                IsVisible="{Binding IsLogViewerVisible}"
-                Background="{DynamicResource ModalOverlay}">
-            <Button Background="Transparent"
-                    BorderThickness="0"
-                    Command="{Binding ToggleLogViewerCommand}"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Cursor="Arrow">
-                <Button.Template>
-                    <ControlTemplate>
-                        <Border Background="{TemplateBinding Background}"/>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-        </Border>
-
-        <!-- Log Viewer Panel (slides in from right) -->
-        <Border Grid.Column="0" Grid.ColumnSpan="3"
-                Background="{DynamicResource ModalOverlay}"
-                IsVisible="{Binding IsLogViewerVisible}">
-            <Button Background="Transparent"
-                    BorderThickness="0"
-                    Command="{Binding ToggleLogViewerCommand}"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Cursor="Arrow">
-                <Button.Template>
-                    <ControlTemplate>
-                        <Border Background="{TemplateBinding Background}"/>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-        </Border>
-
-        <!-- Slide-in panel container -->
-        <Grid Grid.Column="0" Grid.ColumnSpan="3"
-              HorizontalAlignment="Right"
-              VerticalAlignment="Stretch">
-            <Border Width="400"
-                    HorizontalAlignment="Right"
-                    Background="{DynamicResource CardBackground}"
-                    BorderBrush="{DynamicResource BorderDefault}"
-                    BorderThickness="1,0,0,0"
-                    BoxShadow="-8 0 24 0 #32000000"
-                    VerticalAlignment="Stretch"
-                    IsVisible="{Binding IsLogViewerVisible}">
-                <Border.Styles>
-                    <Style Selector="Border">
-                        <Setter Property="Opacity" Value="0"/>
-                        <Style.Animations>
-                            <Animation Duration="0:0:0.15" FillMode="Forward">
-                                <KeyFrame Cue="0%">
-                                    <Setter Property="Opacity" Value="0"/>
-                                </KeyFrame>
-                                <KeyFrame Cue="100%">
-                                    <Setter Property="Opacity" Value="1"/>
-                                </KeyFrame>
-                            </Animation>
-                        </Style.Animations>
-                    </Style>
-                </Border.Styles>
-                <controls:LogViewerPanel DataContext="{Binding LogViewer}"
-                                         VerticalAlignment="Stretch">
-                    <controls:LogViewerPanel.CloseCommand>
-                        <Binding Path="$parent[Window].DataContext.ToggleLogViewerCommand"/>
-                    </controls:LogViewerPanel.CloseCommand>
-                </controls:LogViewerPanel>
-            </Border>
-        </Grid>
+        <!-- Log Viewer Slide-out Panel -->
+        <controls:LogViewerPanel Grid.Column="0" Grid.ColumnSpan="3"
+                                 DataContext="{Binding LogViewer}"/>
     </Grid>
 </Window>
 

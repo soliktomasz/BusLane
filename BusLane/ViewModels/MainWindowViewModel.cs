@@ -135,9 +135,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _deviceCodeUrl = "";
     [ObservableProperty] private string _deviceCodeMessage = "";
 
-    // Log viewer panel
-    [ObservableProperty] private bool _isLogViewerVisible;
-
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
 
@@ -884,7 +881,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private void CloseDeviceCodeDialog() => ShowDeviceCodeDialog = false;
 
     [RelayCommand]
-    private void ToggleLogViewer() => IsLogViewerVisible = !IsLogViewerVisible;
+    private void ToggleLogViewer() => LogViewer.Toggle();
 
     [RelayCommand]
     private async Task CopyDeviceCodeAsync()
