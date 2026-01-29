@@ -1,6 +1,7 @@
 using BusLane.Converters;
 using BusLane.Models.Logging;
 using FluentAssertions;
+using System.Globalization;
 
 namespace BusLane.Tests.Converters;
 
@@ -12,7 +13,7 @@ public class LogSourceToStringConverterTests
     public void Convert_Application_ReturnsApp()
     {
         // Act
-        var result = _sut.Convert(LogSource.Application, typeof(string), null, null);
+        var result = _sut.Convert(LogSource.Application, typeof(string), null!, CultureInfo.InvariantCulture);
 
         // Assert
         result.Should().Be("APP");
@@ -22,7 +23,7 @@ public class LogSourceToStringConverterTests
     public void Convert_ServiceBus_ReturnsSb()
     {
         // Act
-        var result = _sut.Convert(LogSource.ServiceBus, typeof(string), null, null);
+        var result = _sut.Convert(LogSource.ServiceBus, typeof(string), null!, CultureInfo.InvariantCulture);
 
         // Assert
         result.Should().Be("SB");
@@ -34,7 +35,7 @@ public class LogSourceToStringConverterTests
     public void Convert_UnknownValue_ReturnsDefault(object? value)
     {
         // Act
-        var result = _sut.Convert(value, typeof(string), null, null);
+        var result = _sut.Convert(value, typeof(string), null!, CultureInfo.InvariantCulture);
 
         // Assert
         result.Should().Be("APP");
@@ -44,7 +45,7 @@ public class LogSourceToStringConverterTests
     public void ConvertBack_ThrowsNotSupportedException()
     {
         // Act & Assert
-        var action = () => _sut.ConvertBack("APP", typeof(LogSource), null, null);
+        var action = () => _sut.ConvertBack("APP", typeof(LogSource), null!, CultureInfo.InvariantCulture);
         action.Should().Throw<NotSupportedException>();
     }
 

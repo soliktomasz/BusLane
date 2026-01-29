@@ -10,7 +10,6 @@ public sealed class LogSink : ILogSink
     private readonly int _maxEntries;
     private readonly object _lock = new();
     private readonly List<LogEntry> _entries;
-    private readonly List<LogEntry> _filteredEntries; // For thread-safe reads
     private int _index;
 
     public event Action<LogEntry>? OnLogAdded;
@@ -19,7 +18,6 @@ public sealed class LogSink : ILogSink
     {
         _maxEntries = maxEntries;
         _entries = new List<LogEntry>(maxEntries);
-        _filteredEntries = new List<LogEntry>();
     }
 
     public void Log(LogEntry entry)
@@ -36,10 +34,6 @@ public sealed class LogSink : ILogSink
                 _entries[_index] = entry;
                 _index = (_index + 1) % _maxEntries;
             }
-
-            // Update filtered list for thread-safe reads
-            _filteredEntries.Clear();
-            _filteredEntries.AddRange(_entries.Where(e => e.Timestamp != default).OrderByDescending(e => e.Timestamp));
         }
 
         // Fire event outside the lock to avoid blocking
@@ -50,7 +44,11 @@ public sealed class LogSink : ILogSink
     {
         lock (_lock)
         {
-            return _filteredEntries.ToList();
+            // Sort only when reading - more efficient than sorting on every write
+            return _entries
+                .Where(e => e.Timestamp != default)
+                .OrderByDescending(e => e.Timestamp)
+                .ToList();
         }
     }
 
@@ -59,7 +57,6 @@ public sealed class LogSink : ILogSink
         lock (_lock)
         {
             _entries.Clear();
-            _filteredEntries.Clear();
             _index = 0;
         }
     }

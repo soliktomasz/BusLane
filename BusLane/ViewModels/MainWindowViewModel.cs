@@ -1367,6 +1367,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;
 
+        // Dispose the log viewer to unsubscribe from events
+        LogViewer?.Dispose();
+
         // Dispose operations if they implement IAsyncDisposable
         if (_operations is IAsyncDisposable asyncDisposable)
         {

@@ -105,21 +105,19 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 
     private void OnLogAdded(LogEntry entry)
     {
-        // Update all logs list
-        _allLogs.Add(entry);
-
-        // Apply filters
-        if (MatchesFilters(entry))
+        // Marshal all operations to UI thread for thread safety
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            // Add to filtered collection on UI thread
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            _allLogs.Add(entry);
+
+            if (MatchesFilters(entry))
             {
                 _filteredLogs.Insert(0, entry);
                 OnPropertyChanged(nameof(ShowingLogCount));
-            });
-        }
+            }
 
-        OnPropertyChanged(nameof(TotalLogCount));
+            OnPropertyChanged(nameof(TotalLogCount));
+        });
     }
 
     private void RefreshLogs()
@@ -150,10 +148,9 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         // Apply search text filter
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            var searchLower = SearchText.ToLowerInvariant();
             query = query.Where(e =>
-                e.Message.ToLowerInvariant().Contains(searchLower) ||
-                (e.Details?.ToLowerInvariant().Contains(searchLower) ?? false));
+                e.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                (e.Details?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
         // Apply debug mode filter
@@ -188,9 +185,8 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         // Apply search text filter
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            var searchLower = SearchText.ToLowerInvariant();
-            if (!entry.Message.ToLowerInvariant().Contains(searchLower) &&
-                !(entry.Details?.ToLowerInvariant().Contains(searchLower) ?? false))
+            if (!entry.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase) &&
+                !(entry.Details?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false))
                 return false;
         }
 
@@ -265,9 +261,10 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail - clipboard operations can fail in various scenarios
+            // Log but don't interrupt user flow - clipboard failures are non-critical
+            System.Diagnostics.Debug.WriteLine($"Clipboard operation failed: {ex.Message}");
         }
     }
 
@@ -277,9 +274,10 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         {
             await task;
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore exceptions in fire-and-forget operations
+            // Log but don't interrupt user flow - fire-and-forget failures are non-critical
+            System.Diagnostics.Debug.WriteLine($"Fire-and-forget operation failed: {ex.Message}");
         }
     }
 

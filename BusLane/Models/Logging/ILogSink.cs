@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-
 namespace BusLane.Models.Logging;
 
 /// <summary>

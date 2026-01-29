@@ -260,7 +260,11 @@
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="models:LogEntry">
-                                <Border Classes.log-entry="{Binding Level}">
+                                <Border Classes="log-entry"
+                                        Classes.info="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Info}"
+                                        Classes.warning="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Warning}"
+                                        Classes.error="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Error}"
+                                        Classes.debug="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Debug}">
                                     <Border.ContextMenu>
                                         <ContextMenu>
                                             <MenuItem Header="Copy Entry"
@@ -297,7 +301,11 @@
                                                            Foreground="{DynamicResource SubtleForeground}"/>
                                             </Border>
                                             <TextBlock Text="{Binding Level}"
-                                                       Classes.log-level="{Binding Level}"/>
+                                                       Classes="log-level"
+                                                       Classes.Info="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Info}"
+                                                       Classes.Warning="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Warning}"
+                                                       Classes.Error="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Error}"
+                                                       Classes.Debug="{Binding Level, Converter={x:Static converters:LogLevelToBoolConverter.Instance}, ConverterParameter=Debug}"/>
                                         </StackPanel>
 
                                         <!-- Copy button -->
