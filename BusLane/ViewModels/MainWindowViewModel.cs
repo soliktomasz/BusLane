@@ -191,6 +191,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             auth,
             connectionStorage,
             operationsFactory,
+            _logSink,
             msg => StatusMessage = msg,
             OnConnectedAsync,
             OnDisconnectedAsync);
@@ -981,6 +982,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Connection.ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
             _connectionStorage,
             _operationsFactory,
+            _logSink,
             async conn =>
             {
                 Connection.ShowConnectionLibrary = false;

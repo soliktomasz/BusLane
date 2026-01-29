@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Auth;
 using BusLane.Services.ServiceBus;
@@ -17,6 +18,7 @@ public partial class ConnectionViewModel : ViewModelBase
     private readonly IAzureAuthService _auth;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IServiceBusOperationsFactory _operationsFactory;
+    private readonly ILogSink _logSink;
     private readonly Action<string> _setStatus;
     private readonly Func<Task> _onConnected;
     private readonly Func<Task> _onDisconnected;
@@ -65,6 +67,7 @@ public partial class ConnectionViewModel : ViewModelBase
         IAzureAuthService auth,
         IConnectionStorageService connectionStorage,
         IServiceBusOperationsFactory operationsFactory,
+        ILogSink logSink,
         Action<string> setStatus,
         Func<Task> onConnected,
         Func<Task> onDisconnected)
@@ -72,6 +75,7 @@ public partial class ConnectionViewModel : ViewModelBase
         _auth = auth;
         _connectionStorage = connectionStorage;
         _operationsFactory = operationsFactory;
+        _logSink = logSink;
         _setStatus = setStatus;
         _onConnected = onConnected;
         _onDisconnected = onDisconnected;
@@ -83,6 +87,12 @@ public partial class ConnectionViewModel : ViewModelBase
     public async Task InitializeAsync()
     {
         _setStatus("Loading...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            "Initializing connection manager..."));
+
         await LoadSavedConnectionsAsync();
 
         // Try to restore previous Azure session from cached credentials
@@ -92,9 +102,20 @@ public partial class ConnectionViewModel : ViewModelBase
             CurrentMode = ConnectionMode.AzureAccount;
             IsNamespacePanelOpen = true;
             _setStatus("Restored Azure session");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                "Restored Azure session from cache"));
             await _onConnected();
             return;
         }
+
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Debug,
+            "No cached Azure session found"));
 
         _setStatus(SavedConnections.Count > 0
             ? "Select a saved connection or sign in with Azure"
@@ -113,12 +134,22 @@ public partial class ConnectionViewModel : ViewModelBase
                 FavoriteConnections.Add(conn);
         }
         OnPropertyChanged(nameof(HasFavoriteConnections));
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Loaded {SavedConnections.Count} saved connection(s)"));
     }
 
     [RelayCommand]
     public async Task LoginAsync()
     {
         _setStatus("Signing in to Azure...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            "Initiating Azure login..."));
 
         try
         {
@@ -128,34 +159,67 @@ public partial class ConnectionViewModel : ViewModelBase
                 ActiveConnection = null;
                 IsNamespacePanelOpen = true;
                 _setStatus("Ready");
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Info,
+                    "Azure login successful"));
                 await _onConnected();
             }
             else
             {
                 _setStatus("Sign in failed");
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Warning,
+                    "Azure login cancelled by user"));
             }
         }
         catch (Exception ex)
         {
+            var errorMsg = "Azure login failed";
             _setStatus($"Error: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
         }
     }
 
     [RelayCommand]
     public async Task LogoutAsync()
     {
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            "Logging out from Azure..."));
+
         await _auth.LogoutAsync();
         CurrentMode = ConnectionMode.None;
         ActiveConnection = null;
         IsNamespacePanelOpen = false;
         await _onDisconnected();
         _setStatus("Disconnected");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            "Logged out from Azure"));
     }
 
     [RelayCommand]
     public async Task ConnectToSavedConnectionAsync(SavedConnection connection)
     {
         _setStatus($"Connecting to {connection.Name}...");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Connecting to {connection.Name} ({connection.Endpoint ?? "unknown"})..."));
 
         try
         {
@@ -163,10 +227,22 @@ public partial class ConnectionViewModel : ViewModelBase
             ActiveConnection = connection;
             await _onConnected();
             _setStatus($"Connected to {connection.Name}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Connected to {connection.Name}"));
         }
         catch (Exception ex)
         {
+            var errorMsg = $"Failed to connect to {connection.Name}";
             _setStatus($"Error: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                errorMsg,
+                ex.Message));
             CurrentMode = ConnectionMode.None;
             ActiveConnection = null;
         }
@@ -175,11 +251,23 @@ public partial class ConnectionViewModel : ViewModelBase
     [RelayCommand]
     public async Task DisconnectConnectionAsync()
     {
+        var endpoint = ActiveConnection?.Endpoint ?? "Azure";
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Disconnecting from {endpoint}..."));
+
         CurrentMode = ConnectionMode.None;
         ActiveConnection = null;
         await _onDisconnected();
         await LoadSavedConnectionsAsync();
         _setStatus("Disconnected");
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Disconnected from {endpoint}"));
     }
 
     [RelayCommand]
@@ -188,6 +276,7 @@ public partial class ConnectionViewModel : ViewModelBase
         ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
             _connectionStorage,
             _operationsFactory,
+            _logSink,
             async conn =>
             {
                 ShowConnectionLibrary = false;
