@@ -29,10 +29,10 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     private bool _isDebugModeEnabled;
 
     [ObservableProperty]
-    private LogLevel? _selectedLevelFilter;
+    private LogLevel? _selectedLevelFilter = LogLevel.Info;
 
     [ObservableProperty]
-    private LogSource? _selectedSourceFilter;
+    private LogSource? _selectedSourceFilter = LogSource.Application;
 
     [ObservableProperty]
     private string _searchText = string.Empty;

@@ -58,11 +58,11 @@
         </Style>
 
         <Style Selector="TextBlock.log-level.Warning">
-            <Setter Property="Foreground" Value="{DynamicResource Warning}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextWarning}"/>
         </Style>
 
         <Style Selector="TextBlock.log-level.Error">
-            <Setter Property="Foreground" Value="{DynamicResource Danger}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
         </Style>
 
         <Style Selector="TextBlock.log-level.Debug">
