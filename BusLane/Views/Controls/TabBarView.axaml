@@ -136,14 +136,6 @@
 
             <!-- Action Buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <!-- Log Viewer Toggle Button -->
-                <ToggleButton Classes="subtle icon-button"
-                              IsChecked="{Binding IsLogViewerVisible}"
-                              Padding="6"
-                              ToolTip.Tip="Toggle activity log">
-                    <LucideIcon Kind="ScrollText" Size="14"/>
-                </ToggleButton>
-
                 <!-- New Tab Button -->
                 <Button Classes="subtle icon-button"
                         Command="{Binding OpenConnectionLibraryCommand}"
