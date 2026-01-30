@@ -369,6 +369,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         {
             await Connection.InitializeAsync();
             await Tabs.RestoreTabSessionAsync();
+
+            // Check for updates on startup (non-blocking)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await _updateService.CheckForUpdatesAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Startup update check failed");
+                }
+            });
         }
         finally
         {
