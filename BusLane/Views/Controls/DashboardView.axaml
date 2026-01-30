@@ -48,7 +48,8 @@
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
                                             <Button Grid.Column="1" Classes="subtle tiny"
-                                                    Command="{Binding RemoveCommand}"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.RemoveWidgetCommand}"
+                                                    CommandParameter="{Binding}"
                                                     Padding="4">
                                                 <LucideIcon Kind="X" Size="14"/>
                                             </Button>
