@@ -3,15 +3,20 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
+using CommunityToolkit.Mvvm.Input;
 
 namespace BusLane.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>> _shortcutHandlers;
+
     public MainWindow()
     {
         InitializeComponent();
-        
+
+        _shortcutHandlers = BuildShortcutHandlers();
+
         // Try to restore previous session when window loads
         Loaded += async (_, _) =>
         {
@@ -20,9 +25,138 @@ public partial class MainWindow : Window
                 await vm.InitializeAsync();
             }
         };
-        
+
         // Handle keyboard shortcuts
         KeyDown += OnKeyDown;
+    }
+
+    private Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>> BuildShortcutHandlers()
+    {
+        return new Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>>
+        {
+            // Navigation
+            [KeyboardShortcutAction.Refresh] = vm =>
+                Execute(vm.RefreshCommand),
+
+            [KeyboardShortcutAction.ToggleNavigationPanel] = vm =>
+                Execute(vm.ToggleNavigationPanelCommand),
+
+            [KeyboardShortcutAction.FocusSearch] = vm =>
+            {
+                if (IsTextInputFocused())
+                    return false;
+                var searchBox = FindDescendantByName<TextBox>("MessageSearchTextBox");
+                if (searchBox == null)
+                    return false;
+                searchBox.Focus();
+                searchBox.SelectAll();
+                return true;
+            },
+
+            // Messages
+            [KeyboardShortcutAction.NewMessage] = vm =>
+                vm.Navigation.CurrentEntityName != null && Execute(vm.OpenSendMessagePopupCommand),
+
+            [KeyboardShortcutAction.CopyMessageBody] = vm =>
+                !IsTextInputFocused() && vm.MessageOps.SelectedMessage != null && Execute(vm.CopyMessageBodyCommand),
+
+            [KeyboardShortcutAction.DeleteSelected] = vm =>
+                vm.MessageOps.HasSelectedMessages && Execute(vm.BulkDeleteMessagesAsyncCommand),
+
+            [KeyboardShortcutAction.SelectAll] = vm =>
+            {
+                if (IsTextInputFocused() || vm.MessageOps.FilteredMessages.Count == 0)
+                    return false;
+                if (!vm.MessageOps.IsMultiSelectMode)
+                    vm.ToggleMultiSelectModeCommand.Execute(null);
+                vm.SelectAllMessagesCommand.Execute(null);
+                return true;
+            },
+
+            [KeyboardShortcutAction.DeselectAll] = vm =>
+                vm.MessageOps.IsMultiSelectMode && Execute(vm.DeselectAllMessagesCommand),
+
+            [KeyboardShortcutAction.ToggleMultiSelect] = vm =>
+                Execute(vm.ToggleMultiSelectModeCommand),
+
+            [KeyboardShortcutAction.ToggleDeadLetter] = vm =>
+                vm.Navigation.CurrentEntityName != null && Execute(vm.ToggleDeadLetterViewCommand),
+
+            // Feature panels
+            [KeyboardShortcutAction.OpenLiveStream] = vm =>
+                Execute(vm.OpenLiveStreamCommand),
+
+            [KeyboardShortcutAction.OpenCharts] = vm =>
+                Execute(vm.OpenChartsCommand),
+
+            [KeyboardShortcutAction.OpenAlerts] = vm =>
+                Execute(vm.OpenAlertsCommand),
+
+            [KeyboardShortcutAction.OpenSettings] = vm =>
+                Execute(vm.OpenSettingsCommand),
+
+            // Connections
+            [KeyboardShortcutAction.OpenConnectionLibrary] = vm =>
+                Execute(vm.OpenConnectionLibraryCommand),
+
+            [KeyboardShortcutAction.Disconnect] = vm =>
+            {
+                if (vm.Connection.CurrentMode == ConnectionMode.None)
+                    return false;
+                if (vm.Connection.CurrentMode == ConnectionMode.AzureAccount)
+                    vm.LogoutCommand.Execute(null);
+                else
+                    vm.DisconnectConnectionCommand.Execute(null);
+                return true;
+            },
+
+            // Tabs
+            [KeyboardShortcutAction.CloseTab] = vm =>
+                vm.ActiveTab != null && Execute(vm.CloseActiveTabCommand),
+
+            [KeyboardShortcutAction.NextTab] = vm =>
+                vm.ConnectionTabs.Count > 1 && Execute(vm.NextTabCommand),
+
+            [KeyboardShortcutAction.PreviousTab] = vm =>
+                vm.ConnectionTabs.Count > 1 && Execute(vm.PreviousTabCommand),
+
+            [KeyboardShortcutAction.SwitchToTab1] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 1),
+
+            [KeyboardShortcutAction.SwitchToTab2] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 2),
+
+            [KeyboardShortcutAction.SwitchToTab3] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 3),
+
+            [KeyboardShortcutAction.SwitchToTab4] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 4),
+
+            [KeyboardShortcutAction.SwitchToTab5] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 5),
+
+            [KeyboardShortcutAction.SwitchToTab6] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 6),
+
+            [KeyboardShortcutAction.SwitchToTab7] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 7),
+
+            [KeyboardShortcutAction.SwitchToTab8] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 8),
+
+            [KeyboardShortcutAction.SwitchToTab9] = vm =>
+                Execute(vm.SwitchToTabByIndexCommand, 9),
+
+            // Help
+            [KeyboardShortcutAction.ShowHelp] = vm =>
+                Execute(vm.ShowKeyboardShortcutsHelpCommand),
+        };
+    }
+
+    private static bool Execute(IRelayCommand command, object? parameter = null)
+    {
+        command.Execute(parameter);
+        return true;
     }
 
     /// <summary>
@@ -51,251 +185,61 @@ public partial class MainWindow : Window
             return;
 
         var shortcuts = vm.KeyboardShortcuts;
-        
-        // Handle Escape key specially - close any open dialogs
+
+        // Handle Escape key specially - close dialogs in priority order
         if (shortcuts.Matches(e, KeyboardShortcutAction.CloseDialog))
         {
-            if (vm.ShowKeyboardShortcuts)
-            {
-                vm.CloseKeyboardShortcutsCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-            if (vm.ShowSettings)
-            {
-                vm.CloseSettingsCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-            if (vm.ShowSendMessagePopup)
-            {
-                vm.CancelSendMessageCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-            if (vm.Confirmation.ShowConfirmDialog)
-            {
-                vm.Confirmation.CancelConfirmDialogCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-            if (vm.ShowStatusPopup)
-            {
-                vm.CloseStatusPopupCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-            if (vm.MessageOps.SelectedMessage != null)
-            {
-                vm.ClearSelectedMessageCommand.Execute(null);
-                e.Handled = true;
-            }
+            e.Handled = HandleEscape(vm);
+            return;
         }
-        
+
         // Don't process other shortcuts if a dialog is open
         if (vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.Confirmation.ShowConfirmDialog)
             return;
-        
-        // Navigation shortcuts
-        if (shortcuts.Matches(e, KeyboardShortcutAction.Refresh))
+
+        // Dispatch via action map
+        foreach (var (action, handler) in _shortcutHandlers)
         {
-            vm.RefreshCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.ToggleNavigationPanel))
-        {
-            vm.ToggleNavigationPanelCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.FocusSearch))
-        {
-            // Don't intercept Cmd+F when a text input is already focused
-            if (!IsTextInputFocused())
+            if (shortcuts.Matches(e, action))
             {
-                // Find the MessageSearchTextBox in the visual tree and focus it
-                var searchBox = FindDescendantByName<TextBox>("MessageSearchTextBox");
-                if (searchBox != null)
-                {
-                    searchBox.Focus();
-                    searchBox.SelectAll();
-                    e.Handled = true;
-                }
+                e.Handled = handler(vm);
+                return;
             }
         }
-        // Message shortcuts
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.NewMessage))
+    }
+
+    private static bool HandleEscape(MainWindowViewModel vm)
+    {
+        if (vm.ShowKeyboardShortcuts)
         {
-            if (vm.Navigation.CurrentEntityName != null)
-            {
-                vm.OpenSendMessagePopupCommand.Execute(null);
-                e.Handled = true;
-            }
+            vm.CloseKeyboardShortcutsCommand.Execute(null);
+            return true;
         }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.CopyMessageBody))
+        if (vm.ShowSettings)
         {
-            // Don't intercept Cmd+C when a text input is focused - allow normal copy behavior
-            if (!IsTextInputFocused() && vm.MessageOps.SelectedMessage != null)
-            {
-                vm.CopyMessageBodyCommand.Execute(null);
-                e.Handled = true;
-            }
+            vm.CloseSettingsCommand.Execute(null);
+            return true;
         }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.DeleteSelected))
+        if (vm.ShowSendMessagePopup)
         {
-            if (vm.MessageOps.HasSelectedMessages)
-            {
-                vm.BulkDeleteMessagesAsyncCommand.Execute(null);
-                e.Handled = true;
-            }
+            vm.CancelSendMessageCommand.Execute(null);
+            return true;
         }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SelectAll))
+        if (vm.Confirmation.ShowConfirmDialog)
         {
-            // Don't intercept Cmd+A when a text input is focused - allow normal select all behavior
-            // When not in a text input, enable multi-select mode and select all messages
-            if (!IsTextInputFocused() && vm.MessageOps.FilteredMessages.Count > 0)
-            {
-                if (!vm.MessageOps.IsMultiSelectMode)
-                {
-                    vm.ToggleMultiSelectModeCommand.Execute(null);
-                }
-                vm.SelectAllMessagesCommand.Execute(null);
-                e.Handled = true;
-            }
+            vm.Confirmation.CancelConfirmDialogCommand.Execute(null);
+            return true;
         }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.DeselectAll))
+        if (vm.ShowStatusPopup)
         {
-            if (vm.MessageOps.IsMultiSelectMode)
-            {
-                vm.DeselectAllMessagesCommand.Execute(null);
-                e.Handled = true;
-            }
+            vm.CloseStatusPopupCommand.Execute(null);
+            return true;
         }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.ToggleMultiSelect))
+        if (vm.MessageOps.SelectedMessage != null)
         {
-            vm.ToggleMultiSelectModeCommand.Execute(null);
-            e.Handled = true;
+            vm.ClearSelectedMessageCommand.Execute(null);
+            return true;
         }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.ToggleDeadLetter))
-        {
-            if (vm.Navigation.CurrentEntityName != null)
-            {
-                vm.ToggleDeadLetterViewCommand.Execute(null);
-                e.Handled = true;
-            }
-        }
-        // Feature panel shortcuts
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.OpenLiveStream))
-        {
-            vm.OpenLiveStreamCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.OpenCharts))
-        {
-            vm.OpenChartsCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.OpenAlerts))
-        {
-            vm.OpenAlertsCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.OpenSettings))
-        {
-            vm.OpenSettingsCommand.Execute(null);
-            e.Handled = true;
-        }
-        // Connection shortcuts
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.OpenConnectionLibrary))
-        {
-            vm.OpenConnectionLibraryCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.Disconnect))
-        {
-            if (vm.Connection.CurrentMode != ConnectionMode.None)
-            {
-                if (vm.Connection.CurrentMode == ConnectionMode.AzureAccount)
-                    vm.LogoutCommand.Execute(null);
-                else
-                    vm.DisconnectConnectionCommand.Execute(null);
-                e.Handled = true;
-            }
-        }
-        // Tab shortcuts
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.CloseTab))
-        {
-            if (vm.ActiveTab != null)
-            {
-                vm.CloseActiveTabCommand.Execute(null);
-                e.Handled = true;
-            }
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.NextTab))
-        {
-            if (vm.ConnectionTabs.Count > 1)
-            {
-                vm.NextTabCommand.Execute(null);
-                e.Handled = true;
-            }
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.PreviousTab))
-        {
-            if (vm.ConnectionTabs.Count > 1)
-            {
-                vm.PreviousTabCommand.Execute(null);
-                e.Handled = true;
-            }
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab1))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(1);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab2))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(2);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab3))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(3);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab4))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(4);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab5))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(5);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab6))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(6);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab7))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(7);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab8))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(8);
-            e.Handled = true;
-        }
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.SwitchToTab9))
-        {
-            vm.SwitchToTabByIndexCommand.Execute(9);
-            e.Handled = true;
-        }
-        // Help
-        else if (shortcuts.Matches(e, KeyboardShortcutAction.ShowHelp))
-        {
-            vm.ShowKeyboardShortcutsHelpCommand.Execute(null);
-            e.Handled = true;
-        }
+        return false;
     }
 }

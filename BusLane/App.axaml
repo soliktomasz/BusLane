@@ -104,8 +104,13 @@
                     <SolidColorBrush x:Key="CodeBackground" Color="#1E1E1E"/>
                     <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4"/>
                     <SolidColorBrush x:Key="CodeBorder" Color="#3C3C3C"/>
+
+                    <!-- Focus ring shadows -->
+                    <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #0F6CBD</BoxShadows>
+                    <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #C50F1F</BoxShadows>
+                    <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
                 </ResourceDictionary>
-                
+
                 <!-- Dark Theme - Microsoft Fluent 2 Design -->
                 <ResourceDictionary x:Key="Dark">
                     <!-- Background layers - Fluent 2 elevation system -->
@@ -177,6 +182,11 @@
                     <SolidColorBrush x:Key="CodeBackground" Color="#1E1E1E"/>
                     <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4"/>
                     <SolidColorBrush x:Key="CodeBorder" Color="#3C3C3C"/>
+
+                    <!-- Focus ring shadows -->
+                    <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #60CDFF</BoxShadows>
+                    <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #FF99A4</BoxShadows>
+                    <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
