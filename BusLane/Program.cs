@@ -137,6 +137,7 @@ class Program
         // Dashboard services
         services.AddSingleton<IDashboardPersistenceService, DashboardPersistenceService>();
         services.AddSingleton<DashboardLayoutEngine>();
+        services.AddSingleton<ViewModels.Dashboard.DashboardViewModel>();
 
         // Main ViewModel with unified services
         services.AddSingleton<MainWindowViewModel>(sp => new MainWindowViewModel(
@@ -152,7 +153,8 @@ class Program
             sp.GetRequiredService<INotificationService>(),
             sp.GetRequiredService<IKeyboardShortcutService>(),
             sp.GetRequiredService<IUpdateService>(),
-            sp.GetRequiredService<ILogSink>()
+            sp.GetRequiredService<ILogSink>(),
+            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>()
         ));
 
         // Other ViewModels

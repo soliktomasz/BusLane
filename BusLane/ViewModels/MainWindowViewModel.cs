@@ -172,6 +172,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         IKeyboardShortcutService keyboardShortcutService,
         IUpdateService updateService,
         ILogSink logSink,
+        ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -216,6 +217,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         FeaturePanels = new FeaturePanelsViewModel(
             liveStreamService, metricsService, alertService, notificationService,
+            dashboardViewModel,
             () => Navigation.CurrentEndpoint ?? Connection.CurrentEndpoint,
             () => Navigation.Queues,
             () => Navigation.Topics,
