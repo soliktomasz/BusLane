@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels.Dashboard"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Dialogs.AddWidgetDialog"
+             x:DataType="vm:DashboardViewModel">
+
+    <Border Background="{DynamicResource BackgroundPrimary}"
+            BorderBrush="{DynamicResource BorderDefault}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="24"
+            MaxWidth="500">
+        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+            <TextBlock Grid.Row="0" Text="Add Widget" Classes="heading"/>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                <Button Grid.Row="0" Grid.Column="0"
+                        Command="{Binding AddWidgetCommand}"
+                        CommandParameter="{x:Static models:WidgetType.LineChart}"
+                        Classes="card"
+                        Margin="0,0,8,8"
+                        Padding="16">
+                    <StackPanel Spacing="8">
+                        <LucideIcon Kind="Cable" Size="32"/>
+                        <TextBlock Text="Line Chart" FontWeight="SemiBold"/>
+                        <TextBlock Text="Time-series data over time" FontSize="12" Opacity="0.7"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Row="0" Grid.Column="1"
+                        Command="{Binding AddWidgetCommand}"
+                        CommandParameter="{x:Static models:WidgetType.PieChart}"
+                        Classes="card"
+                        Margin="8,0,0,8"
+                        Padding="16">
+                    <StackPanel Spacing="8">
+                        <LucideIcon Kind="ScrollText" Size="32"/>
+                        <TextBlock Text="Pie Chart" FontWeight="SemiBold"/>
+                        <TextBlock Text="Distribution across entities" FontSize="12" Opacity="0.7"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Row="1" Grid.Column="0"
+                        Command="{Binding AddWidgetCommand}"
+                        CommandParameter="{x:Static models:WidgetType.BarChart}"
+                        Classes="card"
+                        Margin="0,8,8,0"
+                        Padding="16">
+                    <StackPanel Spacing="8">
+                        <LucideIcon Kind="ListOrdered" Size="32"/>
+                        <TextBlock Text="Bar Chart" FontWeight="SemiBold"/>
+                        <TextBlock Text="Compare entities side-by-side" FontSize="12" Opacity="0.7"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Row="1" Grid.Column="1"
+                        Command="{Binding AddWidgetCommand}"
+                        CommandParameter="{x:Static models:WidgetType.MetricCard}"
+                        Classes="card"
+                        Margin="8,8,0,0"
+                        Padding="16">
+                    <StackPanel Spacing="8">
+                        <LucideIcon Kind="Search" Size="32"/>
+                        <TextBlock Text="Metric Card" FontWeight="SemiBold"/>
+                        <TextBlock Text="Single metric with trend" FontSize="12" Opacity="0.7"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <Button Grid.Row="2"
+                    Command="{Binding CloseAddWidgetDialogCommand}"
+                    Classes="subtle"
+                    HorizontalAlignment="Right"
+                    Content="Cancel"/>
+        </Grid>
+    </Border>
+</UserControl>
