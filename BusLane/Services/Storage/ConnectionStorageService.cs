@@ -16,6 +16,7 @@ public class ConnectionStorageService : IConnectionStorageService
 
     private readonly IEncryptionService _encryptionService;
     private List<SavedConnection> _connections = [];
+    private bool _loaded;
 
     public ConnectionStorageService(IEncryptionService encryptionService)
     {
@@ -56,14 +57,19 @@ public class ConnectionStorageService : IConnectionStorageService
     public async Task ClearAllConnectionsAsync()
     {
         _connections.Clear();
+        _loaded = true;
         await PersistConnectionsAsync();
     }
 
     private async Task LoadConnectionsAsync()
     {
+        if (_loaded)
+            return;
+
         if (!File.Exists(AppPaths.Connections))
         {
             _connections = [];
+            _loaded = true;
             return;
         }
 
@@ -78,13 +84,13 @@ public class ConnectionStorageService : IConnectionStorageService
                     // Decrypt the connection string
                     // The decryption handles both encrypted and legacy unencrypted strings
                     var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString);
-                    
-                    // If decryption returns null, the encrypted data is corrupted or 
+
+                    // If decryption returns null, the encrypted data is corrupted or
                     // was encrypted with a different key (e.g., from a different machine)
                     if (connectionString == null)
                     {
                         Log.Warning("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId}). " +
-                                    "The connection may have been encrypted with a different key", 
+                                    "The connection may have been encrypted with a different key",
                             stored.Name, stored.Id);
                         return null;
                     }
@@ -121,6 +127,8 @@ public class ConnectionStorageService : IConnectionStorageService
                 _connections = [];
             }
         }
+
+        _loaded = true;
     }
 
     private async Task PersistConnectionsAsync()

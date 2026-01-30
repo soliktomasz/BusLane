@@ -33,7 +33,7 @@ public enum ConnectionMode
 /// Main window view model - slim coordinator that composes specialized components.
 /// Responsibilities: coordination, UI state, and glue between components.
 /// </summary>
-public partial class MainWindowViewModel : ViewModelBase, IDisposable
+public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDisposable
 {
     private bool _disposed;
 
@@ -1351,10 +1351,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// <summary>
     /// Called when the application is closing to save session state.
     /// </summary>
-    public void OnApplicationClosing()
+    public async Task OnApplicationClosingAsync()
     {
         SaveTabSession();
-        Dispose();
+        await DisposeAsync();
     }
 
     #endregion
@@ -1379,7 +1379,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     #endregion
 
-    #region IDisposable
+    #region IDisposable / IAsyncDisposable
 
     public void Dispose()
     {
@@ -1393,10 +1393,32 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
 
-        // Dispose operations if they implement IAsyncDisposable
+        // Dispose operations if they implement IDisposable (sync path only)
+        if (_operations is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _autoRefreshTimer?.Stop();
+        _autoRefreshTimer?.Dispose();
+        _autoRefreshTimer = null;
+
+        LogViewer?.Dispose();
+
+        // Properly await async disposal of operations
         if (_operations is IAsyncDisposable asyncDisposable)
         {
-            asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            await asyncDisposable.DisposeAsync();
+        }
+        else if (_operations is IDisposable disposable)
+        {
+            disposable.Dispose();
         }
     }
 
