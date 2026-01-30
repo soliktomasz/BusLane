@@ -240,6 +240,9 @@ public partial class ConnectionTabViewModel : ViewModelBase
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string OpenTabsJson { get; set; } = "[]";
+        public bool AutoCheckForUpdates { get; set; } = true;
+        public string? SkippedUpdateVersion { get; set; }
+        public DateTime? UpdateRemindLaterDate { get; set; }
         public event EventHandler? PreferencesChanged;
         public void Save() { }
         public void Load() { }

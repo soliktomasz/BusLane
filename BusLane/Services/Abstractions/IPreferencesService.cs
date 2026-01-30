@@ -20,6 +20,11 @@ public interface IPreferencesService
     bool RestoreTabsOnStartup { get; set; }
     string OpenTabsJson { get; set; }
 
+    // Update preferences
+    bool AutoCheckForUpdates { get; set; }
+    string? SkippedUpdateVersion { get; set; }
+    DateTime? UpdateRemindLaterDate { get; set; }
+
     void Save();
     void Load();
     event EventHandler? PreferencesChanged;

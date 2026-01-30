@@ -24,6 +24,11 @@ public class PreferencesService : IPreferencesService
     public bool RestoreTabsOnStartup { get; set; } = true;
     public string OpenTabsJson { get; set; } = "[]";
 
+    // Update preferences
+    public bool AutoCheckForUpdates { get; set; } = true;
+    public string? SkippedUpdateVersion { get; set; }
+    public DateTime? UpdateRemindLaterDate { get; set; }
+
     public event EventHandler? PreferencesChanged;
 
     public PreferencesService()
@@ -53,6 +58,9 @@ public class PreferencesService : IPreferencesService
                     LiveStreamPollingIntervalSeconds = data.LiveStreamPollingIntervalSeconds;
                     RestoreTabsOnStartup = data.RestoreTabsOnStartup;
                     OpenTabsJson = data.OpenTabsJson ?? "[]";
+                    AutoCheckForUpdates = data.AutoCheckForUpdates;
+                    SkippedUpdateVersion = data.SkippedUpdateVersion;
+                    UpdateRemindLaterDate = data.UpdateRemindLaterDate;
                 }
             }
         }
@@ -81,7 +89,10 @@ public class PreferencesService : IPreferencesService
                 Theme = Theme,
                 LiveStreamPollingIntervalSeconds = LiveStreamPollingIntervalSeconds,
                 RestoreTabsOnStartup = RestoreTabsOnStartup,
-                OpenTabsJson = OpenTabsJson
+                OpenTabsJson = OpenTabsJson,
+                AutoCheckForUpdates = AutoCheckForUpdates,
+                SkippedUpdateVersion = SkippedUpdateVersion,
+                UpdateRemindLaterDate = UpdateRemindLaterDate
             };
 
             var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
@@ -112,5 +123,8 @@ public class PreferencesService : IPreferencesService
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string? OpenTabsJson { get; set; }
+        public bool AutoCheckForUpdates { get; set; } = true;
+        public string? SkippedUpdateVersion { get; set; }
+        public DateTime? UpdateRemindLaterDate { get; set; }
     }
 }
