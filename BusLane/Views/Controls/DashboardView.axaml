@@ -3,117 +3,133 @@
              xmlns:vm="using:BusLane.ViewModels.Dashboard"
              xmlns:local="using:BusLane.Views.Controls"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:dialogs="using:BusLane.Views.Dialogs"
              x:Class="BusLane.Views.Controls.DashboardView"
              x:DataType="vm:DashboardViewModel">
 
-    <Border Classes="card" Padding="0">
-        <Grid RowDefinitions="Auto,*">
-            <!-- Header -->
-            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0" Text="Dashboard" Classes="heading" VerticalAlignment="Center"/>
+    <Grid>
+        <Border Classes="card" Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header -->
+                <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Dashboard" Classes="heading" VerticalAlignment="Center"/>
 
-                    <Button Grid.Column="1" Classes="primary small"
-                            Command="{Binding OpenAddWidgetDialogCommand}"
-                            IsEnabled="{Binding CanAddWidget}"
-                            Padding="12,8">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <LucideIcon Kind="Plus" Size="14"/>
-                            <TextBlock Text="Add Widget"/>
-                        </StackPanel>
-                    </Button>
-                </Grid>
-            </Border>
+                        <Button Grid.Column="1" Classes="primary small"
+                                Command="{Binding OpenAddWidgetDialogCommand}"
+                                IsEnabled="{Binding CanAddWidget}"
+                                Padding="12,8">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="Plus" Size="14"/>
+                                <TextBlock Text="Add Widget"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
 
-            <!-- Dashboard Content -->
-            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Widgets}" Margin="16">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="vm:DashboardWidgetViewModel">
-                            <Border Classes="card"
-                                    Padding="0"
-                                    Width="{Binding Width, Converter={StaticResource GridColumnToWidthConverter}}"
-                                    Height="{Binding Height, Converter={StaticResource GridRowToHeightConverter}}"
-                                    Margin="0,0,8,8">
-                                <Grid RowDefinitions="Auto,*">
-                                    <!-- Widget Header -->
-                                    <Border Grid.Row="0" Padding="12,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
-                                            <Button Grid.Column="1" Classes="subtle tiny"
-                                                    Command="{Binding $parent[ItemsControl].DataContext.RemoveWidgetCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Padding="4">
-                                                <LucideIcon Kind="X" Size="14"/>
-                                            </Button>
-                                        </Grid>
-                                    </Border>
+                <!-- Dashboard Content -->
+                <ScrollViewer x:Name="WidgetScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Widgets}" Margin="16">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:DashboardWidgetViewModel">
+                                <Border Classes="card"
+                                        Padding="0"
+                                        Width="{Binding Width, Converter={StaticResource GridColumnToWidthConverter}}"
+                                        Height="{Binding Height, Converter={StaticResource GridRowToHeightConverter}}"
+                                        Margin="0,0,8,8">
+                                    <Grid RowDefinitions="Auto,*">
+                                        <!-- Widget Header -->
+                                        <Border Grid.Row="0" Padding="12,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
+                                                <Button Grid.Column="1" Classes="subtle tiny"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveWidgetCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Padding="4">
+                                                    <LucideIcon Kind="X" Size="14"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
 
-                                    <!-- Widget Content -->
-                                    <ContentControl Grid.Row="1" Content="{Binding}">
-                                        <ContentControl.ContentTemplate>
-                                            <local:DashboardWidgetTemplateSelector>
-                                                <local:DashboardWidgetTemplateSelector.LineChartTemplate>
-                                                    <DataTemplate DataType="vm:LineChartWidgetViewModel">
-                                                        <lvc:CartesianChart Series="{Binding Series}"
-                                                                            XAxes="{Binding XAxes}"
-                                                                            YAxes="{Binding YAxes}"
-                                                                            ZoomMode="None"
-                                                                            TooltipPosition="Top"
-                                                                            Margin="8" />
-                                                    </DataTemplate>
-                                                </local:DashboardWidgetTemplateSelector.LineChartTemplate>
-                                                <local:DashboardWidgetTemplateSelector.PieChartTemplate>
-                                                    <DataTemplate DataType="vm:PieChartWidgetViewModel">
-                                                        <lvc:PieChart Series="{Binding Series}"
-                                                                      LegendPosition="Right"
-                                                                      TooltipPosition="Center"
-                                                                      Margin="8" />
-                                                    </DataTemplate>
-                                                </local:DashboardWidgetTemplateSelector.PieChartTemplate>
-                                                <local:DashboardWidgetTemplateSelector.BarChartTemplate>
-                                                    <DataTemplate DataType="vm:BarChartWidgetViewModel">
-                                                        <lvc:CartesianChart Series="{Binding Series}"
-                                                                            XAxes="{Binding XAxes}"
-                                                                            YAxes="{Binding YAxes}"
-                                                                            TooltipPosition="Top"
-                                                                            Margin="8" />
-                                                    </DataTemplate>
-                                                </local:DashboardWidgetTemplateSelector.BarChartTemplate>
-                                                <local:DashboardWidgetTemplateSelector.MetricCardTemplate>
-                                                    <DataTemplate DataType="vm:MetricCardWidgetViewModel">
-                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                                                            <TextBlock Text="{Binding CurrentValue, StringFormat='{}{0:N0}'}"
-                                                                       FontSize="36" FontWeight="Bold"
-                                                                       HorizontalAlignment="Center" />
-                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
-                                                                <LucideIcon Kind="TrendingUp" Size="16"
-                                                                            IsVisible="{Binding IsTrendUp}" />
-                                                                <LucideIcon Kind="TrendingDown" Size="16"
-                                                                            IsVisible="{Binding !IsTrendUp}" />
-                                                                <TextBlock Text="{Binding TrendPercentage}"
-                                                                           FontSize="14" FontWeight="SemiBold" />
+                                        <!-- Widget Content -->
+                                        <ContentControl Grid.Row="1" Content="{Binding}">
+                                            <ContentControl.ContentTemplate>
+                                                <local:DashboardWidgetTemplateSelector>
+                                                    <local:DashboardWidgetTemplateSelector.LineChartTemplate>
+                                                        <DataTemplate DataType="vm:LineChartWidgetViewModel">
+                                                            <lvc:CartesianChart Series="{Binding Series}"
+                                                                                XAxes="{Binding XAxes}"
+                                                                                YAxes="{Binding YAxes}"
+                                                                                ZoomMode="None"
+                                                                                TooltipPosition="Top"
+                                                                                Margin="8" />
+                                                        </DataTemplate>
+                                                    </local:DashboardWidgetTemplateSelector.LineChartTemplate>
+                                                    <local:DashboardWidgetTemplateSelector.PieChartTemplate>
+                                                        <DataTemplate DataType="vm:PieChartWidgetViewModel">
+                                                            <lvc:PieChart Series="{Binding Series}"
+                                                                          LegendPosition="Right"
+                                                                          TooltipPosition="Center"
+                                                                          Margin="8" />
+                                                        </DataTemplate>
+                                                    </local:DashboardWidgetTemplateSelector.PieChartTemplate>
+                                                    <local:DashboardWidgetTemplateSelector.BarChartTemplate>
+                                                        <DataTemplate DataType="vm:BarChartWidgetViewModel">
+                                                            <lvc:CartesianChart Series="{Binding Series}"
+                                                                                XAxes="{Binding XAxes}"
+                                                                                YAxes="{Binding YAxes}"
+                                                                                TooltipPosition="Top"
+                                                                                Margin="8" />
+                                                        </DataTemplate>
+                                                    </local:DashboardWidgetTemplateSelector.BarChartTemplate>
+                                                    <local:DashboardWidgetTemplateSelector.MetricCardTemplate>
+                                                        <DataTemplate DataType="vm:MetricCardWidgetViewModel">
+                                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                                                <TextBlock Text="{Binding CurrentValue, StringFormat='{}{0:N0}'}"
+                                                                           FontSize="36" FontWeight="Bold"
+                                                                           HorizontalAlignment="Center" />
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                                                                    <LucideIcon Kind="TrendingUp" Size="16"
+                                                                                IsVisible="{Binding IsTrendUp}" />
+                                                                    <LucideIcon Kind="TrendingDown" Size="16"
+                                                                                IsVisible="{Binding !IsTrendUp}" />
+                                                                    <TextBlock Text="{Binding TrendPercentage}"
+                                                                               FontSize="14" FontWeight="SemiBold" />
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding MetricUnit}"
+                                                                           FontSize="12" Opacity="0.6"
+                                                                           HorizontalAlignment="Center" />
                                                             </StackPanel>
-                                                            <TextBlock Text="{Binding MetricUnit}"
-                                                                       FontSize="12" Opacity="0.6"
-                                                                       HorizontalAlignment="Center" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </local:DashboardWidgetTemplateSelector.MetricCardTemplate>
-                                            </local:DashboardWidgetTemplateSelector>
-                                        </ContentControl.ContentTemplate>
-                                    </ContentControl>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
-    </Border>
+                                                        </DataTemplate>
+                                                    </local:DashboardWidgetTemplateSelector.MetricCardTemplate>
+                                                </local:DashboardWidgetTemplateSelector>
+                                            </ContentControl.ContentTemplate>
+                                        </ContentControl>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Add Widget Dialog Overlay -->
+        <Border IsVisible="{Binding IsAddWidgetDialogOpen}"
+                Background="{DynamicResource ModalOverlay}"
+                IsHitTestVisible="True">
+            <Border Background="{DynamicResource CardBackground}"
+                    CornerRadius="12"
+                    MaxWidth="500"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    BoxShadow="0 8 24 0 #32000000">
+                <dialogs:AddWidgetDialog />
+            </Border>
+        </Border>
+    </Grid>
 </UserControl>

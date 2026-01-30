@@ -5,74 +5,171 @@
              x:Class="BusLane.Views.Dialogs.AddWidgetDialog"
              x:DataType="vm:DashboardViewModel">
 
-    <Border Background="{DynamicResource BackgroundPrimary}"
-            BorderBrush="{DynamicResource BorderDefault}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Padding="24"
-            MaxWidth="500">
-        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
-            <TextBlock Grid.Row="0" Text="Add Widget" Classes="heading"/>
+    <Grid RowDefinitions="Auto,*,Auto" MinWidth="480">
+        <!-- Header -->
+        <Border Grid.Row="0"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BorderThickness="0,0,0,1"
+                Padding="24,20">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Border Grid.Column="0"
+                        Width="40" Height="40"
+                        CornerRadius="8"
+                        Background="{DynamicResource SurfaceBrand}"
+                        Margin="0,0,16,0">
+                    <LucideIcon Kind="LayoutDashboard" Size="20"
+                                Foreground="{DynamicResource AccentBrand}"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="Add Widget" Classes="title-small"/>
+                    <TextBlock Text="Choose a widget type for your dashboard" Classes="caption"/>
+                </StackPanel>
+                <Button Grid.Column="2"
+                        Classes="subtle"
+                        Padding="8"
+                        VerticalAlignment="Top"
+                        Command="{Binding CloseAddWidgetDialogCommand}">
+                    <LucideIcon Kind="X" Size="16"/>
+                </Button>
+            </Grid>
+        </Border>
 
-            <Grid Grid.Row="1" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+        <!-- Content -->
+        <Border Grid.Row="1" Padding="24,20">
+            <Grid ColumnDefinitions="*,*" RowDefinitions="*,*" ColumnSpacing="12" RowSpacing="12">
+
+                <!-- Line Chart -->
                 <Button Grid.Row="0" Grid.Column="0"
                         Command="{Binding AddWidgetCommand}"
                         CommandParameter="{x:Static models:WidgetType.LineChart}"
-                        Classes="card"
-                        Margin="0,0,8,8"
-                        Padding="16">
-                    <StackPanel Spacing="8">
-                        <LucideIcon Kind="Cable" Size="32"/>
-                        <TextBlock Text="Line Chart" FontWeight="SemiBold"/>
-                        <TextBlock Text="Time-series data over time" FontSize="12" Opacity="0.7"/>
-                    </StackPanel>
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Padding="0"
+                        CornerRadius="8"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="1">
+                    <Border Padding="16">
+                        <StackPanel Spacing="12">
+                            <Border Width="44" Height="44"
+                                    CornerRadius="10"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    HorizontalAlignment="Left">
+                                <LucideIcon Kind="TrendingUp" Size="22"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Line Chart" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="Track metrics over time with trend lines"
+                                           FontSize="12" Foreground="{DynamicResource SubtleForeground}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Button>
 
+                <!-- Pie Chart -->
                 <Button Grid.Row="0" Grid.Column="1"
                         Command="{Binding AddWidgetCommand}"
                         CommandParameter="{x:Static models:WidgetType.PieChart}"
-                        Classes="card"
-                        Margin="8,0,0,8"
-                        Padding="16">
-                    <StackPanel Spacing="8">
-                        <LucideIcon Kind="ScrollText" Size="32"/>
-                        <TextBlock Text="Pie Chart" FontWeight="SemiBold"/>
-                        <TextBlock Text="Distribution across entities" FontSize="12" Opacity="0.7"/>
-                    </StackPanel>
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Padding="0"
+                        CornerRadius="8"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="1">
+                    <Border Padding="16">
+                        <StackPanel Spacing="12">
+                            <Border Width="44" Height="44"
+                                    CornerRadius="10"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    HorizontalAlignment="Left">
+                                <LucideIcon Kind="Donut" Size="22"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Pie Chart" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="Visualize message distribution across entities"
+                                           FontSize="12" Foreground="{DynamicResource SubtleForeground}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Button>
 
+                <!-- Bar Chart -->
                 <Button Grid.Row="1" Grid.Column="0"
                         Command="{Binding AddWidgetCommand}"
                         CommandParameter="{x:Static models:WidgetType.BarChart}"
-                        Classes="card"
-                        Margin="0,8,8,0"
-                        Padding="16">
-                    <StackPanel Spacing="8">
-                        <LucideIcon Kind="ListOrdered" Size="32"/>
-                        <TextBlock Text="Bar Chart" FontWeight="SemiBold"/>
-                        <TextBlock Text="Compare entities side-by-side" FontSize="12" Opacity="0.7"/>
-                    </StackPanel>
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Padding="0"
+                        CornerRadius="8"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="1">
+                    <Border Padding="16">
+                        <StackPanel Spacing="12">
+                            <Border Width="44" Height="44"
+                                    CornerRadius="10"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    HorizontalAlignment="Left">
+                                <LucideIcon Kind="ChartColumnBig" Size="22"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Bar Chart" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="Compare entities side by side with grouped bars"
+                                           FontSize="12" Foreground="{DynamicResource SubtleForeground}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Button>
 
+                <!-- Metric Card -->
                 <Button Grid.Row="1" Grid.Column="1"
                         Command="{Binding AddWidgetCommand}"
                         CommandParameter="{x:Static models:WidgetType.MetricCard}"
-                        Classes="card"
-                        Margin="8,8,0,0"
-                        Padding="16">
-                    <StackPanel Spacing="8">
-                        <LucideIcon Kind="Search" Size="32"/>
-                        <TextBlock Text="Metric Card" FontWeight="SemiBold"/>
-                        <TextBlock Text="Single metric with trend" FontSize="12" Opacity="0.7"/>
-                    </StackPanel>
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Padding="0"
+                        CornerRadius="8"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="1">
+                    <Border Padding="16">
+                        <StackPanel Spacing="12">
+                            <Border Width="44" Height="44"
+                                    CornerRadius="10"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    HorizontalAlignment="Left">
+                                <LucideIcon Kind="Activity" Size="22"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Metric Card" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="Single metric at a glance with trend indicator"
+                                           FontSize="12" Foreground="{DynamicResource SubtleForeground}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Button>
-            </Grid>
 
-            <Button Grid.Row="2"
-                    Command="{Binding CloseAddWidgetDialogCommand}"
-                    Classes="subtle"
+            </Grid>
+        </Border>
+
+        <!-- Footer -->
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BorderThickness="0,1,0,0"
+                Padding="24,16">
+            <Button Classes="secondary small"
+                    Content="Cancel"
                     HorizontalAlignment="Right"
-                    Content="Cancel"/>
-        </Grid>
-    </Border>
+                    Command="{Binding CloseAddWidgetDialogCommand}"/>
+        </Border>
+    </Grid>
 </UserControl>
