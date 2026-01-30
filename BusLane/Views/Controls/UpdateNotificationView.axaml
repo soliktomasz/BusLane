@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Controls.UpdateNotificationView"
+             x:DataType="vm:UpdateNotificationViewModel"
+             IsVisible="{Binding IsVisible}">
+
+    <Border Background="{DynamicResource AccentBrand}"
+            Padding="16,12"
+            BorderThickness="0,0,0,1"
+            BorderBrush="{DynamicResource BorderDefault}">
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="{Binding VersionText}"
+                           FontWeight="SemiBold"
+                           FontSize="14"
+                           Foreground="White"/>
+                <TextBlock Text="{Binding ReleaseNotes}"
+                           FontSize="12"
+                           Foreground="White"
+                           Opacity="0.8"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="600"/>
+
+                <!-- Download Progress -->
+                <StackPanel IsVisible="{Binding IsDownloading}" Spacing="4" Margin="0,4,0,0">
+                    <ProgressBar Value="{Binding DownloadProgress}"
+                                 Maximum="100"
+                                 Height="4"
+                                 Foreground="White"
+                                 Background="{DynamicResource BorderDefault}"/>
+                    <TextBlock Text="{Binding DownloadProgress, StringFormat='Downloading... {0:F0}%'}"
+                               FontSize="11"
+                               Foreground="White"
+                               Opacity="0.8"/>
+                </StackPanel>
+
+                <!-- Error Message -->
+                <TextBlock IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           Text="{Binding ErrorMessage}"
+                           FontSize="12"
+                           Foreground="#FFFFCCCC"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <!-- Install Now / Restart Button -->
+                <Button Classes="primary small"
+                        Command="{Binding InstallNowCommand}"
+                        IsVisible="{Binding !IsDownloaded}">
+                    <TextBlock Text="Install Now" Foreground="White"/>
+                </Button>
+                <Button Classes="primary small"
+                        Command="{Binding InstallNowCommand}"
+                        IsVisible="{Binding IsDownloaded}">
+                    <TextBlock Text="Restart to Update" Foreground="White"/>
+                </Button>
+
+                <!-- Retry Button (on error) -->
+                <Button Classes="secondary small"
+                        Command="{Binding RetryCommand}"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="Retry"/>
+                </Button>
+
+                <!-- Later Button -->
+                <Button Classes="subtle small"
+                        Command="{Binding RemindLaterCommand}"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                    <TextBlock Text="Later" Foreground="White" Opacity="0.9"/>
+                </Button>
+
+                <!-- Skip Button -->
+                <Button Classes="subtle small"
+                        Command="{Binding SkipVersionCommand}"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                    <TextBlock Text="Skip" Foreground="White" Opacity="0.9"/>
+                </Button>
+
+                <!-- Dismiss Button -->
+                <Button Classes="subtle"
+                        Command="{Binding DismissCommand}"
+                        Padding="4">
+                    <LucideIcon Kind="X" Size="14" Foreground="White"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
