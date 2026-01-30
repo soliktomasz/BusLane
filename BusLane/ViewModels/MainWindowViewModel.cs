@@ -15,6 +15,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Update;
 
 /// <summary>
 /// Represents a group of keyboard shortcuts for display in the help dialog.
@@ -45,6 +46,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly IUpdateService _updateService;
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
 
@@ -58,6 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     public FeaturePanelsViewModel FeaturePanels { get; }
     public LogViewerViewModel LogViewer { get; }
     public NamespaceSelectionViewModel NamespaceSelection { get; }
+    public UpdateNotificationViewModel UpdateNotification { get; }
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -167,6 +170,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         IAlertService alertService,
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
+        IUpdateService updateService,
         ILogSink logSink,
         IFileDialogService? fileDialogService = null)
     {
@@ -178,6 +182,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _alertService = alertService;
         _preferencesService = preferencesService;
         _keyboardShortcutService = keyboardShortcutService;
+        _updateService = updateService;
         _logSink = logSink;
         _fileDialogService = fileDialogService;
 
@@ -241,6 +246,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
+
+        UpdateNotification = new UpdateNotificationViewModel(updateService);
 
         // Wire up property change handlers for cross-component dependencies
         Navigation.PropertyChanged += (_, e) =>

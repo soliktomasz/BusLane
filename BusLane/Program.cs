@@ -14,6 +14,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Update;
 using ViewModels;
 
 class Program
@@ -128,6 +129,10 @@ class Program
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<INotificationService, NotificationService>();
 
+        // Update services
+        services.AddSingleton<UpdateDownloadService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
+
         // Main ViewModel with unified services
         services.AddSingleton<MainWindowViewModel>(sp => new MainWindowViewModel(
             sp.GetRequiredService<IAzureAuthService>(),
@@ -141,6 +146,7 @@ class Program
             sp.GetRequiredService<IAlertService>(),
             sp.GetRequiredService<INotificationService>(),
             sp.GetRequiredService<IKeyboardShortcutService>(),
+            sp.GetRequiredService<IUpdateService>(),
             sp.GetRequiredService<ILogSink>()
         ));
 
