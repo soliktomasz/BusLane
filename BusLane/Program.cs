@@ -14,6 +14,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Dashboard;
 using Services.Update;
 using ViewModels;
 
@@ -132,6 +133,10 @@ class Program
         // Update services
         services.AddSingleton<UpdateDownloadService>();
         services.AddSingleton<IUpdateService, UpdateService>();
+
+        // Dashboard services
+        services.AddSingleton<IDashboardPersistenceService, DashboardPersistenceService>();
+        services.AddSingleton<DashboardLayoutEngine>();
 
         // Main ViewModel with unified services
         services.AddSingleton<MainWindowViewModel>(sp => new MainWindowViewModel(
