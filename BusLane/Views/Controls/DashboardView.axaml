@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels.Dashboard"
+             xmlns:local="using:BusLane.Views.Controls"
+             x:Class="BusLane.Views.Controls.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <Border Classes="card" Padding="0">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Text="Dashboard" Classes="heading" VerticalAlignment="Center"/>
+
+                    <Button Grid.Column="1" Classes="primary small"
+                            Command="{Binding OpenAddWidgetDialogCommand}"
+                            IsEnabled="{Binding CanAddWidget}"
+                            Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Plus" Size="14"/>
+                            <TextBlock Text="Add Widget"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Dashboard Content -->
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Widgets}" Margin="16">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:DashboardWidgetViewModel">
+                            <Border Background="{DynamicResource BackgroundSecondary}"
+                                    BorderBrush="{DynamicResource BorderDefault}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Width="{Binding Width, Converter={StaticResource GridColumnToWidthConverter}}"
+                                    Height="{Binding Height, Converter={StaticResource GridRowToHeightConverter}}"
+                                    Canvas.Left="{Binding Column, Converter={StaticResource GridColumnToLeftConverter}}"
+                                    Canvas.Top="{Binding Row, Converter={StaticResource GridRowToTopConverter}}">
+                                <Grid RowDefinitions="Auto,*">
+                                    <!-- Widget Header -->
+                                    <Border Grid.Row="0" Padding="12,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
+                                            <Button Grid.Column="1" Classes="subtle tiny"
+                                                    Command="{Binding RemoveCommand}"
+                                                    Padding="4">
+                                                <LucideIcon Kind="X" Size="14"/>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Widget Content -->
+                                    <ContentControl Grid.Row="1" Content="{Binding}">
+                                        <ContentControl.ContentTemplate>
+                                            <local:DashboardWidgetTemplateSelector />
+                                        </ContentControl.ContentTemplate>
+                                    </ContentControl>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>
