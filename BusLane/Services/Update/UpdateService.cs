@@ -228,17 +228,22 @@ public class UpdateService : IUpdateService, IDisposable
 
     private UpdatePreferences LoadPreferences()
     {
-        // For now, use simple in-memory storage
-        // Could be enhanced to use IPreferencesService with additional fields
         return new UpdatePreferences
         {
-            AutoCheckEnabled = true
+            AutoCheckEnabled = _preferencesService.AutoCheckForUpdates,
+            SkippedVersion = _preferencesService.SkippedUpdateVersion,
+            RemindLaterDate = _preferencesService.UpdateRemindLaterDate,
+            LastCheckTime = null
         };
     }
 
     private void SavePreferences(UpdatePreferences prefs)
     {
-        // Persist to IPreferencesService if extended
+        _preferencesService.AutoCheckForUpdates = prefs.AutoCheckEnabled;
+        _preferencesService.SkippedUpdateVersion = prefs.SkippedVersion;
+        _preferencesService.UpdateRemindLaterDate = prefs.RemindLaterDate;
+        _preferencesService.Save();
+
         Log.Information("Update preferences saved: Skipped={Skipped}, RemindLater={Remind}",
             prefs.SkippedVersion, prefs.RemindLaterDate);
     }
