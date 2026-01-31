@@ -379,6 +379,40 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Keyboard Shortcuts Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,16"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <LucideIcon Kind="Keyboard" Size="20"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Keyboard Shortcuts" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="View all shortcuts" FontWeight="Medium" FontSize="13"/>
+                                            <TextBlock Text="See available keyboard shortcuts for quick navigation"
+                                                       Classes="caption" FontSize="12"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Classes="secondary small"
+                                                Content="View Shortcuts"
+                                                Command="{Binding ShowKeyboardShortcutsHelpCommand}"
+                                                VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         </StackPanel>
                     </Border>
                 </ScrollViewer>

@@ -301,18 +301,8 @@
                 </Button>
             </StackPanel>
 
-            <!-- Settings and Help Buttons - Docked to bottom -->
+            <!-- Settings Button - Docked to bottom -->
             <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12" Spacing="4">
-                <Button Classes="subtle"
-                        Command="{Binding ShowKeyboardShortcutsHelpCommand}"
-                        HorizontalAlignment="Stretch"
-                        Padding="12,12"
-                        ToolTip.Tip="⌘? or Ctrl+?">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="Keyboard" Size="16"/>
-                        <TextBlock Text="Keyboard Shortcuts" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
                 <Button Classes="subtle"
                         Command="{Binding OpenSettingsCommand}"
                         HorizontalAlignment="Stretch"
