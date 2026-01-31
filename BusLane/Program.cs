@@ -164,9 +164,8 @@ class Program
         services.AddTransient<MessageViewModel>();
         services.AddTransient<TopicViewModel>();
 
-        // ViewModels for Live Stream, Charts, and Alerts
+        // ViewModels for Live Stream and Alerts
         services.AddTransient<LiveStreamViewModel>();
-        services.AddTransient<ChartsViewModel>();
     }
 
     public static AppBuilder BuildAvaloniaApp()

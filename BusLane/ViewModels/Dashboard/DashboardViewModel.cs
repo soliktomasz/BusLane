@@ -8,6 +8,9 @@ using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+/// <summary>
+/// Manages the dashboard widget collection, including adding, removing, and persisting widgets.
+/// </summary>
 public partial class DashboardViewModel : ViewModelBase
 {
     private readonly IDashboardPersistenceService _persistenceService;
@@ -87,6 +90,7 @@ public partial class DashboardViewModel : ViewModelBase
     private void RemoveWidget(DashboardWidgetViewModel widget)
     {
         Widgets.Remove(widget);
+        widget.Dispose();
         OnPropertyChanged(nameof(CanAddWidget));
         SaveDashboard();
     }

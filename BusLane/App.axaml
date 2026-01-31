@@ -23,8 +23,6 @@
             <converters:SeverityToBackgroundConverter x:Key="SeverityToBackgroundConverter"/>
             
             <!-- Grid Layout Converters -->
-            <viewsConverters:GridColumnToLeftConverter x:Key="GridColumnToLeftConverter"/>
-            <viewsConverters:GridRowToTopConverter x:Key="GridRowToTopConverter"/>
             <viewsConverters:GridColumnToWidthConverter x:Key="GridColumnToWidthConverter"/>
             <viewsConverters:GridRowToHeightConverter x:Key="GridRowToHeightConverter"/>
             

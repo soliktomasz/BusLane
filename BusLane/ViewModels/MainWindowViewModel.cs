@@ -1393,6 +1393,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
 
+        // Dispose update notification to unsubscribe from events
+        UpdateNotification?.Dispose();
+
         // Dispose operations if they implement IDisposable (sync path only)
         if (_operations is IDisposable disposable)
         {
@@ -1410,6 +1413,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer = null;
 
         LogViewer?.Dispose();
+
+        // Dispose update notification to unsubscribe from events
+        UpdateNotification?.Dispose();
 
         // Properly await async disposal of operations
         if (_operations is IAsyncDisposable asyncDisposable)

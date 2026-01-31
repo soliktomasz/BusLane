@@ -57,7 +57,7 @@ public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
 
     private void OnMetricRecorded(object? sender, MetricDataPoint dataPoint)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(RefreshData);
+        ScheduleRefresh();
     }
 
     public override void RefreshData()
@@ -139,5 +139,14 @@ public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
             "24 Hours" => TimeSpan.FromHours(24),
             _ => TimeSpan.FromHours(1)
         };
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _metricsService.MetricRecorded -= OnMetricRecorded;
+        }
+        base.Dispose(disposing);
     }
 }

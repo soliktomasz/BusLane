@@ -8,13 +8,21 @@ public static class UpdateCheckService
 {
     private const string GitHubApiUrl = "https://api.github.com/repos/soliktomasz/BusLane/releases/latest";
 
+    private static readonly HttpClient DefaultHttpClient = CreateDefaultHttpClient();
+
+    private static HttpClient CreateDefaultHttpClient()
+    {
+        var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "BusLane-AutoUpdater");
+        return client;
+    }
+
     public static async Task<ReleaseInfo?> CheckForUpdateAsync(
         string currentVersion,
         string platform,
         HttpClient? httpClient = null)
     {
-        var client = httpClient ?? new HttpClient();
-        client.DefaultRequestHeaders.Add("User-Agent", "BusLane-AutoUpdater");
+        var client = httpClient ?? DefaultHttpClient;
 
         try
         {
@@ -66,6 +74,9 @@ public static class UpdateCheckService
             var body = root.GetProperty("body").GetString() ?? string.Empty;
             var publishedAt = root.GetProperty("published_at").GetDateTime();
             var isPrerelease = root.GetProperty("prerelease").GetBoolean();
+            var releaseUrl = root.TryGetProperty("html_url", out var htmlUrlElement)
+                ? htmlUrlElement.GetString() ?? $"https://github.com/soliktomasz/BusLane/releases/tag/{tagName}"
+                : $"https://github.com/soliktomasz/BusLane/releases/tag/{tagName}";
 
             var assets = new Dictionary<string, AssetInfo>();
             if (root.TryGetProperty("assets", out var assetsElement))
@@ -95,7 +106,8 @@ public static class UpdateCheckService
                 ReleaseNotes = body,
                 PublishedAt = publishedAt,
                 IsPrerelease = isPrerelease,
-                Assets = assets
+                Assets = assets,
+                ReleaseUrl = releaseUrl
             };
         }
         catch (Exception ex)

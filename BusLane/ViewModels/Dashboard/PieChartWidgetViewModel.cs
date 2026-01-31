@@ -39,17 +39,11 @@ public partial class PieChartWidgetViewModel : DashboardWidgetViewModel
             ClearError();
             Series.Clear();
 
-            var data = new List<(string Name, double Value)>();
-
-            foreach (var queue in _queues.OrderByDescending(q => GetMetricValue(q)).Take(Widget.Configuration.TopEntities))
-            {
-                data.Add((queue.Name, GetMetricValue(queue)));
-            }
-
-            foreach (var sub in _subscriptions.OrderByDescending(s => GetMetricValue(s)).Take(Widget.Configuration.TopEntities))
-            {
-                data.Add(($"{sub.TopicName}/{sub.Name}", GetMetricValue(sub)));
-            }
+            var data = _queues.Select(q => (Name: q.Name, Value: GetMetricValue(q)))
+                .Concat(_subscriptions.Select(s => (Name: $"{s.TopicName}/{s.Name}", Value: GetMetricValue(s))))
+                .OrderByDescending(e => e.Value)
+                .Take(Widget.Configuration.TopEntities)
+                .ToList();
 
             var colors = new[]
             {

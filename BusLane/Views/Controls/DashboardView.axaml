@@ -39,9 +39,14 @@
                             <DataTemplate DataType="vm:DashboardWidgetViewModel">
                                 <Border Classes="card"
                                         Padding="0"
-                                        Width="{Binding Width, Converter={StaticResource GridColumnToWidthConverter}}"
                                         Height="{Binding Height, Converter={StaticResource GridRowToHeightConverter}}"
                                         Margin="0,0,8,8">
+                                    <Border.Width>
+                                        <MultiBinding Converter="{StaticResource GridColumnToWidthConverter}">
+                                            <Binding Path="Width"/>
+                                            <Binding Path="Bounds.Width" ElementName="WidgetScrollViewer"/>
+                                        </MultiBinding>
+                                    </Border.Width>
                                     <Grid RowDefinitions="Auto,*">
                                         <!-- Widget Header -->
                                         <Border Grid.Row="0" Padding="12,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">

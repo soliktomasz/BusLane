@@ -1,5 +1,6 @@
 namespace BusLane.Models.Update;
 
+/// <summary>User preferences for auto-update behavior.</summary>
 public record UpdatePreferences
 {
     public DateTime? LastCheckTime { get; init; }

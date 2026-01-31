@@ -1,5 +1,6 @@
 namespace BusLane.Models.Update;
 
+/// <summary>Describes a downloadable asset attached to a GitHub release.</summary>
 public record AssetInfo
 {
     public string DownloadUrl { get; init; } = null!;

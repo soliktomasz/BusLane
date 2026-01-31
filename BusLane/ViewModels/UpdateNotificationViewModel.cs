@@ -6,9 +6,10 @@ using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-public partial class UpdateNotificationViewModel : ViewModelBase
+public partial class UpdateNotificationViewModel : ViewModelBase, IDisposable
 {
     private readonly IUpdateService _updateService;
+    private bool _disposed;
 
     [ObservableProperty]
     private bool _isVisible;
@@ -92,14 +93,8 @@ public partial class UpdateNotificationViewModel : ViewModelBase
     [RelayCommand]
     private async Task InstallNowAsync()
     {
-        if (_updateService.Status == UpdateStatus.UpdateAvailable)
-        {
-            await _updateService.DownloadUpdateAsync();
-        }
-        else if (_updateService.Status == UpdateStatus.Downloaded)
-        {
-            await _updateService.InstallUpdateAsync();
-        }
+        // Opens the GitHub release page so the user can download and verify manually
+        await _updateService.InstallUpdateAsync();
     }
 
     [RelayCommand]
@@ -132,5 +127,13 @@ public partial class UpdateNotificationViewModel : ViewModelBase
     {
         ErrorMessage = null;
         await _updateService.CheckForUpdatesAsync(manualCheck: true);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _updateService.StatusChanged -= OnStatusChanged;
+        _updateService.DownloadProgressChanged -= OnDownloadProgressChanged;
     }
 }

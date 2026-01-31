@@ -55,7 +55,19 @@ public class UpdateService : IUpdateService, IDisposable
 
         // Check every 24 hours
         _checkTimer = new System.Timers.Timer(TimeSpan.FromHours(24).TotalMilliseconds);
-        _checkTimer.Elapsed += async (_, _) => await CheckForUpdatesAsync();
+        _checkTimer.Elapsed += OnCheckTimerElapsed;
+    }
+
+    private async void OnCheckTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        try
+        {
+            await CheckForUpdatesAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Unhandled exception in periodic update check");
+        }
     }
 
     public async Task CheckForUpdatesAsync(bool manualCheck = false)
@@ -146,33 +158,34 @@ public class UpdateService : IUpdateService, IDisposable
 
     public Task InstallUpdateAsync()
     {
-        // Platform-specific installation will be implemented in Task 6
-        // For now, just open the downloaded file
-        if (_downloadedFilePath == null)
+        if (_availableRelease == null)
         {
-            _errorMessage = "No update downloaded";
+            _errorMessage = "No update available";
             Status = UpdateStatus.Error;
             return Task.CompletedTask;
         }
 
         try
         {
-            Status = UpdateStatus.Installing;
+            // Open the GitHub release page in the user's browser so they can
+            // download and verify the installer themselves. Direct execution of
+            // downloaded binaries is disabled until checksum validation is implemented.
+            var releaseUrl = _availableRelease.ReleaseUrl;
+            Log.Information("Opening release page for manual install: {Url}", releaseUrl);
 
             var psi = new System.Diagnostics.ProcessStartInfo
             {
-                FileName = _downloadedFilePath,
+                FileName = releaseUrl,
                 UseShellExecute = true
             };
             System.Diagnostics.Process.Start(psi);
 
-            // The installer will handle the actual installation
-            // Application should exit to allow file replacement
+            Status = UpdateStatus.Idle;
             return Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Installation failed");
+            Log.Error(ex, "Failed to open release page");
             _errorMessage = ex.Message;
             Status = UpdateStatus.Error;
             return Task.CompletedTask;

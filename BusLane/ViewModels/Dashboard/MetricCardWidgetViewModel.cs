@@ -24,7 +24,7 @@ public partial class MetricCardWidgetViewModel : DashboardWidgetViewModel
 
     private void OnMetricRecorded(object? sender, MetricDataPoint dataPoint)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(RefreshData);
+        ScheduleRefresh();
     }
 
     public override void RefreshData()
@@ -101,5 +101,14 @@ public partial class MetricCardWidgetViewModel : DashboardWidgetViewModel
             "Previous Day" => TimeSpan.FromDays(1),
             _ => TimeSpan.FromHours(1)
         };
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _metricsService.MetricRecorded -= OnMetricRecorded;
+        }
+        base.Dispose(disposing);
     }
 }

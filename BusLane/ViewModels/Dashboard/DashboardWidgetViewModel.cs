@@ -5,8 +5,16 @@ using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-public abstract partial class DashboardWidgetViewModel : ViewModelBase
+/// <summary>
+/// Base class for all dashboard widget ViewModels. Provides grid positioning,
+/// error state management, debounced refresh scheduling, and disposal.
+/// </summary>
+public abstract partial class DashboardWidgetViewModel : ViewModelBase, IDisposable
 {
+    private bool _disposed;
+    private Timer? _refreshDebounceTimer;
+    private const int RefreshDebounceMs = 100;
+
     [ObservableProperty] private DashboardWidget _widget;
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private bool _hasError;
@@ -76,6 +84,15 @@ public abstract partial class DashboardWidgetViewModel : ViewModelBase
     protected abstract string GetDefaultTitle();
     public abstract void RefreshData();
 
+    protected void ScheduleRefresh()
+    {
+        _refreshDebounceTimer?.Dispose();
+        _refreshDebounceTimer = new Timer(_ =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(RefreshData);
+        }, null, RefreshDebounceMs, Timeout.Infinite);
+    }
+
     protected void SetError(string message)
     {
         HasError = true;
@@ -93,5 +110,22 @@ public abstract partial class DashboardWidgetViewModel : ViewModelBase
     {
         ClearError();
         RefreshData();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _refreshDebounceTimer?.Dispose();
+            _refreshDebounceTimer = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
