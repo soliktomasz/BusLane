@@ -2,6 +2,7 @@ namespace BusLane.Services.ServiceBus;
 
 using Azure.Messaging.ServiceBus;
 using BusLane.Models;
+using Serilog;
 
 /// <summary>
 /// Configuration options for Service Bus batch operations.
@@ -275,9 +276,10 @@ internal static class ServiceBusOperations
                         sequenceSet.Remove(msg.SequenceNumber);
                         deletedCount++;
                     }
-                    catch (ServiceBusException)
+                    catch (ServiceBusException ex)
                     {
-                        // Message might already be processed, continue
+                        // Message might already be processed or lock expired, continue
+                        Log.Debug(ex, "Failed to complete message {SequenceNumber}, continuing", msg.SequenceNumber);
                     }
                 }
                 else
@@ -286,9 +288,10 @@ internal static class ServiceBusOperations
                     {
                         await receiver.AbandonMessageAsync(msg, cancellationToken: ct);
                     }
-                    catch (ServiceBusException)
+                    catch (ServiceBusException ex)
                     {
                         // Ignore abandon errors
+                        Log.Debug(ex, "Failed to abandon message {SequenceNumber}, ignoring", msg.SequenceNumber);
                     }
                 }
             }
@@ -335,9 +338,10 @@ internal static class ServiceBusOperations
                 await sender.SendMessagesAsync(serviceBusMessages, ct);
                 sentCount += batchSize;
             }
-            catch (ServiceBusException)
+            catch (ServiceBusException ex)
             {
                 // If batch send fails, try sending individually
+                Log.Debug(ex, "Batch send failed, attempting individual message sends");
                 foreach (var sbMsg in serviceBusMessages)
                 {
                     if (ct.IsCancellationRequested) break;
@@ -346,9 +350,10 @@ internal static class ServiceBusOperations
                         await sender.SendMessageAsync(sbMsg, ct);
                         sentCount++;
                     }
-                    catch (ServiceBusException)
+                    catch (ServiceBusException innerEx)
                     {
                         // Individual message failed, continue with others
+                        Log.Debug(innerEx, "Failed to send individual message, continuing with remaining messages");
                     }
                 }
             }
@@ -411,9 +416,10 @@ internal static class ServiceBusOperations
 
                 resubmittedCount++;
             }
-            catch (ServiceBusException)
+            catch (ServiceBusException ex)
             {
                 // Message might not be found or already processed, continue
+                Log.Debug(ex, "Failed to resubmit message {SequenceNumber} from DLQ, continuing", msg.SequenceNumber);
             }
         }
 

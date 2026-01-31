@@ -12,7 +12,7 @@ public static class UpdateCheckService
 
     private static HttpClient CreateDefaultHttpClient()
     {
-        var client = new HttpClient();
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         client.DefaultRequestHeaders.Add("User-Agent", "BusLane-AutoUpdater");
         return client;
     }
@@ -51,6 +51,11 @@ public static class UpdateCheckService
 
             Log.Information("Update available: {Version}", release.Version);
             return release;
+        }
+        catch (OperationCanceledException) when (client.Timeout == TimeSpan.FromSeconds(30))
+        {
+            Log.Warning("Update check timed out after 30 seconds");
+            return null;
         }
         catch (Exception ex)
         {

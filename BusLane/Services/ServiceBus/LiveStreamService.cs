@@ -56,18 +56,17 @@ public class LiveStreamService : ILiveStreamService
     {
         lock (_subjectLock)
         {
-            if (!_disposed)
+            if (_disposed) return;
+
+            try
             {
-                try
-                {
-                    _messageSubject.OnNext(message);
-                }
-                catch (ObjectDisposedException ex)
-                {
-                    // Subject was disposed unexpectedly - this indicates a bug
-                    // Don't recreate as it would lose existing subscribers
-                    Log.Error(ex, "Live stream subject disposed unexpectedly while emitting message");
-                }
+                _messageSubject.OnNext(message);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Subject was disposed - recreate and notify new subscribers
+                _messageSubject = new Subject<LiveStreamMessage>();
+                Log.Warning("Live stream subject was disposed, recreated new subject");
             }
         }
     }
