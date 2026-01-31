@@ -30,6 +30,7 @@ public class LiveStreamService : ILiveStreamService
     private const int DefaultPollingIntervalSeconds = 1;
     private const int ErrorRetryDelaySeconds = 5;
     private const int GracefulShutdownTimeoutSeconds = 5;
+    private const int DefaultPeekBatchSize = 10;
 
     public LiveStreamService(IPreferencesService preferencesService)
     {
@@ -174,7 +175,7 @@ public class LiveStreamService : ILiveStreamService
                             timeoutCts.Token
                         );
 
-                        var messages = await _peekReceiver.PeekMessagesAsync(10, lastSequenceNumber + 1, linkedCts.Token);
+                        var messages = await _peekReceiver.PeekMessagesAsync(DefaultPeekBatchSize, lastSequenceNumber + 1, linkedCts.Token);
 
                         foreach (var msg in messages)
                         {

@@ -15,6 +15,9 @@ public class AlertService : IAlertService
     // Cached JsonSerializerOptions to avoid recreation on every serialization
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
+    // Maximum time allowed for regex pattern matching to prevent catastrophic backtracking
+    private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromMilliseconds(100);
+
     // Lock object for thread-safe access to mutable collections
     private readonly object _lock = new();
 
@@ -249,7 +252,7 @@ public class AlertService : IAlertService
         {
             try
             {
-                return new Regex(p, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
+                return new Regex(p, RegexOptions.IgnoreCase | RegexOptions.Compiled, RegexMatchTimeout);
             }
             catch (ArgumentException ex)
             {

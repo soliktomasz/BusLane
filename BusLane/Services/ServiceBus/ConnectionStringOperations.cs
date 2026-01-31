@@ -31,15 +31,20 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+        
         // First, collect all queue properties
         var queueProperties = new List<QueueProperties>();
         await foreach (var queue in AdminClient.GetQueuesAsync(ct))
         {
+            ct.ThrowIfCancellationRequested();
             queueProperties.Add(queue);
         }
 
         if (queueProperties.Count == 0)
             return [];
+
+        ct.ThrowIfCancellationRequested();
 
         // Fetch runtime properties in parallel for better performance
         var runtimeTasks = queueProperties.Select(q =>
@@ -68,15 +73,20 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<IEnumerable<TopicInfo>> GetTopicsAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+        
         // First, collect all topic properties
         var topicProperties = new List<TopicProperties>();
         await foreach (var topic in AdminClient.GetTopicsAsync(ct))
         {
+            ct.ThrowIfCancellationRequested();
             topicProperties.Add(topic);
         }
 
         if (topicProperties.Count == 0)
             return [];
+
+        ct.ThrowIfCancellationRequested();
 
         // Fetch runtime properties in parallel for better performance
         var runtimeTasks = topicProperties.Select(t =>
@@ -105,10 +115,13 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<IEnumerable<SubscriptionInfo>> GetSubscriptionsAsync(string topicName, CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+        
         // First, collect all subscription properties
         var subscriptionProperties = new List<SubscriptionProperties>();
         await foreach (var sub in AdminClient.GetSubscriptionsAsync(topicName, ct))
         {
+            ct.ThrowIfCancellationRequested();
             subscriptionProperties.Add(sub);
         }
 
