@@ -846,6 +846,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task RefreshAsync()
     {
+        // First check if we have an active tab (new tab system)
+        if (ActiveTab != null)
+        {
+            await RefreshActiveTabAsync();
+            return;
+        }
+
+        // Fall back to legacy behavior for backward compatibility
         if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
         {
             await LoadConnectionEntitiesAsync(Connection.ActiveConnection);
@@ -853,6 +861,78 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         else if (Navigation.SelectedNamespace != null)
         {
             await SelectNamespaceAsync(Navigation.SelectedNamespace);
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the active tab's entity list.
+    /// </summary>
+    private async Task RefreshActiveTabAsync()
+    {
+        if (ActiveTab == null) return;
+
+        IsLoading = true;
+        StatusMessage = "Refreshing...";
+
+        try
+        {
+            ActiveTab.Navigation.Clear();
+
+            if (ActiveTab.Mode == ConnectionMode.ConnectionString && ActiveTab.SavedConnection != null)
+            {
+                await RefreshTabConnectionEntitiesAsync(ActiveTab);
+            }
+            else if (ActiveTab.Mode == ConnectionMode.AzureAccount && ActiveTab.Namespace != null)
+            {
+                await ActiveTab.RefreshNamespaceEntitiesAsync();
+            }
+
+            StatusMessage = "Refreshed successfully";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error refreshing: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes entities for a tab connected via connection string.
+    /// </summary>
+    private async Task RefreshTabConnectionEntitiesAsync(ConnectionTabViewModel tab)
+    {
+        if (tab.Operations == null || tab.SavedConnection == null) return;
+
+        if (tab.SavedConnection.Type == ConnectionType.Namespace)
+        {
+            await tab.RefreshNamespaceEntitiesAsync();
+        }
+        else if (tab.SavedConnection.Type == ConnectionType.Queue && tab.SavedConnection.EntityName != null)
+        {
+            var queueInfo = await tab.Operations.GetQueueInfoAsync(tab.SavedConnection.EntityName);
+            if (queueInfo != null)
+            {
+                tab.Navigation.Queues.Add(queueInfo);
+                tab.Navigation.SelectedQueue = queueInfo;
+                tab.Navigation.SelectedEntity = queueInfo;
+            }
+        }
+        else if (tab.SavedConnection.Type == ConnectionType.Topic && tab.SavedConnection.EntityName != null)
+        {
+            var topicInfo = await tab.Operations.GetTopicInfoAsync(tab.SavedConnection.EntityName);
+            if (topicInfo != null)
+            {
+                tab.Navigation.Topics.Add(topicInfo);
+                tab.Navigation.SelectedTopic = topicInfo;
+                tab.Navigation.SelectedEntity = topicInfo;
+
+                var subs = await tab.Operations.GetSubscriptionsAsync(tab.SavedConnection.EntityName);
+                foreach (var sub in subs)
+                    tab.Navigation.TopicSubscriptions.Add(sub);
+            }
         }
     }
 
@@ -1037,8 +1117,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task RefreshConnectionAsync()
     {
-        if (Connection.ActiveConnection != null)
-            await LoadConnectionEntitiesAsync(Connection.ActiveConnection);
+        // Use the unified refresh which handles both tab and legacy modes
+        await RefreshAsync();
     }
 
     // Aliases for connection-string mode navigation

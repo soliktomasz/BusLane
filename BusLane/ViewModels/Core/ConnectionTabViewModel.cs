@@ -224,6 +224,42 @@ public partial class ConnectionTabViewModel : ViewModelBase
         StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
     }
 
+    /// <summary>
+    /// Refreshes the namespace entities (queues and topics) for this tab.
+    /// </summary>
+    public async Task RefreshNamespaceEntitiesAsync()
+    {
+        if (_operations == null) return;
+
+        IsLoading = true;
+        StatusMessage = "Refreshing...";
+
+        try
+        {
+            Navigation.Queues.Clear();
+            Navigation.Topics.Clear();
+
+            var queues = await _operations.GetQueuesAsync();
+            foreach (var queue in queues)
+                Navigation.Queues.Add(queue);
+
+            var topics = await _operations.GetTopicsAsync();
+            foreach (var topic in topics)
+                Navigation.Topics.Add(topic);
+
+            StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error refreshing: {ex.Message}";
+            throw;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
     // Minimal implementation for parameterless constructor
     #pragma warning disable CS0067 // Event is never used (required by interface but not needed in dummy implementation)
     private class DummyPreferencesService : IPreferencesService
