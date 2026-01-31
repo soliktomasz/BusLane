@@ -38,10 +38,9 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                             <!-- Multi-select toggle button -->
-                            <ToggleButton Classes="subtle small"
+                            <ToggleButton Classes="pill"
                                           IsChecked="{Binding CurrentMessageOps.IsMultiSelectMode, Mode=TwoWay}"
-                                          ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)"
-                                          Padding="8,8">
+                                          ToolTip.Tip="Toggle multi-select mode (⌘M / Ctrl+M)">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <LucideIcon Kind="Check" Size="12"/>
                                     <TextBlock Text="Select"/>
@@ -74,16 +73,20 @@
 
                     <!-- Bulk Actions Bar (visible when multi-select mode is active) -->
                     <Border Grid.Row="1"
-                            Background="{DynamicResource SurfaceAccent}"
+                            Background="{DynamicResource SurfaceSubtle}"
                             CornerRadius="6"
                             Padding="12,8"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource BorderMuted}"
                             IsVisible="{Binding CurrentMessageOps.IsMultiSelectMode}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                <TextBlock Text="{Binding CurrentMessageOps.SelectedMessagesCount, StringFormat='{}{0} selected'}"
-                                           FontWeight="SemiBold"
-                                           FontSize="13"
-                                           VerticalAlignment="Center"/>
+                        <StackPanel Spacing="8">
+                            <!-- Selection info row -->
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Border Classes="badge-info" Padding="8,4">
+                                    <TextBlock Text="{Binding CurrentMessageOps.SelectedMessagesCount, StringFormat='{}{0} selected'}"
+                                               FontWeight="SemiBold"
+                                               FontSize="12"/>
+                                </Border>
                                 <Button Classes="subtle small"
                                         Content="Select All"
                                         Command="{Binding SelectAllMessagesCommand}"
@@ -93,37 +96,38 @@
                                         Command="{Binding DeselectAllMessagesCommand}"
                                         Padding="8,4"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                            <!-- Action buttons row -->
+                            <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Button Classes="primary small"
                                         Command="{Binding BulkResendMessagesCommand}"
                                         Padding="12,6"
                                         ToolTip.Tip="Resend selected messages">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="Send" Size="12"/>
                                         <TextBlock Text="Resend"/>
                                     </StackPanel>
                                 </Button>
-                                <Button Classes="warning small"
+                                <Button Classes="secondary small"
                                         Command="{Binding ResubmitDeadLetterMessagesAsyncCommand}"
                                         IsVisible="{Binding CurrentNavigation.ShowDeadLetter}"
                                         Padding="12,6"
                                         ToolTip.Tip="Resubmit selected messages from dead letter queue">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="RefreshCw" Size="12"/>
                                         <TextBlock Text="Resubmit"/>
                                     </StackPanel>
                                 </Button>
-                                <Button Classes="danger small"
+                                <Button Classes="danger-outline small"
                                         Command="{Binding BulkDeleteMessagesAsyncCommand}"
                                         Padding="12,6"
                                         ToolTip.Tip="Delete selected messages">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <LucideIcon Kind="X" Size="12"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Trash2" Size="12"/>
                                         <TextBlock Text="Delete"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
-                        </Grid>
+                        </StackPanel>
                     </Border>
 
                     <!-- Search Row -->
