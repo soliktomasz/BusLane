@@ -5,17 +5,28 @@ using BusLane.Models;
 
 namespace BusLane.Converters;
 
+/// <summary>
+/// Converts boolean streaming status to background brush using Fluent 2 semantic colors.
+/// </summary>
 public class BoolToColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool isActive)
         {
-            return isActive 
-                ? new SolidColorBrush(Color.Parse("#E8F5E9")) 
-                : new SolidColorBrush(Color.Parse("#F5F5F5"));
+            // Use Fluent 2 semantic surface colors from theme resources
+            var resourceKey = isActive ? "SurfaceSuccess" : "SurfaceSubtle";
+            if (App.Current?.Resources.TryGetResource(resourceKey, App.Current.ActualThemeVariant, out var resource) == true && resource is SolidColorBrush brush)
+            {
+                return brush;
+            }
         }
-        return new SolidColorBrush(Color.Parse("#F5F5F5"));
+        // Fallback to SurfaceSubtle
+        if (App.Current?.Resources.TryGetResource("SurfaceSubtle", App.Current.ActualThemeVariant, out var fallback) == true && fallback is SolidColorBrush fallbackBrush)
+        {
+            return fallbackBrush;
+        }
+        return new SolidColorBrush(Colors.Transparent);
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -24,17 +35,28 @@ public class BoolToColorConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Converts boolean streaming status to indicator color using Fluent 2 semantic colors.
+/// </summary>
 public class BoolToStatusColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool isActive)
         {
-            return isActive 
-                ? new SolidColorBrush(Color.Parse("#4CAF50")) 
-                : new SolidColorBrush(Color.Parse("#9E9E9E"));
+            // Use Fluent 2 semantic text colors for status indicators
+            var resourceKey = isActive ? "TextSuccess" : "MutedForeground";
+            if (App.Current?.Resources.TryGetResource(resourceKey, App.Current.ActualThemeVariant, out var resource) == true && resource is SolidColorBrush brush)
+            {
+                return brush;
+            }
         }
-        return new SolidColorBrush(Color.Parse("#9E9E9E"));
+        // Fallback to MutedForeground
+        if (App.Current?.Resources.TryGetResource("MutedForeground", App.Current.ActualThemeVariant, out var fallback) == true && fallback is SolidColorBrush fallbackBrush)
+        {
+            return fallbackBrush;
+        }
+        return new SolidColorBrush(Colors.Gray);
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -79,21 +101,35 @@ public class BoolToOpacityConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Converts AlertSeverity to foreground color using Fluent 2 semantic colors.
+/// </summary>
 public class SeverityToColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is AlertSeverity severity)
         {
-            return severity switch
+            string resourceKey = severity switch
             {
-                AlertSeverity.Info => new SolidColorBrush(Color.Parse("#0078D4")),
-                AlertSeverity.Warning => new SolidColorBrush(Color.Parse("#FF8C00")),
-                AlertSeverity.Critical => new SolidColorBrush(Color.Parse("#D13438")),
-                _ => new SolidColorBrush(Color.Parse("#666666"))
+                AlertSeverity.Info => "AccentBrand",
+                AlertSeverity.Warning => "TextWarning",
+                AlertSeverity.Critical => "TextDanger",
+                _ => "SubtleForeground"
             };
+            
+            if (App.Current?.Resources.TryGetResource(resourceKey, App.Current.ActualThemeVariant, out var resource) == true && resource is SolidColorBrush brush)
+            {
+                return brush;
+            }
         }
-        return new SolidColorBrush(Color.Parse("#666666"));
+        
+        // Fallback to SubtleForeground
+        if (App.Current?.Resources.TryGetResource("SubtleForeground", App.Current.ActualThemeVariant, out var fallback) == true && fallback is SolidColorBrush fallbackBrush)
+        {
+            return fallbackBrush;
+        }
+        return new SolidColorBrush(Colors.Gray);
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -102,21 +138,35 @@ public class SeverityToColorConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Converts AlertSeverity to background color using Fluent 2 semantic surface colors.
+/// </summary>
 public class SeverityToBackgroundConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is AlertSeverity severity)
         {
-            return severity switch
+            string resourceKey = severity switch
             {
-                AlertSeverity.Info => new SolidColorBrush(Color.Parse("#E3F2FD")),
-                AlertSeverity.Warning => new SolidColorBrush(Color.Parse("#FFF3E0")),
-                AlertSeverity.Critical => new SolidColorBrush(Color.Parse("#FFEBEE")),
-                _ => new SolidColorBrush(Color.Parse("#F5F5F5"))
+                AlertSeverity.Info => "SurfaceBrand",
+                AlertSeverity.Warning => "SurfaceWarning",
+                AlertSeverity.Critical => "SurfaceDanger",
+                _ => "SurfaceSubtle"
             };
+            
+            if (App.Current?.Resources.TryGetResource(resourceKey, App.Current.ActualThemeVariant, out var resource) == true && resource is SolidColorBrush brush)
+            {
+                return brush;
+            }
         }
-        return new SolidColorBrush(Color.Parse("#F5F5F5"));
+        
+        // Fallback to SurfaceSubtle
+        if (App.Current?.Resources.TryGetResource("SurfaceSubtle", App.Current.ActualThemeVariant, out var fallback) == true && fallback is SolidColorBrush fallbackBrush)
+        {
+            return fallbackBrush;
+        }
+        return new SolidColorBrush(Colors.Transparent);
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

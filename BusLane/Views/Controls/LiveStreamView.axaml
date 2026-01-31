@@ -14,14 +14,19 @@
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="Live Stream" Classes="heading" VerticalAlignment="Center"/>
 
-                            <!-- Status indicator -->
+                            <!-- Status indicator - Fluent 2 compliant -->
                             <Border CornerRadius="4" Padding="8,4"
-                                    Background="{Binding IsStreaming, Converter={StaticResource BoolToColorConverter}}">
+                                    Background="{Binding IsStreaming, Converter={StaticResource BoolToColorConverter}}"
+                                    BorderThickness="1"
+                                    BorderBrush="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <Ellipse Width="8" Height="8"
                                              Fill="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}"/>
                                     <TextBlock Text="{Binding IsStreaming, Converter={StaticResource BoolToStatusTextConverter}}"
-                                               FontSize="12" VerticalAlignment="Center"/>
+                                               FontSize="12" 
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -98,49 +103,60 @@
 
             <!-- Messages List -->
             <Grid Grid.Row="2">
-                <!-- Loading/Connecting indicator -->
+                <!-- Loading/Connecting indicator - Fluent 2 compliant -->
                 <Border IsVisible="{Binding IsConnecting}"
                         VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Padding="24" Background="{DynamicResource SurfaceSubtle}" CornerRadius="8">
-                    <StackPanel Spacing="12" HorizontalAlignment="Center">
+                        Classes="card-elevated"
+                        Padding="32">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center">
                         <ProgressBar IsIndeterminate="True" Width="120" Height="4"/>
-                        <TextBlock Text="Connecting to stream..." FontSize="14" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Connecting to stream..." 
+                                   Classes="body-strong"
+                                   HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Error message -->
+                <!-- Error message - Fluent 2 infobar style -->
                 <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                         VerticalAlignment="Top" Margin="16"
-                        Padding="16" Background="{DynamicResource SurfaceDanger}"
-                        CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource TextDanger}">
+                        Classes="infobar-error">
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <LucideIcon Kind="TriangleAlert" Size="20" Foreground="{DynamicResource TextDanger}"/>
-                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource TextDanger}"
-                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                   Foreground="{DynamicResource TextDanger}"
+                                   VerticalAlignment="Center" 
+                                   TextWrapping="Wrap"
+                                   Classes="body"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Not streaming state - Entity Selection -->
+                <!-- Not streaming state - Entity Selection - Fluent 2 empty state -->
                 <Border IsVisible="{Binding !IsStreaming}"
                         VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Padding="32" Background="{DynamicResource SurfaceSubtle}" CornerRadius="12"
+                        Classes="empty-state"
                         MinWidth="400">
                     <StackPanel Spacing="16" HorizontalAlignment="Center">
-                        <LucideIcon Kind="Radio" Size="32"
-                                  Foreground="{DynamicResource SubtleForeground}" HorizontalAlignment="Center"/>
+                        <Border Background="{DynamicResource SurfaceBrand}" 
+                                CornerRadius="12" 
+                                Padding="16"
+                                HorizontalAlignment="Center">
+                            <LucideIcon Kind="Radio" Size="32"
+                                      Foreground="{DynamicResource AccentBrand}"/>
+                        </Border>
                         <TextBlock Text="Select an entity to stream"
-                                   FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AppForeground}"
+                                   Classes="heading"
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="Choose a queue or topic subscription to start receiving live messages"
-                                   FontSize="13" Foreground="{DynamicResource SubtleForeground}"
-                                   HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                                   Classes="subtitle"
+                                   HorizontalAlignment="Center" 
+                                   TextWrapping="Wrap" 
+                                   TextAlignment="Center"/>
 
                         <!-- Entity selector -->
                         <StackPanel Spacing="12" IsVisible="{Binding HasEntities}">
-                            <!-- Queues section -->
+                            <!-- Queues section - Fluent 2 compliant -->
                             <StackPanel Spacing="8" IsVisible="{Binding AvailableQueues.Count}">
-                                <TextBlock Text="Queues" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
+                                <TextBlock Text="Queues" Classes="field-group-header"/>
                                 <ListBox ItemsSource="{Binding AvailableQueues}"
                                          SelectedItem="{Binding SelectedStreamEntity}"
                                          MaxHeight="150"
@@ -152,28 +168,29 @@
                                     <ListBox.ItemTemplate>
                                         <DataTemplate DataType="models:QueueInfo">
                                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="4">
-                                                <Border Background="{DynamicResource AccentSubtle}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                    <TextBlock Text="Q" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentBrand}"/>
+                                                <Border Classes="entity-icon-queue" VerticalAlignment="Center">
+                                                    <TextBlock Text="Q"/>
                                                 </Border>
                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
-                                                <TextBlock Text="{Binding ActiveMessageCount, StringFormat='({0} msgs)'}"
-                                                           VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SubtleForeground}"/>
+                                                <Border Classes="counter-active" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ActiveMessageCount, StringFormat='{}{0}'}"/>
+                                                </Border>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </StackPanel>
 
-                            <!-- Topics section -->
+                            <!-- Topics section - Fluent 2 compliant -->
                             <StackPanel Spacing="8" IsVisible="{Binding AvailableTopics.Count}">
-                                <TextBlock Text="Topics &amp; Subscriptions" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubtleForeground}"/>
+                                <TextBlock Text="Topics &amp; Subscriptions" Classes="field-group-header"/>
                                 <ItemsControl ItemsSource="{Binding AvailableTopics}" MaxHeight="200">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="models:TopicInfo">
                                             <StackPanel Spacing="4" Margin="0,0,0,8">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <Border Background="{DynamicResource SuccessSubtle}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                        <TextBlock Text="T" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSuccess}"/>
+                                                    <Border Classes="entity-icon-topic" VerticalAlignment="Center">
+                                                        <TextBlock Text="T"/>
                                                     </Border>
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
                                                 </StackPanel>
@@ -189,20 +206,24 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate DataType="models:SubscriptionInfo">
                                                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="4">
-                                                                <Border Background="{DynamicResource WarningSubtle}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                                    <TextBlock Text="S" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextWarning}"/>
+                                                                <Border Classes="entity-icon-subscription" VerticalAlignment="Center">
+                                                                    <TextBlock Text="S"/>
                                                                 </Border>
                                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
-                                                                <TextBlock Text="{Binding ActiveMessageCount, StringFormat='({0} msgs)'}"
-                                                                           VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SubtleForeground}"/>
+                                                                <Border Classes="counter-active" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding ActiveMessageCount, StringFormat='{}{0}'}"/>
+                                                                </Border>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
                                                 </ListBox>
-                                                <TextBlock Text="Expand topic in sidebar to load subscriptions"
-                                                           FontSize="11" Foreground="{DynamicResource MutedForeground}"
-                                                           Margin="24,0,0,0"
-                                                           IsVisible="{Binding !Subscriptions.Count}"/>
+                                                <Border Classes="infobar" Margin="24,0,0,0" IsVisible="{Binding !Subscriptions.Count}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <LucideIcon Kind="Bell" Size="14" Foreground="{DynamicResource AccentBrand}"/>
+                                                        <TextBlock Text="Expand topic in sidebar to load subscriptions"
+                                                                   FontSize="11" Foreground="{DynamicResource SubtleForeground}"/>
+                                                    </StackPanel>
+                                                </Border>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -219,58 +240,61 @@
                                     IsEnabled="{Binding SelectedStreamEntity, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                         </StackPanel>
 
-                        <!-- No entities available -->
-                        <TextBlock Text="No queues or topics available. Please connect to a namespace first."
-                                   FontSize="13" Foreground="{DynamicResource TextDanger}"
-                                   HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
-                                   IsVisible="{Binding !HasEntities}"/>
+                        <!-- No entities available - Fluent 2 infobar style -->
+                        <Border Classes="infobar-error" IsVisible="{Binding !HasEntities}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <LucideIcon Kind="TriangleAlert" Size="16" Foreground="{DynamicResource TextDanger}"/>
+                                <TextBlock Text="No queues or topics available. Please connect to a namespace first."
+                                           Classes="body"
+                                           Foreground="{DynamicResource TextDanger}"
+                                           TextWrapping="Wrap" 
+                                           TextAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 
-                <!-- Messages list -->
+                <!-- Messages list - Fluent 2 compliant -->
                 <ListBox ItemsSource="{Binding FilteredMessages}"
                          SelectedItem="{Binding SelectedMessage}"
                          IsVisible="{Binding IsStreaming}"
-                         Padding="8">
+                         Padding="8"
+                         Classes="entity-list">
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="models:LiveStreamMessage">
-                            <Border Padding="12,12" Margin="0,2" CornerRadius="6"
-                                    Background="{DynamicResource CardBackground}"
-                                    BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
+                            <Border Classes="entity-item" Padding="12">
                                 <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                     <!-- Message ID and time -->
                                     <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding MessageId}" FontWeight="SemiBold" FontSize="13"
-                                                   Foreground="{DynamicResource AppForeground}"/>
-                                        <Border Background="{DynamicResource AccentSubtle}" CornerRadius="4" Padding="6,2"
-                                                BorderThickness="1" BorderBrush="{DynamicResource AccentBrand}">
-                                            <TextBlock Text="{Binding EntityType}" FontSize="11" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="{Binding MessageId}" Classes="body-strong"/>
+                                        <Border Classes="badge-info" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding EntityType}"/>
                                         </Border>
                                     </StackPanel>
                                     <TextBlock Grid.Row="0" Grid.Column="1"
                                                Text="{Binding ReceivedAt, StringFormat='{}{0:HH:mm:ss.fff}'}"
-                                               FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SubtleForeground}"/>
+                                               Classes="caption"/>
 
                                     <!-- Body preview -->
                                     <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
                                                Text="{Binding Body}"
                                                MaxLines="2" TextTrimming="CharacterEllipsis"
-                                               FontSize="12" Foreground="{DynamicResource SubtleForeground}"
-                                               Margin="0,4,0,0"/>
+                                               Classes="body"
+                                               Foreground="{DynamicResource SubtleForeground}"
+                                               Margin="0,6,0,0"/>
 
                                     <!-- Metadata -->
-                                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
-                                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedForeground}">
+                                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+                                        <TextBlock Classes="caption" Foreground="{DynamicResource MutedForeground}">
                                             <Run Text="Seq:"/>
                                             <Run Text="{Binding SequenceNumber}"/>
                                         </TextBlock>
-                                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedForeground}"
+                                        <TextBlock Classes="caption" Foreground="{DynamicResource MutedForeground}"
                                                    IsVisible="{Binding CorrelationId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                             <Run Text="Correlation:"/>
                                             <Run Text="{Binding CorrelationId}"/>
                                         </TextBlock>
-                                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedForeground}"
+                                        <TextBlock Classes="caption" Foreground="{DynamicResource MutedForeground}"
                                                    IsVisible="{Binding SessionId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                             <Run Text="Session:"/>
                                             <Run Text="{Binding SessionId}"/>
