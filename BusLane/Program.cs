@@ -1,5 +1,6 @@
 namespace BusLane;
 
+using System.Text.Json;
 using Avalonia;
 using Avalonia.ReactiveUI;
 using Microsoft.Extensions.Configuration;
@@ -31,12 +32,17 @@ class Program
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
             .Build();
 
+        // Check if telemetry is enabled in user preferences
+        var telemetryEnabled = IsTelemetryEnabled();
+
         // Get Sentry DSN from configuration or environment variable
-        var sentryDsn = configuration["Sentry:Dsn"] 
-                        ?? Environment.GetEnvironmentVariable("SENTRY_DSN") 
-                        ?? "";
-        
-        // Initialize Sentry SDK
+        var sentryDsn = telemetryEnabled
+            ? configuration["Sentry:Dsn"]
+              ?? Environment.GetEnvironmentVariable("SENTRY_DSN")
+              ?? ""
+            : "";
+
+        // Initialize Sentry SDK only if telemetry is enabled
         using var sentryDisposable = SentrySdk.Init(o =>
         {
             o.Dsn = sentryDsn;
@@ -46,7 +52,7 @@ class Program
             o.AutoSessionTracking = true;
             o.AttachStacktrace = true;
         });
-        
+
         // Configure Serilog with Sentry sink
         ConfigureLogging(sentryDsn);
         
@@ -166,6 +172,36 @@ class Program
 
         // ViewModels for Live Stream and Alerts
         services.AddTransient<LiveStreamViewModel>();
+    }
+
+    /// <summary>
+    /// Reads the telemetry preference directly from the preferences file.
+    /// This runs before DI is available, so we read the JSON file manually.
+    /// </summary>
+    private static bool IsTelemetryEnabled()
+    {
+        try
+        {
+            var prefsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "BusLane",
+                "preferences.json");
+
+            if (!File.Exists(prefsPath))
+                return false; // Default: disabled (opt-in)
+
+            var json = File.ReadAllText(prefsPath);
+            using var doc = JsonDocument.Parse(json);
+
+            if (doc.RootElement.TryGetProperty("EnableTelemetry", out var prop))
+                return prop.GetBoolean();
+        }
+        catch
+        {
+            // If anything fails, default to disabled (opt-in)
+        }
+
+        return false;
     }
 
     public static AppBuilder BuildAvaloniaApp()

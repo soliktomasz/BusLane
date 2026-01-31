@@ -290,6 +290,42 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Privacy Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,16"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <LucideIcon Kind="Shield" Size="20"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Privacy" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Telemetry Toggle -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Send error reports" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Help improve BusLane by sending anonymous crash reports (requires restart)"
+                                                           Classes="caption" FontSize="12" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.EnableTelemetry}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Updates Section -->
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>

@@ -24,6 +24,9 @@ public class PreferencesService : IPreferencesService
     public bool RestoreTabsOnStartup { get; set; } = true;
     public string OpenTabsJson { get; set; } = "[]";
 
+    // Privacy
+    public bool EnableTelemetry { get; set; }
+
     // Update preferences
     public bool AutoCheckForUpdates { get; set; } = true;
     public string? SkippedUpdateVersion { get; set; }
@@ -58,6 +61,7 @@ public class PreferencesService : IPreferencesService
                     LiveStreamPollingIntervalSeconds = data.LiveStreamPollingIntervalSeconds;
                     RestoreTabsOnStartup = data.RestoreTabsOnStartup;
                     OpenTabsJson = data.OpenTabsJson ?? "[]";
+                    EnableTelemetry = data.EnableTelemetry;
                     AutoCheckForUpdates = data.AutoCheckForUpdates;
                     SkippedUpdateVersion = data.SkippedUpdateVersion;
                     UpdateRemindLaterDate = data.UpdateRemindLaterDate;
@@ -90,6 +94,7 @@ public class PreferencesService : IPreferencesService
                 LiveStreamPollingIntervalSeconds = LiveStreamPollingIntervalSeconds,
                 RestoreTabsOnStartup = RestoreTabsOnStartup,
                 OpenTabsJson = OpenTabsJson,
+                EnableTelemetry = EnableTelemetry,
                 AutoCheckForUpdates = AutoCheckForUpdates,
                 SkippedUpdateVersion = SkippedUpdateVersion,
                 UpdateRemindLaterDate = UpdateRemindLaterDate
@@ -123,6 +128,7 @@ public class PreferencesService : IPreferencesService
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string? OpenTabsJson { get; set; }
+        public bool EnableTelemetry { get; set; }
         public bool AutoCheckForUpdates { get; set; } = true;
         public string? SkippedUpdateVersion { get; set; }
         public DateTime? UpdateRemindLaterDate { get; set; }

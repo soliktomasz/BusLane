@@ -20,6 +20,9 @@ public interface IPreferencesService
     bool RestoreTabsOnStartup { get; set; }
     string OpenTabsJson { get; set; }
 
+    // Privacy
+    bool EnableTelemetry { get; set; }
+
     // Update preferences
     bool AutoCheckForUpdates { get; set; }
     string? SkippedUpdateVersion { get; set; }

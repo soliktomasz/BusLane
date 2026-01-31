@@ -23,6 +23,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _enableMessagePreview = true;
     [ObservableProperty] private string _theme = "Light";
     [ObservableProperty] private bool _restoreTabsOnStartup = true;
+    [ObservableProperty] private bool _enableTelemetry;
     [ObservableProperty] private bool _autoCheckForUpdates = true;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
@@ -73,6 +74,7 @@ public partial class SettingsViewModel : ViewModelBase
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
             RestoreTabsOnStartup = _preferencesService.RestoreTabsOnStartup;
+            EnableTelemetry = _preferencesService.EnableTelemetry;
             AutoCheckForUpdates = _preferencesService.AutoCheckForUpdates;
             // Note: _isLoading is set to false via Dispatcher in constructor (normal case)
         }
@@ -99,6 +101,7 @@ public partial class SettingsViewModel : ViewModelBase
         _preferencesService.EnableMessagePreview = EnableMessagePreview;
         _preferencesService.Theme = themeToApply;
         _preferencesService.RestoreTabsOnStartup = RestoreTabsOnStartup;
+        _preferencesService.EnableTelemetry = EnableTelemetry;
         _preferencesService.AutoCheckForUpdates = AutoCheckForUpdates;
         _preferencesService.Save();
         
@@ -143,6 +146,7 @@ public partial class SettingsViewModel : ViewModelBase
         EnableMessagePreview = true;
         Theme = "Light";
         RestoreTabsOnStartup = true;
+        EnableTelemetry = false;
         AutoCheckForUpdates = true;
     }
 }
