@@ -21,37 +21,32 @@
         <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
     </Window.Resources>
 
-    <Grid ColumnDefinitions="Auto,Auto,*">
+    <Grid ColumnDefinitions="Auto,*">
         <!-- Navigation Pane (Fluent 2 Sidebar) -->
         <controls:NavigationSidebar Grid.Column="0"
                                     IsVisible="{Binding IsNavigationPanelVisible}"/>
 
-        <!-- Expand/Collapse Toggle Button -->
-        <Border Grid.Column="1"
-                Background="{DynamicResource SurfaceSubtle}"
-                BorderBrush="{DynamicResource BorderDefault}"
-                BorderThickness="0,0,1,0"
-                VerticalAlignment="Stretch">
-            <Button Classes="subtle"
-                    Command="{Binding ToggleNavigationPanelCommand}"
-                    ToolTip.Tip="Toggle navigation panel"
-                    Padding="4,0"
-                    Width="20"
-                    VerticalAlignment="Stretch"
-                    VerticalContentAlignment="Center">
-                <Panel>
-                    <LucideIcon Kind="ChevronLeft" Size="12"
-                              IsVisible="{Binding IsNavigationPanelVisible}"/>
-                    <LucideIcon Kind="ChevronRight" Size="12"
-                              IsVisible="{Binding !IsNavigationPanelVisible}"/>
-                </Panel>
-            </Button>
-        </Border>
-
         <!-- Main Content -->
-        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
-            <!-- Tab Bar -->
-            <controls:TabBarView Grid.Row="0"/>
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*">
+            <!-- Tab Bar with Show Panel Button -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                <!-- Show Panel Button (visible when panel is hidden and tabs exist) -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource TabNavBackground}"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="0,0,1,1"
+                        Padding="12,8"
+                        IsVisible="{Binding !IsNavigationPanelVisible}">
+                    <Button Classes="subtle icon-button"
+                            Command="{Binding ToggleNavigationPanelCommand}"
+                            ToolTip.Tip="Show navigation panel"
+                            Padding="6">
+                        <LucideIcon Kind="PanelLeftOpen" Size="16"/>
+                    </Button>
+                </Border>
+                
+                <controls:TabBarView Grid.Column="1"/>
+            </Grid>
 
             <!-- Update Notification Banner -->
             <controls:UpdateNotificationView Grid.Row="1"
