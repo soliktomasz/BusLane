@@ -73,10 +73,9 @@ public class NotificationService : INotificationService
 
     private static void ShowMacNotification(string title, string message)
     {
-        // Use osascript to display notification on macOS
+        // Pass AppleScript via stdin to avoid shell argument injection
         var escapedTitle = title.Replace("\\", "\\\\").Replace("\"", "\\\"");
         var escapedMessage = message.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n");
-
         var script = $"display notification \"{escapedMessage}\" with title \"{escapedTitle}\"";
 
         var process = new Process
@@ -84,20 +83,26 @@ public class NotificationService : INotificationService
             StartInfo = new ProcessStartInfo
             {
                 FileName = "osascript",
-                Arguments = $"-e \"{script.Replace("\"", "\\\"")}\"",
-                UseShellExecute = true,
-                CreateNoWindow = true
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             }
         };
 
         process.Start();
+        process.StandardInput.Write(script);
+        process.StandardInput.Close();
     }
 
     private static void ShowWindowsNotification(string title, string message)
     {
-        // Use PowerShell to display Windows toast notification
-        var escapedTitle = title.Replace("'", "''");
-        var escapedMessage = message.Replace("'", "''").Replace("\n", "`n");
+        // XML-escape values to prevent injection in toast template
+        var xmlTitle = System.Security.SecurityElement.Escape(
+            title.Replace("\r", "").Replace("\n", " ")) ?? title;
+        var xmlMessage = System.Security.SecurityElement.Escape(
+            message.Replace("\r", "").Replace("\n", " ")) ?? message;
 
         var script = $@"
             [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
@@ -106,8 +111,8 @@ public class NotificationService : INotificationService
             <toast>
                 <visual>
                     <binding template=""ToastGeneric"">
-                        <text>{escapedTitle}</text>
-                        <text>{escapedMessage}</text>
+                        <text>{xmlTitle}</text>
+                        <text>{xmlMessage}</text>
                     </binding>
                 </visual>
             </toast>
@@ -118,42 +123,42 @@ public class NotificationService : INotificationService
             [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('BusLane').Show($toast)
         ";
 
+        // Pass script via stdin to avoid command-line argument injection
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell",
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"",
+                Arguments = "-NoProfile -ExecutionPolicy Bypass -Command -",
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             }
         };
 
         process.Start();
+        process.StandardInput.Write(script);
+        process.StandardInput.Close();
         process.WaitForExit(5000); // Wait max 5 seconds
     }
 
     private static void ShowLinuxNotification(string title, string message)
     {
-        // Use notify-send for Linux notifications
-        var escapedTitle = title.Replace("\"", "\\\"");
-        var escapedMessage = message.Replace("\"", "\\\"");
-
-        var process = new Process
+        // Use ArgumentList to pass arguments without shell interpretation
+        var psi = new ProcessStartInfo
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "notify-send",
-                Arguments = $"\"{escapedTitle}\" \"{escapedMessage}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            }
+            FileName = "notify-send",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
         };
+        psi.ArgumentList.Add(title);
+        psi.ArgumentList.Add(message);
 
+        var process = new Process { StartInfo = psi };
         process.Start();
         process.WaitForExit(2000); // Wait max 2 seconds
     }

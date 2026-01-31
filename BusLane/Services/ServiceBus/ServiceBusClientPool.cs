@@ -30,7 +30,7 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
         {
             Log.Debug("Creating new ServiceBusClient for connection key {Key}", k[..8]);
             var client = new ServiceBusClient(connectionString);
-            return new PooledClient(client, 1);
+            return new PooledClient(client, 0);
         });
 
         Interlocked.Increment(ref pooled.ReferenceCount);

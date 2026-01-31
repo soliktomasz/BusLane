@@ -19,6 +19,9 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     private readonly Action<string> _onStatusUpdate;
     private readonly Func<Task>? _onFavoritesChanged;
 
+    private const string ConnectionStringMask = "••••••••••••••••••••••••••••••••";
+    private string? _originalEditConnectionString;
+
     [ObservableProperty] private string _newConnectionName = "";
     [ObservableProperty] private string _newConnectionString = "";
     [ObservableProperty] private bool _isValidating;
@@ -96,6 +99,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         IsAddingConnection = true;
         IsEditingConnection = false;
         EditingConnection = null;
+        _originalEditConnectionString = null;
         NewConnectionName = "";
         NewConnectionString = "";
         NewConnectionEnvironment = ConnectionEnvironment.None;
@@ -111,7 +115,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         IsEditingConnection = true;
         EditingConnection = connection;
         NewConnectionName = connection.Name;
-        NewConnectionString = connection.ConnectionString;
+        _originalEditConnectionString = connection.ConnectionString;
+        NewConnectionString = ConnectionStringMask;
         NewConnectionEnvironment = connection.Environment;
         ValidationMessage = null;
         DetectedInfo = null;
@@ -124,10 +129,22 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         IsAddingConnection = false;
         IsEditingConnection = false;
         EditingConnection = null;
+        _originalEditConnectionString = null;
         ValidationMessage = null;
         DetectedInfo = null;
         CheckConnectionResult = null;
         NewConnectionEnvironment = ConnectionEnvironment.None;
+    }
+
+    /// <summary>
+    /// Returns the original connection string when editing with a masked value,
+    /// or the user-entered value for new connections.
+    /// </summary>
+    private string ResolveConnectionString()
+    {
+        if (IsEditingConnection && NewConnectionString == ConnectionStringMask && _originalEditConnectionString != null)
+            return _originalEditConnectionString;
+        return NewConnectionString;
     }
 
     [RelayCommand]
@@ -145,6 +162,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             return;
         }
 
+        var effectiveConnectionString = ResolveConnectionString();
+
         IsValidating = true;
         ValidationMessage = "Validating connection...";
         DetectedInfo = null;
@@ -157,7 +176,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
         try
         {
-            var ops = _operationsFactory.CreateFromConnectionString(NewConnectionString);
+            var ops = _operationsFactory.CreateFromConnectionString(effectiveConnectionString);
             var (isValid, _, endpoint, errorMessage) = await ops.ValidateAsync();
 
             if (!isValid)
@@ -188,7 +207,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 {
                     Id = EditingConnection.Id,
                     Name = NewConnectionName,
-                    ConnectionString = NewConnectionString,
+                    ConnectionString = effectiveConnectionString,
                     Type = ConnectionType.Namespace,
                     EntityName = null,
                     CreatedAt = EditingConnection.CreatedAt,
@@ -217,7 +236,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = NewConnectionName,
-                    ConnectionString = NewConnectionString,
+                    ConnectionString = effectiveConnectionString,
                     Type = ConnectionType.Namespace,
                     EntityName = null,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -238,6 +257,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             IsAddingConnection = false;
             IsEditingConnection = false;
             EditingConnection = null;
+            _originalEditConnectionString = null;
             ValidationMessage = null;
             DetectedInfo = null;
             CheckConnectionResult = null;
@@ -272,13 +292,15 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             return;
         }
 
+        var effectiveConnectionString = ResolveConnectionString();
+
         IsCheckingConnection = true;
         CheckConnectionResult = null;
         DetectedInfo = null;
 
         try
         {
-            var ops = _operationsFactory.CreateFromConnectionString(NewConnectionString);
+            var ops = _operationsFactory.CreateFromConnectionString(effectiveConnectionString);
             var (isValid, _, endpoint, errorMessage) = await ops.ValidateAsync();
 
             if (!isValid)
