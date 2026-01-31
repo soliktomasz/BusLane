@@ -7,6 +7,8 @@
 
     <Border Classes="modal-overlay">
         <Border Classes="modal modal-large"
+                Width="800"
+                Height="650"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Padding="0">
