@@ -33,5 +33,10 @@ public interface IMetricsService : IDisposable
     /// Event raised when new metrics are recorded
     /// </summary>
     event EventHandler<MetricDataPoint>? MetricRecorded;
+    
+    /// <summary>
+    /// Event raised when a batch of metrics is recorded (debounced for performance)
+    /// </summary>
+    event EventHandler<IReadOnlyList<MetricDataPoint>>? MetricsBatchRecorded;
 }
 

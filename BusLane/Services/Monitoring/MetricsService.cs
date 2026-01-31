@@ -102,15 +102,32 @@ internal sealed class MetricDataList : IDisposable
 public class MetricsService : IMetricsService, IDisposable
 {
     internal const int MaxPointsPerMetric = 1000;
+    private const int BatchIntervalMilliseconds = 100;
+    private const int MaxBatchSize = 50;
+    
     private readonly ConcurrentDictionary<string, MetricDataList> _metrics = new();
+    private readonly List<MetricDataPoint> _pendingMetrics = new();
+    private readonly object _batchLock = new();
+    private readonly System.Timers.Timer _batchTimer;
     private bool _disposed;
 
     public event EventHandler<MetricDataPoint>? MetricRecorded;
+    public event EventHandler<IReadOnlyList<MetricDataPoint>>? MetricsBatchRecorded;
+
+    public MetricsService()
+    {
+        _batchTimer = new System.Timers.Timer(BatchIntervalMilliseconds);
+        _batchTimer.Elapsed += OnBatchTimerElapsed;
+        _batchTimer.AutoReset = false;
+    }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
+
+        _batchTimer?.Stop();
+        _batchTimer?.Dispose();
 
         foreach (var kvp in _metrics)
         {
@@ -137,7 +154,44 @@ public class MetricsService : IMetricsService, IDisposable
             }
         );
 
+        // Add to batch and start timer if needed
+        lock (_batchLock)
+        {
+            _pendingMetrics.Add(dataPoint);
+            
+            if (_pendingMetrics.Count >= MaxBatchSize)
+            {
+                // Flush immediately if batch is full
+                FlushBatch();
+            }
+            else if (!_batchTimer.Enabled)
+            {
+                _batchTimer.Start();
+            }
+        }
+
+        // Still fire individual event for backward compatibility
         MetricRecorded?.Invoke(this, dataPoint);
+    }
+
+    private void OnBatchTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        FlushBatch();
+    }
+
+    private void FlushBatch()
+    {
+        List<MetricDataPoint> batch;
+        lock (_batchLock)
+        {
+            if (_pendingMetrics.Count == 0) return;
+            
+            batch = new List<MetricDataPoint>(_pendingMetrics);
+            _pendingMetrics.Clear();
+            _batchTimer.Stop();
+        }
+
+        MetricsBatchRecorded?.Invoke(this, batch.AsReadOnly());
     }
 
     public IEnumerable<MetricDataPoint> GetMetricHistory(string entityName, string metricName, TimeSpan duration)

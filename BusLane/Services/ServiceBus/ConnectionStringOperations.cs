@@ -7,24 +7,26 @@ using Serilog;
 
 /// <summary>
 /// Service Bus operations using a connection string for authentication.
-/// Caches ServiceBusClient and ServiceBusAdministrationClient for connection pooling.
+/// Uses connection pooling to share clients across tabs with the same connection string.
 /// </summary>
 public class ConnectionStringOperations : IConnectionStringOperations
 {
     private readonly string _connectionString;
-    private readonly Lazy<ServiceBusClient> _client;
+    private readonly ServiceBusClientPool _clientPool;
     private readonly Lazy<ServiceBusAdministrationClient> _adminClient;
+    private ServiceBusClient? _client;
     private bool _disposed;
 
-    public ConnectionStringOperations(string connectionString)
+    public ConnectionStringOperations(string connectionString, ServiceBusClientPool? clientPool = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         _connectionString = connectionString;
-        _client = new Lazy<ServiceBusClient>(() => new ServiceBusClient(_connectionString));
-        _adminClient = new Lazy<ServiceBusAdministrationClient>(() => new ServiceBusAdministrationClient(_connectionString));
+        _clientPool = clientPool ?? new ServiceBusClientPool();
+        _adminClient = new Lazy<ServiceBusAdministrationClient>(() => 
+            _clientPool.GetAdminClient(_connectionString));
     }
 
-    private ServiceBusClient Client => _client.Value;
+    private ServiceBusClient Client => _client ??= _clientPool.GetClient(_connectionString);
     private ServiceBusAdministrationClient AdminClient => _adminClient.Value;
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
@@ -246,11 +248,14 @@ public class ConnectionStringOperations : IConnectionStringOperations
         if (_disposed) return;
         _disposed = true;
 
-        if (_client.IsValueCreated)
+        // Return the client to the pool instead of disposing directly
+        if (_client != null)
         {
-            await _client.Value.DisposeAsync();
+            _clientPool.ReturnClient(_connectionString, _client);
         }
+        
         // ServiceBusAdministrationClient doesn't implement IAsyncDisposable
+        // It's lightweight and will be garbage collected
     }
 
     #region Private Helpers

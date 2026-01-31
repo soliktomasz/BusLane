@@ -23,20 +23,24 @@ public interface IServiceBusOperationsFactory
 
 /// <summary>
 /// Default implementation of the operations factory.
+/// Manages connection pooling for efficient resource reuse.
 /// </summary>
-public class ServiceBusOperationsFactory : IServiceBusOperationsFactory
+public class ServiceBusOperationsFactory : IServiceBusOperationsFactory, IDisposable
 {
     private readonly Func<ArmClient?> _getArmClient;
+    private readonly ServiceBusClientPool _clientPool;
+    private bool _disposed;
 
     public ServiceBusOperationsFactory(Func<ArmClient?> getArmClient)
     {
         _getArmClient = getArmClient;
+        _clientPool = new ServiceBusClientPool();
     }
 
     public IConnectionStringOperations CreateFromConnectionString(string connectionString)
     {
         Log.Debug("Creating Service Bus operations from connection string");
-        return new ConnectionStringOperations(connectionString);
+        return new ConnectionStringOperations(connectionString, _clientPool);
     }
 
     public IAzureCredentialOperations CreateFromAzureCredential(string endpoint, string namespaceId, TokenCredential credential)
@@ -55,5 +59,12 @@ public class ServiceBusOperationsFactory : IServiceBusOperationsFactory
             credential,
             () => armClient.GetServiceBusNamespaceResource(new ResourceIdentifier(namespaceId))
         );
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _clientPool.Dispose();
     }
 }
