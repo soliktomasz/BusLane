@@ -1,6 +1,7 @@
 namespace BusLane.Services.ServiceBus;
 
 using BusLane.Models;
+using Azure.Messaging.ServiceBus;
 
 /// <summary>
 /// Unified interface for all Service Bus operations.
@@ -9,6 +10,12 @@ using BusLane.Models;
 /// </summary>
 public interface IServiceBusOperations : IAsyncDisposable
 {
+    /// <summary>
+    /// Gets the underlying ServiceBusClient for this operations instance.
+    /// Used for live streaming scenarios requiring direct access to the client.
+    /// </summary>
+    ServiceBusClient GetClient();
+
     // Entity discovery
     Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default);
     Task<QueueInfo?> GetQueueInfoAsync(string queueName, CancellationToken ct = default);

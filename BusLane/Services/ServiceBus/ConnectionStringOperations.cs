@@ -14,7 +14,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
     private readonly string _connectionString;
     private readonly ServiceBusClientPool _clientPool;
     private readonly Lazy<ServiceBusAdministrationClient> _adminClient;
-    private ServiceBusClient? _client;
+    private readonly Lazy<ServiceBusClient> _client;
     private bool _disposed;
 
     public ConnectionStringOperations(string connectionString, ServiceBusClientPool? clientPool = null)
@@ -22,11 +22,12 @@ public class ConnectionStringOperations : IConnectionStringOperations
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         _connectionString = connectionString;
         _clientPool = clientPool ?? new ServiceBusClientPool();
-        _adminClient = new Lazy<ServiceBusAdministrationClient>(() => 
+        _adminClient = new Lazy<ServiceBusAdministrationClient>(() =>
             _clientPool.GetAdminClient(_connectionString));
+        _client = new Lazy<ServiceBusClient>(() => _clientPool.GetClient(_connectionString));
     }
 
-    private ServiceBusClient Client => _client ??= _clientPool.GetClient(_connectionString);
+    public ServiceBusClient GetClient() => _client.Value;
     private ServiceBusAdministrationClient AdminClient => _adminClient.Value;
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
@@ -178,8 +179,8 @@ public class ConnectionStringOperations : IConnectionStringOperations
         bool requiresSession = false, CancellationToken ct = default)
     {
         var messages = requiresSession
-            ? await ServiceBusOperations.PeekSessionMessagesAsync(Client, entityName, subscription, count, deadLetter, ct)
-            : await ServiceBusOperations.PeekStandardMessagesAsync(Client, entityName, subscription, count, deadLetter, ct);
+            ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, count, deadLetter, ct)
+            : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, deadLetter, ct);
 
         return messages.Select(ServiceBusOperations.MapToMessageInfo);
     }
@@ -192,7 +193,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
         TimeSpan? timeToLive = null, DateTimeOffset? scheduledEnqueueTime = null,
         CancellationToken ct = default)
     {
-        await using var sender = Client.CreateSender(entityName);
+        await using var sender = GetClient().CreateSender(entityName);
 
         var msg = new ServiceBusMessage(body);
         ServiceBusOperations.ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
@@ -203,21 +204,21 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task PurgeMessagesAsync(string entityName, string? subscription, bool deadLetter, CancellationToken ct = default)
     {
-        await ServiceBusOperations.PurgeMessagesAsync(Client, entityName, subscription, deadLetter, ct);
+        await ServiceBusOperations.PurgeMessagesAsync(GetClient(), entityName, subscription, deadLetter, ct);
     }
 
     public async Task<int> DeleteMessagesAsync(
         string entityName, string? subscription, IEnumerable<long> sequenceNumbers,
         bool deadLetter = false, CancellationToken ct = default)
     {
-        return await ServiceBusOperations.DeleteMessagesAsync(Client, entityName, subscription, sequenceNumbers, deadLetter, ct);
+        return await ServiceBusOperations.DeleteMessagesAsync(GetClient(), entityName, subscription, sequenceNumbers, deadLetter, ct);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
         var messageList = messages.ToList();
         Log.Debug("Resending {Count} messages to {EntityName}", messageList.Count, entityName);
-        var resent = await ServiceBusOperations.ResendMessagesAsync(Client, entityName, messageList, ct);
+        var resent = await ServiceBusOperations.ResendMessagesAsync(GetClient(), entityName, messageList, ct);
         Log.Information("Resent {ResentCount} messages to {EntityName}", resent, entityName);
         return resent;
     }
@@ -227,7 +228,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
     {
         var messageList = messages.ToList();
         Log.Debug("Resubmitting {Count} dead letter messages from {EntityName}", messageList.Count, entityName);
-        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(Client, entityName, subscription, messageList, ct);
+        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(GetClient(), entityName, subscription, messageList, ct);
         Log.Information("Resubmitted {ResubmittedCount} dead letter messages from {EntityName}", resubmitted, entityName);
         return resubmitted;
     }
@@ -262,11 +263,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
         _disposed = true;
 
         // Return the client to the pool instead of disposing directly
-        if (_client != null)
+        if (_client.IsValueCreated)
         {
-            _clientPool.ReturnClient(_connectionString, _client);
+            await _clientPool.ReturnClientAsync(_connectionString, _client.Value).ConfigureAwait(false);
         }
-        
+
         // ServiceBusAdministrationClient doesn't implement IAsyncDisposable
         // It's lightweight and will be garbage collected
     }

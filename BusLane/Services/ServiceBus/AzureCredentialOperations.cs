@@ -40,7 +40,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         Log.Debug("AzureCredentialOperations initialized for endpoint {Endpoint}", _endpoint);
     }
 
-    private ServiceBusClient Client => _client.Value;
+    public ServiceBusClient GetClient() => _client.Value;
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
     {
@@ -164,8 +164,8 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         entityName = NormalizeEntityPath(entityName);
 
         var messages = requiresSession
-            ? await ServiceBusOperations.PeekSessionMessagesAsync(Client, entityName, subscription, count, deadLetter, ct)
-            : await ServiceBusOperations.PeekStandardMessagesAsync(Client, entityName, subscription, count, deadLetter, ct);
+            ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, count, deadLetter, ct)
+            : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, deadLetter, ct);
 
         return messages.Select(ServiceBusOperations.MapToMessageInfo);
     }
@@ -179,7 +179,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         CancellationToken ct = default)
     {
         Log.Debug("Sending message to {EntityName} via Azure credential", entityName);
-        await using var sender = Client.CreateSender(entityName);
+        await using var sender = GetClient().CreateSender(entityName);
 
         var msg = new ServiceBusMessage(body);
         ServiceBusOperations.ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
@@ -193,7 +193,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         Log.Information("Purging messages from {EntityName}{Subscription} (DeadLetter: {DeadLetter})",
             entityName, subscription != null ? $"/{subscription}" : "", deadLetter);
-        await ServiceBusOperations.PurgeMessagesAsync(Client, entityName, subscription, deadLetter, ct);
+        await ServiceBusOperations.PurgeMessagesAsync(GetClient(), entityName, subscription, deadLetter, ct);
         Log.Information("Purge completed for {EntityName}", entityName);
     }
 
@@ -203,7 +203,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         var sequenceList = sequenceNumbers.ToList();
         Log.Debug("Deleting {Count} messages from {EntityName}", sequenceList.Count, entityName);
-        var deleted = await ServiceBusOperations.DeleteMessagesAsync(Client, entityName, subscription, sequenceList, deadLetter, ct);
+        var deleted = await ServiceBusOperations.DeleteMessagesAsync(GetClient(), entityName, subscription, sequenceList, deadLetter, ct);
         Log.Information("Deleted {DeletedCount} messages from {EntityName}", deleted, entityName);
         return deleted;
     }
@@ -212,7 +212,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         var messageList = messages.ToList();
         Log.Debug("Resending {Count} messages to {EntityName}", messageList.Count, entityName);
-        var resent = await ServiceBusOperations.ResendMessagesAsync(Client, entityName, messageList, ct);
+        var resent = await ServiceBusOperations.ResendMessagesAsync(GetClient(), entityName, messageList, ct);
         Log.Information("Resent {ResentCount} messages to {EntityName}", resent, entityName);
         return resent;
     }
@@ -222,7 +222,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         var messageList = messages.ToList();
         Log.Debug("Resubmitting {Count} dead letter messages from {EntityName}", messageList.Count, entityName);
-        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(Client, entityName, subscription, messageList, ct);
+        var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(GetClient(), entityName, subscription, messageList, ct);
         Log.Information("Resubmitted {ResubmittedCount} dead letter messages from {EntityName}", resubmitted, entityName);
         return resubmitted;
     }

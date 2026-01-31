@@ -11,7 +11,7 @@ using Serilog;
 /// A lightweight connection pool for Service Bus clients that enables sharing
 /// connections across multiple tabs/operations with the same connection string.
 /// </summary>
-public sealed class ServiceBusClientPool : IDisposable
+public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, PooledClient> _clients = new();
     private bool _disposed;
@@ -49,9 +49,9 @@ public sealed class ServiceBusClientPool : IDisposable
     }
 
     /// <summary>
-    /// Returns a client to the pool, disposing it if no longer referenced.
+    /// Returns a client to the pool, disposing it asynchronously if no longer referenced.
     /// </summary>
-    public void ReturnClient(string connectionString, ServiceBusClient client)
+    public async ValueTask ReturnClientAsync(string connectionString, ServiceBusClient client)
     {
         if (_disposed) return;
 
@@ -67,7 +67,14 @@ public sealed class ServiceBusClientPool : IDisposable
                 if (_clients.TryRemove(key, out var removed))
                 {
                     Log.Debug("Disposing pooled ServiceBusClient for key {Key}", key[..8]);
-                    removed.Client.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(5));
+                    try
+                    {
+                        await removed.Client.DisposeAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Error disposing client for key {Key}", key[..8]);
+                    }
                 }
             }
         }
@@ -84,6 +91,10 @@ public sealed class ServiceBusClientPool : IDisposable
         );
     }
 
+    /// <summary>
+    /// Synchronously disposes all clients in the pool.
+    /// Prefer DisposeAsync for proper async cleanup.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
@@ -95,7 +106,32 @@ public sealed class ServiceBusClientPool : IDisposable
         {
             try
             {
-                kvp.Value.Client.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(10));
+                kvp.Value.Client.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Error disposing client for key {Key}", kvp.Key[..8]);
+            }
+        }
+        
+        _clients.Clear();
+    }
+
+    /// <summary>
+    /// Asynchronously disposes all clients in the pool.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        Log.Information("Disposing ServiceBusClientPool with {Count} clients", _clients.Count);
+        
+        foreach (var kvp in _clients)
+        {
+            try
+            {
+                await kvp.Value.Client.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {

@@ -2,7 +2,7 @@ namespace BusLane.Services.Storage;
 
 using System.Text.Json;
 using BusLane.Models;
-using Infrastructure;
+using BusLane.Services.Infrastructure;
 using Serilog;
 
 public class ConnectionStorageService : IConnectionStorageService
@@ -15,6 +15,7 @@ public class ConnectionStorageService : IConnectionStorageService
     };
 
     private readonly IEncryptionService _encryptionService;
+    private readonly object _lock = new();
     private List<SavedConnection> _connections = [];
     private bool _loaded;
 
@@ -27,16 +28,22 @@ public class ConnectionStorageService : IConnectionStorageService
     public async Task<IEnumerable<SavedConnection>> GetConnectionsAsync()
     {
         await LoadConnectionsAsync();
-        return _connections.AsReadOnly();
+        lock (_lock)
+        {
+            return _connections.ToList().AsReadOnly();
+        }
     }
 
     public async Task SaveConnectionAsync(SavedConnection connection)
     {
         await LoadConnectionsAsync();
 
-        // Remove existing connection with same ID if exists
-        _connections.RemoveAll(c => c.Id == connection.Id);
-        _connections.Add(connection);
+        lock (_lock)
+        {
+            // Remove existing connection with same ID if exists
+            _connections.RemoveAll(c => c.Id == connection.Id);
+            _connections.Add(connection);
+        }
 
         await PersistConnectionsAsync();
     }
@@ -44,20 +51,33 @@ public class ConnectionStorageService : IConnectionStorageService
     public async Task DeleteConnectionAsync(string connectionId)
     {
         await LoadConnectionsAsync();
-        _connections.RemoveAll(c => c.Id == connectionId);
+
+        lock (_lock)
+        {
+            _connections.RemoveAll(c => c.Id == connectionId);
+        }
+
         await PersistConnectionsAsync();
     }
 
     public async Task<SavedConnection?> GetConnectionAsync(string connectionId)
     {
         await LoadConnectionsAsync();
-        return _connections.FirstOrDefault(c => c.Id == connectionId);
+
+        lock (_lock)
+        {
+            return _connections.FirstOrDefault(c => c.Id == connectionId);
+        }
     }
 
     public async Task ClearAllConnectionsAsync()
     {
-        _connections.Clear();
-        _loaded = true;
+        lock (_lock)
+        {
+            _connections.Clear();
+            _loaded = true;
+        }
+
         await PersistConnectionsAsync();
     }
 
@@ -66,10 +86,15 @@ public class ConnectionStorageService : IConnectionStorageService
         if (_loaded)
             return;
 
+        List<SavedConnection>? loadedConnections = null;
+
         if (!File.Exists(AppPaths.Connections))
         {
-            _connections = [];
-            _loaded = true;
+            lock (_lock)
+            {
+                _connections = [];
+                _loaded = true;
+            }
             return;
         }
 
@@ -78,7 +103,7 @@ public class ConnectionStorageService : IConnectionStorageService
             var json = await File.ReadAllTextAsync(AppPaths.Connections);
             var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, JsonOptions) ?? [];
 
-            _connections = storedConnections
+            loadedConnections = storedConnections
                 .Select(stored =>
                 {
                     // Decrypt the connection string
@@ -118,34 +143,43 @@ public class ConnectionStorageService : IConnectionStorageService
             try
             {
                 var json = await File.ReadAllTextAsync(AppPaths.Connections);
-                _connections = JsonSerializer.Deserialize<List<SavedConnection>>(json, JsonOptions) ?? [];
-                Log.Information("Loaded {Count} connections from legacy format", _connections.Count);
+                loadedConnections = JsonSerializer.Deserialize<List<SavedConnection>>(json, JsonOptions) ?? [];
+                Log.Information("Loaded {Count} connections from legacy format", loadedConnections.Count);
             }
             catch (Exception legacyEx)
             {
                 Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
-                _connections = [];
+                loadedConnections = [];
             }
         }
 
-        _loaded = true;
+        lock (_lock)
+        {
+            _connections = loadedConnections ?? [];
+            _loaded = true;
+        }
     }
 
     private async Task PersistConnectionsAsync()
     {
-        // Convert to stored format with encrypted connection strings
-        var storedConnections = _connections
-            .Select(conn => new StoredConnection(
-                conn.Id,
-                conn.Name,
-                _encryptionService.Encrypt(conn.ConnectionString),
-                conn.Type,
-                conn.EntityName,
-                conn.CreatedAt,
-                conn.IsFavorite,
-                conn.Environment
-            ))
-            .ToList();
+        List<StoredConnection> storedConnections;
+
+        lock (_lock)
+        {
+            // Convert to stored format with encrypted connection strings
+            storedConnections = _connections
+                .Select(conn => new StoredConnection(
+                    conn.Id,
+                    conn.Name,
+                    _encryptionService.Encrypt(conn.ConnectionString),
+                    conn.Type,
+                    conn.EntityName,
+                    conn.CreatedAt,
+                    conn.IsFavorite,
+                    conn.Environment
+                ))
+                .ToList();
+        }
 
         var json = JsonSerializer.Serialize(storedConnections, JsonOptions);
         await File.WriteAllTextAsync(AppPaths.Connections, json);
