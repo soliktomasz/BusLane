@@ -32,6 +32,11 @@ internal static class AppPaths
     public static string Connections => Path.Combine(AppDataFolder, "connections.json");
 
     /// <summary>
+    /// Path to the dashboard configuration file.
+    /// </summary>
+    public static string DashboardConfig => Path.Combine(AppDataFolder, "dashboard.json");
+
+    /// <summary>
     /// Ensures the application data directory exists.
     /// </summary>
     public static void EnsureDirectoryExists()
@@ -47,4 +52,3 @@ internal static class AppPaths
     /// </summary>
     public static string DataFolder => AppDataFolder;
 }
-

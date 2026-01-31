@@ -14,6 +14,8 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Dashboard;
+using Services.Update;
 using ViewModels;
 
 class Program
@@ -128,6 +130,15 @@ class Program
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<INotificationService, NotificationService>();
 
+        // Update services
+        services.AddSingleton<UpdateDownloadService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
+
+        // Dashboard services
+        services.AddSingleton<IDashboardPersistenceService, DashboardPersistenceService>();
+        services.AddSingleton<DashboardLayoutEngine>();
+        services.AddSingleton<ViewModels.Dashboard.DashboardViewModel>();
+
         // Main ViewModel with unified services
         services.AddSingleton<MainWindowViewModel>(sp => new MainWindowViewModel(
             sp.GetRequiredService<IAzureAuthService>(),
@@ -141,7 +152,9 @@ class Program
             sp.GetRequiredService<IAlertService>(),
             sp.GetRequiredService<INotificationService>(),
             sp.GetRequiredService<IKeyboardShortcutService>(),
-            sp.GetRequiredService<ILogSink>()
+            sp.GetRequiredService<IUpdateService>(),
+            sp.GetRequiredService<ILogSink>(),
+            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>()
         ));
 
         // Other ViewModels
@@ -151,9 +164,8 @@ class Program
         services.AddTransient<MessageViewModel>();
         services.AddTransient<TopicViewModel>();
 
-        // ViewModels for Live Stream, Charts, and Alerts
+        // ViewModels for Live Stream and Alerts
         services.AddTransient<LiveStreamViewModel>();
-        services.AddTransient<ChartsViewModel>();
     }
 
     public static AppBuilder BuildAvaloniaApp()

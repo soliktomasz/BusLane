@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:BusLane.ViewModels"
+        xmlns:dashVm="using:BusLane.ViewModels.Dashboard"
         xmlns:models="using:BusLane.Models"
         xmlns:controls="using:BusLane.Views.Controls"
         xmlns:dialogs="using:BusLane.Views.Dialogs"
@@ -48,12 +49,16 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Column="2" RowDefinitions="Auto,*">
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
             <!-- Tab Bar -->
             <controls:TabBarView Grid.Row="0"/>
 
+            <!-- Update Notification Banner -->
+            <controls:UpdateNotificationView Grid.Row="1"
+                                             DataContext="{Binding UpdateNotification}"/>
+
             <!-- Content Area -->
-            <Grid Grid.Row="1" Margin="24,20">
+            <Grid Grid.Row="2" Margin="24,20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -160,12 +165,12 @@
 
             <!-- Charts Panel (overlay when active) -->
             <Border Grid.Row="0" Grid.RowSpan="2"
-                    IsVisible="{Binding FeaturePanels.ChartsViewModel, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    IsVisible="{Binding FeaturePanels.ShowCharts}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
                     <Border Grid.Row="0" Margin="0,0,0,16">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Metrics &amp; Charts" Classes="title"/>
+                            <TextBlock Grid.Column="0" Text="Dashboard" Classes="title"/>
                             <Button Grid.Column="1" Classes="subtle"
                                     Command="{Binding CloseChartsCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -175,10 +180,10 @@
                             </Button>
                         </Grid>
                     </Border>
-                    <ContentControl Grid.Row="1" Content="{Binding FeaturePanels.ChartsViewModel}">
+                    <ContentControl Grid.Row="1" Content="{Binding FeaturePanels.DashboardViewModel}">
                         <ContentControl.ContentTemplate>
-                            <DataTemplate DataType="vm:ChartsViewModel">
-                                <controls:ChartsView />
+                            <DataTemplate DataType="dashVm:DashboardViewModel">
+                                <controls:DashboardView />
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>

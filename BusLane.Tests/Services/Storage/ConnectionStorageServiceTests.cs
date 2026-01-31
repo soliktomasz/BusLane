@@ -65,8 +65,11 @@ public class ConnectionStorageServiceTests : IDisposable
         var connection = CreateTestConnection();
         await _sut.SaveConnectionAsync(connection);
 
+        // Use a fresh instance to force loading from disk (simulates app restart)
+        var freshService = new ConnectionStorageService(_encryptionService);
+
         // Act
-        var connections = await _sut.GetConnectionsAsync();
+        var connections = await freshService.GetConnectionsAsync();
 
         // Assert
         _encryptionService.Received().Decrypt(Arg.Any<string>());

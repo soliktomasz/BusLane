@@ -290,6 +290,57 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Updates Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <!-- Section Header -->
+                                <Border Padding="16,16"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <LucideIcon Kind="Download" Size="20"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Settings Items -->
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Auto Check for Updates -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Automatically check for updates" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Check for new versions on startup"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.AutoCheckForUpdates}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Current Version -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Current version" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Installed application version"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding AppVersion}"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         </StackPanel>
                     </Border>
                 </ScrollViewer>

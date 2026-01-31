@@ -15,6 +15,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Update;
 
 /// <summary>
 /// Represents a group of keyboard shortcuts for display in the help dialog.
@@ -32,7 +33,7 @@ public enum ConnectionMode
 /// Main window view model - slim coordinator that composes specialized components.
 /// Responsibilities: coordination, UI state, and glue between components.
 /// </summary>
-public partial class MainWindowViewModel : ViewModelBase, IDisposable
+public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDisposable
 {
     private bool _disposed;
 
@@ -45,6 +46,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly IUpdateService _updateService;
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
 
@@ -58,6 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     public FeaturePanelsViewModel FeaturePanels { get; }
     public LogViewerViewModel LogViewer { get; }
     public NamespaceSelectionViewModel NamespaceSelection { get; }
+    public UpdateNotificationViewModel UpdateNotification { get; }
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -167,7 +170,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         IAlertService alertService,
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
+        IUpdateService updateService,
         ILogSink logSink,
+        ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -178,6 +183,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _alertService = alertService;
         _preferencesService = preferencesService;
         _keyboardShortcutService = keyboardShortcutService;
+        _updateService = updateService;
         _logSink = logSink;
         _fileDialogService = fileDialogService;
 
@@ -211,6 +217,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         FeaturePanels = new FeaturePanelsViewModel(
             liveStreamService, metricsService, alertService, notificationService,
+            dashboardViewModel,
             () => Navigation.CurrentEndpoint ?? Connection.CurrentEndpoint,
             () => Navigation.Queues,
             () => Navigation.Topics,
@@ -241,6 +248,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
+
+        UpdateNotification = new UpdateNotificationViewModel(updateService);
 
         // Wire up property change handlers for cross-component dependencies
         Navigation.PropertyChanged += (_, e) =>
@@ -362,6 +371,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         {
             await Connection.InitializeAsync();
             await Tabs.RestoreTabSessionAsync();
+
+            // Check for updates on startup (non-blocking)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await _updateService.CheckForUpdatesAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Startup update check failed");
+                }
+            });
         }
         finally
         {
@@ -1328,10 +1351,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// <summary>
     /// Called when the application is closing to save session state.
     /// </summary>
-    public void OnApplicationClosing()
+    public async Task OnApplicationClosingAsync()
     {
         SaveTabSession();
-        Dispose();
+        await DisposeAsync();
     }
 
     #endregion
@@ -1356,7 +1379,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     #endregion
 
-    #region IDisposable
+    #region IDisposable / IAsyncDisposable
 
     public void Dispose()
     {
@@ -1370,10 +1393,38 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
 
-        // Dispose operations if they implement IAsyncDisposable
+        // Dispose update notification to unsubscribe from events
+        UpdateNotification?.Dispose();
+
+        // Dispose operations if they implement IDisposable (sync path only)
+        if (_operations is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _autoRefreshTimer?.Stop();
+        _autoRefreshTimer?.Dispose();
+        _autoRefreshTimer = null;
+
+        LogViewer?.Dispose();
+
+        // Dispose update notification to unsubscribe from events
+        UpdateNotification?.Dispose();
+
+        // Properly await async disposal of operations
         if (_operations is IAsyncDisposable asyncDisposable)
         {
-            asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            await asyncDisposable.DisposeAsync();
+        }
+        else if (_operations is IDisposable disposable)
+        {
+            disposable.Dispose();
         }
     }
 

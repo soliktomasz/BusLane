@@ -1,6 +1,7 @@
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using BusLane.Services.ServiceBus;
+using BusLane.ViewModels.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
@@ -29,7 +30,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     [ObservableProperty] private bool _showCharts;
     [ObservableProperty] private bool _showAlerts;
     [ObservableProperty] private LiveStreamViewModel? _liveStreamViewModel;
-    [ObservableProperty] private ChartsViewModel? _chartsViewModel;
+    [ObservableProperty] private DashboardViewModel? _dashboardViewModel;
     [ObservableProperty] private AlertsViewModel? _alertsViewModel;
     [ObservableProperty] private int _activeAlertCount;
 
@@ -38,6 +39,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         IMetricsService metricsService,
         IAlertService alertService,
         INotificationService notificationService,
+        DashboardViewModel dashboardViewModel,
         Func<string?> getEndpoint,
         Func<ObservableCollection<QueueInfo>> getQueues,
         Func<ObservableCollection<TopicInfo>> getTopics,
@@ -57,6 +59,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _getSelectedQueue = getSelectedQueue;
         _getSelectedSubscription = getSelectedSubscription;
         _setStatus = setStatus;
+        DashboardViewModel = dashboardViewModel;
 
         _alertService.AlertTriggered += OnAlertTriggered;
         _alertService.AlertsChanged += OnAlertsChanged;
@@ -106,12 +109,10 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     {
         var queues = _getQueues();
         var subscriptions = _getSubscriptions();
-        
-        ChartsViewModel = new ChartsViewModel(_metricsService);
-        ChartsViewModel.RecordCurrentMetrics(queues, subscriptions);
-        ChartsViewModel.UpdateEntityDistribution(queues, subscriptions);
-        ChartsViewModel.UpdateComparisonChart(queues, subscriptions);
-        
+
+        DashboardViewModel?.UpdateEntityData(queues, subscriptions);
+        DashboardViewModel?.RecordCurrentMetrics(queues, subscriptions);
+
         ShowCharts = true;
         ShowLiveStream = false;
         ShowAlerts = false;
@@ -119,7 +120,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public void CloseCharts()
     {
-        ChartsViewModel = null;
         ShowCharts = false;
     }
 
