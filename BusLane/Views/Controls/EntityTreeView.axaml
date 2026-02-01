@@ -271,14 +271,14 @@
                                             </Expander.Header>
 
                                             <!-- Subscriptions -->
-                                            <Grid ColumnDefinitions="Auto,*" Margin="16,4,0,4">
+                                            <Grid ColumnDefinitions="Auto,*" Margin="12,4,4,4">
                                                 <!-- Tree connector line -->
                                                 <Border Grid.Column="0" Width="1"
                                                         Background="{DynamicResource BorderDefault}"
                                                         VerticalAlignment="Stretch"
-                                                        Margin="6,0,0,0"/>
+                                                        Margin="4,0,0,0"/>
 
-                                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                                <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                                     <!-- Loading indicator -->
                                                     <Border IsVisible="{Binding IsLoadingSubscriptions}"
                                                             Padding="8,4"
@@ -311,7 +311,7 @@
                                                                         HorizontalAlignment="Stretch"
                                                                         HorizontalContentAlignment="Stretch"
                                                                         Padding="0"
-                                                                        Margin="0,1">
+                                                                        Margin="0,5">
                                                                     <Grid ColumnDefinitions="3,*">
                                                                         <!-- Selection indicator -->
                                                                         <Border Grid.Column="0"
