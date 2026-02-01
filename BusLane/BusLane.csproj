@@ -24,10 +24,10 @@
     <MinVerVerbosity>normal</MinVerVerbosity>
 
     <!-- Application Metadata -->
-    <Product>Bus Lane</Product>
+    <Product>BusLane</Product>
     <Description>Azure Service Bus Manager</Description>
-    <Company>Bus Lane</Company>
-    <Copyright>Copyright © 2026 Bus Lane</Copyright>
+    <Company>BusLane</Company>
+    <Copyright>Copyright © 2026 BusLane</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

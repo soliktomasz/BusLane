@@ -60,7 +60,7 @@
                                 </Canvas>
                             </Viewbox>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Bus Lane" Classes="heading-large"/>
+                                <TextBlock Text="BusLane" Classes="heading-large"/>
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <TextBlock Text="Service Bus Manager" Classes="caption" FontSize="11"/>
                                     <Border Classes="badge-info" Padding="4,1">

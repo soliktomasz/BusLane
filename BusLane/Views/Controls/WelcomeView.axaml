@@ -9,7 +9,7 @@
                 HorizontalAlignment="Center"
                 MaxWidth="480"
                 IsVisible="{Binding ShowWelcome}">
-        <TextBlock Text="Welcome to Bus Lane" Classes="title-large" HorizontalAlignment="Center"/>
+        <TextBlock Text="Welcome to BusLane" Classes="title-large" HorizontalAlignment="Center"/>
         <TextBlock Text="Connect using a connection string or sign in with your Azure account to manage your Service Bus resources." 
                    Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,24" TextWrapping="Wrap" TextAlignment="Center"/>
         

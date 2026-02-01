@@ -39,7 +39,7 @@ public partial class App : Application
             ApplyTheme(preferencesService.Theme);
             
             var vm = Program.Services!.GetRequiredService<MainWindowViewModel>();
-            var mainWindow = new MainWindow { DataContext = vm, Title = "Bus Lane" };
+            var mainWindow = new MainWindow { DataContext = vm, Title = "BusLane" };
             MainWindow = mainWindow;
             
             // Set up file dialog service now that we have the window
@@ -77,25 +77,72 @@ public partial class App : Application
             var initWithContentsOfFile = sel_registerName("initWithContentsOfFile:");
             var setApplicationIconImage = sel_registerName("setApplicationIconImage:");
             var sharedApplication = sel_registerName("sharedApplication");
-            
+
             var nsApp = objc_getClass("NSApplication");
             var sharedApp = objc_msgSend(nsApp, sharedApplication);
-            
+
             var nsString = objc_getClass("NSString");
             var stringWithUTF8String = sel_registerName("stringWithUTF8String:");
             var pathString = objc_msgSend(nsString, stringWithUTF8String, iconPath);
-            
+
             var imageAlloc = objc_msgSend(nsImage, alloc);
             var image = objc_msgSend(imageAlloc, initWithContentsOfFile, pathString);
-            
+
             if (image != IntPtr.Zero)
             {
                 objc_msgSend(sharedApp, setApplicationIconImage, image);
             }
+
+            // Set the application name in the menu bar
+            SetMacOSMenuBarTitle(sharedApp);
         }
         catch
         {
             // Silently fail if we can't set the icon
+        }
+    }
+
+    private static void SetMacOSMenuBarTitle(IntPtr nsApp)
+    {
+        try
+        {
+            // Get the main menu
+            var mainMenuSelector = sel_registerName("mainMenu");
+            var mainMenu = objc_msgSend(nsApp, mainMenuSelector);
+
+            if (mainMenu != IntPtr.Zero)
+            {
+                // Get the first item (application menu)
+                var itemAtIndexSelector = sel_registerName("itemAtIndex:");
+                var appMenuItem = objc_msgSend(mainMenu, itemAtIndexSelector, (IntPtr)0);
+
+                if (appMenuItem != IntPtr.Zero)
+                {
+                    // Get the submenu
+                    var submenuSelector = sel_registerName("submenu");
+                    var appMenu = objc_msgSend(appMenuItem, submenuSelector);
+
+                    if (appMenu != IntPtr.Zero)
+                    {
+                        // Set the title of the first menu item to "BusLane"
+                        var setTitleSelector = sel_registerName("setTitle:");
+                        var nsString = objc_getClass("NSString");
+                        var stringWithUTF8String = sel_registerName("stringWithUTF8String:");
+                        var titleString = objc_msgSend(nsString, stringWithUTF8String, "BusLane");
+
+                        // Get the first item in the submenu (About item)
+                        var firstItem = objc_msgSend(appMenu, itemAtIndexSelector, (IntPtr)0);
+                        if (firstItem != IntPtr.Zero)
+                        {
+                            objc_msgSend(firstItem, setTitleSelector, titleString);
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail if we can't set the menu title
         }
     }
     

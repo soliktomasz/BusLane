@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>Bus Lane</string>
+	<string>BusLane</string>
 	<key>CFBundleDisplayName</key>
-	<string>Bus Lane</string>
+	<string>BusLane</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.buslane.app</string>
 	<key>CFBundleVersion</key>
@@ -23,7 +23,7 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026 Bus Lane</string>
+	<string>Copyright © 2026 BusLane</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.15</string>
 	<key>NSPrincipalClass</key>

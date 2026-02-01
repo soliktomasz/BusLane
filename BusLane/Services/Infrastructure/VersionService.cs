@@ -46,7 +46,7 @@ public class VersionService : IVersionService
         get
         {
             var attribute = _assembly.GetCustomAttribute<AssemblyProductAttribute>();
-            return attribute?.Product ?? "Bus Lane";
+            return attribute?.Product ?? "BusLane";
         }
     }
     

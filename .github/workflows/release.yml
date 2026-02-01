@@ -212,7 +212,7 @@ jobs:
 
       - name: Create macOS App Bundle
         run: |
-          APP_NAME="Bus Lane"
+          APP_NAME="BusLane"
           APP_BUNDLE="${APP_NAME}.app"
           
           # Create app bundle structure
@@ -259,7 +259,7 @@ jobs:
 
       - name: Create DMG installer
         run: |
-          APP_NAME="Bus Lane"
+          APP_NAME="BusLane"
           DMG_NAME="BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}"
           
           # Create DMG with pretty background and layout

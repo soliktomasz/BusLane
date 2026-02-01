@@ -33,7 +33,7 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
 
 Download the latest release from [Releases](https://github.com/soliktomasz/BusLane/releases).
 
-**macOS note:** Run `xattr -cr "/Applications/Bus Lane.app"` if Gatekeeper blocks the app.
+**macOS note:** Run `xattr -cr "/Applications/BusLane.app"` if Gatekeeper blocks the app.
 
 ### Build from Source
 

@@ -77,7 +77,7 @@ When using Azure authentication:
 
 1. **Keep Updated** - Always use the latest version of BusLane
 2. **Verify Downloads** - Download releases only from the official GitHub repository
-3. **macOS Users** - If you see a "damaged" warning, run: `xattr -cr "/Applications/Bus Lane.app"`
+3. **macOS Users** - If you see a "damaged" warning, run: `xattr -cr "/Applications/BusLane.app"`
 4. **File Permissions** - Ensure your user directory has appropriate permissions
 5. **Shared Computers** - Don't use saved connections on shared or public computers
 

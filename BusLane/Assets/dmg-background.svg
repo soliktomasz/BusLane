@@ -28,7 +28,7 @@
   <!-- Title text area (top) -->
   <text x="270" y="45" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" 
         font-size="24" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.9">
-    Install Bus Lane
+    Install BusLane
   </text>
   
   <!-- Subtitle -->
@@ -50,7 +50,7 @@
   <!-- Icon placeholder labels -->
   <text x="130" y="300" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
         font-size="12" fill="#a8b2d1" text-anchor="middle">
-    Bus Lane
+    BusLane
   </text>
   
   <text x="410" y="300" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
