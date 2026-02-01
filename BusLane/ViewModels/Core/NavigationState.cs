@@ -19,12 +19,33 @@ public partial class NavigationState : ViewModelBase
     [ObservableProperty] private bool _showDeadLetter;
     [ObservableProperty] private int _selectedMessageTabIndex;
     [ObservableProperty] private string _namespaceFilter = string.Empty;
+    [ObservableProperty] private string _entityFilter = string.Empty;
+    [ObservableProperty] private bool _isQueuesSectionExpanded = true;
+    [ObservableProperty] private bool _isTopicsSectionExpanded = true;
 
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
     public ObservableCollection<ServiceBusNamespace> Namespaces { get; } = [];
     public ObservableCollection<QueueInfo> Queues { get; } = [];
     public ObservableCollection<TopicInfo> Topics { get; } = [];
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
+
+    /// <summary>
+    /// Gets the filtered queues based on the current entity filter text.
+    /// </summary>
+    public IEnumerable<QueueInfo> FilteredQueues =>
+        string.IsNullOrWhiteSpace(EntityFilter)
+            ? Queues
+            : Queues.Where(q =>
+                q.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Gets the filtered topics based on the current entity filter text.
+    /// </summary>
+    public IEnumerable<TopicInfo> FilteredTopics =>
+        string.IsNullOrWhiteSpace(EntityFilter)
+            ? Topics
+            : Topics.Where(t =>
+                t.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Gets the filtered namespaces based on the current filter text.
@@ -71,10 +92,15 @@ public partial class NavigationState : ViewModelBase
         Queues.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(HasQueues));
+            OnPropertyChanged(nameof(FilteredQueues));
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
-        Topics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTopics));
+        Topics.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasTopics));
+            OnPropertyChanged(nameof(FilteredTopics));
+        };
         TopicSubscriptions.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(TotalDeadLetterCount));
@@ -84,6 +110,12 @@ public partial class NavigationState : ViewModelBase
         {
             OnPropertyChanged(nameof(FilteredNamespaces));
         };
+    }
+
+    partial void OnEntityFilterChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredQueues));
+        OnPropertyChanged(nameof(FilteredTopics));
     }
 
     partial void OnNamespaceFilterChanged(string value)

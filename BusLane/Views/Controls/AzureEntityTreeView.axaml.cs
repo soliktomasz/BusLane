@@ -17,13 +17,14 @@ public partial class AzureEntityTreeView : UserControl
     {
         if (sender is Expander expander && expander.DataContext is TopicInfo topic)
         {
-            // Get the ViewModel from the main window
             var mainWindow = TopLevel.GetTopLevel(this);
             if (mainWindow?.DataContext is MainWindowViewModel vm)
             {
-                // Fire and forget - load subscriptions when expander opens
                 _ = vm.LoadTopicSubscriptionsCommand.ExecuteAsync(topic);
             }
+
+            // Prevent the event from bubbling to the section Expander
+            e.Handled = true;
         }
     }
 
@@ -34,10 +35,9 @@ public partial class AzureEntityTreeView : UserControl
             var mainWindow = TopLevel.GetTopLevel(this);
             if (mainWindow?.DataContext is MainWindowViewModel vm)
             {
-                // Select the topic
                 vm.SelectTopicCommand.Execute(topic);
-                // Toggle expansion
-                topic.IsExpanded = !topic.IsExpanded;
+                // Don't toggle IsExpanded here - the Expander's built-in
+                // ToggleButton handles it via the two-way binding
             }
         }
     }

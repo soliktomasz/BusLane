@@ -22,7 +22,8 @@ public class EntitySelectionConverter : IMultiValueConverter
         var currentItem = values[0];
         var selectedItem = values[1];
 
-        if (currentItem == null || selectedItem == null)
+        if (currentItem == null || selectedItem == null
+            || currentItem is UnsetValueType || selectedItem is UnsetValueType)
             return false;
 
         return ReferenceEquals(currentItem, selectedItem) || currentItem.Equals(selectedItem);
@@ -77,7 +78,8 @@ public class EntitySelectionBackgroundConverter : IMultiValueConverter
         var currentItem = values[0];
         var selectedItem = values[1];
 
-        if (currentItem == null || selectedItem == null)
+        if (currentItem == null || selectedItem == null
+            || currentItem is UnsetValueType || selectedItem is UnsetValueType)
             return Brushes.Transparent;
 
         var isSelected = ReferenceEquals(currentItem, selectedItem) || currentItem.Equals(selectedItem);
