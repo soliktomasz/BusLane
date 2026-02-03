@@ -49,6 +49,16 @@ public class UpdateCheckServiceTests
         result.Should().Be(expected);
     }
 
+    [Fact(Skip = "Manual test - remove Skip to run against real GitHub API")]
+    public async Task CheckForUpdateAsync_WithOldVersion_FindsUpdate()
+    {
+        // Simulate running an old version
+        var result = await UpdateCheckService.CheckForUpdateAsync("0.1.0", "osx-arm64");
+
+        result.Should().NotBeNull();
+        result!.Version.Should().NotBe("0.1.0");
+    }
+
     [Theory]
     [InlineData("BusLane-0.10.0-win-x64.msi", "win-x64", true)]
     [InlineData("BusLane-0.10.0-osx-arm64.dmg", "osx-arm64", true)]

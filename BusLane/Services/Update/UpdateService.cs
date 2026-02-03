@@ -87,7 +87,7 @@ public class UpdateService : IUpdateService, IDisposable
             Status = UpdateStatus.Checking;
             _errorMessage = null;
 
-            var currentVersion = _versionService.Version;
+            var currentVersion = _versionService.InformationalVersion;
             var release = await UpdateCheckService.CheckForUpdateAsync(currentVersion, _platform);
 
             if (release == null)

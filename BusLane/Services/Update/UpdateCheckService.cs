@@ -158,12 +158,14 @@ public static class UpdateCheckService
 
     public static string GetCurrentPlatform()
     {
-        var os = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
         var arch = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
 
-        var osPart = os.Contains("Windows") ? "win" :
-                     os.Contains("Darwin") || os.Contains("Mac") ? "osx" :
-                     os.Contains("Linux") ? "linux" : "unknown";
+        var osPart = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                         System.Runtime.InteropServices.OSPlatform.Windows) ? "win" :
+                     System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                         System.Runtime.InteropServices.OSPlatform.OSX) ? "osx" :
+                     System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                         System.Runtime.InteropServices.OSPlatform.Linux) ? "linux" : "unknown";
 
         var archPart = arch switch
         {

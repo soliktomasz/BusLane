@@ -17,6 +17,7 @@ public class UpdateServiceTests
     {
         _versionService = Substitute.For<IVersionService>();
         _versionService.Version.Returns("0.9.0");
+        _versionService.InformationalVersion.Returns("0.9.0");
 
         _preferencesService = Substitute.For<IPreferencesService>();
         _preferencesService.AutoCheckForUpdates.Returns(true);
