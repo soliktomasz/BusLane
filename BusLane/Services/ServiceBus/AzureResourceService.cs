@@ -22,17 +22,27 @@ public class AzureResourceService : IAzureResourceService
     {
         if (_auth.ArmClient == null)
         {
-            Log.Warning("Cannot get Azure subscriptions: ArmClient is not initialized");
+            Log.Warning("Cannot get Azure subscriptions: ArmClient is not initialized. IsAuthenticated={IsAuthenticated}",
+                _auth.IsAuthenticated);
             return [];
         }
 
-        Log.Debug("Fetching Azure subscriptions");
+        Log.Debug("Fetching Azure subscriptions using ArmClient");
         var subs = new List<AzureSubscription>();
-        await foreach (var sub in _auth.ArmClient.GetSubscriptions().GetAllAsync(ct))
+        try
         {
-            subs.Add(new AzureSubscription(sub.Data.SubscriptionId, sub.Data.DisplayName));
+            await foreach (var sub in _auth.ArmClient.GetSubscriptions().GetAllAsync(ct))
+            {
+                Log.Debug("Found subscription: {Name} ({Id})", sub.Data.DisplayName, sub.Data.SubscriptionId);
+                subs.Add(new AzureSubscription(sub.Data.SubscriptionId, sub.Data.DisplayName));
+            }
+            Log.Information("Retrieved {Count} Azure subscriptions", subs.Count);
         }
-        Log.Information("Retrieved {Count} Azure subscriptions", subs.Count);
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error fetching Azure subscriptions from ARM API");
+            throw;
+        }
         return subs;
     }
 

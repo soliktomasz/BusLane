@@ -394,12 +394,38 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     private async Task LoadSubscriptionsAsync()
     {
-        Navigation.Subscriptions.Clear();
-        foreach (var sub in await _azureResources.GetAzureSubscriptionsAsync())
-            Navigation.Subscriptions.Add(sub);
+        IsLoading = true;
+        StatusMessage = "Loading Azure subscriptions...";
 
-        if (Navigation.Subscriptions.Count > 0)
-            Navigation.SelectedAzureSubscription = Navigation.Subscriptions[0];
+        Log.Debug("LoadSubscriptionsAsync called. Auth.IsAuthenticated={IsAuth}, Auth.ArmClient is {ArmClientStatus}",
+            _auth.IsAuthenticated, _auth.ArmClient != null ? "initialized" : "NULL");
+
+        try
+        {
+            Navigation.Subscriptions.Clear();
+            foreach (var sub in await _azureResources.GetAzureSubscriptionsAsync())
+                Navigation.Subscriptions.Add(sub);
+
+            if (Navigation.Subscriptions.Count > 0)
+            {
+                Navigation.SelectedAzureSubscription = Navigation.Subscriptions[0];
+                StatusMessage = $"Found {Navigation.Subscriptions.Count} subscription(s)";
+            }
+            else
+            {
+                StatusMessage = "No Azure subscriptions found";
+                Log.Warning("No Azure subscriptions returned - check account permissions");
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading subscriptions: {ex.Message}";
+            Log.Error(ex, "Failed to load Azure subscriptions");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task LoadNamespacesAsync(string? subscriptionId)

@@ -190,6 +190,7 @@ public class AzureAuthService : IAzureAuthService
         // Try interactive browser first
         try
         {
+            Log.Information("Attempting interactive browser authentication...");
             var browserOptions = CreateBrowserCredentialOptions();
             var browserCredential = new InteractiveBrowserCredential(browserOptions);
 
@@ -202,12 +203,14 @@ public class AzureAuthService : IAzureAuthService
             IsAuthenticated = true;
             UserName = _authRecord.Username;
 
+            Log.Information("Browser authentication successful for user {Username}", UserName);
             AuthenticationChanged?.Invoke(this, true);
             return true;
         }
         catch (Exception browserEx)
         {
-            Log.Debug(browserEx, "Browser login failed, falling back to device code authentication");
+            Log.Warning(browserEx, "Browser login failed ({ExceptionType}), falling back to device code authentication",
+                browserEx.GetType().Name);
 
             // Fallback to device code authentication
             try
