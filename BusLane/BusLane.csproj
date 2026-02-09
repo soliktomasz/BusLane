@@ -43,7 +43,7 @@
     <PackageReference Include="Azure.ResourceManager.ServiceBus" Version="1.1.0" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="Lucide.Avalonia" Version="0.1.57" />
+    <PackageReference Include="Lucide.Avalonia" Version="0.1.58" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
@@ -55,7 +55,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Reactive" Version="6.1.0" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.4.1" />
 
     <!-- MinVer for automatic versioning from Git tags -->
     <PackageReference Include="MinVer" Version="7.0.0">
