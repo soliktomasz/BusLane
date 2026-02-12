@@ -246,7 +246,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 // Check if there might be more messages
                 var hasMore = page1Messages.Count >= _preferencesService.MessagesPerPage &&
                              _pageCache.GetTotalCachedMessages() < _preferencesService.MaxTotalMessages;
-                Pagination.UpdatePageInfo(1, _preferencesService.MessagesPerPage, hasMore);
+                Pagination.UpdatePageInfo(1, _preferencesService.MessagesPerPage, page1Messages.Count, hasMore);
 
                 _setStatus($"Loaded {page1Messages.Count} messages");
                 _logSink.Log(new LogEntry(
@@ -331,7 +331,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
                 var hasMore = pageMessages.Count >= _preferencesService.MessagesPerPage &&
                              _pageCache.GetTotalCachedMessages() < _preferencesService.MaxTotalMessages;
-                Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, hasMore);
+                Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, pageMessages.Count, hasMore);
 
                 _setStatus($"Loaded page {nextPage}");
             }

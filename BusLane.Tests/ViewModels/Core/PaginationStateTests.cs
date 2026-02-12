@@ -21,7 +21,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(1, 100, true); // page 1, 100 per page, has more
+        sut.UpdatePageInfo(1, 100, 100, true); // page 1, 100 per page, 100 messages, has more
         
         // Act & Assert
         sut.CanGoNext.Should().BeTrue();
@@ -32,7 +32,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(1, 100, false); // page 1, 100 per page, no more
+        sut.UpdatePageInfo(1, 100, 50, false); // page 1, 100 per page, 50 messages, no more
         
         // Act & Assert
         sut.CanGoNext.Should().BeFalse();
@@ -43,7 +43,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(1, 100, true);
+        sut.UpdatePageInfo(1, 100, 100, true);
         
         // Act & Assert
         sut.CanGoPrevious.Should().BeFalse();
@@ -54,7 +54,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(2, 100, true);
+        sut.UpdatePageInfo(2, 100, 100, true);
         
         // Act & Assert
         sut.CanGoPrevious.Should().BeTrue();
@@ -65,7 +65,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(1, 100, true);
+        sut.UpdatePageInfo(1, 100, 100, true);
         
         // Act
         sut.GoToNextPage();
@@ -79,7 +79,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(2, 100, true);
+        sut.UpdatePageInfo(2, 100, 100, true);
         
         // Act
         sut.GoToPreviousPage();
@@ -93,7 +93,7 @@ public class PaginationStateTests
     {
         // Arrange
         var sut = new PaginationState();
-        sut.UpdatePageInfo(3, 100, true);
+        sut.UpdatePageInfo(3, 100, 100, true);
         
         // Act
         sut.Reset();
@@ -102,5 +102,44 @@ public class PaginationStateTests
         sut.CurrentPage.Should().Be(1);
         sut.CanGoNext.Should().BeFalse();
         sut.CanGoPrevious.Should().BeFalse();
+    }
+    
+    [Fact]
+    public void PageInfoText_WithPartialPage_ShouldShowCorrectRange()
+    {
+        // Arrange
+        var sut = new PaginationState();
+        
+        // Act
+        sut.UpdatePageInfo(1, 100, 50, false); // 50 messages on page 1
+        
+        // Assert
+        sut.PageInfoText.Should().Be("Page 1 (1-50)");
+    }
+    
+    [Fact]
+    public void PageInfoText_WithFullPage_ShouldShowCorrectRange()
+    {
+        // Arrange
+        var sut = new PaginationState();
+        
+        // Act
+        sut.UpdatePageInfo(1, 100, 100, true); // 100 messages on page 1
+        
+        // Assert
+        sut.PageInfoText.Should().Be("Page 1 (1-100)");
+    }
+    
+    [Fact]
+    public void PageInfoText_OnPage2_ShouldShowCorrectRange()
+    {
+        // Arrange
+        var sut = new PaginationState();
+        
+        // Act
+        sut.UpdatePageInfo(2, 50, 25, false); // 25 messages on page 2 with 50 per page
+        
+        // Assert
+        sut.PageInfoText.Should().Be("Page 2 (51-75)");
     }
 }

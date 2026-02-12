@@ -19,13 +19,13 @@ public partial class PaginationState : ObservableObject
     private int _messagesPerPage;
     private int _totalMessagesLoaded;
     
-    public void UpdatePageInfo(int currentPage, int messagesPerPage, bool hasMoreMessages)
+    public void UpdatePageInfo(int currentPage, int messagesPerPage, int actualMessageCount, bool hasMoreMessages)
     {
         CurrentPage = currentPage;
         _messagesPerPage = messagesPerPage;
         
         var startMessage = (currentPage - 1) * messagesPerPage + 1;
-        var endMessage = startMessage + messagesPerPage - 1;
+        var endMessage = startMessage + actualMessageCount - 1;
         
         CanGoPrevious = currentPage > 1;
         CanGoNext = hasMoreMessages;
