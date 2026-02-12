@@ -188,7 +188,7 @@
                                 <VirtualizingStackPanel/>
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
+                            <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:MessageInfo">
                                     <Grid ColumnDefinitions="Auto,*">
                                         <!-- Checkbox for multi-select mode -->
@@ -269,6 +269,45 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                            <!-- Pagination Controls -->
+                            <Border Classes="card"
+                                    Margin="8,8,8,0"
+                                    IsVisible="{Binding CurrentMessageOps.Pagination.PageInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Previous Button -->
+                                    <Button Grid.Column="0"
+                                            Classes="subtle small"
+                                            Command="{Binding LoadPreviousPageCommand}"
+                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoPrevious}"
+                                            ToolTip.Tip="Previous page">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <LucideIcon Kind="ChevronLeft" Size="14"/>
+                                            <TextBlock Text="Previous"/>
+                                        </StackPanel>
+                                    </Button>
+                                    
+                                    <!-- Page Info -->
+                                    <TextBlock Grid.Column="1" 
+                                               Text="{Binding CurrentMessageOps.Pagination.PageInfoText}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="Medium"/>
+                                    
+                                    <!-- Next Button -->
+                                    <Button Grid.Column="2"
+                                            Classes="subtle small"
+                                            Command="{Binding LoadNextPageCommand}"
+                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoNext}"
+                                            ToolTip.Tip="Next page">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="Next"/>
+                                            <LucideIcon Kind="ChevronRight" Size="14"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
 
                             <!-- Beautiful centered loading overlay -->
                             <Border IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
@@ -414,6 +453,45 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                            <!-- Pagination Controls -->
+                            <Border Classes="card"
+                                    Margin="8,8,8,0"
+                                    IsVisible="{Binding CurrentMessageOps.Pagination.PageInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Previous Button -->
+                                    <Button Grid.Column="0"
+                                            Classes="subtle small"
+                                            Command="{Binding LoadPreviousPageCommand}"
+                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoPrevious}"
+                                            ToolTip.Tip="Previous page">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <LucideIcon Kind="ChevronLeft" Size="14"/>
+                                            <TextBlock Text="Previous"/>
+                                        </StackPanel>
+                                    </Button>
+                                    
+                                    <!-- Page Info -->
+                                    <TextBlock Grid.Column="1" 
+                                               Text="{Binding CurrentMessageOps.Pagination.PageInfoText}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="Medium"/>
+                                    
+                                    <!-- Next Button -->
+                                    <Button Grid.Column="2"
+                                            Classes="subtle small"
+                                            Command="{Binding LoadNextPageCommand}"
+                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoNext}"
+                                            ToolTip.Tip="Next page">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="Next"/>
+                                            <LucideIcon Kind="ChevronRight" Size="14"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
 
                             <!-- Beautiful centered loading overlay -->
                             <Border IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
