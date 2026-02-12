@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Threading;
 using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
@@ -186,6 +187,9 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
         foreach (var msg in filtered)
             FilteredMessages.Add(msg);
+        
+        // Notify UI that FilteredMessages has changed
+        OnPropertyChanged(nameof(FilteredMessages));
     }
 
     [RelayCommand]
@@ -402,18 +406,21 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     private void DisplayPage(int pageNumber)
     {
-        Messages.Clear();
-        FilteredMessages.Clear();
-        SelectedMessages.Clear();
-        SelectedMessage = null;
-
-        var pageMessages = _pageCache.GetPage(pageNumber);
-        foreach (var message in pageMessages)
+        Dispatcher.UIThread.Post(() =>
         {
-            Messages.Add(message);
-        }
+            Messages.Clear();
+            FilteredMessages.Clear();
+            SelectedMessages.Clear();
+            SelectedMessage = null;
 
-        ApplyMessageFilter();
+            var pageMessages = _pageCache.GetPage(pageNumber);
+            foreach (var message in pageMessages)
+            {
+                Messages.Add(message);
+            }
+
+            ApplyMessageFilter();
+        });
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
