@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
+using BusLane.Services.Infrastructure;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -54,6 +55,13 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public ObservableCollection<MessageInfo> Messages { get; } = [];
     public ObservableCollection<MessageInfo> FilteredMessages { get; } = [];
     public ObservableCollection<MessageInfo> SelectedMessages { get; } = [];
+
+    public PaginationState Pagination { get; } = new();
+    private readonly MessagePageCache _pageCache = new();
+    private string? _currentEntityName;
+    private string? _currentSubscription;
+    private bool _currentDeadLetter;
+    private bool _currentRequiresSession;
 
     public bool HasSelectedMessages => SelectedMessages.Count > 0;
     public int SelectedMessagesCount => SelectedMessages.Count;
@@ -186,14 +194,21 @@ public partial class MessageOperationsViewModel : ViewModelBase
     [RelayCommand]
     public async Task LoadMessagesAsync()
     {
-        var operations = _getOperations();
         var entityName = _getEntityName();
+        if (entityName == null) return;
 
-        if (entityName == null || operations == null) return;
+        await LoadFirstPageAsync(entityName, _getSubscriptionName(), _getShowDeadLetter(), _getRequiresSession());
+    }
 
-        var subscription = _getSubscriptionName();
-        var requiresSession = _getRequiresSession();
-        var showDeadLetter = _getShowDeadLetter();
+    public async Task LoadFirstPageAsync(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        bool requiresSession)
+    {
+        var operations = _getOperations();
+        if (operations == null) return;
+
         var entityDisplay = GetEntityDisplayName();
 
         IsLoadingMessages = true;
@@ -206,24 +221,44 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
         try
         {
+            // Store current context for pagination
+            _currentEntityName = entityName;
+            _currentSubscription = subscription;
+            _currentDeadLetter = deadLetter;
+            _currentRequiresSession = requiresSession;
+
+            // Clear cache and reset pagination
+            _pageCache.Clear();
+            Pagination.Reset();
             Messages.Clear();
-            var msgs = await operations.PeekMessagesAsync(
-                entityName, subscription, _preferencesService.DefaultMessageCount, null, showDeadLetter, requiresSession);
+            FilteredMessages.Clear();
+            SelectedMessages.Clear();
+            SelectedMessage = null;
 
-            var sortedMsgs = SortDescending
-                ? msgs.OrderByDescending(m => m.EnqueuedTime)
-                : msgs.OrderBy(m => m.EnqueuedTime);
+            // Load first page
+            var page1Messages = await LoadPageAsync(1, null);
 
-            foreach (var m in sortedMsgs)
-                Messages.Add(m);
+            if (page1Messages.Any())
+            {
+                _pageCache.StorePage(1, page1Messages);
+                DisplayPage(1);
 
-            ApplyMessageFilter();
-            _setStatus($"{Messages.Count} message(s)");
-            _logSink.Log(new LogEntry(
-                DateTime.UtcNow,
-                LogSource.ServiceBus,
-                LogLevel.Info,
-                $"Loaded {Messages.Count} messages from {entityDisplay}"));
+                // Check if there might be more messages
+                var hasMore = page1Messages.Count >= _preferencesService.MessagesPerPage &&
+                             _pageCache.GetTotalCachedMessages() < _preferencesService.MaxTotalMessages;
+                Pagination.UpdatePageInfo(1, _preferencesService.MessagesPerPage, hasMore);
+
+                _setStatus($"Loaded {page1Messages.Count} messages");
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.ServiceBus,
+                    LogLevel.Info,
+                    $"Loaded {page1Messages.Count} messages from {entityDisplay}"));
+            }
+            else
+            {
+                _setStatus("No messages found");
+            }
         }
         catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx) when (sbEx.Reason == Azure.Messaging.ServiceBus.ServiceBusFailureReason.MessagingEntityNotFound)
         {
@@ -262,6 +297,123 @@ public partial class MessageOperationsViewModel : ViewModelBase
         {
             IsLoadingMessages = false;
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanLoadNextPage))]
+    private async Task LoadNextPageAsync()
+    {
+        var operations = _getOperations();
+        if (operations == null) return;
+
+        IsLoadingMessages = true;
+        _setStatus("Loading next page...");
+
+        try
+        {
+            var nextPage = Pagination.CurrentPage + 1;
+            var lastSeqNum = _pageCache.GetLastSequenceNumber(Pagination.CurrentPage);
+
+            // Check max messages limit
+            if (_pageCache.GetTotalCachedMessages() >= _preferencesService.MaxTotalMessages)
+            {
+                _setStatus($"Maximum message limit ({_preferencesService.MaxTotalMessages}) reached");
+                Pagination.CanGoNext = false;
+                return;
+            }
+
+            var pageMessages = await LoadPageAsync(nextPage, lastSeqNum);
+
+            if (pageMessages.Any())
+            {
+                _pageCache.StorePage(nextPage, pageMessages);
+                Pagination.GoToNextPage();
+                DisplayPage(nextPage);
+
+                var hasMore = pageMessages.Count >= _preferencesService.MessagesPerPage &&
+                             _pageCache.GetTotalCachedMessages() < _preferencesService.MaxTotalMessages;
+                Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, hasMore);
+
+                _setStatus($"Loaded page {nextPage}");
+            }
+            else
+            {
+                Pagination.CanGoNext = false;
+                _setStatus("No more messages");
+            }
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Error loading page: {ex.Message}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                "Failed to load next page",
+                ex.Message));
+        }
+        finally
+        {
+            IsLoadingMessages = false;
+        }
+    }
+
+    public bool CanLoadNextPage => Pagination.CanGoNext;
+
+    [RelayCommand(CanExecute = nameof(CanLoadPreviousPage))]
+    private void LoadPreviousPage()
+    {
+        if (Pagination.CanGoPrevious)
+        {
+            Pagination.GoToPreviousPage();
+            DisplayPage(Pagination.CurrentPage);
+
+            var totalCached = _pageCache.GetTotalCachedMessages();
+            Pagination.UpdatePageInfoWithTotal(
+                Pagination.CurrentPage,
+                _preferencesService.MessagesPerPage,
+                totalCached);
+
+            _setStatus($"Showing page {Pagination.CurrentPage}");
+        }
+    }
+
+    public bool CanLoadPreviousPage => Pagination.CanGoPrevious;
+
+    private async Task<IReadOnlyList<MessageInfo>> LoadPageAsync(int pageNumber, long? fromSequenceNumber)
+    {
+        var operations = _getOperations();
+        if (operations == null) return new List<MessageInfo>().AsReadOnly();
+
+        var count = _preferencesService.MessagesPerPage;
+        var messages = await operations.PeekMessagesAsync(
+            _currentEntityName!,
+            _currentSubscription,
+            count,
+            fromSequenceNumber,
+            _currentDeadLetter,
+            _currentRequiresSession);
+
+        var sorted = SortDescending
+            ? messages.OrderByDescending(m => m.EnqueuedTime)
+            : messages.OrderBy(m => m.EnqueuedTime);
+
+        return sorted.ToList().AsReadOnly();
+    }
+
+    private void DisplayPage(int pageNumber)
+    {
+        Messages.Clear();
+        FilteredMessages.Clear();
+        SelectedMessages.Clear();
+        SelectedMessage = null;
+
+        var pageMessages = _pageCache.GetPage(pageNumber);
+        foreach (var message in pageMessages)
+        {
+            Messages.Add(message);
+        }
+
+        ApplyMessageFilter();
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
@@ -343,6 +495,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
         SelectedMessage = null;
         IsMultiSelectMode = false;
         MessageSearchText = "";
+        _pageCache.Clear();
+        Pagination.Reset();
     }
 }
 
