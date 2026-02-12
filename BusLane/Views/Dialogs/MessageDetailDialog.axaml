@@ -247,7 +247,9 @@
                                     CornerRadius="6"
                                     BorderThickness="1"
                                     BorderBrush="{DynamicResource BorderMuted}"
-                                    Padding="0">
+                                    Padding="0"
+                                    ClipToBounds="True"
+                                    MaxHeight="360">
                                 <controls:SyntaxHighlightedTextBox
                                          Text="{Binding CurrentMessageOps.FormattedMessageBody, Mode=OneWay}"
                                          IsJson="{Binding CurrentMessageOps.IsMessageBodyJson}"
