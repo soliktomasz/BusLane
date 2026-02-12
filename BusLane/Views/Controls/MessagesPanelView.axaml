@@ -170,14 +170,14 @@
                         SelectedIndex="{Binding CurrentNavigation.SelectedMessageTabIndex}">
 
                 <TabItem Header="Active Messages">
-                    <!-- Loading indicator for messages -->
                     <TabItem.Content>
-                        <Grid>
-                            <ListBox ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
-                             SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
-                             Background="Transparent"
-                             Padding="8"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <Grid RowDefinitions="*,Auto">
+                            <ListBox Grid.Row="0"
+                                     ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
+                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     Background="Transparent"
+                                     Padding="8"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -271,7 +271,8 @@
                         </ListBox>
 
                             <!-- Pagination Controls -->
-                            <Border Classes="card"
+                            <Border Grid.Row="1"
+                                    Classes="card"
                                     Margin="8,8,8,0"
                                     IsVisible="{Binding CurrentMessageOps.Pagination.PageInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
@@ -286,15 +287,15 @@
                                             <TextBlock Text="Previous"/>
                                         </StackPanel>
                                     </Button>
-                                    
+
                                     <!-- Page Info -->
-                                    <TextBlock Grid.Column="1" 
+                                    <TextBlock Grid.Column="1"
                                                Text="{Binding CurrentMessageOps.Pagination.PageInfoText}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="13"
                                                FontWeight="Medium"/>
-                                    
+
                                     <!-- Next Button -->
                                     <Button Grid.Column="2"
                                             Classes="subtle small"
@@ -310,7 +311,7 @@
                             </Border>
 
                             <!-- Beautiful centered loading overlay -->
-                            <Border IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
+                            <Border Grid.RowSpan="2" IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
                                     Background="{DynamicResource LoadingOverlay}"
                                     IsHitTestVisible="True">
                                 <Border Background="{DynamicResource CardBackground}"
@@ -348,8 +349,9 @@
                 <TabItem Header="Dead Letter">
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
-                        <Grid>
-                            <ListBox ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
+                        <Grid RowDefinitions="*,Auto">
+                            <ListBox Grid.Row="0"
+                                     ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
                              SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
                              Background="Transparent"
                              Padding="8"
@@ -455,7 +457,8 @@
                         </ListBox>
 
                             <!-- Pagination Controls -->
-                            <Border Classes="card"
+                            <Border Grid.Row="1"
+                                    Classes="card"
                                     Margin="8,8,8,0"
                                     IsVisible="{Binding CurrentMessageOps.Pagination.PageInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
@@ -470,15 +473,15 @@
                                             <TextBlock Text="Previous"/>
                                         </StackPanel>
                                     </Button>
-                                    
+
                                     <!-- Page Info -->
-                                    <TextBlock Grid.Column="1" 
+                                    <TextBlock Grid.Column="1"
                                                Text="{Binding CurrentMessageOps.Pagination.PageInfoText}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="13"
                                                FontWeight="Medium"/>
-                                    
+
                                     <!-- Next Button -->
                                     <Button Grid.Column="2"
                                             Classes="subtle small"
@@ -494,7 +497,7 @@
                             </Border>
 
                             <!-- Beautiful centered loading overlay -->
-                            <Border IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
+                            <Border Grid.RowSpan="2" IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
                                     Background="{DynamicResource LoadingOverlay}"
                                     IsHitTestVisible="True">
                                 <Border Background="{DynamicResource CardBackground}"

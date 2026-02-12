@@ -84,22 +84,22 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     public bool HasActiveTabs => ConnectionTabs.Count > 0;
     public string? ShellStatusMessage => ActiveTab?.StatusMessage ?? StatusMessage;
-    
+
     /// <summary>
     /// Gets whether there's an active tab that is connected.
     /// </summary>
     public bool HasActiveConnectionTab => ActiveTab?.IsConnected == true;
-    
+
     /// <summary>
     /// Gets whether the active tab is connected via Azure credentials (namespace mode).
     /// </summary>
     public bool IsActiveTabAzureMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.AzureAccount;
-    
+
     /// <summary>
     /// Gets whether the active tab is connected via connection string.
     /// </summary>
     public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
-    
+
     /// <summary>
     /// Gets whether to show the welcome screen (no active connection).
     /// </summary>
@@ -1285,7 +1285,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // Track the currently subscribed tab for property change notifications
     private ConnectionTabViewModel? _subscribedTab;
-    
+
     partial void OnActiveTabChanged(ConnectionTabViewModel? oldValue, ConnectionTabViewModel? newValue)
     {
         // Unsubscribe from old tab's property changes
@@ -1303,9 +1303,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             newValue.Navigation.PropertyChanged += OnActiveTabNavigationPropertyChanged;
             _subscribedTab = newValue;
         }
-        
+
         OnPropertyChanged(nameof(ShellStatusMessage));
-        
+
         // Notify computed properties that depend on active tab state
         NotifyActiveTabDependentProperties();
 
@@ -1315,7 +1315,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Save session state when active tab changes
         SaveTabSession();
     }
-    
+
     private void OnActiveTabNavigationPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(NavigationState.ShowDeadLetter))
@@ -1331,20 +1331,22 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             NotifyActiveTabDependentProperties();
         }
-        
+
         // Also notify for SavedConnection and Namespace so bindings update properly
         if (e.PropertyName is nameof(ConnectionTabViewModel.SavedConnection) or nameof(ConnectionTabViewModel.Namespace))
         {
             OnPropertyChanged(nameof(ActiveTab));
         }
     }
-    
+
     private void NotifyActiveTabDependentProperties()
     {
         OnPropertyChanged(nameof(HasActiveConnectionTab));
         OnPropertyChanged(nameof(IsActiveTabAzureMode));
         OnPropertyChanged(nameof(IsActiveTabConnectionStringMode));
         OnPropertyChanged(nameof(ShowWelcome));
+        OnPropertyChanged(nameof(CurrentNavigation));
+        OnPropertyChanged(nameof(CurrentMessageOps));
     }
 
     /// <summary>

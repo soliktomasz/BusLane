@@ -86,7 +86,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         {
             if (SelectedMessage?.Body == null) return false;
             var trimmed = SelectedMessage.Body.Trim();
-            return trimmed.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) || 
+            return trimmed.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) ||
                    (trimmed.StartsWith("<") && trimmed.Contains("</") && trimmed.EndsWith(">"));
         }
     }
@@ -155,6 +155,21 @@ public partial class MessageOperationsViewModel : ViewModelBase
             OnPropertyChanged(nameof(SelectedMessagesCount));
             OnPropertyChanged(nameof(CanResubmitDeadLetters));
         };
+
+        // Subscribe to Pagination property changes to update command CanExecute
+        Pagination.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(PaginationState.CanGoNext))
+            {
+                OnPropertyChanged(nameof(CanLoadNextPage));
+                LoadNextPageCommand.NotifyCanExecuteChanged();
+            }
+            else if (e.PropertyName == nameof(PaginationState.CanGoPrevious))
+            {
+                OnPropertyChanged(nameof(CanLoadPreviousPage));
+                LoadPreviousPageCommand.NotifyCanExecuteChanged();
+            }
+        };
     }
 
     partial void OnIsMultiSelectModeChanged(bool value)
@@ -185,9 +200,14 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 (m.DeadLetterReason?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 m.SequenceNumber.ToString().Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase));
 
-        foreach (var msg in filtered)
+        var filteredList = filtered.ToList();
+        System.Diagnostics.Debug.WriteLine($"[ApplyMessageFilter] SearchText='{MessageSearchText}', Messages.Count={Messages.Count}, Filtered count={filteredList.Count}");
+
+        foreach (var msg in filteredList)
             FilteredMessages.Add(msg);
-        
+
+        System.Diagnostics.Debug.WriteLine($"[ApplyMessageFilter] FilteredMessages.Count after adding: {FilteredMessages.Count}");
+
         // Notify UI that FilteredMessages has changed
         OnPropertyChanged(nameof(FilteredMessages));
     }
@@ -244,8 +264,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
             if (page1Messages.Any())
             {
+                System.Diagnostics.Debug.WriteLine($"[LoadFirstPageAsync] Loaded {page1Messages.Count} messages, storing in cache");
                 _pageCache.StorePage(1, page1Messages);
+                System.Diagnostics.Debug.WriteLine($"[LoadFirstPageAsync] Calling DisplayPage(1)");
                 DisplayPage(1);
+                System.Diagnostics.Debug.WriteLine($"[LoadFirstPageAsync] DisplayPage completed, updating pagination");
 
                 // Check if there might be more messages
                 var hasMore = page1Messages.Count >= _preferencesService.MessagesPerPage &&
@@ -406,21 +429,38 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     private void DisplayPage(int pageNumber)
     {
-        Dispatcher.UIThread.Post(() =>
+        // Use Invoke to ensure UI updates happen synchronously
+        // This prevents race conditions where pagination shows but messages don't
+        if (Dispatcher.UIThread.CheckAccess())
         {
-            Messages.Clear();
-            FilteredMessages.Clear();
-            SelectedMessages.Clear();
-            SelectedMessage = null;
+            DisplayPageCore(pageNumber);
+        }
+        else
+        {
+            Dispatcher.UIThread.Invoke(() => DisplayPageCore(pageNumber));
+        }
+    }
 
-            var pageMessages = _pageCache.GetPage(pageNumber);
-            foreach (var message in pageMessages)
-            {
-                Messages.Add(message);
-            }
+    private void DisplayPageCore(int pageNumber)
+    {
+        Messages.Clear();
+        FilteredMessages.Clear();
+        SelectedMessages.Clear();
+        SelectedMessage = null;
 
-            ApplyMessageFilter();
-        });
+        var pageMessages = _pageCache.GetPage(pageNumber);
+        System.Diagnostics.Debug.WriteLine($"[DisplayPageCore] Page {pageNumber}: Cache returned {pageMessages.Count} messages");
+
+        foreach (var message in pageMessages)
+        {
+            Messages.Add(message);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[DisplayPageCore] Messages collection now has {Messages.Count} items");
+
+        ApplyMessageFilter();
+
+        System.Diagnostics.Debug.WriteLine($"[DisplayPageCore] FilteredMessages now has {FilteredMessages.Count} items");
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
@@ -473,7 +513,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         Messages.Clear();
         foreach (var m in sorted)
             Messages.Add(m);
-        
+
         ApplyMessageFilter();
     }
 
