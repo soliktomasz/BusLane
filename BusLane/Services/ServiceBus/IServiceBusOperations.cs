@@ -28,6 +28,7 @@ public interface IServiceBusOperations : IAsyncDisposable
         string entityName,
         string? subscription,
         int count,
+        long? fromSequenceNumber,
         bool deadLetter,
         bool requiresSession = false,
         CancellationToken ct = default);
