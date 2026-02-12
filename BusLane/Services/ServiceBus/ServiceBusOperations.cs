@@ -147,11 +147,14 @@ internal static class ServiceBusOperations
         string entityName, 
         string? subscription,
         int count, 
+        long? fromSequenceNumber,
         bool deadLetter, 
         CancellationToken ct)
     {
         await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter);
-        return await receiver.PeekMessagesAsync(count, cancellationToken: ct);
+        return fromSequenceNumber.HasValue
+            ? await receiver.PeekMessagesAsync(count, fromSequenceNumber.Value, cancellationToken: ct)
+            : await receiver.PeekMessagesAsync(count, cancellationToken: ct);
     }
 
     /// <summary>
@@ -161,7 +164,8 @@ internal static class ServiceBusOperations
         ServiceBusClient client, 
         string entityName, 
         string? subscription,
-        int count, 
+        int count,
+        long? fromSequenceNumber,
         bool deadLetter, 
         CancellationToken ct)
     {
@@ -186,7 +190,9 @@ internal static class ServiceBusOperations
                     sessionsChecked.Add(sessionReceiver.SessionId);
 
                     var remaining = count - allMessages.Count;
-                    var sessionMessages = await sessionReceiver.PeekMessagesAsync(remaining, cancellationToken: ct);
+                    var sessionMessages = fromSequenceNumber.HasValue
+                        ? await sessionReceiver.PeekMessagesAsync(remaining, fromSequenceNumber.Value, cancellationToken: ct)
+                        : await sessionReceiver.PeekMessagesAsync(remaining, cancellationToken: ct);
                     allMessages.AddRange(sessionMessages);
 
                     await sessionReceiver.DisposeAsync();

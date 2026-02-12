@@ -208,7 +208,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         {
             Messages.Clear();
             var msgs = await operations.PeekMessagesAsync(
-                entityName, subscription, _preferencesService.DefaultMessageCount, showDeadLetter, requiresSession);
+                entityName, subscription, _preferencesService.DefaultMessageCount, null, showDeadLetter, requiresSession);
 
             var sortedMsgs = SortDescending
                 ? msgs.OrderByDescending(m => m.EnqueuedTime)

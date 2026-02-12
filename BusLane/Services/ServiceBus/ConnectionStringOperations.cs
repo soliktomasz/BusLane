@@ -175,12 +175,12 @@ public class ConnectionStringOperations : IConnectionStringOperations
     }
 
     public async Task<IEnumerable<MessageInfo>> PeekMessagesAsync(
-        string entityName, string? subscription, int count, bool deadLetter,
+        string entityName, string? subscription, int count, long? fromSequenceNumber, bool deadLetter,
         bool requiresSession = false, CancellationToken ct = default)
     {
         var messages = requiresSession
-            ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, count, deadLetter, ct)
-            : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, deadLetter, ct);
+            ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct)
+            : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct);
 
         return messages.Select(ServiceBusOperations.MapToMessageInfo);
     }
