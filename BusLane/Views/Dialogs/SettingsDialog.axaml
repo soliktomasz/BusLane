@@ -118,16 +118,32 @@
                                 <!-- Settings Items -->
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
-                                        <!-- Default Message Count -->
+                                        <!-- Messages Per Page -->
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Default message count" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Number of messages to load by default"
+                                                <TextBlock Text="Messages per page" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Number of messages to show per page"
                                                            Classes="caption" FontSize="12"/>
                                             </StackPanel>
                                             <ComboBox Grid.Column="1"
-                                                      ItemsSource="{Binding SettingsViewModel.AvailableMessageCounts}"
-                                                      SelectedItem="{Binding SettingsViewModel.DefaultMessageCount}"
+                                                      ItemsSource="{Binding SettingsViewModel.MessagesPerPageOptions}"
+                                                      SelectedItem="{Binding SettingsViewModel.MessagesPerPage}"
+                                                      Width="100"
+                                                      VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Max Total Messages -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Maximum total messages" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Maximum messages to load across all pages"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ComboBox Grid.Column="1"
+                                                      ItemsSource="{Binding SettingsViewModel.MaxTotalMessagesOptions}"
+                                                      SelectedItem="{Binding SettingsViewModel.MaxTotalMessages}"
                                                       Width="100"
                                                       VerticalAlignment="Center"/>
                                         </Grid>
