@@ -213,13 +213,18 @@ public class MetricsService : IMetricsService, IDisposable
         var result = new List<MetricDataPoint>();
         var entityPrefix = $"{entityName}:";
 
-        // Filter keys by entity prefix to avoid checking every metric list
-        foreach (var kvp in _metrics.Where(k => k.Key.StartsWith(entityPrefix, StringComparison.Ordinal)))
+        foreach (var kvp in _metrics)
         {
+            if (!kvp.Key.StartsWith(entityPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
         }
 
-        return result.OrderBy(p => p.Timestamp);
+        result.Sort(static (left, right) => left.Timestamp.CompareTo(right.Timestamp));
+        return result;
     }
 
     public IEnumerable<MetricDataPoint> GetAggregatedMetrics(string metricName, TimeSpan duration)
@@ -228,13 +233,18 @@ public class MetricsService : IMetricsService, IDisposable
         var result = new List<MetricDataPoint>();
         var metricSuffix = $":{metricName}";
 
-        // Filter keys by metric suffix
-        foreach (var kvp in _metrics.Where(k => k.Key.EndsWith(metricSuffix, StringComparison.Ordinal)))
+        foreach (var kvp in _metrics)
         {
+            if (!kvp.Key.EndsWith(metricSuffix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             result.AddRange(kvp.Value.Where(p => p.Timestamp >= cutoff));
         }
 
-        return result.OrderBy(p => p.Timestamp);
+        result.Sort(static (left, right) => left.Timestamp.CompareTo(right.Timestamp));
+        return result;
     }
 
     public void CleanupOldMetrics(TimeSpan retentionPeriod)
@@ -246,10 +256,21 @@ public class MetricsService : IMetricsService, IDisposable
             kvp.Value.RemoveAll(p => p.Timestamp < cutoff);
         }
 
-        var emptyKeys = _metrics.Where(kvp => kvp.Value.Count == 0).Select(kvp => kvp.Key).ToList();
+        var emptyKeys = new List<string>();
+        foreach (var kvp in _metrics)
+        {
+            if (kvp.Value.Count == 0)
+            {
+                emptyKeys.Add(kvp.Key);
+            }
+        }
+
         foreach (var key in emptyKeys)
         {
-            _metrics.TryRemove(key, out _);
+            if (_metrics.TryRemove(key, out var metricDataList))
+            {
+                metricDataList.Dispose();
+            }
         }
     }
 
@@ -258,4 +279,3 @@ public class MetricsService : IMetricsService, IDisposable
         return $"{entityName}:{metricName}";
     }
 }
-

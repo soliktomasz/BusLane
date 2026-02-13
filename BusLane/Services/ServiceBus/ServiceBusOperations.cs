@@ -46,8 +46,8 @@ public record ServiceBusOperationOptions
 /// </summary>
 internal static class ServiceBusOperations
 {
-    // Default options - these are used when no options are provided
-    public static ServiceBusOperationOptions Options { get; set; } = ServiceBusOperationOptions.Default;
+    // Default options used by shared operations.
+    public static ServiceBusOperationOptions Options { get; } = ServiceBusOperationOptions.Default;
 
     // Convenience accessors for backwards compatibility
     public static int MaxSessionsToCheck => Options.MaxSessionsToCheck;

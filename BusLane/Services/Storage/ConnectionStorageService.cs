@@ -101,56 +101,63 @@ public class ConnectionStorageService : IConnectionStorageService
         try
         {
             var json = await File.ReadAllTextAsync(AppPaths.Connections);
-            var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, JsonOptions) ?? [];
+            try
+            {
+                var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, JsonOptions) ?? [];
 
-            loadedConnections = storedConnections
-                .Select(stored =>
+                loadedConnections = storedConnections
+                    .Select(stored =>
+                    {
+                        // Decrypt the connection string
+                        // The decryption handles both encrypted and legacy unencrypted strings
+                        var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString);
+
+                        // If decryption returns null, the encrypted data is corrupted or
+                        // was encrypted with a different key (e.g., from a different machine)
+                        if (connectionString == null)
+                        {
+                            Log.Warning("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId}). " +
+                                        "The connection may have been encrypted with a different key",
+                                stored.Name, stored.Id);
+                            return null;
+                        }
+
+                        return new SavedConnection
+                        {
+                            Id = stored.Id,
+                            Name = stored.Name,
+                            ConnectionString = connectionString,
+                            Type = stored.Type,
+                            EntityName = stored.EntityName,
+                            CreatedAt = stored.CreatedAt,
+                            IsFavorite = stored.IsFavorite,
+                            Environment = stored.Environment
+                        };
+                    })
+                    .Where(conn => conn != null)
+                    .Cast<SavedConnection>()
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                // Try loading legacy format (unencrypted SavedConnection)
+                Log.Debug(ex, "Failed to load connections in encrypted format, trying legacy format");
+                try
                 {
-                    // Decrypt the connection string
-                    // The decryption handles both encrypted and legacy unencrypted strings
-                    var connectionString = _encryptionService.Decrypt(stored.EncryptedConnectionString);
-
-                    // If decryption returns null, the encrypted data is corrupted or
-                    // was encrypted with a different key (e.g., from a different machine)
-                    if (connectionString == null)
-                    {
-                        Log.Warning("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId}). " +
-                                    "The connection may have been encrypted with a different key",
-                            stored.Name, stored.Id);
-                        return null;
-                    }
-
-                    return new SavedConnection
-                    {
-                        Id = stored.Id,
-                        Name = stored.Name,
-                        ConnectionString = connectionString,
-                        Type = stored.Type,
-                        EntityName = stored.EntityName,
-                        CreatedAt = stored.CreatedAt,
-                        IsFavorite = stored.IsFavorite,
-                        Environment = stored.Environment
-                    };
-                })
-                .Where(conn => conn != null)
-                .Cast<SavedConnection>()
-                .ToList();
+                    loadedConnections = JsonSerializer.Deserialize<List<SavedConnection>>(json, JsonOptions) ?? [];
+                    Log.Information("Loaded {Count} connections from legacy format", loadedConnections.Count);
+                }
+                catch (Exception legacyEx)
+                {
+                    Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
+                    loadedConnections = [];
+                }
+            }
         }
         catch (Exception ex)
         {
-            // Try loading legacy format (unencrypted SavedConnection)
-            Log.Debug(ex, "Failed to load connections in encrypted format, trying legacy format");
-            try
-            {
-                var json = await File.ReadAllTextAsync(AppPaths.Connections);
-                loadedConnections = JsonSerializer.Deserialize<List<SavedConnection>>(json, JsonOptions) ?? [];
-                Log.Information("Loaded {Count} connections from legacy format", loadedConnections.Count);
-            }
-            catch (Exception legacyEx)
-            {
-                Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
-                loadedConnections = [];
-            }
+            Log.Warning(ex, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
+            loadedConnections = [];
         }
 
         lock (_lock)
@@ -185,4 +192,3 @@ public class ConnectionStorageService : IConnectionStorageService
         await File.WriteAllTextAsync(AppPaths.Connections, json);
     }
 }
-

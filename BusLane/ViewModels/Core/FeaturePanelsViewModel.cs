@@ -15,10 +15,9 @@ namespace BusLane.ViewModels.Core;
 public partial class FeaturePanelsViewModel : ViewModelBase
 {
     private readonly ILiveStreamService _liveStreamService;
-    private readonly IMetricsService _metricsService;
     private readonly IAlertService _alertService;
     private readonly INotificationService _notificationService;
-    private readonly Func<string?> _getEndpoint;
+    private readonly Func<IServiceBusOperations?> _getOperations;
     private readonly Func<ObservableCollection<QueueInfo>> _getQueues;
     private readonly Func<ObservableCollection<TopicInfo>> _getTopics;
     private readonly Func<ObservableCollection<SubscriptionInfo>> _getSubscriptions;
@@ -36,11 +35,10 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public FeaturePanelsViewModel(
         ILiveStreamService liveStreamService,
-        IMetricsService metricsService,
         IAlertService alertService,
         INotificationService notificationService,
         DashboardViewModel dashboardViewModel,
-        Func<string?> getEndpoint,
+        Func<IServiceBusOperations?> getOperations,
         Func<ObservableCollection<QueueInfo>> getQueues,
         Func<ObservableCollection<TopicInfo>> getTopics,
         Func<ObservableCollection<SubscriptionInfo>> getSubscriptions,
@@ -49,10 +47,9 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         Action<string> setStatus)
     {
         _liveStreamService = liveStreamService;
-        _metricsService = metricsService;
         _alertService = alertService;
         _notificationService = notificationService;
-        _getEndpoint = getEndpoint;
+        _getOperations = getOperations;
         _getQueues = getQueues;
         _getTopics = getTopics;
         _getSubscriptions = getSubscriptions;
@@ -88,8 +85,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     [RelayCommand]
     public async Task OpenLiveStream()
     {
-        LiveStreamViewModel = new LiveStreamViewModel(_liveStreamService);
-        LiveStreamViewModel.SetAvailableEntities(_getEndpoint(), _getQueues(), _getTopics());
+        LiveStreamViewModel = new LiveStreamViewModel(_liveStreamService, _getOperations);
+        LiveStreamViewModel.SetAvailableEntities(_getQueues(), _getTopics());
 
         ShowLiveStream = true;
         ShowCharts = false;
@@ -142,19 +139,16 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     {
         if (LiveStreamViewModel == null) return;
 
-        var endpoint = _getEndpoint();
-        if (string.IsNullOrEmpty(endpoint)) return;
-
         var selectedQueue = _getSelectedQueue();
         var selectedSubscription = _getSelectedSubscription();
 
         if (selectedQueue != null)
         {
-            await LiveStreamViewModel.StartQueueAsync(endpoint, selectedQueue.Name);
+            await LiveStreamViewModel.StartQueueAsync(selectedQueue.Name);
         }
         else if (selectedSubscription != null)
         {
-            await LiveStreamViewModel.StartSubscriptionAsync(endpoint, selectedSubscription.TopicName, selectedSubscription.Name);
+            await LiveStreamViewModel.StartSubscriptionAsync(selectedSubscription.TopicName, selectedSubscription.Name);
         }
     }
 
@@ -174,4 +168,3 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         CloseAlerts();
     }
 }
-

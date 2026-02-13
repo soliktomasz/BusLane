@@ -18,7 +18,6 @@ public class UpdateService : IUpdateService, IDisposable
     private ReleaseInfo? _availableRelease;
     private double _downloadProgress;
     private string? _errorMessage;
-    private string? _downloadedFilePath;
 
     public UpdateStatus Status
     {
@@ -145,7 +144,6 @@ public class UpdateService : IUpdateService, IDisposable
                 return;
             }
 
-            _downloadedFilePath = filePath;
             Status = UpdateStatus.Downloaded;
         }
         catch (Exception ex)

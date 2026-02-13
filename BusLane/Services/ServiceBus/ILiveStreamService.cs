@@ -27,22 +27,6 @@ public interface ILiveStreamService : IAsyncDisposable
     Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, bool peekOnly = true, CancellationToken ct = default);
 
     /// <summary>
-    /// Start streaming messages from a queue (legacy method).
-    /// Creates a new ServiceBusClient and does not use the connection pool.
-    /// Prefer using the overload that accepts IServiceBusOperations.
-    /// </summary>
-    [Obsolete("Use StartQueueStreamAsync(IServiceBusOperations, ...) instead")]
-    Task StartQueueStreamAsync(string endpoint, string queueName, bool peekOnly = true, CancellationToken ct = default);
-
-    /// <summary>
-    /// Start streaming messages from a topic subscription (legacy method).
-    /// Creates a new ServiceBusClient and does not use the connection pool.
-    /// Prefer using the overload that accepts IServiceBusOperations.
-    /// </summary>
-    [Obsolete("Use StartSubscriptionStreamAsync(IServiceBusOperations, ...) instead")]
-    Task StartSubscriptionStreamAsync(string endpoint, string topicName, string subscriptionName, bool peekOnly = true, CancellationToken ct = default);
-
-    /// <summary>
     /// Stop the current stream
     /// </summary>
     Task StopStreamAsync();
@@ -57,4 +41,3 @@ public interface ILiveStreamService : IAsyncDisposable
     /// </summary>
     event EventHandler<Exception>? StreamError;
 }
-

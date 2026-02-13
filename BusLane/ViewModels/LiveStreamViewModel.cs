@@ -12,6 +12,7 @@ using Services.ServiceBus;
 public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 {
     private readonly ILiveStreamService _liveStreamService;
+    private readonly Func<IServiceBusOperations?> _getOperations;
     private IDisposable? _messageSubscription;
     private const int MaxMessages = 500;
 
@@ -26,8 +27,6 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty] private bool _autoScroll = true;
     [ObservableProperty] private string _filterText = "";
 
-    // Entity selection properties
-    [ObservableProperty] private string? _endpoint;
     [ObservableProperty] private object? _selectedStreamEntity;
     [ObservableProperty] private bool _hasEntities;
 
@@ -38,9 +37,12 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     public ObservableCollection<QueueInfo> AvailableQueues { get; } = [];
     public ObservableCollection<TopicInfo> AvailableTopics { get; } = [];
 
-    public LiveStreamViewModel(ILiveStreamService liveStreamService)
+    public LiveStreamViewModel(
+        ILiveStreamService liveStreamService,
+        Func<IServiceBusOperations?> getOperations)
     {
         _liveStreamService = liveStreamService;
+        _getOperations = getOperations;
         _liveStreamService.StreamingStatusChanged += OnStreamingStatusChanged;
         _liveStreamService.StreamError += OnStreamError;
 
@@ -120,16 +122,24 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     }
 
     [RelayCommand]
-    private async Task StartQueueStreamAsync((string endpoint, string queueName) args)
+    private async Task StartQueueStreamAsync(string queueName)
     {
         try
         {
+            var operations = _getOperations();
+            if (operations == null)
+            {
+                ErrorMessage = "No active connection for live stream";
+                IsConnecting = false;
+                return;
+            }
+
             ErrorMessage = null;
             IsConnecting = true;
-            CurrentEntityName = args.queueName;
+            CurrentEntityName = queueName;
             CurrentEntityType = "Queue";
 
-            await _liveStreamService.StartQueueStreamAsync(args.endpoint, args.queueName, IsPeekMode);
+            await _liveStreamService.StartQueueStreamAsync(operations, queueName, IsPeekMode);
         }
         catch (Exception ex)
         {
@@ -139,16 +149,24 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     }
 
     [RelayCommand]
-    private async Task StartSubscriptionStreamAsync((string endpoint, string topicName, string subscriptionName) args)
+    private async Task StartSubscriptionStreamAsync((string topicName, string subscriptionName) args)
     {
         try
         {
+            var operations = _getOperations();
+            if (operations == null)
+            {
+                ErrorMessage = "No active connection for live stream";
+                IsConnecting = false;
+                return;
+            }
+
             ErrorMessage = null;
             IsConnecting = true;
             CurrentEntityName = $"{args.topicName}/{args.subscriptionName}";
             CurrentEntityType = "Subscription";
 
-            await _liveStreamService.StartSubscriptionStreamAsync(args.endpoint, args.topicName, args.subscriptionName, IsPeekMode);
+            await _liveStreamService.StartSubscriptionStreamAsync(operations, args.topicName, args.subscriptionName, IsPeekMode);
         }
         catch (Exception ex)
         {
@@ -160,17 +178,17 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     /// <summary>
     /// Start streaming from a queue - public helper method
     /// </summary>
-    public Task StartQueueAsync(string endpoint, string queueName)
+    public Task StartQueueAsync(string queueName)
     {
-        return StartQueueStreamAsync((endpoint, queueName));
+        return StartQueueStreamAsync(queueName);
     }
 
     /// <summary>
     /// Start streaming from a subscription - public helper method
     /// </summary>
-    public Task StartSubscriptionAsync(string endpoint, string topicName, string subscriptionName)
+    public Task StartSubscriptionAsync(string topicName, string subscriptionName)
     {
-        return StartSubscriptionStreamAsync((endpoint, topicName, subscriptionName));
+        return StartSubscriptionStreamAsync((topicName, subscriptionName));
     }
 
     [RelayCommand]
@@ -198,10 +216,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     /// <summary>
     /// Initialize available entities for streaming selection
     /// </summary>
-    public void SetAvailableEntities(string? endpoint, IEnumerable<QueueInfo> queues, IEnumerable<TopicInfo> topics)
+    public void SetAvailableEntities(IEnumerable<QueueInfo> queues, IEnumerable<TopicInfo> topics)
     {
-        Endpoint = endpoint;
-
         AvailableQueues.Clear();
         foreach (var queue in queues)
         {
@@ -220,16 +236,16 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     [RelayCommand]
     private async Task StartStreamForSelectedEntity()
     {
-        if (string.IsNullOrEmpty(Endpoint) || SelectedStreamEntity == null)
+        if (SelectedStreamEntity == null)
             return;
 
         switch (SelectedStreamEntity)
         {
             case QueueInfo queue:
-                await StartQueueAsync(Endpoint, queue.Name);
+                await StartQueueAsync(queue.Name);
                 break;
             case SubscriptionInfo subscription:
-                await StartSubscriptionAsync(Endpoint, subscription.TopicName, subscription.Name);
+                await StartSubscriptionAsync(subscription.TopicName, subscription.Name);
                 break;
         }
     }

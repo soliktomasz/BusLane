@@ -94,6 +94,36 @@ public class MessagePageCacheTests
         // Assert
         result.Should().Be(200);
     }
+
+    [Fact]
+    public void GetMaxSequenceNumber_WhenMultiplePagesExist_ShouldReturnHighestSequenceNumber()
+    {
+        // Arrange
+        var sut = new MessagePageCache();
+        sut.StorePage(1, [CreateMessage("1", "body1", 10), CreateMessage("2", "body2", 20)]);
+        sut.StorePage(2, [CreateMessage("3", "body3", 30), CreateMessage("4", "body4", 15)]);
+
+        // Act
+        var result = sut.GetMaxSequenceNumber();
+
+        // Assert
+        result.Should().Be(30);
+    }
+
+    [Fact]
+    public void GetCachedSequenceNumbers_ShouldReturnDistinctSequenceNumbersFromAllPages()
+    {
+        // Arrange
+        var sut = new MessagePageCache();
+        sut.StorePage(1, [CreateMessage("1", "body1", 10), CreateMessage("2", "body2", 20)]);
+        sut.StorePage(2, [CreateMessage("3", "body3", 20), CreateMessage("4", "body4", 30)]);
+
+        // Act
+        var result = sut.GetCachedSequenceNumbers();
+
+        // Assert
+        result.Should().BeEquivalentTo([10, 20, 30]);
+    }
     
     [Fact]
     public void Clear_ShouldRemoveAllPages()

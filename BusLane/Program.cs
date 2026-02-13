@@ -114,7 +114,6 @@ class Program
         services.AddSingleton<IVersionService, VersionService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IPreferencesService, PreferencesService>();
-        services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
         services.AddSingleton<ILogSink, LogSink>();
         
@@ -154,7 +153,6 @@ class Program
             sp.GetRequiredService<IVersionService>(),
             sp.GetRequiredService<IPreferencesService>(),
             sp.GetRequiredService<ILiveStreamService>(),
-            sp.GetRequiredService<IMetricsService>(),
             sp.GetRequiredService<IAlertService>(),
             sp.GetRequiredService<INotificationService>(),
             sp.GetRequiredService<IKeyboardShortcutService>(),
@@ -163,15 +161,6 @@ class Program
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>()
         ));
 
-        // Other ViewModels
-        services.AddTransient<LoginViewModel>();
-        services.AddTransient<NamespaceViewModel>();
-        services.AddTransient<QueueViewModel>();
-        services.AddTransient<MessageViewModel>();
-        services.AddTransient<TopicViewModel>();
-
-        // ViewModels for Live Stream and Alerts
-        services.AddTransient<LiveStreamViewModel>();
     }
 
     /// <summary>

@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
@@ -166,7 +165,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IVersionService versionService,
         IPreferencesService preferencesService,
         ILiveStreamService liveStreamService,
-        IMetricsService metricsService,
         IAlertService alertService,
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
@@ -198,7 +196,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         Connection = new ConnectionViewModel(
             auth,
             connectionStorage,
-            operationsFactory,
             _logSink,
             msg => StatusMessage = msg,
             OnConnectedAsync,
@@ -217,9 +214,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             msg => StatusMessage = msg);
 
         FeaturePanels = new FeaturePanelsViewModel(
-            liveStreamService, metricsService, alertService, notificationService,
+            liveStreamService, alertService, notificationService,
             dashboardViewModel,
-            () => Navigation.CurrentEndpoint ?? Connection.CurrentEndpoint,
+            () => ActiveTab?.Operations ?? _operations,
             () => Navigation.Queues,
             () => Navigation.Topics,
             () => Navigation.TopicSubscriptions,
@@ -1204,25 +1201,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public async Task OpenTabForConnectionAsync(SavedConnection connection)
     {
-        var tab = new ConnectionTabViewModel(
-            Guid.NewGuid().ToString(),
-            connection.Name,
-            connection.Endpoint ?? "",
-            _preferencesService,
-            _logSink);
-
-        ConnectionTabs.Add(tab);
-        ActiveTab = tab;
-        OnPropertyChanged(nameof(HasActiveTabs));
-
-        try
-        {
-            await tab.ConnectWithConnectionStringAsync(connection, _operationsFactory);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Failed to connect: {ex.Message}";
-        }
+        await Tabs.OpenTabForConnectionAsync(connection);
     }
 
     /// <summary>
@@ -1231,27 +1210,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public async Task OpenTabForNamespaceAsync(ServiceBusNamespace ns)
     {
-        if (_auth.Credential == null) return;
-
-        var tab = new ConnectionTabViewModel(
-            Guid.NewGuid().ToString(),
-            ns.Name,
-            ns.Endpoint,
-            _preferencesService,
-            _logSink);
-
-        ConnectionTabs.Add(tab);
-        ActiveTab = tab;
-        OnPropertyChanged(nameof(HasActiveTabs));
-
-        try
-        {
-            await tab.ConnectWithAzureCredentialAsync(ns, _auth.Credential, _operationsFactory);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Failed to connect: {ex.Message}";
-        }
+        await Tabs.OpenTabForNamespaceAsync(ns);
     }
 
     /// <summary>
@@ -1260,25 +1219,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public async Task CloseTabAsync(string tabId)
     {
-        var tab = ConnectionTabs.FirstOrDefault(t => t.TabId == tabId);
-        if (tab == null) return;
-
-        await tab.DisconnectAsync();
-
-        var index = ConnectionTabs.IndexOf(tab);
-        ConnectionTabs.Remove(tab);
-        OnPropertyChanged(nameof(HasActiveTabs));
-
-        // Switch to nearest tab or clear active
-        if (ConnectionTabs.Count == 0)
-        {
-            ActiveTab = null;
-        }
-        else if (ActiveTab == tab)
-        {
-            var newIndex = Math.Min(index, ConnectionTabs.Count - 1);
-            ActiveTab = ConnectionTabs[newIndex];
-        }
+        await Tabs.CloseTabAsync(tabId);
     }
 
     /// <summary>
@@ -1287,11 +1228,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public void SwitchToTab(string tabId)
     {
-        var tab = ConnectionTabs.FirstOrDefault(t => t.TabId == tabId);
-        if (tab != null)
-        {
-            ActiveTab = tab;
-        }
+        Tabs.SwitchToTab(tabId);
     }
 
     /// <summary>
@@ -1300,10 +1237,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public async Task CloseActiveTabAsync()
     {
-        if (ActiveTab != null)
-        {
-            await CloseTabAsync(ActiveTab.TabId);
-        }
+        await Tabs.CloseActiveTabAsync();
     }
 
     // Track the currently subscribed tab for property change notifications
@@ -1335,8 +1269,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Update the legacy _operations reference for backward compatibility
         SetOperations(newValue?.Operations);
 
-        // Save session state when active tab changes
-        SaveTabSession();
     }
 
     private void OnActiveTabNavigationPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1378,11 +1310,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public void NextTab()
     {
-        if (ConnectionTabs.Count <= 1) return;
-
-        var currentIndex = ActiveTab != null ? ConnectionTabs.IndexOf(ActiveTab) : -1;
-        var nextIndex = (currentIndex + 1) % ConnectionTabs.Count;
-        ActiveTab = ConnectionTabs[nextIndex];
+        Tabs.NextTab();
     }
 
     /// <summary>
@@ -1391,11 +1319,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public void PreviousTab()
     {
-        if (ConnectionTabs.Count <= 1) return;
-
-        var currentIndex = ActiveTab != null ? ConnectionTabs.IndexOf(ActiveTab) : 0;
-        var prevIndex = currentIndex <= 0 ? ConnectionTabs.Count - 1 : currentIndex - 1;
-        ActiveTab = ConnectionTabs[prevIndex];
+        Tabs.PreviousTab();
     }
 
     /// <summary>
@@ -1404,88 +1328,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     public void SwitchToTabByIndex(int index)
     {
-        var zeroBasedIndex = index - 1;
-        if (zeroBasedIndex >= 0 && zeroBasedIndex < ConnectionTabs.Count)
-        {
-            ActiveTab = ConnectionTabs[zeroBasedIndex];
-        }
-    }
-
-    #endregion
-
-    #region Session Persistence
-
-    /// <summary>
-    /// Saves the current tab session to preferences.
-    /// </summary>
-    public void SaveTabSession()
-    {
-        try
-        {
-            var states = ConnectionTabs.Select((tab, index) => new TabSessionState
-            {
-                TabId = tab.TabId,
-                Mode = tab.Mode,
-                ConnectionId = tab.SavedConnection?.Id,
-                NamespaceId = tab.Namespace?.Id,
-                SelectedEntityName = tab.Navigation.CurrentEntityName,
-                TabOrder = index
-            }).ToList();
-
-            _preferencesService.OpenTabsJson = JsonSerializer.Serialize(states);
-            _preferencesService.Save();
-        }
-        catch
-        {
-            // Silently ignore save failures
-        }
-    }
-
-    /// <summary>
-    /// Restores tabs from the saved session.
-    /// </summary>
-    public async Task RestoreTabSessionAsync()
-    {
-        if (!_preferencesService.RestoreTabsOnStartup)
-            return;
-
-        try
-        {
-            var states = JsonSerializer.Deserialize<List<TabSessionState>>(_preferencesService.OpenTabsJson);
-            if (states == null || states.Count == 0)
-                return;
-
-            foreach (var state in states.OrderBy(s => s.TabOrder))
-            {
-                if (state.Mode == ConnectionMode.ConnectionString && state.ConnectionId != null)
-                {
-                    // Restore connection string tab
-                    var connection = await _connectionStorage.GetConnectionAsync(state.ConnectionId);
-                    if (connection != null)
-                    {
-                        await OpenTabForConnectionAsync(connection);
-                    }
-                }
-                else if (state.Mode == ConnectionMode.AzureAccount && state.NamespaceId != null)
-                {
-                    // Azure tabs require re-authentication, skip for now
-                    // Could be enhanced to prompt for re-auth
-                }
-            }
-        }
-        catch
-        {
-            // Silently ignore restore failures
-        }
-    }
-
-    /// <summary>
-    /// Called when the application is closing to save session state.
-    /// </summary>
-    public async Task OnApplicationClosingAsync()
-    {
-        SaveTabSession();
-        await DisposeAsync();
+        Tabs.SwitchToTabByIndex(index);
     }
 
     #endregion

@@ -2,7 +2,6 @@ namespace BusLane.Services.ServiceBus;
 
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
@@ -19,12 +18,8 @@ public class LiveStreamService : ILiveStreamService
     private Task? _peekStreamTask;
     private bool _isStreaming;
     private bool _disposed;
-    private IServiceBusOperations? _currentOperations;
-    private ServiceBusClient? _legacyClient;
 
     private string _currentEntityName = "";
-    private string? _currentTopicName;
-    private bool _isPeekMode = true;
 
     private const int DefaultPeekTimeoutSeconds = 30;
     private const int DefaultPollingIntervalSeconds = 1;
@@ -76,10 +71,7 @@ public class LiveStreamService : ILiveStreamService
     {
         await StopStreamAsync();
 
-        _currentOperations = operations;
         _currentEntityName = queueName;
-        _currentTopicName = null;
-        _isPeekMode = peekOnly;
 
         try
         {
@@ -105,10 +97,7 @@ public class LiveStreamService : ILiveStreamService
     {
         await StopStreamAsync();
 
-        _currentOperations = operations;
         _currentEntityName = subscriptionName;
-        _currentTopicName = topicName;
-        _isPeekMode = peekOnly;
 
         Log.Information("Starting live stream for subscription {TopicName}/{SubscriptionName} (PeekOnly: {PeekOnly})",
             topicName, subscriptionName, peekOnly);
@@ -122,76 +111,6 @@ public class LiveStreamService : ILiveStreamService
             else
             {
                 await StartProcessorStreamAsync(operations.GetClient(), topicName, subscriptionName);
-            }
-
-            SetStreamingStatus(true);
-            Log.Debug("Live stream started successfully for subscription {TopicName}/{SubscriptionName}",
-                topicName, subscriptionName);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Failed to start live stream for subscription {TopicName}/{SubscriptionName}",
-                topicName, subscriptionName);
-            StreamError?.Invoke(this, ex);
-            throw;
-        }
-    }
-
-    public async Task StartQueueStreamAsync(string endpoint, string queueName, bool peekOnly = true, CancellationToken ct = default)
-    {
-        await StopStreamAsync();
-
-        _currentOperations = null;
-        _currentEntityName = queueName;
-        _currentTopicName = null;
-        _isPeekMode = peekOnly;
-
-        Log.Warning("StartQueueStreamAsync endpoint parameter is deprecated and bypasses connection pooling. Use StartQueueStreamAsync(IServiceBusOperations, ...) instead.");
-
-        try
-        {
-            _legacyClient = new ServiceBusClient(endpoint, new Azure.Identity.DefaultAzureCredential());
-
-            if (peekOnly)
-            {
-                await StartPeekStreamAsync(_legacyClient, queueName, null, ct);
-            }
-            else
-            {
-                await StartProcessorStreamAsync(_legacyClient, queueName, null);
-            }
-
-            SetStreamingStatus(true);
-        }
-        catch (Exception ex)
-        {
-            StreamError?.Invoke(this, ex);
-            throw;
-        }
-    }
-
-    public async Task StartSubscriptionStreamAsync(string endpoint, string topicName, string subscriptionName, bool peekOnly = true, CancellationToken ct = default)
-    {
-        await StopStreamAsync();
-
-        _currentOperations = null;
-        _currentEntityName = subscriptionName;
-        _currentTopicName = topicName;
-        _isPeekMode = peekOnly;
-
-        Log.Warning("StartSubscriptionStreamAsync endpoint parameter is deprecated and bypasses connection pooling. Use StartSubscriptionStreamAsync(IServiceBusOperations, ...) instead.");
-
-        try
-        {
-            _legacyClient = new ServiceBusClient(endpoint, new Azure.Identity.DefaultAzureCredential());
-
-            if (peekOnly)
-            {
-                await StartPeekStreamAsync(_legacyClient, topicName, subscriptionName, ct);
-            }
-            else
-            {
-                await StartProcessorStreamAsync(_legacyClient, topicName, subscriptionName);
             }
 
             SetStreamingStatus(true);
@@ -403,16 +322,6 @@ public class LiveStreamService : ILiveStreamService
             _processor = null;
         }
 
-        // Clean up legacy client if it was used (deprecated method)
-        if (_legacyClient != null)
-        {
-            await _legacyClient.DisposeAsync();
-            _legacyClient = null;
-        }
-
-        // Note: We don't dispose _currentOperations.GetClient() because it's pooled
-        // and will be managed by the pool / operations object
-
         Log.Debug("Live stream resources cleaned up");
     }
 
@@ -441,4 +350,3 @@ public class LiveStreamService : ILiveStreamService
         GC.SuppressFinalize(this);
     }
 }
-

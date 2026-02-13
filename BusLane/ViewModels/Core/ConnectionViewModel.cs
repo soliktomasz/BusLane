@@ -3,7 +3,6 @@ using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Auth;
-using BusLane.Services.ServiceBus;
 using BusLane.Services.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,7 +16,6 @@ public partial class ConnectionViewModel : ViewModelBase
 {
     private readonly IAzureAuthService _auth;
     private readonly IConnectionStorageService _connectionStorage;
-    private readonly IServiceBusOperationsFactory _operationsFactory;
     private readonly ILogSink _logSink;
     private readonly Action<string> _setStatus;
     private readonly Func<Task> _onConnected;
@@ -56,7 +54,6 @@ public partial class ConnectionViewModel : ViewModelBase
     public ConnectionViewModel(
         IAzureAuthService auth,
         IConnectionStorageService connectionStorage,
-        IServiceBusOperationsFactory operationsFactory,
         ILogSink logSink,
         Action<string> setStatus,
         Func<Task> onConnected,
@@ -65,7 +62,6 @@ public partial class ConnectionViewModel : ViewModelBase
     {
         _auth = auth;
         _connectionStorage = connectionStorage;
-        _operationsFactory = operationsFactory;
         _logSink = logSink;
         _setStatus = setStatus;
         _onConnected = onConnected;
@@ -204,43 +200,6 @@ public partial class ConnectionViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public async Task ConnectToSavedConnectionAsync(SavedConnection connection)
-    {
-        _setStatus($"Connecting to {connection.Name}...");
-        _logSink.Log(new LogEntry(
-            DateTime.UtcNow,
-            LogSource.Application,
-            LogLevel.Info,
-            $"Connecting to {connection.Name} ({connection.Endpoint ?? "unknown"})..."));
-
-        try
-        {
-            CurrentMode = ConnectionMode.ConnectionString;
-            ActiveConnection = connection;
-            await _onConnected();
-            _setStatus($"Connected to {connection.Name}");
-            _logSink.Log(new LogEntry(
-                DateTime.UtcNow,
-                LogSource.Application,
-                LogLevel.Info,
-                $"Connected to {connection.Name}"));
-        }
-        catch (Exception ex)
-        {
-            var errorMsg = $"Failed to connect to {connection.Name}";
-            _setStatus($"Error: {ex.Message}");
-            _logSink.Log(new LogEntry(
-                DateTime.UtcNow,
-                LogSource.Application,
-                LogLevel.Error,
-                errorMsg,
-                ex.Message));
-            CurrentMode = ConnectionMode.None;
-            ActiveConnection = null;
-        }
-    }
-
-    [RelayCommand]
     public async Task DisconnectConnectionAsync()
     {
         var endpoint = ActiveConnection?.Endpoint ?? "Azure";
@@ -260,26 +219,6 @@ public partial class ConnectionViewModel : ViewModelBase
             LogSource.Application,
             LogLevel.Info,
             $"Disconnected from {endpoint}"));
-    }
-
-    [RelayCommand]
-    public async Task OpenConnectionLibraryAsync()
-    {
-        ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
-            _connectionStorage,
-            _operationsFactory,
-            _logSink,
-            async conn =>
-            {
-                ShowConnectionLibrary = false;
-                ConnectionLibraryViewModel = null;
-                await ConnectToSavedConnectionAsync(conn);
-            },
-            _setStatus,
-            RefreshFavoriteConnectionsAsync
-        );
-        await ConnectionLibraryViewModel.LoadConnectionsAsync();
-        ShowConnectionLibrary = true;
     }
 
     public void CloseConnectionLibrary()
