@@ -50,6 +50,12 @@ public partial class TabManagementViewModel : ViewModelBase
     /// </summary>
     public async Task OpenTabForConnectionAsync(SavedConnection connection)
     {
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Opening tab for connection '{connection.Name}'"));
+
         var tab = new ConnectionTabViewModel(
             Guid.NewGuid().ToString(),
             connection.Name,
@@ -64,9 +70,20 @@ public partial class TabManagementViewModel : ViewModelBase
         try
         {
             await tab.ConnectWithConnectionStringAsync(connection, _operationsFactory);
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Opened tab '{tab.TabTitle}' (connection string mode)"));
         }
-        catch
+        catch (Exception ex)
         {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                $"Failed to open tab for connection '{connection.Name}'",
+                ex.Message));
             _activeTabChanged?.Invoke(ActiveTab);
         }
     }
@@ -76,7 +93,21 @@ public partial class TabManagementViewModel : ViewModelBase
     /// </summary>
     public async Task OpenTabForNamespaceAsync(ServiceBusNamespace ns)
     {
-        if (_auth.Credential == null) return;
+        if (_auth.Credential == null)
+        {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Warning,
+                $"Cannot open tab for namespace '{ns.Name}' - Azure credential is not available"));
+            return;
+        }
+
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Opening tab for namespace '{ns.Name}'"));
 
         var tab = new ConnectionTabViewModel(
             Guid.NewGuid().ToString(),
@@ -92,9 +123,20 @@ public partial class TabManagementViewModel : ViewModelBase
         try
         {
             await tab.ConnectWithAzureCredentialAsync(ns, _auth.Credential, _operationsFactory);
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Opened tab '{tab.TabTitle}' (Azure mode)"));
         }
-        catch
+        catch (Exception ex)
         {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                $"Failed to open tab for namespace '{ns.Name}'",
+                ex.Message));
             _activeTabChanged?.Invoke(ActiveTab);
         }
     }
@@ -105,7 +147,21 @@ public partial class TabManagementViewModel : ViewModelBase
     public async Task CloseTabAsync(string tabId)
     {
         var tab = ConnectionTabs.FirstOrDefault(t => t.TabId == tabId);
-        if (tab == null) return;
+        if (tab == null)
+        {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Debug,
+                $"Close tab skipped - tab '{tabId}' was not found"));
+            return;
+        }
+
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Closing tab '{tab.TabTitle}'"));
 
         await tab.DisconnectAsync();
 
@@ -122,6 +178,12 @@ public partial class TabManagementViewModel : ViewModelBase
             var newIndex = Math.Min(index, ConnectionTabs.Count - 1);
             ActiveTab = ConnectionTabs[newIndex];
         }
+
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Info,
+            $"Closed tab '{tab.TabTitle}'. Remaining tab count: {ConnectionTabs.Count}"));
     }
 
     /// <summary>
@@ -133,6 +195,11 @@ public partial class TabManagementViewModel : ViewModelBase
         if (tab != null)
         {
             ActiveTab = tab;
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Debug,
+                $"Switched to tab '{tab.TabTitle}'"));
         }
     }
 
@@ -157,6 +224,11 @@ public partial class TabManagementViewModel : ViewModelBase
         var currentIndex = ActiveTab != null ? ConnectionTabs.IndexOf(ActiveTab) : -1;
         var nextIndex = (currentIndex + 1) % ConnectionTabs.Count;
         ActiveTab = ConnectionTabs[nextIndex];
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Debug,
+            $"Switched to next tab '{ActiveTab?.TabTitle}'"));
     }
 
     /// <summary>
@@ -169,6 +241,11 @@ public partial class TabManagementViewModel : ViewModelBase
         var currentIndex = ActiveTab != null ? ConnectionTabs.IndexOf(ActiveTab) : 0;
         var prevIndex = currentIndex <= 0 ? ConnectionTabs.Count - 1 : currentIndex - 1;
         ActiveTab = ConnectionTabs[prevIndex];
+        _logSink.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            LogLevel.Debug,
+            $"Switched to previous tab '{ActiveTab?.TabTitle}'"));
     }
 
     /// <summary>
@@ -180,6 +257,11 @@ public partial class TabManagementViewModel : ViewModelBase
         if (zeroBasedIndex >= 0 && zeroBasedIndex < ConnectionTabs.Count)
         {
             ActiveTab = ConnectionTabs[zeroBasedIndex];
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Debug,
+                $"Switched to tab {index}: '{ActiveTab?.TabTitle}'"));
         }
     }
 
@@ -202,9 +284,20 @@ public partial class TabManagementViewModel : ViewModelBase
 
             _preferencesService.OpenTabsJson = System.Text.Json.JsonSerializer.Serialize(states);
             _preferencesService.Save();
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Debug,
+                $"Saved tab session with {states.Count} tab(s)"));
         }
-        catch
+        catch (Exception ex)
         {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Warning,
+                "Failed to save tab session",
+                ex.Message));
         }
     }
 
@@ -214,13 +307,33 @@ public partial class TabManagementViewModel : ViewModelBase
     public async Task RestoreTabSessionAsync()
     {
         if (!_preferencesService.RestoreTabsOnStartup)
+        {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Debug,
+                "Restore tab session skipped - disabled in preferences"));
             return;
+        }
 
         try
         {
             var states = System.Text.Json.JsonSerializer.Deserialize<List<TabSessionState>>(_preferencesService.OpenTabsJson);
             if (states == null || states.Count == 0)
+            {
+                _logSink.Log(new LogEntry(
+                    DateTime.UtcNow,
+                    LogSource.Application,
+                    LogLevel.Debug,
+                    "No saved tab session found"));
                 return;
+            }
+
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Restoring {states.Count} tab(s) from previous session"));
 
             foreach (var state in states.OrderBy(s => s.TabOrder))
             {
@@ -233,9 +346,21 @@ public partial class TabManagementViewModel : ViewModelBase
                     }
                 }
             }
+
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                "Tab session restore completed"));
         }
-        catch
+        catch (Exception ex)
         {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Warning,
+                "Failed to restore tab session",
+                ex.Message));
         }
     }
 

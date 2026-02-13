@@ -88,6 +88,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     {
         IsLoading = true;
         StatusMessage = $"Connecting to {connection.Name}...";
+        LogActivity(LogLevel.Info, $"Tab '{TabTitle}': connecting with saved connection '{connection.Name}'");
 
         try
         {
@@ -102,6 +103,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
             IsConnected = true;
             StatusMessage = "Connected";
+            LogActivity(LogLevel.Info, $"Tab '{TabTitle}': connection established");
         }
         catch (Exception ex)
         {
@@ -109,6 +111,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             _operations = null;
             SavedConnection = null;
             Mode = ConnectionMode.None;
+            LogActivity(LogLevel.Error, $"Tab '{TabTitle}': connection failed", ex.Message);
             throw;
         }
         finally
@@ -127,6 +130,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     {
         IsLoading = true;
         StatusMessage = $"Connecting to {ns.Name}...";
+        LogActivity(LogLevel.Info, $"Tab '{TabTitle}': connecting to namespace '{ns.Name}' with Azure credential");
 
         try
         {
@@ -141,6 +145,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
             IsConnected = true;
             StatusMessage = "Connected";
+            LogActivity(LogLevel.Info, $"Tab '{TabTitle}': Azure connection established");
         }
         catch (Exception ex)
         {
@@ -148,6 +153,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             _operations = null;
             Namespace = null;
             Mode = ConnectionMode.None;
+            LogActivity(LogLevel.Error, $"Tab '{TabTitle}': Azure connection failed", ex.Message);
             throw;
         }
         finally
@@ -161,6 +167,8 @@ public partial class ConnectionTabViewModel : ViewModelBase
     /// </summary>
     public Task DisconnectAsync()
     {
+        var tabTitle = TabTitle;
+
         _operations = null;
         SavedConnection = null;
         Namespace = null;
@@ -171,6 +179,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         MessageOps.Clear();
 
         StatusMessage = "Disconnected";
+        LogActivity(LogLevel.Info, $"Tab '{tabTitle}': disconnected");
         return Task.CompletedTask;
     }
 
@@ -183,6 +192,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         if (connection.Type == ConnectionType.Namespace)
         {
             await LoadNamespaceEntitiesAsync();
+            LogActivity(LogLevel.Info, $"Tab '{TabTitle}': loaded namespace entities");
         }
         else if (connection.Type == ConnectionType.Queue && connection.EntityName != null)
         {
@@ -192,6 +202,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
                 Navigation.Queues.Add(queueInfo);
                 Navigation.SelectedQueue = queueInfo;
                 Navigation.SelectedEntity = queueInfo;
+                LogActivity(LogLevel.Info, $"Tab '{TabTitle}': loaded queue '{queueInfo.Name}'");
             }
         }
         else if (connection.Type == ConnectionType.Topic && connection.EntityName != null)
@@ -206,6 +217,8 @@ public partial class ConnectionTabViewModel : ViewModelBase
                 var subs = await _operations.GetSubscriptionsAsync(connection.EntityName);
                 foreach (var sub in subs)
                     Navigation.TopicSubscriptions.Add(sub);
+
+                LogActivity(LogLevel.Info, $"Tab '{TabTitle}': loaded topic '{topicInfo.Name}' with {Navigation.TopicSubscriptions.Count} subscription(s)");
             }
         }
     }
@@ -223,6 +236,9 @@ public partial class ConnectionTabViewModel : ViewModelBase
             Navigation.Topics.Add(topic);
 
         StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
+        LogActivity(
+            LogLevel.Info,
+            $"Tab '{TabTitle}': discovered {Navigation.Queues.Count} queue(s) and {Navigation.Topics.Count} topic(s)");
     }
 
     /// <summary>
@@ -234,6 +250,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
         IsLoading = true;
         StatusMessage = "Refreshing...";
+        LogActivity(LogLevel.Info, $"Tab '{TabTitle}': refreshing namespace entities");
 
         try
         {
@@ -249,10 +266,14 @@ public partial class ConnectionTabViewModel : ViewModelBase
                 Navigation.Topics.Add(topic);
 
             StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
+            LogActivity(
+                LogLevel.Info,
+                $"Tab '{TabTitle}': refresh completed with {Navigation.Queues.Count} queue(s) and {Navigation.Topics.Count} topic(s)");
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error refreshing: {ex.Message}";
+            LogActivity(LogLevel.Error, $"Tab '{TabTitle}': refresh failed", ex.Message);
             throw;
         }
         finally
@@ -277,6 +298,16 @@ public partial class ConnectionTabViewModel : ViewModelBase
         return Navigation.SelectedQueue?.ActiveMessageCount
             ?? Navigation.SelectedSubscription?.ActiveMessageCount
             ?? 0;
+    }
+
+    private void LogActivity(LogLevel level, string message, string? details = null)
+    {
+        _logSink?.Log(new LogEntry(
+            DateTime.UtcNow,
+            LogSource.Application,
+            level,
+            message,
+            details));
     }
 
     // Minimal implementation for parameterless constructor

@@ -135,4 +135,73 @@ public class ConnectionTabViewModelTests
         tab.IsConnected.Should().BeFalse();
         tab.Mode.Should().Be(ConnectionMode.None);
     }
+
+    [Fact]
+    public async Task ConnectWithConnectionStringAsync_EmitsActivityLogs()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+
+        // Act
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Assert
+        logSink.Received().Log(Arg.Is<LogEntry>(entry =>
+            entry.Level == LogLevel.Info &&
+            entry.Message.Contains("connecting with saved connection", StringComparison.OrdinalIgnoreCase)));
+
+        logSink.Received().Log(Arg.Is<LogEntry>(entry =>
+            entry.Level == LogLevel.Info &&
+            entry.Message.Contains("connection established", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_EmitsActivityLog()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        await tab.DisconnectAsync();
+
+        // Assert
+        logSink.Received().Log(Arg.Is<LogEntry>(entry =>
+            entry.Level == LogLevel.Info &&
+            entry.Message.Contains("disconnected", StringComparison.OrdinalIgnoreCase)));
+    }
 }
