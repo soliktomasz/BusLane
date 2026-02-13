@@ -69,6 +69,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             () => Navigation.CurrentSubscriptionName,
             () => Navigation.CurrentEntityRequiresSession,
             () => Navigation.ShowDeadLetter,
+            () => GetKnownMessageCount(),
             msg => StatusMessage = msg);
     }
 
@@ -258,6 +259,24 @@ public partial class ConnectionTabViewModel : ViewModelBase
         {
             IsLoading = false;
         }
+    }
+
+    /// <summary>
+    /// Gets the known total message count for the currently selected entity.
+    /// Returns the dead letter count if viewing DLQ, otherwise the active message count.
+    /// </summary>
+    private long GetKnownMessageCount()
+    {
+        if (Navigation.ShowDeadLetter)
+        {
+            return Navigation.SelectedQueue?.DeadLetterCount
+                ?? Navigation.SelectedSubscription?.DeadLetterCount
+                ?? 0;
+        }
+
+        return Navigation.SelectedQueue?.ActiveMessageCount
+            ?? Navigation.SelectedSubscription?.ActiveMessageCount
+            ?? 0;
     }
 
     // Minimal implementation for parameterless constructor

@@ -31,6 +31,8 @@ public partial class PaginationState : ObservableObject
         CanGoNext = hasMoreMessages;
         
         PageInfoText = $"Page {currentPage} ({startMessage}-{endMessage})";
+        
+        Console.WriteLine($"[PaginationState.UpdatePageInfo] Page={currentPage}, ActualCount={actualMessageCount}, hasMoreMessages={hasMoreMessages}, CanGoNext={CanGoNext}, CanGoPrevious={CanGoPrevious}");
     }
     
     public void UpdatePageInfoWithTotal(int currentPage, int messagesPerPage, int totalMessages)

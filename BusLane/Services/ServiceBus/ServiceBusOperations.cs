@@ -171,15 +171,18 @@ internal static class ServiceBusOperations
     {
         var allMessages = new List<ServiceBusReceivedMessage>();
         var sessionsChecked = new HashSet<string>();
+        var acquiredSessionReceivers = new List<ServiceBusSessionReceiver>();
 
         try
         {
-            while (allMessages.Count < count && sessionsChecked.Count < MaxSessionsToCheck)
+            while (allMessages.Count < count && sessionsChecked.Count < Math.Max(MaxSessionsToCheck, count))
             {
                 try
                 {
+                    using var acceptTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    acceptTimeoutCts.CancelAfter(TimeSpan.FromSeconds(5));
                     var sessionReceiver = await AcceptNextSessionReceiverAsync(
-                        client, entityName, subscription, deadLetter, ct);
+                        client, entityName, subscription, deadLetter, acceptTimeoutCts.Token);
 
                     if (sessionsChecked.Contains(sessionReceiver.SessionId))
                     {
@@ -188,14 +191,17 @@ internal static class ServiceBusOperations
                     }
 
                     sessionsChecked.Add(sessionReceiver.SessionId);
+                    acquiredSessionReceivers.Add(sessionReceiver);
 
                     var remaining = count - allMessages.Count;
                     var sessionMessages = fromSequenceNumber.HasValue
                         ? await sessionReceiver.PeekMessagesAsync(remaining, fromSequenceNumber.Value, cancellationToken: ct)
                         : await sessionReceiver.PeekMessagesAsync(remaining, cancellationToken: ct);
                     allMessages.AddRange(sessionMessages);
-
-                    await sessionReceiver.DisposeAsync();
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    break;
                 }
                 catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
                 {
@@ -206,6 +212,20 @@ internal static class ServiceBusOperations
         catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceTimeout)
         {
             // No sessions available at all
+        }
+        finally
+        {
+            foreach (var receiver in acquiredSessionReceivers)
+            {
+                try
+                {
+                    await receiver.DisposeAsync();
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
         }
 
         return allMessages;
@@ -459,4 +479,3 @@ internal static class ServiceBusOperations
         }
     }
 }
-

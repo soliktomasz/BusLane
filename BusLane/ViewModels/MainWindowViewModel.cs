@@ -213,6 +213,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             () => Navigation.CurrentSubscriptionName,
             () => Navigation.CurrentEntityRequiresSession,
             () => Navigation.ShowDeadLetter,
+            () => GetKnownMessageCount(),
             msg => StatusMessage = msg);
 
         FeaturePanels = new FeaturePanelsViewModel(
@@ -295,6 +296,24 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _operations = operations;
     }
 
+    /// <summary>
+    /// Gets the known total message count for the currently selected entity.
+    /// Returns the dead letter count if viewing DLQ, otherwise the active message count.
+    /// </summary>
+    private long GetKnownMessageCount()
+    {
+        if (Navigation.ShowDeadLetter)
+        {
+            return Navigation.SelectedQueue?.DeadLetterCount
+                ?? Navigation.SelectedSubscription?.DeadLetterCount
+                ?? 0;
+        }
+
+        return Navigation.SelectedQueue?.ActiveMessageCount
+            ?? Navigation.SelectedSubscription?.ActiveMessageCount
+            ?? 0;
+    }
+
     private async Task OnConnectedAsync()
     {
         if (Connection.CurrentMode == ConnectionMode.AzureAccount)
@@ -324,17 +343,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer = new System.Timers.Timer();
         _autoRefreshTimer.Elapsed += async (_, _) =>
         {
-            if (_preferencesService.AutoRefreshMessages && Navigation.CurrentEntityName != null)
+            if (_preferencesService.AutoRefreshMessages &&
+                CurrentNavigation.CurrentEntityName != null &&
+                CurrentMessageOps.Pagination.CurrentPage == 1 &&
+                !CurrentMessageOps.IsLoadingMessages)
             {
+                Console.WriteLine($"[AutoRefresh] Reloading messages for entity '{CurrentNavigation.CurrentEntityName}'");
                 await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                 {
-                    await MessageOps.LoadMessagesAsync();
+                    await CurrentMessageOps.LoadMessagesAsync();
                 });
             }
 
-            if (Navigation.Queues.Count > 0 || Navigation.TopicSubscriptions.Count > 0)
+            if (CurrentNavigation.Queues.Count > 0 || CurrentNavigation.TopicSubscriptions.Count > 0)
             {
-                await _alertService.EvaluateAlertsAsync(Navigation.Queues, Navigation.TopicSubscriptions);
+                await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
             }
         };
         UpdateAutoRefreshTimer();
