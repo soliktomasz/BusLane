@@ -338,7 +338,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 CurrentMessageOps.Pagination.CurrentPage == 1 &&
                 !CurrentMessageOps.IsLoadingMessages)
             {
-                Console.WriteLine($"[AutoRefresh] Reloading messages for entity '{CurrentNavigation.CurrentEntityName}'");
                 await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                 {
                     await CurrentMessageOps.LoadMessagesAsync();

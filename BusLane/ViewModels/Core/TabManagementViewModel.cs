@@ -20,6 +20,10 @@ public partial class TabManagementViewModel : ViewModelBase
     private readonly IAzureAuthService _auth;
     private readonly ILogSink _logSink;
     private readonly Action<ConnectionTabViewModel?> _activeTabChanged;
+    private CancellationTokenSource? _saveSessionCts;
+    private string _lastSavedTabsJson;
+    private bool _isRestoringSession;
+    private const int SaveSessionDebounceMilliseconds = 500;
 
     public ObservableCollection<ConnectionTabViewModel> ConnectionTabs { get; } = new();
 
@@ -43,6 +47,7 @@ public partial class TabManagementViewModel : ViewModelBase
         _auth = auth;
         _logSink = logSink;
         _activeTabChanged = activeTabChanged;
+        _lastSavedTabsJson = _preferencesService.OpenTabsJson;
     }
 
     /// <summary>
@@ -282,8 +287,31 @@ public partial class TabManagementViewModel : ViewModelBase
                 TabOrder = index
             }).ToList();
 
-            _preferencesService.OpenTabsJson = System.Text.Json.JsonSerializer.Serialize(states);
-            _preferencesService.Save();
+            var openTabsJson = System.Text.Json.JsonSerializer.Serialize(states);
+            if (string.Equals(openTabsJson, _lastSavedTabsJson, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _lastSavedTabsJson = openTabsJson;
+            _preferencesService.OpenTabsJson = openTabsJson;
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    _preferencesService.Save();
+                }
+                catch (Exception ex)
+                {
+                    _logSink.Log(new LogEntry(
+                        DateTime.UtcNow,
+                        LogSource.Application,
+                        LogLevel.Warning,
+                        "Failed to persist tab session",
+                        ex.Message));
+                }
+            });
+
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.Application,
@@ -318,6 +346,7 @@ public partial class TabManagementViewModel : ViewModelBase
 
         try
         {
+            _isRestoringSession = true;
             var states = System.Text.Json.JsonSerializer.Deserialize<List<TabSessionState>>(_preferencesService.OpenTabsJson);
             if (states == null || states.Count == 0)
             {
@@ -347,6 +376,8 @@ public partial class TabManagementViewModel : ViewModelBase
                 }
             }
 
+            SaveTabSession();
+
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.Application,
@@ -362,11 +393,46 @@ public partial class TabManagementViewModel : ViewModelBase
                 "Failed to restore tab session",
                 ex.Message));
         }
+        finally
+        {
+            _isRestoringSession = false;
+        }
     }
 
     partial void OnActiveTabChanged(ConnectionTabViewModel? value)
     {
         _activeTabChanged?.Invoke(value);
-        SaveTabSession();
+
+        if (!_isRestoringSession)
+        {
+            ScheduleSaveTabSession();
+        }
+    }
+
+    private void ScheduleSaveTabSession()
+    {
+        _saveSessionCts?.Cancel();
+        _saveSessionCts?.Dispose();
+
+        var cts = new CancellationTokenSource();
+        _saveSessionCts = cts;
+        _ = SaveTabSessionDebouncedAsync(cts.Token);
+    }
+
+    private async Task SaveTabSessionDebouncedAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(SaveSessionDebounceMilliseconds, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!ct.IsCancellationRequested)
+        {
+            SaveTabSession();
+        }
     }
 }

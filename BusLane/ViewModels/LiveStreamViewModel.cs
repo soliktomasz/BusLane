@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
+using System.Threading;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +16,11 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private readonly Func<IServiceBusOperations?> _getOperations;
     private IDisposable? _messageSubscription;
     private const int MaxMessages = 500;
+    private const int FlushDelayMilliseconds = 100;
+    private readonly object _messageLock = new();
+    private readonly List<LiveStreamMessage> _pendingMessages = [];
+    private readonly List<LiveStreamMessage> _messageBuffer = [];
+    private int _isFlushScheduled;
 
     [ObservableProperty] private bool _isStreaming;
     [ObservableProperty] private bool _isPeekMode = true;
@@ -72,27 +78,12 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
     private void OnMessageReceived(LiveStreamMessage message)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        lock (_messageLock)
         {
-            Messages.Insert(0, message);
-            MessageCount = Messages.Count;
+            _pendingMessages.Add(message);
+        }
 
-            // Limit messages in memory
-            while (Messages.Count > MaxMessages)
-            {
-                Messages.RemoveAt(Messages.Count - 1);
-            }
-
-            // Apply filter
-            if (MatchesFilter(message))
-            {
-                FilteredMessages.Insert(0, message);
-                while (FilteredMessages.Count > MaxMessages)
-                {
-                    FilteredMessages.RemoveAt(FilteredMessages.Count - 1);
-                }
-            }
-        });
+        ScheduleFlush();
     }
 
     partial void OnFilterTextChanged(string value)
@@ -103,10 +94,20 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
     private void ApplyFilter()
     {
-        FilteredMessages.Clear();
-        foreach (var msg in Messages.Where(MatchesFilter))
+        LiveStreamMessage[] snapshot;
+        lock (_messageLock)
         {
-            FilteredMessages.Add(msg);
+            snapshot = _messageBuffer.ToArray();
+        }
+
+        FilteredMessages.Clear();
+        for (var i = snapshot.Length - 1; i >= 0; i--)
+        {
+            var message = snapshot[i];
+            if (MatchesFilter(message))
+            {
+                FilteredMessages.Add(message);
+            }
         }
     }
 
@@ -202,6 +203,12 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     [RelayCommand]
     private void ClearMessages()
     {
+        lock (_messageLock)
+        {
+            _pendingMessages.Clear();
+            _messageBuffer.Clear();
+        }
+
         Messages.Clear();
         FilteredMessages.Clear();
         MessageCount = 0;
@@ -261,5 +268,65 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         await _liveStreamService.StopStreamAsync();
 
         GC.SuppressFinalize(this);
+    }
+
+    private void ScheduleFlush()
+    {
+        if (Interlocked.Exchange(ref _isFlushScheduled, 1) == 1)
+            return;
+
+        _ = FlushPendingMessagesAsync();
+    }
+
+    private async Task FlushPendingMessagesAsync()
+    {
+        await Task.Delay(FlushDelayMilliseconds);
+        Avalonia.Threading.Dispatcher.UIThread.Post(FlushPendingMessages);
+    }
+
+    private void FlushPendingMessages()
+    {
+        LiveStreamMessage[] snapshot;
+
+        lock (_messageLock)
+        {
+            if (_pendingMessages.Count > 0)
+            {
+                _messageBuffer.AddRange(_pendingMessages);
+                _pendingMessages.Clear();
+
+                var overflow = _messageBuffer.Count - MaxMessages;
+                if (overflow > 0)
+                {
+                    _messageBuffer.RemoveRange(0, overflow);
+                }
+            }
+
+            snapshot = _messageBuffer.ToArray();
+        }
+
+        Messages.Clear();
+        FilteredMessages.Clear();
+
+        for (var i = snapshot.Length - 1; i >= 0; i--)
+        {
+            var message = snapshot[i];
+            Messages.Add(message);
+            if (MatchesFilter(message))
+            {
+                FilteredMessages.Add(message);
+            }
+        }
+
+        MessageCount = snapshot.Length;
+        Interlocked.Exchange(ref _isFlushScheduled, 0);
+
+        lock (_messageLock)
+        {
+            if (_pendingMessages.Count > 0)
+            {
+                ScheduleFlush();
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using Avalonia.Threading;
 using BusLane.Models;
 using BusLane.Models.Logging;
@@ -66,6 +67,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     private bool _currentRequiresSession;
     private long _knownTotalCount;
     private long? _nextFromSequenceNumber;
+    private CancellationTokenSource? _messageFilterCts;
+    private const int MessageFilterDebounceMilliseconds = 150;
 
     public bool HasSelectedMessages => SelectedMessages.Count > 0;
     public int SelectedMessagesCount => SelectedMessages.Count;
@@ -188,33 +191,80 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     partial void OnMessageSearchTextChanged(string value)
     {
-        ApplyMessageFilter();
+        _ = value;
+        DebounceApplyMessageFilter();
     }
 
     private void ApplyMessageFilter()
     {
         FilteredMessages.Clear();
 
-        var filtered = string.IsNullOrWhiteSpace(MessageSearchText)
-            ? Messages
-            : Messages.Where(m =>
-                (m.MessageId?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (m.Body?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (m.CorrelationId?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (m.Subject?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (m.DeadLetterReason?.Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                m.SequenceNumber.ToString().Contains(MessageSearchText, StringComparison.OrdinalIgnoreCase));
+        var searchText = MessageSearchText.Trim();
+        var hasSearch = !string.IsNullOrWhiteSpace(searchText);
+        var isSequenceSearch = long.TryParse(searchText, out var sequenceNumberSearch);
 
-        var filteredList = filtered.ToList();
-        System.Diagnostics.Debug.WriteLine($"[ApplyMessageFilter] SearchText='{MessageSearchText}', Messages.Count={Messages.Count}, Filtered count={filteredList.Count}");
+        foreach (var message in Messages)
+        {
+            if (!hasSearch || MessageMatchesSearch(message, searchText, isSequenceSearch, sequenceNumberSearch))
+            {
+                FilteredMessages.Add(message);
+            }
+        }
+    }
 
-        foreach (var msg in filteredList)
-            FilteredMessages.Add(msg);
+    private static bool MessageMatchesSearch(
+        MessageInfo message,
+        string searchText,
+        bool isSequenceSearch,
+        long sequenceNumberSearch)
+    {
+        if (isSequenceSearch && message.SequenceNumber == sequenceNumberSearch)
+            return true;
 
-        System.Diagnostics.Debug.WriteLine($"[ApplyMessageFilter] FilteredMessages.Count after adding: {FilteredMessages.Count}");
+        return (message.MessageId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (message.Body?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (message.CorrelationId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (message.Subject?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (message.DeadLetterReason?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
 
-        // Notify UI that FilteredMessages has changed
-        OnPropertyChanged(nameof(FilteredMessages));
+    private void DebounceApplyMessageFilter()
+    {
+        _messageFilterCts?.Cancel();
+        _messageFilterCts?.Dispose();
+
+        if (string.IsNullOrWhiteSpace(MessageSearchText))
+        {
+            ApplyMessageFilter();
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _messageFilterCts = cts;
+        _ = DebounceApplyMessageFilterAsync(cts.Token);
+    }
+
+    private async Task DebounceApplyMessageFilterAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(MessageFilterDebounceMilliseconds, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (ct.IsCancellationRequested)
+            return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!ct.IsCancellationRequested)
+            {
+                ApplyMessageFilter();
+            }
+        }, DispatcherPriority.Background);
     }
 
     [RelayCommand]
@@ -225,7 +275,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
     {
         if (IsLoadingMessages)
         {
-            Console.WriteLine("[LoadMessagesAsync] Skipped - IsLoadingMessages is true");
             return;
         }
 
@@ -245,11 +294,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     {
         if (IsLoadingMessages)
         {
-            Console.WriteLine("[LoadFirstPageAsync] Skipped - IsLoadingMessages is true");
             return;
         }
-
-        Console.WriteLine($"[LoadFirstPageAsync] CALLED - entity={entityName}, deadLetter={deadLetter}, knownTotalCount={knownTotalCount}");
 
         var operations = _getOperations();
         if (operations == null) return;
@@ -289,11 +335,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
             if (page1Messages.Any())
             {
-                System.Diagnostics.Debug.WriteLine($"[LoadFirstPageAsync] Loaded {page1Messages.Count} messages, storing in cache");
                 _pageCache.StorePage(1, page1Messages);
-                System.Diagnostics.Debug.WriteLine($"[LoadFirstPageAsync] Calling DisplayPage(1)");
                 DisplayPage(1);
-                System.Diagnostics.Debug.WriteLine($"[LoadFirstPageAsync] DisplayPage completed, updating pagination");
                 var hasMore = DetermineHasMoreMessages(1, page1Messages.Count);
                 Pagination.UpdatePageInfo(1, _preferencesService.MessagesPerPage, page1Messages.Count, hasMore);
 
@@ -354,19 +397,13 @@ public partial class MessageOperationsViewModel : ViewModelBase
         // Prevent concurrent execution - check and set flag immediately
         if (IsLoadingMessages)
         {
-            Console.WriteLine("[LoadNextPageAsync] Already loading, skipping");
             return;
         }
         IsLoadingMessages = true;
 
-        Console.WriteLine($"[LoadNextPageAsync] Called, CurrentPage={Pagination.CurrentPage}, CanGoNext={Pagination.CanGoNext}");
-        System.Diagnostics.Debug.WriteLine($"[LoadNextPageAsync] Called, CurrentPage={Pagination.CurrentPage}, CanGoNext={Pagination.CanGoNext}");
-
         var operations = _getOperations();
         if (operations == null)
         {
-            Console.WriteLine("[LoadNextPageAsync] Operations is null, returning");
-            System.Diagnostics.Debug.WriteLine("[LoadNextPageAsync] Operations is null, returning");
             IsLoadingMessages = false;
             return;
         }
@@ -388,10 +425,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 return;
             }
 
-            // For session-enabled entities, do not use sequence-based cursoring.
-            // Session browsing can surface pages out of global sequence order.
-            // We dedupe by sequence number below instead.
-            var fromSequenceNumber = _currentRequiresSession ? null : _nextFromSequenceNumber;
+            var fromSequenceNumber = _nextFromSequenceNumber;
 
             // Check max messages limit
             if (_pageCache.GetTotalCachedMessages() >= _preferencesService.MaxTotalMessages)
@@ -403,19 +437,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
             var pageResult = await LoadPageAsync(nextPage, fromSequenceNumber);
             var pageMessages = pageResult.Messages;
-            Console.WriteLine($"[LoadNextPageAsync] Loaded candidate page messages: {pageMessages.Count} (requiresSession={_currentRequiresSession}, fromSeq={(fromSequenceNumber?.ToString() ?? "null")})");
 
             if (pageMessages.Any())
             {
                 // Check if we actually got unseen messages (not already cached)
                 var cachedSequenceNumbers = _pageCache.GetCachedSequenceNumbers();
                 var gotNewMessages = pageMessages.Any(m => !cachedSequenceNumbers.Contains(m.SequenceNumber));
-                Console.WriteLine($"[LoadNextPageAsync] gotNewMessages={gotNewMessages}, cachedCount={cachedSequenceNumbers.Count}");
 
                 if (!gotNewMessages)
                 {
                     var fallbackMessages = await LoadNextPageFromStartFallbackAsync(cachedSequenceNumbers);
-                    Console.WriteLine($"[LoadNextPageAsync] Duplicate-page fallback produced {fallbackMessages.Count} messages");
                     if (!fallbackMessages.Any())
                     {
                         Pagination.CanGoNext = false;
@@ -444,7 +475,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
             else
             {
                 var fallbackMessages = await LoadNextPageFromStartFallbackAsync(_pageCache.GetCachedSequenceNumbers());
-                Console.WriteLine($"[LoadNextPageAsync] Empty-page fallback produced {fallbackMessages.Count} messages");
                 if (fallbackMessages.Any())
                 {
                     _nextFromSequenceNumber = null;
@@ -481,13 +511,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanLoadPreviousPage))]
     private void LoadPreviousPage()
     {
-        System.Diagnostics.Debug.WriteLine($"[LoadPreviousPage] Called, CurrentPage={Pagination.CurrentPage}, CanGoPrevious={Pagination.CanGoPrevious}");
-
         if (Pagination.CanGoPrevious)
         {
-            var prevPage = Pagination.CurrentPage - 1;
-            System.Diagnostics.Debug.WriteLine($"[LoadPreviousPage] Going to page {prevPage}");
-
             Pagination.GoToPreviousPage();
             DisplayPage(Pagination.CurrentPage);
 
@@ -521,7 +546,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             ? messages.OrderByDescending(m => m.EnqueuedTime)
             : messages.OrderBy(m => m.EnqueuedTime);
 
-        var nextFrom = messages.Count > 0 ? messages[^1].SequenceNumber + 1 : fromSequenceNumber;
+        var nextFrom = fromSequenceNumber;
+        if (messages.Count > 0)
+        {
+            var maxSequenceNumber = messages.Max(static m => m.SequenceNumber);
+            if (maxSequenceNumber < long.MaxValue)
+            {
+                nextFrom = maxSequenceNumber + 1;
+            }
+        }
+
         return new PageLoadResult(sorted.ToList().AsReadOnly(), nextFrom);
     }
 
@@ -599,18 +633,13 @@ public partial class MessageOperationsViewModel : ViewModelBase
         SelectedMessage = null;
 
         var pageMessages = _pageCache.GetPage(pageNumber);
-        System.Diagnostics.Debug.WriteLine($"[DisplayPageCore] Page {pageNumber}: Cache returned {pageMessages.Count} messages");
 
         foreach (var message in pageMessages)
         {
             Messages.Add(message);
         }
 
-        System.Diagnostics.Debug.WriteLine($"[DisplayPageCore] Messages collection now has {Messages.Count} items");
-
         ApplyMessageFilter();
-
-        System.Diagnostics.Debug.WriteLine($"[DisplayPageCore] FilteredMessages now has {FilteredMessages.Count} items");
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
@@ -686,6 +715,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
     /// </summary>
     public void Clear()
     {
+        _messageFilterCts?.Cancel();
+        _messageFilterCts?.Dispose();
+        _messageFilterCts = null;
+
         Messages.Clear();
         FilteredMessages.Clear();
         SelectedMessages.Clear();

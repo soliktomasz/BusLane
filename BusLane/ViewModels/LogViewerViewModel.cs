@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -18,6 +19,9 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 {
     private readonly ILogSink _logSink;
     private readonly List<LogEntry> _allLogs = new();
+    private CancellationTokenSource? _searchFilterCts;
+    private const int SearchFilterDebounceMilliseconds = 150;
+    private const int MaxLogEntries = 1000;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -108,11 +112,13 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         // Marshal all operations to UI thread for thread safety
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            _allLogs.Add(entry);
+            _allLogs.Insert(0, entry);
+            TrimLogCollection(_allLogs);
 
             if (MatchesFilters(entry))
             {
                 _filteredLogs.Insert(0, entry);
+                TrimLogCollection(_filteredLogs);
                 OnPropertyChanged(nameof(ShowingLogCount));
             }
 
@@ -159,7 +165,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
             query = query.Where(e => e.Level != LogLevel.Debug);
         }
 
-        var filtered = query.OrderByDescending(e => e.Timestamp).ToList();
+        var filtered = query.ToList();
 
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
@@ -209,12 +215,54 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 
     partial void OnSearchTextChanged(string value)
     {
-        ApplyFilters();
+        _ = value;
+        ScheduleSearchFilter();
     }
 
     partial void OnIsDebugModeEnabledChanged(bool value)
     {
         ApplyFilters();
+    }
+
+    private static void TrimLogCollection<T>(IList<T> collection)
+    {
+        while (collection.Count > MaxLogEntries)
+        {
+            collection.RemoveAt(collection.Count - 1);
+        }
+    }
+
+    private void ScheduleSearchFilter()
+    {
+        _searchFilterCts?.Cancel();
+        _searchFilterCts?.Dispose();
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            ApplyFilters();
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _searchFilterCts = cts;
+        _ = ApplyFiltersDebouncedAsync(cts.Token);
+    }
+
+    private async Task ApplyFiltersDebouncedAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(SearchFilterDebounceMilliseconds, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!ct.IsCancellationRequested)
+        {
+            ApplyFilters();
+        }
     }
 
     private void ClearLogs()
@@ -283,6 +331,9 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        _searchFilterCts?.Cancel();
+        _searchFilterCts?.Dispose();
+        _searchFilterCts = null;
         _logSink.OnLogAdded -= OnLogAdded;
     }
 }
