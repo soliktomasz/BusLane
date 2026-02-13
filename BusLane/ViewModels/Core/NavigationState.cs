@@ -65,11 +65,6 @@ public partial class NavigationState : ViewModelBase
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
 
     /// <summary>
-    /// Gets the current endpoint based on mode and selection.
-    /// </summary>
-    public string? CurrentEndpoint => SelectedNamespace?.Endpoint;
-
-    /// <summary>
     /// Gets the current entity name for message operations.
     /// </summary>
     public string? CurrentEntityName => SelectedQueue?.Name 
@@ -160,4 +155,3 @@ public partial class NavigationState : ViewModelBase
         SelectedEntity = null;
     }
 }
-

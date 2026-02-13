@@ -193,7 +193,7 @@
                                         <Border.IsVisible>
                                             <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                 <Binding Path="."/>
-                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ActiveConnection"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ActiveTab.SavedConnection"/>
                                             </MultiBinding>
                                         </Border.IsVisible>
                                     </Border>
@@ -203,7 +203,7 @@
                                         <Border.Background>
                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                 <Binding Path="."/>
-                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ActiveConnection"/>
+                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ActiveTab.SavedConnection"/>
                                             </MultiBinding>
                                         </Border.Background>
                                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -328,9 +328,9 @@
                 </Button>
             </StackPanel>
 
-            <!-- Active Connection Card (when using connection string) - Docked to bottom -->
+            <!-- Active tab connection card -->
             <Border DockPanel.Dock="Bottom" Margin="12,12,12,8"
-                    IsVisible="{Binding Connection.ActiveConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    IsVisible="{Binding HasActiveConnectionTab}"
                     Classes="card" Padding="0">
                 <StackPanel>
                     <!-- Connection Info -->
@@ -340,16 +340,16 @@
                                 <Border Width="8" Height="8" CornerRadius="4" Background="{DynamicResource TextSuccess}"/>
                                 <TextBlock Text="Connected" Classes="caption" Foreground="{DynamicResource TextSuccess}"/>
                             </StackPanel>
-                            <TextBlock Text="{Binding Connection.ActiveConnection.Name}"
+                            <TextBlock Text="{Binding ActiveTab.TabTitle}"
                                        FontWeight="SemiBold"
                                        FontSize="16"
                                        Margin="0,6,0,0"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding Connection.ActiveConnection.EntityName}"
+                            <TextBlock Text="{Binding CurrentNavigation.CurrentEntityName}"
                                        Classes="caption"
                                        Margin="0,2,0,0"
                                        TextTrimming="CharacterEllipsis"
-                                       IsVisible="{Binding Connection.ActiveConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                       IsVisible="{Binding CurrentNavigation.CurrentEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
                             <!-- Dead Letter Count Badge -->
                             <Border Classes="badge-danger" Padding="8,4" Margin="0,8,0,0"
@@ -475,7 +475,6 @@
                 <Border.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding Path="!Connection.ShowAzureSections"/>
-                        <Binding Path="Connection.ActiveConnection" Converter="{x:Static ObjectConverters.IsNull}"/>
                         <Binding Path="!HasActiveConnectionTab"/>
                     </MultiBinding>
                 </Border.IsVisible>
@@ -491,4 +490,3 @@
         </DockPanel>
     </Border>
 </UserControl>
-

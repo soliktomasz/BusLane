@@ -100,9 +100,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
 
     /// <summary>
-    /// Gets whether to show the welcome screen (no active connection).
+    /// Gets whether to show the welcome screen (no active connection tab and not signed in).
     /// </summary>
-    public bool ShowWelcome => !Connection.IsAuthenticated && Connection.ActiveConnection == null && !HasActiveConnectionTab;
+    public bool ShowWelcome => !Connection.IsAuthenticated && !HasActiveConnectionTab;
 
     /// <summary>
     /// Gets the navigation state for the active tab, or the legacy navigation if no tab is active.
@@ -316,13 +316,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (Connection.CurrentMode == ConnectionMode.AzureAccount)
         {
             await LoadSubscriptionsAsync();
-        }
-        else if (Connection.ActiveConnection != null)
-        {
-            // Create operations from connection string
-            var connStrOps = _operationsFactory.CreateFromConnectionString(Connection.ActiveConnection.ConnectionString);
-            SetOperations(connStrOps);
-            await LoadConnectionEntitiesAsync(Connection.ActiveConnection);
         }
     }
 
@@ -581,82 +574,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     #endregion
 
-    #region Connection Mode Entity Loading
-
-    private async Task LoadConnectionEntitiesAsync(SavedConnection connection)
-    {
-        if (_operations == null) return;
-
-        IsLoading = true;
-
-        try
-        {
-            Navigation.Clear();
-
-            if (connection.Type == ConnectionType.Namespace)
-            {
-                StatusMessage = "Loading queues and topics...";
-
-                var queues = await _operations.GetQueuesAsync();
-                foreach (var queue in queues)
-                    Navigation.Queues.Add(queue);
-
-                var topics = await _operations.GetTopicsAsync();
-                foreach (var topic in topics)
-                    Navigation.Topics.Add(topic);
-
-                StatusMessage = $"Connected - {Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
-            }
-            else if (connection.Type == ConnectionType.Queue)
-            {
-                var queueInfo = await _operations.GetQueueInfoAsync(connection.EntityName!);
-
-                if (queueInfo != null)
-                {
-                    Navigation.Queues.Add(queueInfo);
-                    Navigation.SelectedQueue = queueInfo;
-                    Navigation.SelectedEntity = queueInfo;
-                    await MessageOps.LoadMessagesAsync();
-                }
-                else
-                {
-                    StatusMessage = $"Could not find queue '{connection.EntityName}'";
-                }
-            }
-            else if (connection.Type == ConnectionType.Topic)
-            {
-                var topicInfo = await _operations.GetTopicInfoAsync(connection.EntityName!);
-
-                if (topicInfo != null)
-                {
-                    Navigation.Topics.Add(topicInfo);
-                    Navigation.SelectedTopic = topicInfo;
-                    Navigation.SelectedEntity = topicInfo;
-
-                    var subs = await _operations.GetSubscriptionsAsync(connection.EntityName!);
-                    foreach (var sub in subs)
-                        Navigation.TopicSubscriptions.Add(sub);
-                }
-                else
-                {
-                    StatusMessage = $"Could not find topic '{connection.EntityName}'";
-                }
-            }
-
-            await _alertService.EvaluateAlertsAsync(Navigation.Queues, Navigation.TopicSubscriptions);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    #endregion
-
     #region Message Operations (delegated to MessageOps with some coordination)
 
     [RelayCommand]
@@ -892,19 +809,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        // First check if we have an active tab (new tab system)
         if (ActiveTab != null)
         {
             await RefreshActiveTabAsync();
             return;
         }
 
-        // Fall back to legacy behavior for backward compatibility
-        if (Connection.CurrentMode == ConnectionMode.ConnectionString && Connection.ActiveConnection != null)
-        {
-            await LoadConnectionEntitiesAsync(Connection.ActiveConnection);
-        }
-        else if (Navigation.SelectedNamespace != null)
+        if (Navigation.SelectedNamespace != null)
         {
             await SelectNamespaceAsync(Navigation.SelectedNamespace);
         }
@@ -1163,7 +1074,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task RefreshConnectionAsync()
     {
-        // Use the unified refresh which handles both tab and legacy modes
         await RefreshAsync();
     }
 
@@ -1198,7 +1108,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// <summary>
     /// Opens a new tab for the given saved connection.
     /// </summary>
-    [RelayCommand]
     public async Task OpenTabForConnectionAsync(SavedConnection connection)
     {
         await Tabs.OpenTabForConnectionAsync(connection);
@@ -1207,7 +1116,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// <summary>
     /// Opens a new tab for the given Azure namespace.
     /// </summary>
-    [RelayCommand]
     public async Task OpenTabForNamespaceAsync(ServiceBusNamespace ns)
     {
         await Tabs.OpenTabForNamespaceAsync(ns);
@@ -1225,7 +1133,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// <summary>
     /// Switches to the specified tab.
     /// </summary>
-    [RelayCommand]
     public void SwitchToTab(string tabId)
     {
         Tabs.SwitchToTab(tabId);
@@ -1266,7 +1173,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Notify computed properties that depend on active tab state
         NotifyActiveTabDependentProperties();
 
-        // Update the legacy _operations reference for backward compatibility
+        // Keep fallback operations in sync with active tab operations.
         SetOperations(newValue?.Operations);
 
     }

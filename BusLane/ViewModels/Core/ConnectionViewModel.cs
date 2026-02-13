@@ -30,7 +30,6 @@ public partial class ConnectionViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowAzureSections))]
     private ConnectionMode _currentMode = ConnectionMode.None;
 
-    [ObservableProperty] private SavedConnection? _activeConnection;
     [ObservableProperty] private bool _showConnectionLibrary;
     [ObservableProperty] private ConnectionLibraryViewModel? _connectionLibraryViewModel;
 
@@ -39,17 +38,6 @@ public partial class ConnectionViewModel : ViewModelBase
 
     public bool ShowAzureSections => IsAuthenticated && CurrentMode == ConnectionMode.AzureAccount;
     public bool HasFavoriteConnections => FavoriteConnections.Count > 0;
-
-    /// <summary>
-    /// Gets the current connection string (null if in Azure account mode).
-    /// </summary>
-    public string? CurrentConnectionString => 
-        CurrentMode == ConnectionMode.ConnectionString ? ActiveConnection?.ConnectionString : null;
-
-    /// <summary>
-    /// Gets the current endpoint (from namespace or saved connection).
-    /// </summary>
-    public string? CurrentEndpoint => ActiveConnection?.Endpoint;
 
     public ConnectionViewModel(
         IAzureAuthService auth,
@@ -144,7 +132,6 @@ public partial class ConnectionViewModel : ViewModelBase
             if (await _auth.LoginAsync())
             {
                 CurrentMode = ConnectionMode.AzureAccount;
-                ActiveConnection = null;
                 _setNamespacePanelOpen(true);
                 _setStatus("Ready");
                 _logSink.Log(new LogEntry(
@@ -188,7 +175,6 @@ public partial class ConnectionViewModel : ViewModelBase
 
         await _auth.LogoutAsync();
         CurrentMode = ConnectionMode.None;
-        ActiveConnection = null;
         _setNamespacePanelOpen(false);
         await _onDisconnected();
         _setStatus("Disconnected");
@@ -202,7 +188,7 @@ public partial class ConnectionViewModel : ViewModelBase
     [RelayCommand]
     public async Task DisconnectConnectionAsync()
     {
-        var endpoint = ActiveConnection?.Endpoint ?? "Azure";
+        var endpoint = "Azure";
         _logSink.Log(new LogEntry(
             DateTime.UtcNow,
             LogSource.Application,
@@ -210,7 +196,6 @@ public partial class ConnectionViewModel : ViewModelBase
             $"Disconnecting from {endpoint}..."));
 
         CurrentMode = ConnectionMode.None;
-        ActiveConnection = null;
         await _onDisconnected();
         await LoadSavedConnectionsAsync();
         _setStatus("Disconnected");
