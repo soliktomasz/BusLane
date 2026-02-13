@@ -152,9 +152,34 @@ internal static class ServiceBusOperations
         CancellationToken ct)
     {
         await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter);
-        return fromSequenceNumber.HasValue
-            ? await receiver.PeekMessagesAsync(count, fromSequenceNumber.Value, cancellationToken: ct)
-            : await receiver.PeekMessagesAsync(count, cancellationToken: ct);
+
+        var allMessages = new List<ServiceBusReceivedMessage>(count);
+        var nextFromSequenceNumber = fromSequenceNumber;
+
+        while (allMessages.Count < count)
+        {
+            var remaining = count - allMessages.Count;
+            var batch = nextFromSequenceNumber.HasValue
+                ? await receiver.PeekMessagesAsync(remaining, nextFromSequenceNumber.Value, cancellationToken: ct)
+                : await receiver.PeekMessagesAsync(remaining, cancellationToken: ct);
+
+            if (batch.Count == 0)
+            {
+                break;
+            }
+
+            allMessages.AddRange(batch);
+
+            var lastSequenceNumber = batch[^1].SequenceNumber;
+            if (lastSequenceNumber == long.MaxValue)
+            {
+                break;
+            }
+
+            nextFromSequenceNumber = lastSequenceNumber + 1;
+        }
+
+        return allMessages;
     }
 
     /// <summary>
