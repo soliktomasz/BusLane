@@ -31,7 +31,7 @@
                 <StackPanel DockPanel.Dock="Top" Spacing="12" Margin="0,0,0,20">
                     <!-- Step 1 -->
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Border Background="{DynamicResource AccentBrush}"
+                        <Border Background="{DynamicResource AccentBrand}"
                                 CornerRadius="12"
                                 Width="24" Height="24"
                                 VerticalAlignment="Top">
@@ -43,7 +43,7 @@
                         </Border>
                         <StackPanel Spacing="4">
                             <TextBlock Text="Open the authentication page" FontWeight="SemiBold"/>
-                            <Button Classes="accent small"
+                            <Button Classes="primary small"
                                     Command="{Binding OpenDeviceCodeUrlCommand}"
                                     HorizontalAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -56,7 +56,7 @@
 
                     <!-- Step 2 -->
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Border Background="{DynamicResource AccentBrush}"
+                        <Border Background="{DynamicResource AccentBrand}"
                                 CornerRadius="12"
                                 Width="24" Height="24"
                                 VerticalAlignment="Top">
@@ -68,7 +68,7 @@
                         </Border>
                         <StackPanel Spacing="4">
                             <TextBlock Text="Enter this code" FontWeight="SemiBold"/>
-                            <Border Background="{DynamicResource SurfaceBrush}"
+                            <Border Background="{DynamicResource SurfaceSubtle}"
                                     CornerRadius="4"
                                     Padding="12,8"
                                     HorizontalAlignment="Left">
@@ -90,7 +90,7 @@
 
                     <!-- Step 3 -->
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Border Background="{DynamicResource AccentBrush}"
+                        <Border Background="{DynamicResource AccentBrand}"
                                 CornerRadius="12"
                                 Width="24" Height="24"
                                 VerticalAlignment="Top">
@@ -108,14 +108,14 @@
 
                 <!-- Status -->
                 <Border DockPanel.Dock="Top"
-                        Background="{DynamicResource SurfaceBrush}"
+                        Background="{DynamicResource SurfaceSubtle}"
                         CornerRadius="4"
                         Padding="12,8"
                         Margin="0,0,0,16">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <LucideIcon Kind="Info"
                                   Size="16"
-                                  Foreground="{DynamicResource AccentBrush}"/>
+                                  Foreground="{DynamicResource AccentBrand}"/>
                         <TextBlock Text="Waiting for authentication to complete..."
                                    Opacity="0.8"
                                    FontStyle="Italic"/>

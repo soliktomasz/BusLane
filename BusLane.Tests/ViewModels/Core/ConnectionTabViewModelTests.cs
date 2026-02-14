@@ -1,4 +1,5 @@
 // BusLane.Tests/ViewModels/Core/ConnectionTabViewModelTests.cs
+using Azure.Core;
 using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
@@ -203,5 +204,78 @@ public class ConnectionTabViewModelTests
         logSink.Received().Log(Arg.Is<LogEntry>(entry =>
             entry.Level == LogLevel.Info &&
             entry.Message.Contains("disconnected", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [Fact]
+    public async Task ConnectWithAzureCredentialAsync_SetsSelectedNamespaceInNavigation()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IAzureCredentialOperations>();
+
+        operationsFactory.CreateFromAzureCredential(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<TokenCredential>())
+            .Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+
+        var ns = new ServiceBusNamespace(
+            "/subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.ServiceBus/namespaces/ns-1",
+            "ns-1",
+            "rg",
+            "sub-1",
+            "westeurope",
+            "ns-1.servicebus.windows.net");
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+
+        // Act
+        await tab.ConnectWithAzureCredentialAsync(ns, new TestTokenCredential(), operationsFactory);
+
+        // Assert
+        tab.Namespace.Should().Be(ns);
+        tab.Navigation.SelectedNamespace.Should().Be(ns);
+    }
+
+    [Fact]
+    public async Task RefreshNamespaceEntitiesAsync_KeepsSelectedNamespace()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IAzureCredentialOperations>();
+
+        operationsFactory.CreateFromAzureCredential(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<TokenCredential>())
+            .Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+
+        var ns = new ServiceBusNamespace(
+            "/subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.ServiceBus/namespaces/ns-1",
+            "ns-1",
+            "rg",
+            "sub-1",
+            "westeurope",
+            "ns-1.servicebus.windows.net");
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        await tab.ConnectWithAzureCredentialAsync(ns, new TestTokenCredential(), operationsFactory);
+
+        // Act
+        await tab.RefreshNamespaceEntitiesAsync();
+
+        // Assert
+        tab.Navigation.SelectedNamespace.Should().Be(ns);
+    }
+
+    private sealed class TestTokenCredential : TokenCredential
+    {
+        public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken) =>
+            new("token", DateTimeOffset.UtcNow.AddHours(1));
+
+        public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new AccessToken("token", DateTimeOffset.UtcNow.AddHours(1)));
     }
 }

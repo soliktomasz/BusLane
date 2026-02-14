@@ -135,6 +135,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         try
         {
             Namespace = ns;
+            Navigation.SelectedNamespace = ns;
             _operations = operationsFactory.CreateFromAzureCredential(ns.Endpoint, ns.Id, credential);
             Mode = ConnectionMode.AzureAccount;
 
@@ -227,6 +228,9 @@ public partial class ConnectionTabViewModel : ViewModelBase
     {
         if (_operations == null) return;
 
+        // Keep navigation namespace state in sync with the connected tab namespace.
+        Navigation.SelectedNamespace = Namespace;
+
         var queues = await _operations.GetQueuesAsync();
         foreach (var queue in queues)
             Navigation.Queues.Add(queue);
@@ -256,6 +260,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         {
             Navigation.Queues.Clear();
             Navigation.Topics.Clear();
+            Navigation.SelectedNamespace = Namespace;
 
             var queues = await _operations.GetQueuesAsync();
             foreach (var queue in queues)

@@ -1101,7 +1101,7 @@
     <!-- App header in sidebar -->
     <Style Selector="Border.sidebar-header">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="Padding" Value="16,16,16,12"/>
+        <Setter Property="Padding" Value="16"/>
     </Style>
 
     <!-- Compact icon button for toolbar area -->
@@ -1112,8 +1112,8 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="28"/>
-        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="MinWidth" Value="32"/>
+        <Setter Property="MinHeight" Value="32"/>
     </Style>
 
     <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter">
@@ -1124,6 +1124,10 @@
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
     </Style>
 
+    <Style Selector="Button.icon-button:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+    </Style>
+
     <Style Selector="ToggleButton.icon-button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
@@ -1131,8 +1135,8 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="28"/>
-        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="MinWidth" Value="32"/>
+        <Setter Property="MinHeight" Value="32"/>
     </Style>
 
     <Style Selector="ToggleButton.icon-button:pointerover /template/ ContentPresenter">
@@ -1142,5 +1146,9 @@
     <Style Selector="ToggleButton.icon-button:checked /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+
+    <Style Selector="ToggleButton.icon-button:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 </Styles>

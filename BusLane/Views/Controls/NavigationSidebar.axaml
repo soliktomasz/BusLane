@@ -14,7 +14,7 @@
     <Border Classes="sidebar">
         <DockPanel>
             <!-- App Header -->
-            <Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceSubtle}" Padding="16,16,16,12">
+            <Border DockPanel.Dock="Top" Classes="sidebar-header">
                 <StackPanel>
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">

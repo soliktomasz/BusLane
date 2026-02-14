@@ -53,7 +53,7 @@
                                              DataContext="{Binding UpdateNotification}"/>
 
             <!-- Content Area -->
-            <Grid Grid.Row="2" Margin="24,20">
+            <Grid Grid.Row="2" Margin="24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -317,4 +317,3 @@
                                  DataContext="{Binding LogViewer}"/>
     </Grid>
 </Window>
-

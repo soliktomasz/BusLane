@@ -137,6 +137,9 @@ public class AzureAuthService : IAzureAuthService
         var context = new TokenRequestContext(
             new[] { "https://management.azure.com/.default" }
         );
+        var serviceBusContext = new TokenRequestContext(
+            new[] { "https://servicebus.azure.net/.default" }
+        );
 
         // Try DeviceCodeCredential with saved auth record
         try
@@ -153,7 +156,8 @@ public class AzureAuthService : IAzureAuthService
             var deviceCodeCredential = new DeviceCodeCredential(silentDeviceCodeOptions);
 
             // This will use cached token if available
-            var token = await deviceCodeCredential.GetTokenAsync(context, ct);
+            _ = await deviceCodeCredential.GetTokenAsync(context, ct);
+            _ = await deviceCodeCredential.GetTokenAsync(serviceBusContext, ct);
 
             _credential = deviceCodeCredential;
             _armClient = new ArmClient(_credential);
