@@ -20,43 +20,62 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                             <Viewbox Width="32" Height="32">
                                 <Canvas Width="512" Height="512">
+                                    <!-- Definitions (gradients approximated with solid colors for Canvas) -->
+
                                     <!-- Rounded square background -->
-                                    <Rectangle Canvas.Left="32" Canvas.Top="32" Width="448" Height="448" RadiusX="96" RadiusY="96" Fill="#0F172A"/>
+                                    <Rectangle Canvas.Left="32" Canvas.Top="32" Width="448" Height="448" RadiusX="96" RadiusY="96" Fill="#1a1f2e"/>
 
-                                    <!-- Road -->
-                                    <Rectangle Canvas.Left="32" Canvas.Top="240" Width="448" Height="120" Fill="#1E293B"/>
+                                    <!-- Outer ring suggesting connection/network -->
+                                    <Ellipse Canvas.Left="76" Canvas.Top="76" Width="360" Height="360" Stroke="#1e293b" StrokeThickness="2"/>
 
-                                    <!-- Lane dashes -->
-                                    <Rectangle Canvas.Left="72" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
-                                    <Rectangle Canvas.Left="152" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
-                                    <Rectangle Canvas.Left="232" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
-                                    <Rectangle Canvas.Left="312" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
-                                    <Rectangle Canvas.Left="392" Canvas.Top="292" Width="56" Height="16" RadiusX="8" RadiusY="8" Fill="#475569"/>
+                                    <!-- Bus Lane (road) - horizontal band -->
+                                    <Rectangle Canvas.Left="56" Canvas.Top="220" Width="400" Height="72" RadiusX="8" RadiusY="8" Fill="#475569"/>
 
-                                    <!-- Bus body -->
-                                    <Rectangle Canvas.Left="120" Canvas.Top="136" Width="272" Height="136" RadiusX="24" RadiusY="24" Fill="#F59E0B"/>
+                                    <!-- Lane markings (dashed line) -->
+                                    <Rectangle Canvas.Left="96" Canvas.Top="248" Width="48" Height="16" RadiusX="8" RadiusY="8" Fill="#94a3b8"/>
+                                    <Rectangle Canvas.Left="168" Canvas.Top="248" Width="48" Height="16" RadiusX="8" RadiusY="8" Fill="#94a3b8"/>
+                                    <Rectangle Canvas.Left="240" Canvas.Top="248" Width="48" Height="16" RadiusX="8" RadiusY="8" Fill="#94a3b8"/>
+                                    <Rectangle Canvas.Left="312" Canvas.Top="248" Width="48" Height="16" RadiusX="8" RadiusY="8" Fill="#94a3b8"/>
+                                    <Rectangle Canvas.Left="384" Canvas.Top="248" Width="48" Height="16" RadiusX="8" RadiusY="8" Fill="#94a3b8"/>
 
-                                    <!-- Roof accent -->
-                                    <Rectangle Canvas.Left="120" Canvas.Top="136" Width="272" Height="20" RadiusX="24" RadiusY="24" Fill="#D97706"/>
-                                    <Rectangle Canvas.Left="120" Canvas.Top="148" Width="272" Height="8" Fill="#D97706"/>
+                                    <!-- Bus body - modern blue -->
+                                    <Rectangle Canvas.Left="140" Canvas.Top="192" Width="232" Height="96" RadiusX="20" RadiusY="20" Fill="#3b82f6"/>
 
-                                    <!-- Windows row -->
-                                    <Rectangle Canvas.Left="152" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
-                                    <Rectangle Canvas.Left="216" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
-                                    <Rectangle Canvas.Left="280" Canvas.Top="168" Width="48" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
-                                    <Rectangle Canvas.Left="344" Canvas.Top="168" Width="32" Height="40" RadiusX="8" RadiusY="8" Fill="#0F172A"/>
+                                    <!-- Bus windows -->
+                                    <Rectangle Canvas.Left="164" Canvas.Top="212" Width="44" Height="36" RadiusX="6" RadiusY="6" Fill="#0f172a"/>
+                                    <Rectangle Canvas.Left="220" Canvas.Top="212" Width="44" Height="36" RadiusX="6" RadiusY="6" Fill="#0f172a"/>
+                                    <Rectangle Canvas.Left="276" Canvas.Top="212" Width="44" Height="36" RadiusX="6" RadiusY="6" Fill="#0f172a"/>
+                                    <Rectangle Canvas.Left="332" Canvas.Top="212" Width="24" Height="36" RadiusX="6" RadiusY="6" Fill="#0f172a"/>
 
-                                    <!-- Front -->
-                                    <Rectangle Canvas.Left="360" Canvas.Top="224" Width="24" Height="24" RadiusX="6" RadiusY="6" Fill="#FDE68A"/>
+                                    <!-- Window highlights -->
+                                    <Rectangle Canvas.Left="172" Canvas.Top="220" Width="28" Height="4" RadiusX="2" RadiusY="2" Fill="#10b981" Opacity="0.8"/>
+                                    <Rectangle Canvas.Left="228" Canvas.Top="228" Width="20" Height="4" RadiusX="2" RadiusY="2" Fill="#f59e0b" Opacity="0.8"/>
+                                    <Rectangle Canvas.Left="284" Canvas.Top="220" Width="24" Height="4" RadiusX="2" RadiusY="2" Fill="#3b82f6" Opacity="0.8"/>
 
-                                    <!-- Back -->
-                                    <Rectangle Canvas.Left="128" Canvas.Top="224" Width="16" Height="24" RadiusX="4" RadiusY="4" Fill="#DC2626"/>
+                                    <!-- Headlight -->
+                                    <Rectangle Canvas.Left="356" Canvas.Top="252" Width="12" Height="20" RadiusX="4" RadiusY="4" Fill="#fbbf24"/>
+
+                                    <!-- Taillight -->
+                                    <Rectangle Canvas.Left="144" Canvas.Top="252" Width="8" Height="20" RadiusX="2" RadiusY="2" Fill="#ef4444"/>
 
                                     <!-- Wheels -->
-                                    <Ellipse Canvas.Left="160" Canvas.Top="240" Width="64" Height="64" Fill="#0F172A"/>
-                                    <Ellipse Canvas.Left="176" Canvas.Top="256" Width="32" Height="32" Fill="#475569"/>
-                                    <Ellipse Canvas.Left="288" Canvas.Top="240" Width="64" Height="64" Fill="#0F172A"/>
-                                    <Ellipse Canvas.Left="304" Canvas.Top="256" Width="32" Height="32" Fill="#475569"/>
+                                    <Ellipse Canvas.Left="172" Canvas.Top="264" Width="48" Height="48" Fill="#0f172a"/>
+                                    <Ellipse Canvas.Left="184" Canvas.Top="276" Width="24" Height="24" Fill="#334155"/>
+                                    <Ellipse Canvas.Left="292" Canvas.Top="264" Width="48" Height="48" Fill="#0f172a"/>
+                                    <Ellipse Canvas.Left="304" Canvas.Top="276" Width="24" Height="24" Fill="#334155"/>
+
+                                    <!-- Message packet icons -->
+                                    <Rectangle Canvas.Left="400" Canvas.Top="140" Width="40" Height="32" RadiusX="6" RadiusY="6" Fill="#10b981"/>
+                                    <Rectangle Canvas.Left="408" Canvas.Top="148" Width="24" Height="4" RadiusX="2" RadiusY="2" Fill="white" Opacity="0.9"/>
+                                    <Rectangle Canvas.Left="408" Canvas.Top="156" Width="16" Height="4" RadiusX="2" RadiusY="2" Fill="white" Opacity="0.6"/>
+
+                                    <Rectangle Canvas.Left="72" Canvas.Top="140" Width="40" Height="32" RadiusX="6" RadiusY="6" Fill="#10b981"/>
+                                    <Rectangle Canvas.Left="80" Canvas.Top="148" Width="24" Height="4" RadiusX="2" RadiusY="2" Fill="white" Opacity="0.9"/>
+                                    <Rectangle Canvas.Left="80" Canvas.Top="156" Width="16" Height="4" RadiusX="2" RadiusY="2" Fill="white" Opacity="0.6"/>
+
+                                    <!-- Connection dots -->
+                                    <Ellipse Canvas.Left="88" Canvas.Top="152" Width="8" Height="8" Fill="#10b981" Opacity="0.8"/>
+                                    <Ellipse Canvas.Left="416" Canvas.Top="152" Width="8" Height="8" Fill="#10b981" Opacity="0.8"/>
                                 </Canvas>
                             </Viewbox>
                             <StackPanel VerticalAlignment="Center">
