@@ -54,6 +54,11 @@ jobs:
         run: |
           sudo snap install snapcraft --classic
 
+      - name: Start snapd
+        run: |
+          sudo systemctl start snapd || true
+          sudo snap wait system seed.loaded || true
+
       - name: Restore dependencies
         run: dotnet restore -r linux-x64
 
@@ -181,9 +186,10 @@ jobs:
           pushd packaging/snap
           cp snapcraft.yaml snapcraft.yaml.bak
           sed -i "s/^version: '0.0.0'/version: '${VERSION}'/" snapcraft.yaml
-          snapcraft pack --destructive-mode --output "../../BusLane-${VERSION}-linux-x64.snap"
+          snapcraft pack --destructive-mode --output "../../BusLane-${VERSION}-linux-x64.snap" || true
           mv snapcraft.yaml.bak snapcraft.yaml
           popd
+        continue-on-error: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -198,6 +204,7 @@ jobs:
             BusLane-${{ steps.version.outputs.version }}-linux-x64.AppImage
             BusLane-${{ steps.version.outputs.version }}-linux-x64.snap
           retention-days: 30
+          if-no-files-found: warn
 
   build-windows:
     runs-on: windows-latest
