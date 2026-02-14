@@ -27,7 +27,7 @@
                                     IsVisible="{Binding IsNavigationPanelVisible}"/>
 
         <!-- Main Content -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*">
+        <Grid Grid.Column="1" RowDefinitions="Auto,*">
             <!-- Tab Bar with Show Panel Button -->
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
                 <!-- Show Panel Button (visible when panel is hidden and tabs exist) -->
@@ -48,12 +48,8 @@
                 <controls:TabBarView Grid.Column="1"/>
             </Grid>
 
-            <!-- Update Notification Banner -->
-            <controls:UpdateNotificationView Grid.Row="1"
-                                             DataContext="{Binding UpdateNotification}"/>
-
             <!-- Content Area -->
-            <Grid Grid.Row="2" Margin="24">
+            <Grid Grid.Row="1" Margin="24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -250,7 +246,7 @@
 
             <!-- Status Bar -->
             <Border Grid.Row="2" Margin="0,12,0,0">
-                <Grid ColumnDefinitions="Auto,*,Auto">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                     <ProgressBar Grid.Column="0"
                                  IsIndeterminate="True"
                                  IsVisible="{Binding IsLoading}"
@@ -269,8 +265,13 @@
                                    TextTrimming="CharacterEllipsis"
                                    MaxWidth="400"/>
                     </Button>
+
+                    <controls:UpdateNotificationView Grid.Column="2"
+                                                     DataContext="{Binding UpdateNotification}"
+                                                     VerticalAlignment="Center"/>
+
                     <!-- Log Viewer Toggle Button -->
-                    <ToggleButton Grid.Column="2"
+                    <ToggleButton Grid.Column="3"
                                   Classes="subtle icon-button"
                                   IsChecked="{Binding LogViewer.IsOpen}"
                                   Padding="6"

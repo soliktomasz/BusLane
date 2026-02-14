@@ -6,39 +6,43 @@
              IsVisible="{Binding IsVisible}">
 
     <Border Background="{DynamicResource SurfaceBrand}"
-            Padding="16,14"
+            Padding="10,8"
             BorderThickness="1"
             BorderBrush="{DynamicResource BorderDefault}"
-            CornerRadius="8"
-            Margin="24,8,24,0"
-            MaxWidth="960"
+            CornerRadius="6"
+            Margin="0"
+            MaxWidth="520"
             HorizontalAlignment="Left">
-        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
             <Border Grid.Column="0"
-                    Width="32"
-                    Height="32"
-                    CornerRadius="16"
+                    Width="24"
+                    Height="24"
+                    CornerRadius="12"
                     Background="{DynamicResource AccentSubtle}"
                     VerticalAlignment="Top">
-                <LucideIcon Kind="Download" Size="16"
+                <LucideIcon Kind="Download" Size="12"
                             Foreground="{DynamicResource AccentBrand}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"/>
             </Border>
 
-            <StackPanel Grid.Column="1" Spacing="4">
+            <StackPanel Grid.Column="1" Spacing="2">
                 <TextBlock Text="{Binding VersionText}"
-                           Classes="body-strong"/>
+                           Classes="caption"
+                           FontWeight="SemiBold"
+                           MaxWidth="220"
+                           TextTrimming="CharacterEllipsis"/>
                 <TextBlock Text="{Binding ReleaseNotes}"
                            Classes="caption"
+                           IsVisible="{Binding IsDownloading}"
                            TextTrimming="CharacterEllipsis"
-                           MaxWidth="560"/>
+                           MaxWidth="220"/>
 
                 <!-- Download Progress -->
-                <StackPanel IsVisible="{Binding IsDownloading}" Spacing="4" Margin="0,4,0,0">
+                <StackPanel IsVisible="{Binding IsDownloading}" Spacing="2" Margin="0,2,0,0">
                     <ProgressBar Value="{Binding DownloadProgress}"
                                  Maximum="100"
-                                 Height="4"
+                                 Height="3"
                                  Foreground="{DynamicResource AccentBrand}"
                                  Background="{DynamicResource BorderMuted}"/>
                     <TextBlock Text="{Binding DownloadProgress, StringFormat='Downloading... {0:F0}%'}"
@@ -50,10 +54,12 @@
                            Text="{Binding ErrorMessage}"
                            Classes="caption"
                            Foreground="{DynamicResource TextDanger}"
-                           Margin="0,4,0,0"/>
+                           Margin="0,2,0,0"
+                           MaxWidth="220"
+                           TextTrimming="CharacterEllipsis"/>
             </StackPanel>
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                 <!-- Install Now / Restart Button -->
                 <Button Classes="primary small"
                         Command="{Binding InstallNowCommand}"
@@ -80,18 +86,11 @@
                     <TextBlock Text="Later"/>
                 </Button>
 
-                <!-- Skip Button -->
-                <Button Classes="subtle small"
-                        Command="{Binding SkipVersionCommand}"
-                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNullOrEmpty}}">
-                    <TextBlock Text="Skip"/>
-                </Button>
-
                 <!-- Dismiss Button -->
-                <Button Classes="subtle"
+                <Button Classes="subtle small"
                         Command="{Binding DismissCommand}"
                         Padding="4">
-                    <LucideIcon Kind="X" Size="14" Foreground="White"/>
+                    <LucideIcon Kind="X" Size="14"/>
                 </Button>
             </StackPanel>
         </Grid>
