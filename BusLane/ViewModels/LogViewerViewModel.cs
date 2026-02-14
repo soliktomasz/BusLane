@@ -33,10 +33,10 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     private bool _isDebugModeEnabled;
 
     [ObservableProperty]
-    private LogLevel? _selectedLevelFilter = LogLevel.Info;
+    private LogLevel? _selectedLevelFilter;
 
     [ObservableProperty]
-    private LogSource? _selectedSourceFilter = LogSource.Application;
+    private LogSource? _selectedSourceFilter;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -114,14 +114,9 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         {
             _allLogs.Insert(0, entry);
             TrimLogCollection(_allLogs);
-
-            if (MatchesFilters(entry))
-            {
-                _filteredLogs.Insert(0, entry);
-                TrimLogCollection(_filteredLogs);
-                OnPropertyChanged(nameof(ShowingLogCount));
-            }
-
+            // Reapply filters for consistency with filter-change behavior.
+            // This avoids stale/blank item containers when logs stream in.
+            ApplyFilters();
             OnPropertyChanged(nameof(TotalLogCount));
         });
     }
@@ -176,31 +171,6 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
             }
             OnPropertyChanged(nameof(ShowingLogCount));
         });
-    }
-
-    private bool MatchesFilters(LogEntry entry)
-    {
-        // Apply level filter
-        if (SelectedLevelFilter.HasValue && entry.Level != SelectedLevelFilter.Value)
-            return false;
-
-        // Apply source filter
-        if (SelectedSourceFilter.HasValue && entry.Source != SelectedSourceFilter.Value)
-            return false;
-
-        // Apply search text filter
-        if (!string.IsNullOrWhiteSpace(SearchText))
-        {
-            if (!entry.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase) &&
-                !(entry.Details?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false))
-                return false;
-        }
-
-        // Apply debug mode filter
-        if (!IsDebugModeEnabled && entry.Level == LogLevel.Debug)
-            return false;
-
-        return true;
     }
 
     partial void OnSelectedLevelFilterChanged(LogLevel? value)
