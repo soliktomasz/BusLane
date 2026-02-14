@@ -1,5 +1,6 @@
 using System.Text.Json;
 using BusLane.Services.Abstractions;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 namespace BusLane.Services.Infrastructure;
 
@@ -48,7 +49,7 @@ public class PreferencesService : IPreferencesService
             if (File.Exists(AppPaths.Preferences))
             {
                 var json = File.ReadAllText(AppPaths.Preferences);
-                var data = JsonSerializer.Deserialize<PreferencesData>(json);
+                var data = Deserialize<PreferencesData>(json);
                 if (data != null)
                 {
                     ConfirmBeforeDelete = data.ConfirmBeforeDelete;
@@ -106,10 +107,7 @@ public class PreferencesService : IPreferencesService
                 UpdateRemindLaterDate = UpdateRemindLaterDate
             };
 
-            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            var json = Serialize(data);
             File.WriteAllText(AppPaths.Preferences, json);
             
             PreferencesChanged?.Invoke(this, EventArgs.Empty);

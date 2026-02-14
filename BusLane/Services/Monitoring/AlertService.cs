@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
 using Serilog;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class AlertService : IAlertService
 {
@@ -368,7 +369,7 @@ public class AlertService : IAlertService
                 if (File.Exists(AppPaths.AlertRules))
                 {
                     var json = File.ReadAllText(AppPaths.AlertRules);
-                    var data = JsonSerializer.Deserialize<List<AlertRuleData>>(json);
+                    var data = Deserialize<List<AlertRuleData>>(json);
 
                     if (data != null)
                     {

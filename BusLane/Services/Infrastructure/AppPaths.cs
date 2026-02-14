@@ -1,5 +1,10 @@
 namespace BusLane.Services.Infrastructure;
 
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using System.Security.AccessControl;
+using System.Security.Principal;
+
 /// <summary>
 /// Centralized application paths for data storage.
 /// Eliminates repeated path construction across services.
@@ -10,6 +15,75 @@ internal static class AppPaths
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "BusLane"
     );
+
+    /// <summary>
+    /// Creates a file with secure permissions (owner read/write only).
+    /// Uses 0o600 permissions on Unix and restrictive ACLs on Windows.
+    /// </summary>
+    /// <param name="path">The full path to the file to create.</param>
+    /// <param name="content">The content to write to the file.</param>
+    public static void CreateSecureFile(string path, string content)
+    {
+        var dir = Path.GetDirectoryName(path);
+        if (dir != null && !Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            CreateSecureFileWindows(path, content);
+        }
+        else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            CreateSecureFileUnix(path, content);
+        }
+        else
+        {
+            // Fallback: create file without special permissions for unknown platforms
+            File.WriteAllText(path, content);
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static void CreateSecureFileWindows(string path, string content)
+    {
+        // Create or overwrite the file
+        File.WriteAllText(path, content);
+
+        // Set restrictive ACL - only the current user has access
+        var fileInfo = new FileInfo(path);
+        var fileSecurity = fileInfo.GetAccessControl();
+
+        // Remove all inherited permissions
+        fileSecurity.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+
+        // Add full control for the current user only
+        var currentUser = WindowsIdentity.GetCurrent().User;
+        if (currentUser != null)
+        {
+            var userRule = new FileSystemAccessRule(
+                currentUser,
+                FileSystemRights.FullControl,
+                AccessControlType.Allow);
+            fileSecurity.SetAccessRule(userRule);
+        }
+
+        // Also grant SYSTEM access if needed for backups, but deny others
+        fileInfo.SetAccessControl(fileSecurity);
+    }
+
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("macOS")]
+    private static void CreateSecureFileUnix(string path, string content)
+    {
+        // Create file and then explicitly set permissions to 0o600 (owner read/write only)
+        File.WriteAllText(path, content);
+
+        // Set Unix file mode to 0o600 (user read + user write)
+        // 0o600 = 384 in decimal
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+    }
 
     /// <summary>
     /// Path to the alert rules configuration file.

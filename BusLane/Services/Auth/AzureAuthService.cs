@@ -3,6 +3,7 @@ namespace BusLane.Services.Auth;
 using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
+using BusLane.Services.Infrastructure;
 using Serilog;
 
 public class AzureAuthService : IAzureAuthService
@@ -63,8 +64,11 @@ public class AzureAuthService : IAzureAuthService
     {
         try
         {
-            using var stream = File.Create(_authRecordPath);
-            record.Serialize(stream);
+            // Serialize to a memory stream first, then use secure file creation
+            using var memoryStream = new MemoryStream();
+            record.Serialize(memoryStream);
+            var content = System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
+            AppPaths.CreateSecureFile(_authRecordPath, content);
             Log.Debug("Authentication record saved to {Path}", _authRecordPath);
         }
         catch (Exception ex)

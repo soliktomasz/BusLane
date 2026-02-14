@@ -3,10 +3,12 @@ using System.Text.Json;
 using Avalonia.Platform.Storage;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
+using BusLane.Services.Infrastructure;
 using BusLane.Services.ServiceBus;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 namespace BusLane.ViewModels;
 
@@ -285,11 +287,7 @@ public partial class SendMessageViewModel : ViewModelBase
                 Messages = SavedMessages.ToList()
             };
 
-            var json = JsonSerializer.Serialize(exportContainer, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
+            var json = Serialize(exportContainer);
             await File.WriteAllTextAsync(filePath, json);
             _onStatusUpdate($"Exported {SavedMessages.Count} message(s) to {Path.GetFileName(filePath)}");
         }
@@ -328,11 +326,7 @@ public partial class SendMessageViewModel : ViewModelBase
                 Messages = new List<SavedMessage> { message }
             };
 
-            var json = JsonSerializer.Serialize(exportContainer, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
+            var json = Serialize(exportContainer);
             await File.WriteAllTextAsync(filePath, json);
             _onStatusUpdate($"Exported message '{message.Name}' to {Path.GetFileName(filePath)}");
         }
@@ -368,7 +362,7 @@ public partial class SendMessageViewModel : ViewModelBase
             var importedMessages = new List<SavedMessage>();
             try
             {
-                var container = JsonSerializer.Deserialize<MessageExportContainer>(json);
+                var container = Deserialize<MessageExportContainer>(json);
                 if (container?.Messages != null)
                 {
                     foreach (var msg in container.Messages)
@@ -385,7 +379,7 @@ public partial class SendMessageViewModel : ViewModelBase
                 // Fall back to trying to parse as a list of SavedMessage (legacy format)
                 try
                 {
-                    var messages = JsonSerializer.Deserialize<List<SavedMessage>>(json);
+                    var messages = Deserialize<List<SavedMessage>>(json);
                     if (messages != null)
                     {
                         foreach (var msg in messages)
@@ -399,7 +393,7 @@ public partial class SendMessageViewModel : ViewModelBase
                 catch
                 {
                     // Try parsing as single SavedMessage
-                    var singleMsg = JsonSerializer.Deserialize<SavedMessage>(json);
+                    var singleMsg = Deserialize<SavedMessage>(json);
                     if (singleMsg != null)
                     {
                         singleMsg.Id = Guid.NewGuid().ToString();
@@ -487,7 +481,7 @@ public partial class SendMessageViewModel : ViewModelBase
             if (File.Exists(SavedMessagesPath))
             {
                 var json = File.ReadAllText(SavedMessagesPath);
-                var messages = JsonSerializer.Deserialize<List<SavedMessage>>(json);
+                var messages = Deserialize<List<SavedMessage>>(json);
                 if (messages != null)
                 {
                     foreach (var msg in messages.OrderByDescending(m => m.CreatedAt))
@@ -507,17 +501,8 @@ public partial class SendMessageViewModel : ViewModelBase
     {
         try
         {
-            var dir = Path.GetDirectoryName(SavedMessagesPath);
-            if (dir != null && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            var json = JsonSerializer.Serialize(SavedMessages.ToList(), new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-            File.WriteAllText(SavedMessagesPath, json);
+            var json = Serialize(SavedMessages.ToList());
+            AppPaths.CreateSecureFile(SavedMessagesPath, json);
         }
         catch
         {
