@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
-using System.Threading;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;

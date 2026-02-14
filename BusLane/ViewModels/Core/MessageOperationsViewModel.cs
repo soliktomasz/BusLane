@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Threading;
 using Avalonia.Threading;
 using BusLane.Models;
 using BusLane.Models.Logging;

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using BusLane.Models;
 
 namespace BusLane.Services.Infrastructure;
