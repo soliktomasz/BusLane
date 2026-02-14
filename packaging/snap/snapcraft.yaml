@@ -1,5 +1,5 @@
 name: buslane
-base: core24
+base: core22
 version: '0.0.0'
 summary: Azure Service Bus Manager
 description: |
