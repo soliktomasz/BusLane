@@ -55,6 +55,7 @@ public class UpdateService : IUpdateService, IDisposable
         // Check every 24 hours
         _checkTimer = new System.Timers.Timer(TimeSpan.FromHours(24).TotalMilliseconds);
         _checkTimer.Elapsed += OnCheckTimerElapsed;
+        _checkTimer.Start();
     }
 
     private async void OnCheckTimerElapsed(object? sender, ElapsedEventArgs e)
@@ -107,17 +108,21 @@ public class UpdateService : IUpdateService, IDisposable
             _availableRelease = release;
             Status = UpdateStatus.UpdateAvailable;
 
-            // Start timer for periodic checks if not already running
-            if (!_checkTimer.Enabled)
-            {
-                _checkTimer.Start();
-            }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Update check failed");
-            _errorMessage = ex.Message;
-            Status = UpdateStatus.Error;
+            if (manualCheck)
+            {
+                Log.Error(ex, "Manual update check failed");
+                _errorMessage = ex.Message;
+                Status = UpdateStatus.Error;
+            }
+            else
+            {
+                Log.Warning(ex, "Automatic update check failed");
+                _errorMessage = null;
+                Status = UpdateStatus.Idle;
+            }
         }
     }
 

@@ -376,6 +376,20 @@
                                                           VerticalAlignment="Center"/>
                                         </Grid>
 
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Manual check" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Check now for the latest version"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Classes="secondary small"
+                                                    Content="Check now"
+                                                    Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
+                                                    IsEnabled="{Binding !SettingsViewModel.IsCheckingForUpdates}"
+                                                    VerticalAlignment="Center"/>
+                                        </Grid>
+
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
                                         <!-- Current Version -->
@@ -460,4 +474,3 @@
         </Border>
     </Border>
 </UserControl>
-

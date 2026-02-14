@@ -919,7 +919,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private void OpenSettings()
     {
-        SettingsViewModel = new SettingsViewModel(CloseSettings, _preferencesService, this);
+        SettingsViewModel = new SettingsViewModel(CloseSettings, _preferencesService, this, _updateService);
         ShowSettings = true;
     }
 

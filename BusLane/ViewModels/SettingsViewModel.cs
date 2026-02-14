@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using BusLane.Services.Abstractions;
+using BusLane.Services.Update;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,6 +12,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly Action _onClose;
     private readonly MainWindowViewModel? _mainViewModel;
     private readonly IPreferencesService _preferencesService;
+    private readonly IUpdateService? _updateService;
     private string _originalTheme = "Light";
     private bool _isLoading;
 
@@ -27,6 +29,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _restoreTabsOnStartup = true;
     [ObservableProperty] private bool _enableTelemetry;
     [ObservableProperty] private bool _autoCheckForUpdates = true;
+    [ObservableProperty] private bool _isCheckingForUpdates;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
@@ -37,11 +40,13 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         Action onClose,
         IPreferencesService preferencesService,
-        MainWindowViewModel? mainViewModel = null)
+        MainWindowViewModel? mainViewModel = null,
+        IUpdateService? updateService = null)
     {
         _onClose = onClose;
         _preferencesService = preferencesService;
         _mainViewModel = mainViewModel;
+        _updateService = updateService;
 
         // Capture original theme BEFORE loading to avoid any binding interference
         _originalTheme = preferencesService.Theme;
@@ -159,6 +164,22 @@ public partial class SettingsViewModel : ViewModelBase
         EnableTelemetry = false;
         AutoCheckForUpdates = true;
     }
-}
 
+    [RelayCommand]
+    private async Task CheckForUpdatesNowAsync()
+    {
+        if (_updateService == null || IsCheckingForUpdates)
+            return;
+
+        try
+        {
+            IsCheckingForUpdates = true;
+            await _updateService.CheckForUpdatesAsync(manualCheck: true);
+        }
+        finally
+        {
+            IsCheckingForUpdates = false;
+        }
+    }
+}
 

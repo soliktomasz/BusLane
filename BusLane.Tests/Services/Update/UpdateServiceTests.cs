@@ -113,6 +113,28 @@ public class UpdateServiceTests
     }
 
     [Fact]
+    public async Task CheckForUpdatesAsync_AutomaticCheckThrows_DoesNotShowError()
+    {
+        _versionService.InformationalVersion.Returns(_ => throw new InvalidOperationException("Version read failed"));
+
+        await _updateService.CheckForUpdatesAsync(manualCheck: false);
+
+        _updateService.Status.Should().Be(UpdateStatus.Idle);
+        _updateService.ErrorMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_ManualCheckThrows_ShowsError()
+    {
+        _versionService.InformationalVersion.Returns(_ => throw new InvalidOperationException("Version read failed"));
+
+        await _updateService.CheckForUpdatesAsync(manualCheck: true);
+
+        _updateService.Status.Should().Be(UpdateStatus.Error);
+        _updateService.ErrorMessage.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
     public void Dispose_StopsTimer()
     {
         // Should not throw
