@@ -7,1042 +7,1100 @@
     <meta name="description" content="A modern, cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10">
     <meta name="keywords" content="Azure, Service Bus, .NET, Avalonia, Queue Management, Message Broker">
     <meta name="author" content="Tomasz Solik">
-    
-    <!-- Open Graph / Social Media -->
+
     <meta property="og:type" content="website">
     <meta property="og:title" content="BusLane - Azure Service Bus Manager">
     <meta property="og:description" content="A modern, cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10">
     <meta property="og:image" content="https://soliktomasz.github.io/BusLane/assets/og-image.png">
-    
-    <!-- Favicon -->
+
     <link rel="icon" type="image/png" href="assets/icon.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/soliktomasz/BusLane/main/Assets/icon.png" sizes="any">
-    
-    <!-- Fonts -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    
+
     <style>
         :root {
-            --primary: #0078D4;
-            --primary-dark: #005a9e;
-            --primary-light: #4da3e8;
-            --accent: #FF8C00;
-            --accent-light: #FFA940;
-            --bg-dark: #0f1419;
-            --bg-card: #1a1f26;
-            --bg-card-hover: #242b34;
-            --text-primary: #ffffff;
-            --text-secondary: #8b949e;
-            --text-muted: #6e7681;
-            --border: #30363d;
-            --success: #3fb950;
-            --gradient-primary: linear-gradient(135deg, #0078D4 0%, #00BCF2 100%);
-            --gradient-accent: linear-gradient(135deg, #FF8C00 0%, #FFB347 100%);
+            --bg: #0a0f12;
+            --bg-2: #0f171d;
+            --panel: #142028;
+            --panel-2: #1a2a34;
+            --line: #2e485a;
+            --line-soft: #2a4050;
+            --signal: #1cd5dc;
+            --signal-soft: #8df3f1;
+            --warn: #f1b14a;
+            --ok: #65d090;
+            --text: #e8f4f5;
+            --text-dim: #a7bec3;
+            --shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
         }
-        
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-        
+
         html {
             scroll-behavior: smooth;
         }
-        
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 8% 3%, rgba(28, 213, 220, 0.16), transparent 38%),
+                radial-gradient(circle at 92% 12%, rgba(241, 177, 74, 0.14), transparent 42%),
+                linear-gradient(180deg, #0a0f12 0%, #0c1419 52%, #090f12 100%);
             line-height: 1.6;
             overflow-x: hidden;
         }
-        
-        /* Navigation */
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(46, 72, 90, 0.28) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(46, 72, 90, 0.24) 1px, transparent 1px);
+            background-size: 56px 56px;
+            mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.3) 52%, transparent 100%);
+            opacity: 0.5;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(180deg, transparent 0, transparent 3px, rgba(255, 255, 255, 0.015) 4px);
+            z-index: -1;
+        }
+
+        a:focus-visible,
+        button:focus-visible {
+            outline: 2px solid var(--signal);
+            outline-offset: 2px;
+        }
+
+        .container {
+            width: min(1220px, calc(100% - 3rem));
+            margin: 0 auto;
+        }
+
         nav {
             position: fixed;
-            top: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
-            background: rgba(15, 20, 25, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--line);
+            background: rgba(10, 15, 18, 0.85);
+            backdrop-filter: blur(10px);
         }
-        
-        .nav-container {
-            max-width: 1200px;
+
+        .nav-inner {
+            width: min(1220px, calc(100% - 3rem));
             margin: 0 auto;
+            padding: 0.85rem 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 1rem;
         }
-        
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+
+        .brand {
+            color: var(--text);
             text-decoration: none;
-            color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
             font-weight: 700;
-            font-size: 1.25rem;
+            letter-spacing: 0.04em;
         }
-        
-        .nav-logo img {
-            width: 36px;
-            height: 36px;
+
+        .brand img {
+            width: 34px;
+            height: 34px;
             border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(28, 213, 220, 0.45), 0 0 18px rgba(28, 213, 220, 0.24);
         }
-        
+
         .nav-links {
             display: flex;
-            gap: 2rem;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1.2rem;
         }
-        
+
         .nav-links a {
-            color: var(--text-secondary);
+            color: var(--text-dim);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-        
-        .nav-links a:hover {
-            color: var(--text-primary);
-        }
-        
-        .nav-cta {
-            background: var(--gradient-primary);
-            color: white !important;
-            padding: 0.5rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .nav-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 120, 212, 0.4);
-        }
-        
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8rem 2rem 4rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .hero-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 20%, rgba(0, 120, 212, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 140, 0, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(0, 188, 242, 0.05) 0%, transparent 70%);
-            z-index: 0;
-        }
-        
-        .hero-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                linear-gradient(rgba(48, 54, 61, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(48, 54, 61, 0.3) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
-            z-index: 0;
-        }
-        
-        .hero-content {
-            max-width: 900px;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(0, 120, 212, 0.1);
-            border: 1px solid rgba(0, 120, 212, 0.3);
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            color: var(--primary-light);
-            margin-bottom: 1.5rem;
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        .hero-badge i {
-            width: 16px;
-            height: 16px;
-        }
-        
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            animation: fadeInUp 0.6s ease-out 0.1s backwards;
-        }
-        
-        .hero h1 .gradient {
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero h1 .accent {
-            background: var(--gradient-accent);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero p {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 2.5rem;
-            animation: fadeInUp 0.6s ease-out 0.2s backwards;
-        }
-        
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            animation: fadeInUp 0.6s ease-out 0.3s backwards;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.75rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
-        }
-        
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0, 120, 212, 0.5);
-        }
-        
-        .btn-secondary {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-        
-        .btn-secondary:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--text-muted);
-        }
-        
-        .btn i {
-            width: 20px;
-            height: 20px;
-        }
-        
-        /* Tech Badges */
-        .tech-badges {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 3rem;
-            animation: fadeInUp 0.6s ease-out 0.4s backwards;
-        }
-        
-        .tech-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-        
-        .tech-badge img {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Hero Screenshot */
-        .hero-screenshot {
-            margin-top: 4rem;
-            animation: fadeInUp 0.6s ease-out 0.5s backwards;
-        }
-
-        .hero-screenshot img {
-            max-width: 100%;
-            width: 1000px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 120, 212, 0.15);
-        }
-
-        /* Features Section */
-        .features {
-            padding: 6rem 2rem;
-            position: relative;
-        }
-        
-        .section-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-        
-        .section-label {
-            display: inline-block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--primary-light);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 1rem;
+            letter-spacing: 0.08em;
+            font-size: 0.85rem;
+            border-bottom: 1px solid transparent;
+            padding-bottom: 0.2rem;
+            transition: color 0.2s, border-color 0.2s;
         }
-        
-        .section-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
+
+        .nav-links a:hover {
+            color: var(--signal-soft);
+            border-color: var(--signal);
         }
-        
-        .section-subtitle {
-            font-size: 1.125rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto;
+
+        .nav-cta {
+            border: 1px solid var(--signal);
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #17444f, #215f6d);
+            color: var(--text) !important;
         }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.3s;
+
+        section {
+            padding: 5rem 0;
             position: relative;
-            overflow: hidden;
         }
-        
-        .feature-card::before {
+
+        .section-header {
+            max-width: 72ch;
+            margin-bottom: 1.8rem;
+        }
+
+        .eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--signal-soft);
+        }
+
+        .section-header h2 {
+            margin-top: 0.55rem;
+            font-size: clamp(1.7rem, 4.8vw, 2.9rem);
+            line-height: 1.1;
+        }
+
+        .section-header p {
+            margin-top: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .hero {
+            padding-top: 8.3rem;
+        }
+
+        .hero-shell {
+            display: grid;
+            grid-template-columns: 1.18fr 0.82fr;
+            gap: 1.2rem;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: linear-gradient(162deg, rgba(20, 30, 37, 0.95), rgba(15, 24, 30, 0.94));
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-shell::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-        
-        .feature-card:hover::before {
-            opacity: 1;
-        }
-        
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            background: rgba(0, 120, 212, 0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            color: var(--primary-light);
-        }
-        
-        .feature-icon i {
-            width: 28px;
-            height: 28px;
-        }
-        
-        .feature-card h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-        }
-        
-        .feature-card p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-        
-        /* Roadmap Section */
-        .roadmap {
-            padding: 6rem 2rem;
-            background: linear-gradient(180deg, transparent 0%, rgba(255, 140, 0, 0.03) 50%, transparent 100%);
+            right: -120px;
+            top: -80px;
+            width: 320px;
+            height: 320px;
+            transform: rotate(24deg);
+            border: 1px solid rgba(241, 177, 74, 0.35);
         }
 
-        .roadmap-timeline {
-            max-width: 700px;
-            margin: 0 auto 2.5rem;
+        .hero-main {
+            padding: 2.15rem;
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 0 100%);
+            background: linear-gradient(150deg, rgba(19, 32, 39, 0.95), rgba(17, 27, 33, 0.95));
+        }
+
+        .hero-side {
+            padding: 2.15rem 2.15rem 2.15rem 1.4rem;
+            display: grid;
+            align-content: start;
+            gap: 0.8rem;
+        }
+
+        .badge {
+            font-family: 'IBM Plex Mono', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border: 1px solid rgba(28, 213, 220, 0.55);
+            border-radius: 999px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.82rem;
+            color: var(--signal-soft);
+            background: rgba(17, 68, 73, 0.3);
+        }
+
+        .badge i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .hero h1 {
+            margin-top: 1rem;
+            font-size: clamp(2.05rem, 6vw, 4.4rem);
+            line-height: 1.03;
+            max-width: 11ch;
+            letter-spacing: 0.01em;
+        }
+
+        .hero h1 .signal { color: var(--signal); }
+        .hero h1 .warn { color: var(--warn); }
+
+        .hero p {
+            margin-top: 0.95rem;
+            color: var(--text-dim);
+            max-width: 60ch;
+        }
+
+        .button-row {
+            margin-top: 1.4rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            padding: 0.72rem 1.1rem;
+            font-weight: 600;
+            font-size: 0.92rem;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            color: var(--text);
+        }
+
+        .btn i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-primary {
+            border-color: var(--signal);
+            background: linear-gradient(135deg, #1a4d59, #286a78);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #1a2730, #17222b);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--signal-soft);
+            box-shadow: 0 0 0 1px rgba(28, 213, 220, 0.25), 0 10px 28px rgba(0, 0, 0, 0.4);
+        }
+
+        .telemetry {
+            margin-top: 1.25rem;
+            display: grid;
+            gap: 0.7rem;
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+        }
+
+        .telemetry-card {
+            border: 1px solid var(--line-soft);
+            border-radius: 10px;
+            padding: 0.65rem 0.75rem;
+            background: rgba(14, 22, 27, 0.85);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .telemetry-card strong {
+            display: block;
+            color: var(--signal-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .flight-log {
+            border: 1px solid var(--line);
+            background: rgba(12, 18, 23, 0.9);
+            border-radius: 10px;
+            padding: 0.8rem;
+        }
+
+        .flight-log h3 {
+            font-family: 'IBM Plex Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            font-size: 0.78rem;
+            color: var(--signal-soft);
+            margin-bottom: 0.55rem;
+        }
+
+        .flight-log ul {
+            list-style: none;
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .flight-log li {
+            font-size: 0.87rem;
+            color: var(--text-dim);
+            border-left: 2px solid var(--line-soft);
+            padding-left: 0.55rem;
+        }
+
+        .hero-screen {
+            border: 1px solid var(--line);
+            background: #0d151a;
+            border-radius: 10px;
+            padding: 0.6rem;
+        }
+
+        .hero-screen img {
+            width: 100%;
+            display: block;
+            border-radius: 7px;
+            border: 1px solid var(--line-soft);
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.52);
+        }
+
+        .panel-grid {
+            display: grid;
+            gap: 0.95rem;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: linear-gradient(150deg, rgba(18, 29, 36, 0.95), rgba(15, 24, 30, 0.95));
+            padding: 1.15rem;
             position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--signal);
+            box-shadow: 0 0 10px rgba(28, 213, 220, 0.65);
+        }
+
+        .panel:hover {
+            transform: translateY(-3px);
+            border-color: var(--signal);
+        }
+
+        .feature-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 1px solid var(--line-soft);
+            color: var(--signal-soft);
+            background: rgba(16, 63, 68, 0.24);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.62rem;
+        }
+
+        .feature-icon i {
+            width: 21px;
+            height: 21px;
+        }
+
+        .panel h3,
+        .panel h4 {
+            margin-bottom: 0.45rem;
+        }
+
+        .panel p {
+            color: var(--text-dim);
+            font-size: 0.93rem;
+        }
+
+        #features .panel:nth-child(1) { grid-column: span 7; }
+        #features .panel:nth-child(2) { grid-column: span 5; }
+        #features .panel:nth-child(3) { grid-column: span 4; }
+        #features .panel:nth-child(4) { grid-column: span 4; }
+        #features .panel:nth-child(5) { grid-column: span 4; }
+        #features .panel:nth-child(6) { grid-column: span 12; }
+
+        #roadmap {
+            overflow: hidden;
+        }
+
+        #roadmap::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 22%;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(28, 213, 220, 0.42), transparent);
+            transform: skewY(-3deg);
+        }
+
+        .roadmap-overview {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .overview-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: linear-gradient(148deg, rgba(18, 30, 36, 0.95), rgba(14, 22, 28, 0.96));
+            padding: 0.72rem 0.8rem;
+        }
+
+        .overview-card strong {
+            display: block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.74rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.22rem;
+        }
+
+        .overview-card span {
+            color: var(--text-dim);
+            font-size: 0.86rem;
+        }
+
+        .overview-card.now strong { color: var(--ok); }
+        .overview-card.next strong { color: var(--signal-soft); }
+        .overview-card.later strong { color: var(--warn); }
+
+        .roadmap-timeline {
+            position: relative;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 0;
         }
 
         .roadmap-timeline::before {
             content: '';
             position: absolute;
             left: 50%;
+            transform: translateX(-50%);
             top: 0;
             bottom: 0;
-            width: 4px;
-            background: linear-gradient(180deg, var(--success) 0%, var(--primary) 33%, var(--accent) 66%, var(--border) 100%);
-            transform: translateX(-50%);
-            border-radius: 2px;
+            width: 3px;
+            background: linear-gradient(180deg, 
+                var(--ok) 0%, 
+                var(--ok) 25%, 
+                var(--signal) 25%, 
+                var(--signal) 50%, 
+                var(--warn) 50%, 
+                var(--warn) 75%,
+                rgba(46, 72, 90, 0.5) 75%,
+                rgba(46, 72, 90, 0.5) 100%);
+            border-radius: 3px;
         }
 
         .roadmap-item {
-            position: relative;
-            padding: 1.75rem 2rem;
+            border: 1px solid var(--line);
+            background: linear-gradient(145deg, rgba(18, 27, 33, 0.95), rgba(14, 22, 28, 0.95));
+            border-radius: 12px;
+            padding: 1.2rem;
             margin-bottom: 2rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            transition: all 0.3s;
-            width: calc(50% - 3rem);
-            text-align: left;
-        }
-
-        .roadmap-item:nth-child(odd) {
-            margin-left: calc(50% + 3rem);
-        }
-
-        .roadmap-item:nth-child(even) {
-            margin-right: calc(50% + 3rem);
-            text-align: left;
-        }
-
-        .roadmap-connector {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3rem;
-            height: 2px;
-            z-index: 1;
-        }
-
-        .roadmap-item:nth-child(odd) .roadmap-connector {
-            left: -3rem;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
-        }
-
-        .roadmap-item:nth-child(even) .roadmap-connector {
-            right: -3rem;
-            background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary) 100%);
-        }
-
-        .roadmap-connector::before {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            background: var(--bg-card);
-            border: 3px solid var(--primary);
-            border-radius: 50%;
-            top: 50%;
-            transform: translateY(-50%);
-            box-shadow: 0 0 12px rgba(0, 120, 212, 0.5);
-        }
-
-        .roadmap-item:nth-child(odd) .roadmap-connector::before {
-            left: -7px;
-        }
-
-        .roadmap-item:nth-child(even) .roadmap-connector::before {
-            right: -7px;
-        }
-
-        .roadmap-connector::after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: var(--primary-light);
-            border-radius: 2px;
-            top: 50%;
-            transform: translateY(-50%) rotate(45deg);
-        }
-
-        .roadmap-item:nth-child(odd) .roadmap-connector::after {
-            right: -4px;
-        }
-
-        .roadmap-item:nth-child(even) .roadmap-connector::after {
-            left: -4px;
+            position: relative;
+            width: calc(50% - 2.5rem);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .roadmap-item:hover {
-            transform: translateY(-3px);
-            border-color: var(--accent);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px);
+            border-color: var(--signal);
+            box-shadow: 0 8px 32px rgba(28, 213, 220, 0.15);
         }
 
-        .roadmap-item:hover .roadmap-connector::before {
-            border-color: var(--accent);
-            box-shadow: 0 0 16px rgba(255, 140, 0, 0.6);
+        .roadmap-item:nth-child(odd) {
+            margin-left: 0;
+            margin-right: auto;
         }
 
-        .roadmap-version {
+        .roadmap-item:nth-child(even) {
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .roadmap-item.current-milestone {
+            border-color: var(--ok);
+            box-shadow: 0 0 0 1px var(--ok), 0 8px 32px rgba(101, 208, 144, 0.15);
+        }
+
+        .roadmap-item.next-milestone {
+            border-color: var(--signal);
+            box-shadow: 0 0 0 1px var(--signal), 0 8px 32px rgba(28, 213, 220, 0.15);
+        }
+
+        .roadmap-item.future-milestone {
+            border-color: var(--warn);
+        }
+
+        .roadmap-item::before {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            height: 2px;
+            width: 2rem;
+        }
+
+        .roadmap-item:nth-child(odd)::before {
+            right: -2rem;
+            background: linear-gradient(90deg, rgba(28, 213, 220, 0.5), rgba(28, 213, 220, 0.1));
+        }
+
+        .roadmap-item:nth-child(even)::before {
+            left: -2rem;
+            background: linear-gradient(270deg, rgba(28, 213, 220, 0.5), rgba(28, 213, 220, 0.1));
+        }
+
+        .roadmap-item.current-milestone::before {
+            background: linear-gradient(90deg, var(--ok), rgba(101, 208, 144, 0.3)) !important;
+        }
+
+        .roadmap-item.current-milestone:nth-child(even)::before {
+            background: linear-gradient(270deg, var(--ok), rgba(101, 208, 144, 0.3)) !important;
+        }
+
+        .roadmap-item.next-milestone::before {
+            background: linear-gradient(90deg, var(--signal), rgba(28, 213, 220, 0.3)) !important;
+        }
+
+        .roadmap-item.next-milestone:nth-child(even)::before {
+            background: linear-gradient(270deg, var(--signal), rgba(28, 213, 220, 0.3)) !important;
+        }
+
+        .roadmap-item.future-milestone::before {
+            background: linear-gradient(90deg, var(--warn), rgba(241, 177, 74, 0.3)) !important;
+        }
+
+        .roadmap-item.future-milestone:nth-child(even)::before {
+            background: linear-gradient(270deg, var(--warn), rgba(241, 177, 74, 0.3)) !important;
+        }
+
+        .version {
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
             flex-wrap: wrap;
-            justify-content: flex-start;
+            gap: 0.5rem;
+            align-items: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78rem;
+            margin-bottom: 0.45rem;
         }
 
-        .roadmap-list li {
-            justify-content: flex-start;
+        .tag {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 0.14rem 0.52rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
-        .version-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 700;
+        .tag.current { border-color: var(--ok); color: var(--ok); background: rgba(101, 208, 144, 0.1); }
+        .tag.next { border-color: var(--signal); color: var(--signal-soft); background: rgba(28, 213, 220, 0.1); }
+        .tag.future { border-color: var(--warn); color: var(--warn); background: rgba(241, 177, 74, 0.1); }
+
+        .milestone-meta {
+            margin-top: 0.45rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.73rem;
         }
 
-        .version-badge.current {
-            background: rgba(63, 185, 80, 0.15);
-            color: var(--success);
-            border-color: var(--success);
+        .meta-chip {
+            border: 1px solid var(--line-soft);
+            border-radius: 999px;
+            padding: 0.12rem 0.46rem;
+            color: var(--text-dim);
         }
 
-        .version-badge.next {
-            background: rgba(0, 120, 212, 0.15);
-            color: var(--primary-light);
-            border-color: var(--primary);
+        .progress {
+            margin-top: 0.8rem;
         }
 
-        .version-badge.future {
-            background: rgba(255, 140, 0, 0.15);
-            color: var(--accent-light);
-            border-color: var(--accent);
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
         }
 
-        .version-status {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+        .progress-bar {
+            height: 6px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: rgba(42, 64, 80, 0.7);
+            border: 1px solid var(--line-soft);
         }
 
-        .roadmap-item h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            text-align: left;
+        .progress-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--signal), var(--signal-soft));
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.completed {
+            background: linear-gradient(90deg, var(--ok), #7ee0a0);
+        }
+
+        .progress-fill.planned {
+            background: linear-gradient(90deg, var(--warn), #f5c26b);
         }
 
         .roadmap-list {
             list-style: none;
+            margin-top: 0.5rem;
         }
 
         .roadmap-list li {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.375rem 0;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            justify-content: flex-start;
+            gap: 0.4rem;
+            color: var(--text-dim);
+            font-size: 0.88rem;
+            padding: 0.22rem 0;
         }
 
-        .roadmap-list li i {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-
-        .roadmap-list li.completed {
-            color: var(--success);
-        }
-
-        .roadmap-list li.completed i {
-            color: var(--success);
-        }
+        .roadmap-list li.completed { color: var(--ok); }
+        .roadmap-list i { width: 15px; height: 15px; }
 
         .roadmap-cta {
+            margin-top: 1.5rem;
             display: flex;
-            gap: 1rem;
-            justify-content: center;
             flex-wrap: wrap;
+            gap: 0.7rem;
+            justify-content: center;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 980px) {
             .roadmap-timeline::before {
-                left: 1.5rem;
+                left: 20px;
+                transform: none;
             }
 
             .roadmap-item {
-                width: calc(100% - 4.5rem);
-                margin-left: 4.5rem !important;
+                width: calc(100% - 60px);
+                margin-left: 50px !important;
                 margin-right: 0 !important;
-                text-align: left !important;
             }
 
-            .roadmap-connector {
-                left: -3rem !important;
-                right: auto !important;
-                background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%) !important;
-            }
-
-            .roadmap-connector::before {
-                left: -7px !important;
+            .roadmap-item::before {
+                left: -42px !important;
                 right: auto !important;
             }
 
-            .roadmap-connector::after {
-                right: -4px !important;
-                left: auto !important;
+            .roadmap-item::after {
+                left: -26px !important;
+                right: auto !important;
+                width: 26px;
+            }
+
+            .roadmap-item:nth-child(even)::after {
+                background: linear-gradient(90deg, var(--signal), rgba(28, 213, 220, 0.3)) !important;
+            }
+
+            .roadmap-item.current-milestone:nth-child(even)::after {
+                background: linear-gradient(90deg, var(--ok), rgba(101, 208, 144, 0.3)) !important;
+            }
+
+            .roadmap-item.future-milestone:nth-child(even)::after {
+                background: linear-gradient(90deg, var(--warn), rgba(241, 177, 74, 0.3)) !important;
             }
         }
-        
-        /* Platforms Section */
-        .platforms {
-            padding: 6rem 2rem;
-            background: linear-gradient(180deg, transparent 0%, rgba(0, 120, 212, 0.03) 50%, transparent 100%);
+
+        #platforms .panel,
+        #security .security-card {
+            grid-column: span 4;
         }
-        
-        .platforms-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
+
         .platform-card {
             text-align: center;
-            padding: 2rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            transition: all 0.3s;
         }
-        
-        .platform-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-        
+
         .platform-icon {
             width: 64px;
             height: 64px;
-            margin: 0 auto 1rem;
-            display: flex;
+            margin: 0 auto 0.6rem;
+            border-radius: 50%;
+            border: 1px solid var(--line-soft);
+            color: var(--signal-soft);
+            background: rgba(15, 61, 66, 0.2);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-primary);
         }
-        
-        .platform-icon i {
-            width: 48px;
-            height: 48px;
+
+        #installation::before {
+            content: '';
+            position: absolute;
+            right: -14%;
+            top: 15%;
+            width: 48%;
+            height: 70%;
+            background: linear-gradient(140deg, rgba(241, 177, 74, 0.12), transparent 70%);
+            transform: skewX(-18deg);
+            pointer-events: none;
         }
-        
-        .platform-card h3 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+
+        .install-shell {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(15, 24, 30, 0.95);
+            padding: 1rem;
+            position: relative;
+            z-index: 2;
         }
-        
-        .platform-card p {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-        
-        /* Installation Section */
-        .installation {
-            padding: 6rem 2rem;
-        }
-        
+
         .install-tabs {
             display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-bottom: 2rem;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
         }
-        
+
         .install-tab {
-            padding: 0.75rem 1.5rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+            background: #132028;
+            color: var(--text-dim);
+            border: 1px solid var(--line);
             border-radius: 8px;
-            color: var(--text-secondary);
+            padding: 0.48rem 0.85rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.82rem;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
+            transition: color 0.2s, border-color 0.2s;
         }
-        
-        .install-tab:hover {
-            background: var(--bg-card-hover);
-        }
-        
+
         .install-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
+            color: var(--signal-soft);
+            border-color: var(--signal);
+            box-shadow: inset 0 0 0 1px rgba(28, 213, 220, 0.25);
         }
-        
-        .install-content {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        
-        .install-panel {
-            display: none;
-        }
-        
-        .install-panel.active {
-            display: block;
-        }
-        
+
+        .install-panel { display: none; }
+        .install-panel.active { display: block; }
+
         .code-block {
-            background: #161b22;
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            border: 1px solid var(--line-soft);
+            border-radius: 10px;
             overflow: hidden;
+            background: #0f171c;
         }
-        
+
         .code-header {
+            border-bottom: 1px solid var(--line);
+            background: #14212a;
+            padding: 0.55rem 0.7rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem 1rem;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid var(--border);
+            gap: 0.65rem;
+            color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
         }
-        
-        .code-header span {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-        
+
         .copy-btn {
-            display: flex;
+            border: 1px solid var(--line);
+            background: #1b2a34;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 7px;
+            padding: 0.3rem 0.52rem;
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.375rem 0.75rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-secondary);
+            gap: 0.34rem;
             cursor: pointer;
-            font-size: 0.75rem;
-            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.77rem;
         }
-        
-        .copy-btn:hover {
-            background: var(--bg-card-hover);
-            color: var(--text-primary);
-        }
-        
-        .copy-btn i {
-            width: 14px;
-            height: 14px;
-        }
-        
+
+        .copy-btn i { width: 14px; height: 14px; }
+
         .code-content {
-            padding: 1.25rem;
-            overflow-x: auto;
+            padding: 0.9rem;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #d8e8ea;
+            font-size: 0.83rem;
+            white-space: pre-wrap;
         }
-        
-        .code-content code {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-size: 0.875rem;
-            color: #c9d1d9;
-        }
-        
-        .code-content .comment {
-            color: #8b949e;
-        }
-        
-        .code-content .keyword {
-            color: #ff7b72;
-        }
-        
-        .code-content .string {
-            color: #a5d6ff;
-        }
-        
-        /* Security Section */
-        .security {
-            padding: 6rem 2rem;
-            background: linear-gradient(180deg, transparent 0%, rgba(63, 185, 80, 0.03) 50%, transparent 100%);
-        }
-        
+
+        .comment { color: #88a4aa; }
+        .keyword { color: var(--signal-soft); }
+
         .security-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 0.9rem;
         }
-        
+
         .security-card {
-            display: flex;
-            gap: 1rem;
-            padding: 1.5rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--line);
             border-radius: 12px;
-        }
-        
-        .security-card .icon {
-            flex-shrink: 0;
-            width: 40px;
-            height: 40px;
-            background: rgba(63, 185, 80, 0.1);
-            border-radius: 10px;
+            background: linear-gradient(150deg, rgba(17, 28, 34, 0.96), rgba(13, 21, 27, 0.96));
+            padding: 1rem;
             display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .security-card:nth-child(1) { grid-column: span 7; }
+        .security-card:nth-child(2) { grid-column: span 5; }
+        .security-card:nth-child(3) { grid-column: span 5; }
+        .security-card:nth-child(4) { grid-column: span 7; }
+
+        .security-card:hover {
+            border-color: var(--signal);
+            transform: translateY(-2px);
+        }
+
+        .security-card .icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            border: 1px solid var(--line-soft);
+            color: var(--signal-soft);
+            background: rgba(15, 61, 66, 0.2);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--success);
+            flex-shrink: 0;
         }
-        
-        .security-card .icon i {
-            width: 20px;
-            height: 20px;
-        }
-        
-        .security-card h4 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-        
-        .security-card p {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-        
-        /* CTA Section */
-        .cta {
-            padding: 6rem 2rem;
-            text-align: center;
-        }
-        
+
+        .security-card .icon i { width: 19px; height: 19px; }
+
         .cta-card {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4rem;
-            background: var(--gradient-primary);
-            border-radius: 24px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: linear-gradient(160deg, rgba(17, 30, 37, 0.96), rgba(13, 21, 27, 0.96));
+            box-shadow: var(--shadow);
+            padding: 1.7rem;
             position: relative;
             overflow: hidden;
         }
-        
+
         .cta-card::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            left: -120px;
+            top: -40px;
+            width: 260px;
+            height: 180px;
+            border: 1px solid rgba(28, 213, 220, 0.28);
+            transform: rotate(-14deg);
         }
-        
+
         .cta-card h2 {
-            font-size: 2.25rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            position: relative;
+            font-size: clamp(1.4rem, 4.5vw, 2.15rem);
+            line-height: 1.15;
+            max-width: 20ch;
         }
-        
+
         .cta-card p {
-            font-size: 1.125rem;
-            opacity: 0.9;
-            margin-bottom: 2rem;
-            position: relative;
+            margin-top: 0.65rem;
+            color: var(--text-dim);
+            max-width: 62ch;
         }
-        
+
         .cta-buttons {
+            margin-top: 1rem;
             display: flex;
-            gap: 1rem;
-            justify-content: center;
             flex-wrap: wrap;
-            position: relative;
+            gap: 0.75rem;
         }
-        
-        .cta-buttons .btn-primary {
-            background: white;
-            color: var(--primary);
-        }
-        
-        .cta-buttons .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-            color: white;
-        }
-        
-        .cta-buttons .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        /* Footer */
+
         footer {
-            padding: 3rem 2rem;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--line);
+            padding: 1.2rem 0 2rem;
         }
-        
+
         .footer-content {
-            max-width: 1200px;
+            width: min(1220px, calc(100% - 3rem));
             margin: 0 auto;
             display: flex;
+            gap: 1rem;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
             flex-wrap: wrap;
-            gap: 1.5rem;
         }
-        
+
         .footer-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            color: var(--text);
             text-decoration: none;
-            color: var(--text-primary);
-            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-weight: 600;
         }
-        
+
         .footer-logo img {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 6px;
         }
-        
-        .footer-links {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .footer-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.875rem;
-            transition: color 0.2s;
-        }
-        
-        .footer-links a:hover {
-            color: var(--text-primary);
-        }
-        
+
+        .footer-links,
         .footer-social {
             display: flex;
-            gap: 1rem;
+            gap: 0.85rem;
+            flex-wrap: wrap;
         }
-        
+
+        .footer-links a,
         .footer-social a {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-secondary);
-            transition: all 0.2s;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.9rem;
         }
-        
+
+        .footer-links a:hover,
         .footer-social a:hover {
-            background: var(--bg-card-hover);
-            color: var(--text-primary);
-            border-color: var(--text-muted);
+            color: var(--signal-soft);
         }
-        
-        .footer-social i {
-            width: 20px;
-            height: 20px;
+
+        .footer-social i { width: 17px; height: 17px; }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(14px);
+            animation: rise 0.62s ease forwards;
         }
-        
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
+
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+
+        @keyframes rise {
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            
-            .platforms-grid {
+
+        @media (max-width: 980px) {
+            .hero-shell {
                 grid-template-columns: 1fr;
             }
-            
-            .cta-card {
-                padding: 2.5rem 1.5rem;
+
+            .hero-main {
+                clip-path: none;
+                border-bottom: 1px solid var(--line-soft);
             }
-            
+
+            .hero-side {
+                padding-left: 2.15rem;
+            }
+
+            .roadmap-timeline::before {
+                left: 0;
+                transform: none;
+            }
+
+            .roadmap-item,
+            .roadmap-item:nth-child(odd),
+            .roadmap-item:nth-child(even) {
+                width: calc(100% - 3rem);
+                margin-left: 3rem !important;
+                margin-right: 0 !important;
+            }
+
+            .roadmap-item::before,
+            .roadmap-item:nth-child(odd)::before,
+            .roadmap-item:nth-child(even)::before {
+                left: -2.5rem !important;
+                right: auto !important;
+                width: 2.5rem !important;
+            }
+
+            .roadmap-overview {
+                grid-template-columns: 1fr;
+            }
+
+            #features .panel,
+            #platforms .panel,
+            .security-card {
+                grid-column: span 6 !important;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .container,
+            .nav-inner,
             .footer-content {
+                width: calc(100% - 1.4rem);
+            }
+
+            .hero {
+                padding-top: 8.8rem;
+            }
+
+            .nav-inner {
                 flex-direction: column;
-                text-align: center;
+                align-items: flex-start;
+            }
+
+            .button-row,
+            .cta-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .telemetry {
+                grid-template-columns: 1fr;
+            }
+
+            #features .panel,
+            #platforms .panel,
+            .security-card {
+                grid-column: span 12 !important;
+            }
+
+            .hero-main,
+            .hero-side {
+                padding: 1.25rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav>
-        <div class="nav-container">
-            <a href="#" class="nav-logo">
+        <div class="nav-inner">
+            <a href="#" class="brand">
                 <img src="assets/icon.png" onerror="this.src='https://raw.githubusercontent.com/soliktomasz/BusLane/main/Assets/icon.png'" alt="BusLane">
                 <span>BusLane</span>
             </a>
@@ -1055,278 +1113,243 @@
             </div>
         </div>
     </nav>
-    
-    <!-- Hero Section -->
+
     <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-grid"></div>
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i data-lucide="sparkles"></i>
-                <span>Version 0.9.14 — Now Available!</span>
+        <div class="container hero-shell reveal">
+            <div class="hero-main">
+                <div class="badge"><i data-lucide="activity"></i> Version 0.9.14 | Operations build online</div>
+                <h1>Manage <span class="signal">Azure Service Bus</span> with an <span class="warn">Editorial Console</span> feel</h1>
+                <p>A cross-platform operations console for browsing queues, topics, and messages with fast navigation and clear diagnostics. Built with Avalonia UI and .NET 10 for native behavior across systems.</p>
+                <div class="button-row">
+                    <a href="https://github.com/soliktomasz/BusLane/releases" class="btn btn-primary"><i data-lucide="download"></i>Download Now</a>
+                    <a href="https://github.com/soliktomasz/BusLane" class="btn btn-secondary"><i data-lucide="github"></i>View on GitHub</a>
+                </div>
+                <div class="telemetry">
+                    <div class="telemetry-card"><strong>Runtime</strong>.NET 10 + Avalonia 11.3</div>
+                    <div class="telemetry-card"><strong>Auth</strong>Azure Identity + Connection String</div>
+                    <div class="telemetry-card"><strong>Coverage</strong>Queues, Topics, Subscriptions</div>
+                    <div class="telemetry-card"><strong>Security</strong>AES-256 local encryption</div>
+                </div>
             </div>
-            <h1>
-                Manage <span class="gradient">Azure Service Bus</span>
-                <br>with <span class="accent">Elegance</span>
-            </h1>
-            <p>
-                A modern, cross-platform tool for browsing queues, topics, and messages. 
-                Built with Avalonia UI and .NET 10 for a native experience on every platform.
-            </p>
-            <div class="hero-buttons">
-                <a href="https://github.com/soliktomasz/BusLane/releases" class="btn btn-primary">
-                    <i data-lucide="download"></i>
-                    Download Now
-                </a>
-                <a href="https://github.com/soliktomasz/BusLane" class="btn btn-secondary">
-                    <i data-lucide="github"></i>
-                    View on GitHub
-                </a>
-            </div>
-            <div class="tech-badges">
-                <span class="tech-badge">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#512BD4"><path d="M24 8.77h-2.468v7.565h-1.425V8.77h-2.462V7.53H24zm-6.852 7.565h-4.821V7.53h4.63v1.24h-3.205v2.494h2.953v1.234h-2.953v2.604h3.396zm-6.708 0H8.882L4.78 9.863a2.896 2.896 0 0 1-.258-.51h-.036c.032.189.048.592.048 1.21v5.772H3.157V7.53h1.659l3.965 6.32c.167.261.275.442.323.54h.024c-.04-.233-.06-.629-.06-1.185V7.529h1.372zm-8.703-.693a.868.868 0 0 1-.644.26.868.868 0 0 1-.644-.26.893.893 0 0 1-.256-.653c0-.26.085-.48.256-.658a.868.868 0 0 1 .644-.26c.249 0 .464.087.644.26a.893.893 0 0 1 .256.658.893.893 0 0 1-.256.653z"/></svg>
-                    .NET 10
-                </span>
-                <span class="tech-badge">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#8B44AC"><circle cx="12" cy="12" r="10" fill="none" stroke="#8B44AC" stroke-width="2"/><path d="M12 6v6l4 2" fill="none" stroke="#8B44AC" stroke-width="2" stroke-linecap="round"/></svg>
-                    Avalonia UI
-                </span>
-                <span class="tech-badge">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#0078D4"><path d="M5.483 21.3H24L14.025 4.013l-3.038 8.347 5.836 6.938L5.483 21.3zM13.049 2.7L6.617 4.682 0 21.3h5.483l7.566-18.6z" fill="#0078D4"/></svg>
-                    Azure Identity
-                </span>
-                <span class="tech-badge">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 0L2 4v8c0 5.55 4.26 10.74 10 12 5.74-1.26 10-6.45 10-12V4L12 0zm0 2.18l8 3.12v6.7c0 4.5-3.4 8.7-8 9.82-4.6-1.12-8-5.32-8-9.82V5.3l8-3.12z" fill="#3fb950"/><path d="M10 14.2l-2.6-2.6L6 13l4 4 8-8-1.4-1.4L10 14.2z" fill="#3fb950"/></svg>
-                    AES-256 Encryption
-                </span>
-            </div>
-            <div class="hero-screenshot">
-                <img src="MainScreen.png" alt="BusLane - Azure Service Bus Manager screenshot">
-            </div>
+            <aside class="hero-side">
+                <div class="flight-log">
+                    <h3>Current Ops Brief</h3>
+                    <ul>
+                        <li>Fast entity browsing with queue/topic/subscription context.</li>
+                        <li>Live monitoring focused on throughput and queue depth.</li>
+                        <li>DLQ inspection and resend loop for failed workflows.</li>
+                    </ul>
+                </div>
+                <div class="hero-screen reveal delay-1">
+                    <img src="MainScreen.png" alt="BusLane - Azure Service Bus Manager screenshot">
+                </div>
+            </aside>
         </div>
     </section>
-    
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="section-container">
-            <div class="section-header">
-                <span class="section-label">Features</span>
-                <h2 class="section-title">Everything You Need</h2>
-                <p class="section-subtitle">
-                    A comprehensive toolkit for managing Azure Service Bus resources with ease and efficiency.
-                </p>
+
+    <section id="features">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Features</span>
+                <h2>Operator-grade toolkit for Service Bus workflows</h2>
+                <p>Everything needed to inspect, manage, and move messages without losing context.</p>
             </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-lucide="key-round"></i>
-                    </div>
+            <div class="panel-grid">
+                <article class="panel reveal delay-1">
+                    <div class="feature-icon"><i data-lucide="key-round"></i></div>
                     <h3>Flexible Authentication</h3>
                     <p>Sign in with Azure Identity or use connection strings. Save multiple connections for quick access.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-lucide="folder-tree"></i>
-                    </div>
+                </article>
+                <article class="panel reveal delay-1">
+                    <div class="feature-icon"><i data-lucide="folder-tree"></i></div>
                     <h3>Namespace Explorer</h3>
                     <p>Browse subscriptions, namespaces, queues, and topics with an intuitive tree view interface.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-lucide="code-2"></i>
-                    </div>
+                </article>
+                <article class="panel reveal delay-1">
+                    <div class="feature-icon"><i data-lucide="code-2"></i></div>
                     <h3>Syntax Highlighting</h3>
                     <p>JSON and XML syntax highlighting in message bodies with built-in formatter and validator.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-lucide="keyboard"></i>
-                    </div>
+                </article>
+                <article class="panel reveal delay-2">
+                    <div class="feature-icon"><i data-lucide="keyboard"></i></div>
                     <h3>Keyboard Shortcuts</h3>
                     <p>Speed up your workflow with keyboard shortcuts for common actions like refresh, new message, and more.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-lucide="archive-x"></i>
-                    </div>
+                </article>
+                <article class="panel reveal delay-2">
+                    <div class="feature-icon"><i data-lucide="archive-x"></i></div>
                     <h3>Dead Letter Queue</h3>
                     <p>View and manage dead-lettered messages. Understand why messages failed and resend to original queue.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-lucide="activity"></i>
-                    </div>
+                </article>
+                <article class="panel reveal delay-2">
+                    <div class="feature-icon"><i data-lucide="activity"></i></div>
                     <h3>Live Monitoring</h3>
                     <p>Real-time charts and metrics for queue depths, message rates, and performance insights.</p>
-                </div>
+                </article>
             </div>
         </div>
     </section>
-    
-    <!-- Roadmap Section -->
-    <section class="roadmap" id="roadmap">
-        <div class="section-container">
-            <div class="section-header">
-                <span class="section-label">What's Next</span>
-                <h2 class="section-title">Roadmap</h2>
-                <p class="section-subtitle">
-                    See what's coming in future releases and help shape the direction of BusLane.
-                </p>
+
+    <section id="roadmap">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">What's Next</span>
+                <h2>Roadmap</h2>
+                <p>From stabilization to scale: what is shipping now, what lands next, and what is being explored.</p>
+            </div>
+            <div class="roadmap-overview reveal">
+                <div class="overview-card now">
+                    <strong>Now</strong>
+                    <span>Stabilize multi-tab workflows and session continuity.</span>
+                </div>
+                <div class="overview-card next">
+                    <strong>Next</strong>
+                    <span>Deliver deeper monitoring and customizable dashboards.</span>
+                </div>
+                <div class="overview-card later">
+                    <strong>Later</strong>
+                    <span>Expand integrations and add load and reliability tooling.</span>
+                </div>
             </div>
             <div class="roadmap-timeline">
-                <div class="roadmap-item">
-                    <div class="roadmap-connector"></div>
-                    <div class="roadmap-version">
-                        <span class="version-badge current">v0.9.14</span>
-                        <span class="version-status">Current</span>
-                    </div>
+                <article class="roadmap-item current-milestone reveal delay-1">
+                    <div class="version"><span class="tag current">v0.9.14</span><span>Current</span></div>
                     <h3>Multi-Connection Tabs</h3>
-                    <ul class="roadmap-list">
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Tab management</li>
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Session persistence</li>
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Lucide icons migration</li>
-                        <li class="completed"><i data-lucide="check-circle-2"></i> Tab keyboard shortcuts</li>
-                    </ul>
-                </div>
-                <div class="roadmap-item">
-                    <div class="roadmap-connector"></div>
-                    <div class="roadmap-version">
-                        <span class="version-badge next">v0.10.0</span>
-                        <span class="version-status">Next</span>
+                    <div class="milestone-meta">
+                        <span class="meta-chip">ETA: Shipped</span>
+                        <span class="meta-chip">Focus: Workflow speed</span>
                     </div>
+                    <div class="progress">
+                        <div class="progress-label"><span>Completion</span><span>100%</span></div>
+                        <div class="progress-bar"><div class="progress-fill completed" style="width:100%"></div></div>
+                    </div>
+                    <ul class="roadmap-list">
+                        <li class="completed"><i data-lucide="check-circle-2"></i>Tab management</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i>Session persistence</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i>Lucide icons migration</li>
+                        <li class="completed"><i data-lucide="check-circle-2"></i>Tab keyboard shortcuts</li>
+                    </ul>
+                </article>
+                <article class="roadmap-item next-milestone reveal delay-1">
+                    <div class="version"><span class="tag next">v0.10.0</span><span>Next</span></div>
                     <h3>Advanced Monitoring</h3>
-                    <ul class="roadmap-list">
-                        <li><i data-lucide="circle"></i> Historical metrics</li>
-                        <li><i data-lucide="circle"></i> Custom dashboards</li>
-                        <li><i data-lucide="circle"></i> Export charts</li>
-                        <li><i data-lucide="circle"></i> Metric comparison</li>
-                    </ul>
-                </div>
-                <div class="roadmap-item">
-                    <div class="roadmap-connector"></div>
-                    <div class="roadmap-version">
-                        <span class="version-badge future">v1.0.0</span>
-                        <span class="version-status">Planned</span>
+                    <div class="milestone-meta">
+                        <span class="meta-chip">ETA: Q2 2026</span>
+                        <span class="meta-chip">Focus: Insights</span>
                     </div>
+                    <div class="progress">
+                        <div class="progress-label"><span>Completion</span><span>45%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+                    </div>
+                    <ul class="roadmap-list">
+                        <li><i data-lucide="circle"></i>Historical metrics</li>
+                        <li><i data-lucide="circle"></i>Custom dashboards</li>
+                        <li><i data-lucide="circle"></i>Export charts</li>
+                        <li><i data-lucide="circle"></i>Metric comparison</li>
+                    </ul>
+                </article>
+                <article class="roadmap-item future-milestone reveal delay-2">
+                    <div class="version"><span class="tag future">v1.0.0</span><span>Planned</span></div>
                     <h3>Production Ready</h3>
-                    <ul class="roadmap-list">
-                        <li><i data-lucide="circle"></i> Auto-update</li>
-                        <li><i data-lucide="circle"></i> Signed installers</li>
-                        <li><i data-lucide="circle"></i> Full documentation</li>
-                        <li><i data-lucide="circle"></i> Telemetry (opt-in)</li>
-                    </ul>
-                </div>
-                <div class="roadmap-item">
-                    <div class="roadmap-connector"></div>
-                    <div class="roadmap-version">
-                        <span class="version-badge future">Future</span>
-                        <span class="version-status">Considering</span>
+                    <div class="milestone-meta">
+                        <span class="meta-chip">ETA: Q3 2026</span>
+                        <span class="meta-chip">Focus: Reliability</span>
                     </div>
-                    <h3>Beyond v1.0</h3>
+                    <div class="progress">
+                        <div class="progress-label"><span>Completion</span><span>20%</span></div>
+                        <div class="progress-bar"><div class="progress-fill planned" style="width:20%"></div></div>
+                    </div>
                     <ul class="roadmap-list">
-                        <li><i data-lucide="circle"></i> Event Hubs support</li>
-                        <li><i data-lucide="circle"></i> Storage Queues</li>
-                        <li><i data-lucide="circle"></i> AI-powered features</li>
-                        <li><i data-lucide="circle"></i> Load testing tools</li>
+                        <li><i data-lucide="circle"></i>Auto-update</li>
+                        <li><i data-lucide="circle"></i>Signed installers</li>
+                        <li><i data-lucide="circle"></i>Full documentation</li>
+                        <li><i data-lucide="circle"></i>Telemetry (opt-in)</li>
                     </ul>
-                </div>
+                </article>
+                <article class="roadmap-item future-milestone reveal delay-2">
+                    <div class="version"><span class="tag future">Future</span><span>Considering</span></div>
+                    <h3>Beyond v1.0</h3>
+                    <div class="milestone-meta">
+                        <span class="meta-chip">ETA: Post v1.0</span>
+                        <span class="meta-chip">Focus: Expansion</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-label"><span>Completion</span><span>5%</span></div>
+                        <div class="progress-bar"><div class="progress-fill planned" style="width:5%"></div></div>
+                    </div>
+                    <ul class="roadmap-list">
+                        <li><i data-lucide="circle"></i>Event Hubs support</li>
+                        <li><i data-lucide="circle"></i>Storage Queues</li>
+                        <li><i data-lucide="circle"></i>AI-powered features</li>
+                        <li><i data-lucide="circle"></i>Load testing tools</li>
+                    </ul>
+                </article>
             </div>
-            <div class="roadmap-cta">
-                <a href="https://github.com/soliktomasz/BusLane/blob/main/ROADMAP.md" class="btn btn-secondary">
-                    <i data-lucide="map"></i>
-                    View Full Roadmap
-                </a>
-                <a href="https://github.com/soliktomasz/BusLane/issues" class="btn btn-secondary">
-                    <i data-lucide="message-square-plus"></i>
-                    Request a Feature
-                </a>
+            <div class="roadmap-cta reveal delay-3">
+                <a href="https://github.com/soliktomasz/BusLane/blob/main/ROADMAP.md" class="btn btn-secondary"><i data-lucide="map"></i>View Full Roadmap</a>
+                <a href="https://github.com/soliktomasz/BusLane/issues" class="btn btn-secondary"><i data-lucide="message-square-plus"></i>Request a Feature</a>
             </div>
         </div>
     </section>
-    
-    <!-- Platforms Section -->
-    <section class="platforms" id="platforms">
-        <div class="section-container">
-            <div class="section-header">
-                <span class="section-label">Cross-Platform</span>
-                <h2 class="section-title">Works Everywhere</h2>
-                <p class="section-subtitle">
-                    Native experience on macOS, Windows, and Linux with a single codebase.
-                </p>
+
+    <section id="platforms">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Cross-Platform</span>
+                <h2>Works Everywhere</h2>
+                <p>Native experience on macOS, Windows, and Linux with one codebase.</p>
             </div>
-            <div class="platforms-grid">
-                <div class="platform-card">
-                    <div class="platform-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg>
-                    </div>
+            <div class="panel-grid">
+                <article class="panel platform-card reveal delay-1">
+                    <div class="platform-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg></div>
                     <h3>macOS</h3>
                     <p>Intel & Apple Silicon</p>
-                </div>
-                <div class="platform-card">
-                    <div class="platform-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
-                    </div>
+                </article>
+                <article class="panel platform-card reveal delay-1">
+                    <div class="platform-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg></div>
                     <h3>Windows</h3>
                     <p>x64 & ARM64</p>
-                </div>
-                <div class="platform-card">
-                    <div class="platform-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 0 0-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 0 0-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 0 1-.004-.021l-.004-.024a1.807 1.807 0 0 1-.15.706.953.953 0 0 1-.213.335.71.71 0 0 0-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 0 0-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 0 0-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 0 0-.205.334 1.18 1.18 0 0 0-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 0 1-.018-.2v-.02a1.772 1.772 0 0 1 .15-.768 1.08 1.08 0 0 1 .43-.533.985.985 0 0 1 .594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 0 0-.166-.267.248.248 0 0 0-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 0 0-.12.27.944.944 0 0 0-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 0 1-.131.068 2.62 2.62 0 0 1-.275-.402 1.772 1.772 0 0 1-.155-.667 1.759 1.759 0 0 1 .08-.668 1.43 1.43 0 0 1 .283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 0 1 .016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 0 1-.448-.067 3.566 3.566 0 0 1-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.043c-.06-.003-.12 0-.18 0h-.016c.151-.467-.182-.825-1.065-1.224-.915-.4-1.646-.336-1.77.465-.008.043-.013.066-.018.135-.068.023-.139.053-.209.064-.43.268-.662.669-.793 1.187-.13.533-.17 1.156-.205 1.869v.003c-.02.334-.17.838-.319 1.35-1.5 1.072-3.58 1.538-5.348.334a2.645 2.645 0 0 0-.402-.533 1.45 1.45 0 0 0-.275-.333c.182 0 .338-.03.465-.067a.615.615 0 0 0 .314-.334c.108-.267 0-.697-.345-1.163-.345-.467-.931-.995-1.788-1.521-.63-.4-.986-.87-1.15-1.396-.165-.534-.143-1.085-.015-1.645.245-1.07.873-2.11 1.274-2.763.107-.065.037.135-.408.974-.396.751-1.14 2.497-.122 3.854a8.123 8.123 0 0 1 .647-2.876c.564-1.278 1.743-3.504 1.836-5.268.048.036.217.135.289.202.218.133.38.333.59.465.21.201.477.335.876.335.039.003.075.006.11.006.412 0 .73-.134.997-.268.29-.134.52-.334.74-.4h.005c.467-.135.835-.402 1.044-.7zm2.185 8.958c.037.6.343 1.245.882 1.377.588.134 1.434-.333 1.791-.765l.211-.01c.315-.007.577.01.847.268l.003.003c.208.199.305.53.391.876.085.4.154.78.409 1.066.486.527.645.906.636 1.14l.003-.007v.018l-.003-.012c-.015.262-.185.396-.498.595-.63.401-1.746.712-2.457 1.57-.618.737-1.37 1.14-2.036 1.191-.664.053-1.237-.2-1.574-.898l-.005-.003c-.21-.4-.12-1.025.056-1.69.176-.668.428-1.344.463-1.897.037-.714.076-1.335.195-1.814.12-.465.308-.797.641-.984l.045-.022zm-10.814.049h.01c.053 0 .105.005.157.014.376.055.706.333 1.023.752l.91 1.664.003.003c.243.533.754 1.064 1.189 1.637.434.598.77 1.131.729 1.57v.006c-.057.744-.48 1.148-1.125 1.294-.645.135-1.52.002-2.395-.464-.968-.536-2.118-.469-2.857-.602-.369-.066-.61-.2-.723-.4-.11-.2-.113-.602.123-1.23v-.004l.002-.003c.117-.334.03-.752-.027-1.118-.055-.401-.083-.71.043-.94.16-.334.396-.4.69-.533.294-.135.64-.202.915-.47h.002v-.002c.256-.268.445-.601.668-.838.19-.201.38-.336.663-.336zm7.159-9.074c-.435.201-.945.535-1.488.535-.542 0-.97-.267-1.28-.466-.154-.134-.28-.268-.373-.335-.164-.134-.144-.333-.074-.333.109.016.129.134.199.2.096.066.215.2.36.333.292.2.68.467 1.167.467.485 0 1.053-.267 1.398-.466.195-.135.445-.334.648-.467.156-.136.149-.267.279-.267.128.016.034.134-.147.332a8.097 8.097 0 0 1-.69.468zm-1.082-1.583V5.64c-.006-.02.013-.042.029-.05.074-.043.18-.027.26.004.063 0 .16.067.15.135-.006.049-.085.066-.135.066-.055 0-.092-.043-.141-.068-.052-.018-.146-.008-.163-.065zm-.551 0c-.02.058-.113.049-.166.066-.047.025-.086.068-.14.068-.05 0-.13-.02-.136-.068-.01-.066.088-.133.15-.133.08-.031.184-.047.259-.005.019.009.036.03.03.05v.02h.003z"/></svg>
-                    </div>
+                </article>
+                <article class="panel platform-card reveal delay-2">
+                    <div class="platform-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 0 0-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 0 0-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139z"/></svg></div>
                     <h3>Linux</h3>
                     <p>x64 & ARM64</p>
-                </div>
+                </article>
             </div>
         </div>
     </section>
-    
-    <!-- Installation Section -->
-    <section class="installation" id="installation">
-        <div class="section-container">
-            <div class="section-header">
-                <span class="section-label">Get Started</span>
-                <h2 class="section-title">Installation</h2>
-                <p class="section-subtitle">
-                    Download a pre-built release or build from source.
-                </p>
+
+    <section id="installation">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Get Started</span>
+                <h2>Installation</h2>
+                <p>Download a pre-built release or run from source.</p>
             </div>
-            <div class="install-tabs">
-                <button class="install-tab active" data-tab="download">Download</button>
-                <button class="install-tab" data-tab="build">Build from Source</button>
-            </div>
-            <div class="install-content">
-                <div class="install-panel active" id="download">
-                    <div class="code-block">
-                        <div class="code-header">
-                            <span>Download Latest Release</span>
-                            <a href="https://github.com/soliktomasz/BusLane/releases" class="copy-btn">
-                                <i data-lucide="external-link"></i>
-                                GitHub Releases
-                            </a>
-                        </div>
-                        <div class="code-content">
-                            <code>
-<span class="comment"># macOS users: Remove quarantine attribute</span>
+            <div class="install-shell reveal delay-1">
+                <div class="install-tabs">
+                    <button class="install-tab active" data-tab="download">Download</button>
+                    <button class="install-tab" data-tab="build">Build from Source</button>
+                </div>
+                <div class="install-content">
+                    <div class="install-panel active" id="download">
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>Download Latest Release</span>
+                                <a href="https://github.com/soliktomasz/BusLane/releases" class="copy-btn"><i data-lucide="external-link"></i>GitHub Releases</a>
+                            </div>
+                            <div class="code-content"><code><span class="comment"># macOS users: Remove quarantine attribute</span>
 xattr -cr "/Applications/BusLane.app"
 
-<span class="comment"># Then open the app normally</span>
-                            </code>
+<span class="comment"># Then open the app normally</span></code></div>
                         </div>
                     </div>
-                </div>
-                <div class="install-panel" id="build">
-                    <div class="code-block">
-                        <div class="code-header">
-                            <span>Terminal</span>
-                            <button class="copy-btn" onclick="copyCode()">
-                                <i data-lucide="copy"></i>
-                                Copy
-                            </button>
-                        </div>
-                        <div class="code-content">
-                            <code>
-<span class="comment"># Clone the repository</span>
+                    <div class="install-panel" id="build">
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>Terminal</span>
+                                <button class="copy-btn" onclick="copyCode()"><i data-lucide="copy"></i>Copy</button>
+                            </div>
+                            <div class="code-content" id="build-code"><code><span class="comment"># Clone the repository</span>
 <span class="keyword">git</span> clone https://github.com/soliktomasz/BusLane.git
 <span class="keyword">cd</span> BusLane
 
@@ -1335,87 +1358,65 @@ xattr -cr "/Applications/BusLane.app"
 <span class="keyword">dotnet</span> run
 
 <span class="comment"># Or publish self-contained</span>
-<span class="keyword">dotnet</span> publish -c Release -r osx-arm64 --self-contained
-                            </code>
+<span class="keyword">dotnet</span> publish -c Release -r osx-arm64 --self-contained</code></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    
-    <!-- Security Section -->
-    <section class="security" id="security">
-        <div class="section-container">
-            <div class="section-header">
-                <span class="section-label">Security First</span>
-                <h2 class="section-title">Your Data is Protected</h2>
-                <p class="section-subtitle">
-                    BusLane implements multiple layers of protection for your sensitive connection data.
-                </p>
+
+    <section id="security">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Security First</span>
+                <h2>Your Data is Protected</h2>
+                <p>Multiple layers protect sensitive connection data while keeping workflows fast.</p>
             </div>
             <div class="security-grid">
-                <div class="security-card">
-                    <div class="icon">
-                        <i data-lucide="lock"></i>
-                    </div>
+                <article class="security-card reveal delay-1">
+                    <div class="icon"><i data-lucide="lock"></i></div>
                     <div>
                         <h4>AES-256 Encryption</h4>
-                        <p>Connection strings are encrypted with machine-specific keys</p>
+                        <p>Connection strings are encrypted with machine-specific keys.</p>
                     </div>
-                </div>
-                <div class="security-card">
-                    <div class="icon">
-                        <i data-lucide="shield-check"></i>
-                    </div>
+                </article>
+                <article class="security-card reveal delay-1">
+                    <div class="icon"><i data-lucide="shield-check"></i></div>
                     <div>
                         <h4>Secure Token Storage</h4>
-                        <p>Azure tokens stored in system Keychain/Credential Manager</p>
+                        <p>Azure tokens stored in system Keychain/Credential Manager.</p>
                     </div>
-                </div>
-                <div class="security-card">
-                    <div class="icon">
-                        <i data-lucide="eye-off"></i>
-                    </div>
+                </article>
+                <article class="security-card reveal delay-2">
+                    <div class="icon"><i data-lucide="eye-off"></i></div>
                     <div>
                         <h4>Password Masking</h4>
-                        <p>Connection strings displayed with bullet characters in UI</p>
+                        <p>Connection strings displayed with bullet characters in UI.</p>
                     </div>
-                </div>
-                <div class="security-card">
-                    <div class="icon">
-                        <i data-lucide="hard-drive"></i>
-                    </div>
+                </article>
+                <article class="security-card reveal delay-2">
+                    <div class="icon"><i data-lucide="hard-drive"></i></div>
                     <div>
                         <h4>Local Storage Only</h4>
-                        <p>Credentials never leave your machine or transmit externally</p>
+                        <p>Credentials never leave your machine or transmit externally.</p>
                     </div>
-                </div>
+                </article>
             </div>
         </div>
     </section>
-    
-    <!-- CTA Section -->
-    <section class="cta">
-        <div class="section-container">
-            <div class="cta-card">
-                <h2>Ready to streamline your Service Bus workflow?</h2>
-                <p>Download BusLane today and experience modern Azure Service Bus management.</p>
-                <div class="cta-buttons">
-                    <a href="https://github.com/soliktomasz/BusLane/releases" class="btn btn-primary">
-                        <i data-lucide="download"></i>
-                        Download for Free
-                    </a>
-                    <a href="https://www.buymeacoffee.com/tomaszsolik" class="btn btn-secondary">
-                        <i data-lucide="coffee"></i>
-                        Buy Me a Coffee
-                    </a>
-                </div>
+
+    <section>
+        <div class="container cta-card reveal">
+            <h2>Ready to streamline your Service Bus workflow?</h2>
+            <p>Download BusLane today and move from improvised scripts to a focused operations console.</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/soliktomasz/BusLane/releases" class="btn btn-primary"><i data-lucide="download"></i>Download for Free</a>
+                <a href="https://www.buymeacoffee.com/tomaszsolik" class="btn btn-secondary"><i data-lucide="coffee"></i>Buy Me a Coffee</a>
             </div>
         </div>
     </section>
-    
-    <!-- Footer -->
+
     <footer>
         <div class="footer-content">
             <a href="#" class="footer-logo">
@@ -1429,59 +1430,57 @@ xattr -cr "/Applications/BusLane.app"
                 <a href="https://github.com/soliktomasz/BusLane/blob/main/LICENSE">License</a>
             </div>
             <div class="footer-social">
-                <a href="https://github.com/soliktomasz/BusLane" aria-label="GitHub">
-                    <i data-lucide="github"></i>
-                </a>
-                <a href="https://www.buymeacoffee.com/tomaszsolik" aria-label="Buy Me a Coffee">
-                    <i data-lucide="coffee"></i>
-                </a>
+                <a href="https://github.com/soliktomasz/BusLane" aria-label="GitHub"><i data-lucide="github"></i></a>
+                <a href="https://www.buymeacoffee.com/tomaszsolik" aria-label="Buy Me a Coffee"><i data-lucide="coffee"></i></a>
             </div>
         </div>
     </footer>
-    
+
     <script>
-        // Initialize Lucide icons
         lucide.createIcons();
-        
-        // Tab functionality
+
         document.querySelectorAll('.install-tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                // Remove active class from all tabs and panels
                 document.querySelectorAll('.install-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.install-panel').forEach(p => p.classList.remove('active'));
-                
-                // Add active class to clicked tab and corresponding panel
                 tab.classList.add('active');
-                document.getElementById(tab.dataset.tab).classList.add('active');
+                const panel = document.getElementById(tab.dataset.tab);
+                if (panel) {
+                    panel.classList.add('active');
+                }
             });
         });
-        
-        // Copy code functionality
+
         function copyCode() {
-            const code = document.querySelector('#build .code-content code').innerText;
-            navigator.clipboard.writeText(code.replace(/^#.*$/gm, '').trim());
-            
-            const btn = document.querySelector('#build .copy-btn');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="check"></i> Copied!';
-            lucide.createIcons();
-            
-            setTimeout(() => {
-                btn.innerHTML = originalHTML;
+            const codeBlock = document.querySelector('#build-code code');
+            const button = document.querySelector('#build .copy-btn');
+            if (!codeBlock || !button) {
+                return;
+            }
+
+            const plain = codeBlock.innerText
+                .replace(/\u00A0/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+            navigator.clipboard.writeText(plain).then(() => {
+                const original = button.innerHTML;
+                button.innerHTML = '<i data-lucide="check"></i>Copied!';
                 lucide.createIcons();
-            }, 2000);
+                setTimeout(() => {
+                    button.innerHTML = original;
+                    lucide.createIcons();
+                }, 1800);
+            });
         }
-        
-        // Smooth scroll for nav links
+
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+            anchor.addEventListener('click', event => {
+                event.preventDefault();
+                const targetSelector = anchor.getAttribute('href');
+                const target = targetSelector ? document.querySelector(targetSelector) : null;
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
