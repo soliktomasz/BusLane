@@ -352,7 +352,7 @@ public class AlertService : IAlertService
             }).ToList();
 
             var json = JsonSerializer.Serialize(data, JsonOptions);
-            File.WriteAllText(AppPaths.AlertRules, json);
+            AppPaths.CreateSecureFile(AppPaths.AlertRules, json);
         }
         catch (Exception ex)
         {

@@ -108,7 +108,7 @@ public class PreferencesService : IPreferencesService
             };
 
             var json = Serialize(data);
-            File.WriteAllText(AppPaths.Preferences, json);
+            AppPaths.CreateSecureFile(AppPaths.Preferences, json);
             
             PreferencesChanged?.Invoke(this, EventArgs.Empty);
         }

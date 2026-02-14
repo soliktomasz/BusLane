@@ -77,11 +77,7 @@ internal static class AppPaths
     [SupportedOSPlatform("macOS")]
     private static void CreateSecureFileUnix(string path, string content)
     {
-        // Create file and then explicitly set permissions to 0o600 (owner read/write only)
         File.WriteAllText(path, content);
-
-        // Set Unix file mode to 0o600 (user read + user write)
-        // 0o600 = 384 in decimal
         File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
     }
 

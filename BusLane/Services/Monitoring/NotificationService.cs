@@ -172,7 +172,7 @@ public class NotificationService : INotificationService
 
             var settings = new NotificationSettings { IsEnabled = _isEnabled };
             var json = Serialize(settings);
-            File.WriteAllText(AppPaths.NotificationSettings, json);
+            AppPaths.CreateSecureFile(AppPaths.NotificationSettings, json);
         }
         catch
         {
