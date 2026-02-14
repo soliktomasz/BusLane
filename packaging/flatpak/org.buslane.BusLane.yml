@@ -1,0 +1,34 @@
+app-id: org.buslane.BusLane
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: BusLane
+
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
+
+modules:
+  - name: buslane
+    buildsystem: simple
+    build-commands:
+      - install -d /app/lib/buslane
+      - cp -a . /app/lib/buslane
+      - install -Dm755 /app/lib/buslane/BusLane /app/bin/BusLane
+      - install -Dm644 org.buslane.BusLane.desktop /app/share/applications/org.buslane.BusLane.desktop
+      - install -Dm644 org.buslane.BusLane.metainfo.xml /app/share/metainfo/org.buslane.BusLane.metainfo.xml
+      - install -Dm644 org.buslane.BusLane.png /app/share/icons/hicolor/256x256/apps/org.buslane.BusLane.png
+    sources:
+      - type: dir
+        path: ../../publish
+      - type: file
+        path: org.buslane.BusLane.desktop
+      - type: file
+        path: org.buslane.BusLane.metainfo.xml
+      - type: file
+        path: ../../BusLane/Assets/icon.png
+        dest-filename: org.buslane.BusLane.png

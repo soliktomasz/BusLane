@@ -28,6 +28,31 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Install modern archive tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zstd
+
+      - name: Install distro packaging tools
+        run: |
+          sudo apt-get install -y ruby ruby-dev rpm
+          sudo gem install --no-document fpm
+
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+
+      - name: Install AppImage tooling
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+
+      - name: Install Snap tooling
+        run: |
+          sudo snap install snapcraft --classic
+
       - name: Restore dependencies
         run: dotnet restore -r linux-x64
 
@@ -63,12 +88,114 @@ jobs:
         run: |
           cd publish
           tar -czvf ../BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz .
+          tar --zstd -cvf ../BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.zst .
+
+      - name: Create Linux distro packages
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ITERATION="1"
+          CLEAN_VERSION="${VERSION%%-*}"
+          if [ "$CLEAN_VERSION" != "$VERSION" ]; then
+            ITERATION="${VERSION#*-}"
+            ITERATION="${ITERATION//[^a-zA-Z0-9.]/.}"
+          fi
+
+          fpm -s dir -t deb \
+            -n buslane \
+            -v "$CLEAN_VERSION" \
+            --iteration "$ITERATION" \
+            --architecture amd64 \
+            --description "Azure Service Bus Manager" \
+            --url "https://github.com/${{ github.repository }}" \
+            --license "MIT" \
+            --maintainer "BusLane" \
+            --depends libgtk-3-0 \
+            --depends libx11-6 \
+            --depends libxkbcommon0 \
+            --depends libgbm1 \
+            --depends libasound2 \
+            --depends "libicu74 | libicu72 | libicu71" \
+            --depends libssl3 \
+            --prefix /opt/buslane \
+            -C publish \
+            --package "BusLane-${VERSION}-linux-x64.deb" \
+            .
+
+          fpm -s dir -t rpm \
+            -n buslane \
+            -v "$CLEAN_VERSION" \
+            --iteration "$ITERATION" \
+            --architecture x86_64 \
+            --description "Azure Service Bus Manager" \
+            --url "https://github.com/${{ github.repository }}" \
+            --license "MIT" \
+            --maintainer "BusLane" \
+            --depends gtk3 \
+            --depends libX11 \
+            --depends libxkbcommon \
+            --depends mesa-libgbm \
+            --depends alsa-lib \
+            --depends libicu \
+            --depends openssl-libs \
+            --prefix /opt/buslane \
+            -C publish \
+            --package "BusLane-${VERSION}-linux-x64.rpm" \
+            .
+
+      - name: Create Flatpak bundle
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          flatpak-builder --force-clean --repo=flatpak-repo flatpak-build packaging/flatpak/org.buslane.BusLane.yml
+          flatpak build-bundle flatpak-repo "BusLane-${VERSION}-linux-x64.flatpak" org.buslane.BusLane
+
+      - name: Create AppImage bundle
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          APPDIR="BusLane.AppDir"
+
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR/usr/bin"
+          mkdir -p "$APPDIR/usr/share/applications"
+          mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+
+          cp publish/BusLane "$APPDIR/usr/bin/BusLane"
+          cp packaging/appimage/BusLane.desktop "$APPDIR/usr/share/applications/BusLane.desktop"
+          cp BusLane/Assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/BusLane.png"
+
+          cat > "$APPDIR/AppRun" << 'EOF'
+          #!/bin/sh
+          SELF_DIR="$(dirname "$(readlink -f "$0")")"
+          exec "$SELF_DIR/usr/bin/BusLane" "$@"
+          EOF
+          chmod +x "$APPDIR/AppRun"
+
+          cp packaging/appimage/BusLane.desktop "$APPDIR/BusLane.desktop"
+          cp BusLane/Assets/icon.png "$APPDIR/BusLane.png"
+
+          ARCH=x86_64 ./appimagetool "$APPDIR" "BusLane-${VERSION}-linux-x64.AppImage"
+
+      - name: Create Snap package
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          pushd packaging/snap
+          cp snapcraft.yaml snapcraft.yaml.bak
+          sed -i "s/^version: '0.0.0'/version: '${VERSION}'/" snapcraft.yaml
+          snapcraft --destructive-mode --output "../../BusLane-${VERSION}-linux-x64.snap"
+          mv snapcraft.yaml.bak snapcraft.yaml
+          popd
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: BusLane-${{ steps.version.outputs.version }}-linux-x64
-          path: BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+          path: |
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.zst
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.deb
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.rpm
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.flatpak
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.AppImage
+            BusLane-${{ steps.version.outputs.version }}-linux-x64.snap
           retention-days: 30
 
   build-windows:
@@ -337,7 +464,13 @@ jobs:
           echo "- **macOS x64** (Intel): \`BusLane-*-osx-x64.dmg\`" >> release_notes.md
           echo "- **Windows Installer**: \`BusLane-*-win-x64-setup.exe\`" >> release_notes.md
           echo "- **Windows Portable**: \`BusLane-*-win-x64.zip\`" >> release_notes.md
-          echo "- **Linux**: \`BusLane-*-linux-x64.tar.gz\`" >> release_notes.md
+          echo "- **Linux Flatpak**: \`BusLane-*-linux-x64.flatpak\`" >> release_notes.md
+          echo "- **Linux AppImage**: \`BusLane-*-linux-x64.AppImage\`" >> release_notes.md
+          echo "- **Linux Snap**: \`BusLane-*-linux-x64.snap\`" >> release_notes.md
+          echo "- **Linux DEB (Ubuntu/Debian)**: \`BusLane-*-linux-x64.deb\`" >> release_notes.md
+          echo "- **Linux RPM (Fedora/RHEL/openSUSE)**: \`BusLane-*-linux-x64.rpm\`" >> release_notes.md
+          echo "- **Linux (gzip)**: \`BusLane-*-linux-x64.tar.gz\`" >> release_notes.md
+          echo "- **Linux (zstd)**: \`BusLane-*-linux-x64.tar.zst\`" >> release_notes.md
           
           cat release_notes.md
 
@@ -347,9 +480,15 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
           files: |
             artifacts/**/*.tar.gz
+            artifacts/**/*.tar.zst
             artifacts/**/*.zip
             artifacts/**/*.dmg
             artifacts/**/*.exe
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.flatpak
+            artifacts/**/*.AppImage
+            artifacts/**/*.snap
           body_path: release_notes.md
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.event.inputs.version, 'alpha') || contains(github.event.inputs.version, 'beta') || contains(github.event.inputs.version, 'rc') }}

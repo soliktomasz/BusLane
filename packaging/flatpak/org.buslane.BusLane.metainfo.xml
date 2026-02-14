@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.buslane.BusLane</id>
+  <name>BusLane</name>
+  <summary>Azure Service Bus Manager</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="org.buslane">
+    <name>BusLane</name>
+  </developer>
+  <launchable type="desktop-id">org.buslane.BusLane.desktop</launchable>
+  <description>
+    <p>Desktop app for working with Azure Service Bus namespaces, queues, and topics.</p>
+  </description>
+  <url type="homepage">https://github.com/tomaszsolik/BusLane</url>
+  <content_rating type="oars-1.1"/>
+</component>

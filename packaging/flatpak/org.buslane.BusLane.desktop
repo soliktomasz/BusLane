@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=BusLane
+Comment=Azure Service Bus Manager
+Exec=BusLane
+Icon=org.buslane.BusLane
+Terminal=false
+Categories=Development;Network;
+StartupNotify=true

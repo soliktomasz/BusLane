@@ -1,0 +1,37 @@
+name: buslane
+base: core24
+version: '0.0.0'
+summary: Azure Service Bus Manager
+description: |
+  Desktop app for working with Azure Service Bus namespaces, queues, and topics.
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+
+apps:
+  buslane:
+    command: bin/launch-buslane
+    extensions: [gnome]
+    plugs:
+      - network
+      - home
+      - audio-playback
+
+parts:
+  buslane:
+    plugin: dump
+    source: ../../publish
+    organize:
+      '*': opt/buslane/
+    override-build: |
+      craftctl default
+      install -d "$CRAFT_PART_INSTALL/bin"
+      cat > "$CRAFT_PART_INSTALL/bin/launch-buslane" << 'EOF'
+      #!/bin/sh
+      exec "$SNAP/opt/buslane/BusLane" "$@"
+      EOF
+      chmod +x "$CRAFT_PART_INSTALL/bin/launch-buslane"
+      install -Dm644 "$CRAFT_PROJECT_DIR/../flatpak/org.buslane.BusLane.desktop" "$CRAFT_PART_INSTALL/meta/gui/buslane.desktop"
+      install -Dm644 "$CRAFT_PROJECT_DIR/../../BusLane/Assets/icon.png" "$CRAFT_PART_INSTALL/meta/gui/icon.png"
