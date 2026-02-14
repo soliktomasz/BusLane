@@ -4,6 +4,7 @@ using System.Text.Json;
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
 using Serilog;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class ConnectionStorageService : IConnectionStorageService
 {
@@ -103,7 +104,7 @@ public class ConnectionStorageService : IConnectionStorageService
             var json = await File.ReadAllTextAsync(AppPaths.Connections);
             try
             {
-                var storedConnections = JsonSerializer.Deserialize<List<StoredConnection>>(json, JsonOptions) ?? [];
+                var storedConnections = DeserializeList<StoredConnection>(json, JsonOptions);
 
                 loadedConnections = storedConnections
                     .Select(stored =>
@@ -116,9 +117,8 @@ public class ConnectionStorageService : IConnectionStorageService
                         // was encrypted with a different key (e.g., from a different machine)
                         if (connectionString == null)
                         {
-                            Log.Warning("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId}). " +
-                                        "The connection may have been encrypted with a different key",
-                                stored.Name, stored.Id);
+                            Log.Warning("Failed to decrypt a connection. The connection may have been encrypted with a different key");
+                            Log.Debug("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId})", stored.Name, stored.Id);
                             return null;
                         }
 
@@ -144,7 +144,7 @@ public class ConnectionStorageService : IConnectionStorageService
                 Log.Debug(ex, "Failed to load connections in encrypted format, trying legacy format");
                 try
                 {
-                    loadedConnections = JsonSerializer.Deserialize<List<SavedConnection>>(json, JsonOptions) ?? [];
+                    loadedConnections = DeserializeList<SavedConnection>(json, JsonOptions);
                     Log.Information("Loaded {Count} connections from legacy format", loadedConnections.Count);
                 }
                 catch (Exception legacyEx)
@@ -189,6 +189,6 @@ public class ConnectionStorageService : IConnectionStorageService
         }
 
         var json = JsonSerializer.Serialize(storedConnections, JsonOptions);
-        await File.WriteAllTextAsync(AppPaths.Connections, json);
+        AppPaths.CreateSecureFile(AppPaths.Connections, json);
     }
 }

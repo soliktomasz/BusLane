@@ -253,7 +253,9 @@ public class ConnectionStringOperations : IConnectionStringOperations
         }
         catch (Exception ex)
         {
-            return (false, null, null, ex.Message);
+            var correlationId = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+            Log.Error(ex, "Connection validation failed. Correlation ID: {CorrelationId}", correlationId);
+            return (false, null, null, $"Connection validation failed. Reference: {correlationId}");
         }
     }
 

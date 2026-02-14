@@ -23,7 +23,14 @@ public class UpdateDownloadService
         {
             Directory.CreateDirectory(_tempDirectory);
 
-            var filePath = Path.Combine(_tempDirectory, asset.FileName);
+            var sanitizedFileName = Path.GetFileName(asset.FileName);
+            if (string.IsNullOrWhiteSpace(sanitizedFileName))
+            {
+                sanitizedFileName = "update.bin";
+                Log.Warning("Asset filename was empty or contained only path separators, using default: {DefaultFileName}", sanitizedFileName);
+            }
+
+            var filePath = Path.Combine(_tempDirectory, sanitizedFileName);
 
             // Resume partial download if file exists
             var existingLength = File.Exists(filePath) ? new FileInfo(filePath).Length : 0;

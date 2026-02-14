@@ -168,3 +168,6 @@ BusLane.sln.DotSettings.user
 
 # Git Worktrees
 .worktrees/
+
+# Implementation plans (working notes)
+docs/plans/

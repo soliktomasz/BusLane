@@ -3,9 +3,11 @@ using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Auth;
+using BusLane.Services.Infrastructure;
 using BusLane.Services.ServiceBus;
 using BusLane.Services.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 namespace BusLane.ViewModels.Core;
 
@@ -287,7 +289,7 @@ public partial class TabManagementViewModel : ViewModelBase
                 TabOrder = index
             }).ToList();
 
-            var openTabsJson = System.Text.Json.JsonSerializer.Serialize(states);
+            var openTabsJson = Serialize(states);
             if (string.Equals(openTabsJson, _lastSavedTabsJson, StringComparison.Ordinal))
             {
                 return;
@@ -347,7 +349,7 @@ public partial class TabManagementViewModel : ViewModelBase
         try
         {
             _isRestoringSession = true;
-            var states = System.Text.Json.JsonSerializer.Deserialize<List<TabSessionState>>(_preferencesService.OpenTabsJson);
+            var states = Deserialize<List<TabSessionState>>(_preferencesService.OpenTabsJson);
             if (states == null || states.Count == 0)
             {
                 _logSink.Log(new LogEntry(

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class NotificationService : INotificationService
 {
@@ -170,8 +171,8 @@ public class NotificationService : INotificationService
             AppPaths.EnsureDirectoryExists();
 
             var settings = new NotificationSettings { IsEnabled = _isEnabled };
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(AppPaths.NotificationSettings, json);
+            var json = Serialize(settings);
+            AppPaths.CreateSecureFile(AppPaths.NotificationSettings, json);
         }
         catch
         {
@@ -186,7 +187,7 @@ public class NotificationService : INotificationService
             if (File.Exists(AppPaths.NotificationSettings))
             {
                 var json = File.ReadAllText(AppPaths.NotificationSettings);
-                var settings = JsonSerializer.Deserialize<NotificationSettings>(json);
+                var settings = Deserialize<NotificationSettings>(json);
                 _isEnabled = settings?.IsEnabled ?? false;
             }
         }

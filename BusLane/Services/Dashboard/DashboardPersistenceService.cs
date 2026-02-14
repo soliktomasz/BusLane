@@ -3,6 +3,7 @@ namespace BusLane.Services.Dashboard;
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
 using System.Text.Json;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class DashboardPersistenceService : IDashboardPersistenceService
 {
@@ -24,7 +25,7 @@ public class DashboardPersistenceService : IDashboardPersistenceService
         try
         {
             var json = File.ReadAllText(_filePath);
-            var config = JsonSerializer.Deserialize<DashboardConfiguration>(json);
+            var config = Deserialize<DashboardConfiguration>(json);
             return config ?? GetDefaultConfiguration();
         }
         catch
@@ -43,7 +44,7 @@ public class DashboardPersistenceService : IDashboardPersistenceService
             Directory.CreateDirectory(directory);
         }
 
-        var json = JsonSerializer.Serialize(config, JsonOptions);
+        var json = Serialize(config);
         File.WriteAllText(_filePath, json);
     }
 
