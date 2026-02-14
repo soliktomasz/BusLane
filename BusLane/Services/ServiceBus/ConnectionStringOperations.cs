@@ -299,17 +299,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     private string? ExtractNamespaceFromConnectionString()
     {
-        var parts = _connectionString.Split(';');
-        foreach (var part in parts)
-        {
-            if (!part.StartsWith("Endpoint=sb://", StringComparison.OrdinalIgnoreCase))
-                continue;
+        var (endpoint, _) = ParseConnectionString();
+        if (endpoint == null) return null;
 
-            var endpoint = part["Endpoint=sb://".Length..];
-            var dotIndex = endpoint.IndexOf('.');
-            return dotIndex > 0 ? endpoint[..dotIndex] : null;
-        }
-        return null;
+        var dotIndex = endpoint.IndexOf('.');
+        return dotIndex > 0 ? endpoint[..dotIndex] : null;
     }
 
     private (string? Endpoint, string? EntityPath) ParseConnectionString()

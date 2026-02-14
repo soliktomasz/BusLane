@@ -78,25 +78,15 @@ public partial class PieChartWidgetViewModel : DashboardWidgetViewModel
 
     private double GetMetricValue(QueueInfo queue)
     {
-        return Widget.Configuration.MetricName switch
-        {
-            "ActiveMessageCount" => queue.ActiveMessageCount,
-            "DeadLetterCount" => queue.DeadLetterCount,
-            _ => queue.ActiveMessageCount
-        };
+        return GetPrimaryMetricValue(queue);
     }
 
     private double GetMetricValue(SubscriptionInfo sub)
     {
-        return Widget.Configuration.MetricName switch
-        {
-            "ActiveMessageCount" => sub.ActiveMessageCount,
-            "DeadLetterCount" => sub.DeadLetterCount,
-            _ => sub.ActiveMessageCount
-        };
+        return GetPrimaryMetricValue(sub);
     }
 
-    private string GetMetricDisplayName()
+    private new string GetMetricDisplayName()
     {
         return Widget.Configuration.MetricName switch
         {

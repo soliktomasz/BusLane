@@ -4,6 +4,7 @@ using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SkiaSharp;
 
 /// <summary>
 /// Base class for all dashboard widget ViewModels. Provides grid positioning,
@@ -83,6 +84,48 @@ public abstract partial class DashboardWidgetViewModel : ViewModelBase, IDisposa
 
     protected abstract string GetDefaultTitle();
     public abstract void RefreshData();
+
+    protected string GetMetricDisplayName()
+    {
+        return Widget.Configuration.MetricName switch
+        {
+            "ActiveMessageCount" => "Active Messages",
+            "DeadLetterCount" => "Dead Letters",
+            "ScheduledCount" => "Scheduled Messages",
+            "SizeInBytes" => "Size (Bytes)",
+            _ => Widget.Configuration.MetricName
+        };
+    }
+
+    protected SKColor GetMetricColor()
+    {
+        return Widget.Configuration.MetricName switch
+        {
+            "ActiveMessageCount" => SKColors.DodgerBlue,
+            "DeadLetterCount" => SKColors.OrangeRed,
+            "ScheduledCount" => SKColors.Green,
+            "SizeInBytes" => SKColors.Purple,
+            _ => SKColors.DodgerBlue
+        };
+    }
+
+    protected long GetPrimaryMetricValue(QueueInfo queue) => Widget.Configuration.MetricName switch
+    {
+        "ActiveMessageCount" => queue.ActiveMessageCount,
+        "DeadLetterCount" => queue.DeadLetterCount,
+        _ => queue.ActiveMessageCount
+    };
+
+    protected long GetSecondaryMetricValue(QueueInfo queue) => queue.DeadLetterCount;
+
+    protected long GetPrimaryMetricValue(SubscriptionInfo sub) => Widget.Configuration.MetricName switch
+    {
+        "ActiveMessageCount" => sub.ActiveMessageCount,
+        "DeadLetterCount" => sub.DeadLetterCount,
+        _ => sub.ActiveMessageCount
+    };
+
+    protected long GetSecondaryMetricValue(SubscriptionInfo sub) => sub.DeadLetterCount;
 
     protected void ScheduleRefresh()
     {

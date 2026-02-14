@@ -93,23 +93,13 @@ public partial class BarChartWidgetViewModel : DashboardWidgetViewModel
         return "Entity Comparison";
     }
 
-    private long GetPrimaryMetric(QueueInfo queue) => Widget.Configuration.MetricName switch
-    {
-        "ActiveMessageCount" => queue.ActiveMessageCount,
-        "DeadLetterCount" => queue.DeadLetterCount,
-        _ => queue.ActiveMessageCount
-    };
+    private long GetPrimaryMetric(QueueInfo queue) => GetPrimaryMetricValue(queue);
 
-    private long GetSecondaryMetric(QueueInfo queue) => queue.DeadLetterCount;
+    private long GetSecondaryMetric(QueueInfo queue) => GetSecondaryMetricValue(queue);
 
-    private long GetPrimaryMetric(SubscriptionInfo sub) => Widget.Configuration.MetricName switch
-    {
-        "ActiveMessageCount" => sub.ActiveMessageCount,
-        "DeadLetterCount" => sub.DeadLetterCount,
-        _ => sub.ActiveMessageCount
-    };
+    private long GetPrimaryMetric(SubscriptionInfo sub) => GetPrimaryMetricValue(sub);
 
-    private long GetSecondaryMetric(SubscriptionInfo sub) => sub.DeadLetterCount;
+    private long GetSecondaryMetric(SubscriptionInfo sub) => GetSecondaryMetricValue(sub);
 
     private string GetPrimaryMetricName() => Widget.Configuration.MetricName switch
     {
