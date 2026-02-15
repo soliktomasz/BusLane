@@ -162,7 +162,8 @@ class Program
             sp.GetRequiredService<IKeyboardShortcutService>(),
             sp.GetRequiredService<IUpdateService>(),
             sp.GetRequiredService<ILogSink>(),
-            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>()
+            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
+            sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>()
         ));
 
     }

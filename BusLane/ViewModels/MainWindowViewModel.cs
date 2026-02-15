@@ -66,6 +66,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public ExportOperationsViewModel ExportOps { get; }
     public ConfirmationDialogViewModel Confirmation { get; }
 
+    // Dashboard components
+    public ViewModels.Dashboard.NamespaceDashboardViewModel NamespaceDashboard { get; }
+
     // Tab management (delegated to Tabs component)
     public ObservableCollection<ConnectionTabViewModel> ConnectionTabs => Tabs.ConnectionTabs;
 
@@ -170,6 +173,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IUpdateService updateService,
         ILogSink logSink,
         ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
+        ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -183,6 +187,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _updateService = updateService;
         _logSink = logSink;
         _fileDialogService = fileDialogService;
+
+        // Initialize dashboard components
+        NamespaceDashboard = namespaceDashboardViewModel;
 
         // Initialize composed components
         Navigation = new NavigationState();
