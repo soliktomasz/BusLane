@@ -2,56 +2,45 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.MetricCard"
-             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
              x:DataType="vm:MetricCardViewModel">
 
-    <Border Background="#2D2D2D"
-            CornerRadius="8"
-            Padding="20"
-            Margin="8">
-        <Grid RowDefinitions="Auto,Auto,Auto">
-            <!-- Title -->
-            <TextBlock Grid.Row="0"
-                       Text="{Binding Title}"
-                       FontSize="14"
-                       Foreground="#9CA3AF"
-                       Margin="0,0,0,8"/>
-
-            <!-- Value and Trend -->
-            <StackPanel Grid.Row="1"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,12">
-                <TextBlock Text="{Binding Value, StringFormat='{}{0:N0}'}"
-                           FontSize="32"
+    <StackPanel Spacing="8">
+        <!-- Value and Trend -->
+        <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="{Binding Value, StringFormat='{}{0:N0}'}"
+                       FontSize="32"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimary}"/>
+            
+            <StackPanel Orientation="Horizontal"
+                       VerticalAlignment="Center">
+                <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
+                           FontSize="18"
                            FontWeight="Bold"
-                           Foreground="#FFFFFF"/>
-
-                <StackPanel Orientation="Horizontal"
-                           Margin="12,0,0,0"
-                           VerticalAlignment="Center">
-                    <!-- Trend Arrow -->
-                    <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
-                               FontSize="16"
-                               Margin="0,0,4,0"/>
-
-                    <!-- Trend Percentage -->
-                    <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:F1}%'}"
-                               FontSize="14"
-                               Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"/>
-                </StackPanel>
+                           Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
+                           VerticalAlignment="Center"/>
+                
+                <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:+0.0;-0.0;0}%'}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"/>
             </StackPanel>
+        </StackPanel>
 
-            <!-- Sparkline (mini chart) -->
-            <lvc:CartesianChart Grid.Row="2"
-                               Height="40"
-                               Series="{Binding SparklineSeries}"
-                               XAxes="{Binding XAxes}"
-                               YAxes="{Binding YAxes}"
-                               DrawMargin="0"
-                               Background="Transparent"/>
-        </Grid>
-    </Border>
+        <!-- Sparkline -->
+        <lvc:CartesianChart 
+            Height="40"
+            Series="{Binding SparklineSeries}"
+            XAxes="{Binding XAxes}"
+            YAxes="{Binding YAxes}"
+            DrawMargin="0"
+            Background="Transparent"
+            TooltipPosition="Hidden"/>
+    </StackPanel>
 </UserControl>

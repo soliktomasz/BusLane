@@ -2,83 +2,175 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             x:Class="BusLane.Views.Controls.NamespaceDashboardView"
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
              xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
+             mc:Ignorable="d"
+             x:Class="BusLane.Views.Controls.NamespaceDashboardView"
              x:DataType="vm:NamespaceDashboardViewModel">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto"
-              Margin="16">
+              Margin="24">
             
             <!-- Header -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                <TextBlock Grid.Column="0"
-                           Text="Namespace Overview"
-                           FontSize="24"
-                           FontWeight="Bold"
-                           Foreground="#FFFFFF"/>
+            <Border Grid.Row="0" 
+                    Classes="card" 
+                    Padding="20"
+                    Margin="0,0,0,20">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                        <TextBlock Text="Namespace Overview" 
+                                   Classes="heading"
+                                   VerticalAlignment="Center"/>
+                        
+                        <!-- Time Range Selector -->
+                        <Border Background="{DynamicResource InputBackground}" 
+                                CornerRadius="6" 
+                                Padding="4">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <RadioButton Content="15m" 
+                                           GroupName="TimeRange"
+                                           Classes="segment-button"
+                                           IsChecked="{Binding SelectedTimeRange, Converter={x:Static StringConverters.IsNotNullOrEmpty}, ConverterParameter=15 Minutes}"/>
+                                <RadioButton Content="1h" 
+                                           GroupName="TimeRange"
+                                           Classes="segment-button"
+                                           IsChecked="True"/>
+                                <RadioButton Content="6h" 
+                                           GroupName="TimeRange"
+                                           Classes="segment-button"/>
+                                <RadioButton Content="24h" 
+                                           GroupName="TimeRange"
+                                           Classes="segment-button"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
 
-                <StackPanel Grid.Column="1" 
-                            Orientation="Horizontal"
-                            Spacing="12">
-                    <!-- Time Range -->
-                    <ComboBox SelectedItem="{Binding SelectedTimeRange}"
-                             ItemsSource="{Binding TimeRangeOptions}"
-                             Width="120"/>
-
-                    <!-- Auto Refresh -->
-                    <ToggleSwitch IsChecked="{Binding AutoRefreshEnabled}"
-                                 Content="Auto Refresh"/>
-
-                    <NumericUpDown Value="{Binding RefreshIntervalSeconds}"
-                                  Minimum="5"
-                                  Maximum="300"
-                                  Width="80"
-                                  IsVisible="{Binding AutoRefreshEnabled}"/>
-
-                    <!-- Refresh Button -->
-                    <Button Command="{Binding RefreshCommand}"
-                           IsEnabled="{Binding !IsRefreshing}"
-                           Background="#3B82F6"
-                           Foreground="#FFFFFF">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE72C;" 
-                                      FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                      Margin="0,0,8,0"/>
-                            <TextBlock Text="Refresh"/>
+                    <StackPanel Grid.Column="1" 
+                                Orientation="Horizontal"
+                                Spacing="12"
+                                VerticalAlignment="Center">
+                        <!-- Auto Refresh -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ToggleSwitch IsChecked="{Binding AutoRefreshEnabled}"
+                                         OnContent="Auto"
+                                         OffContent="Auto"/>
+                            <NumericUpDown Value="{Binding RefreshIntervalSeconds}"
+                                          Minimum="5"
+                                          Maximum="300"
+                                          Width="70"
+                                          IsVisible="{Binding AutoRefreshEnabled}"/>
                         </StackPanel>
-                    </Button>
-                </StackPanel>
+
+                        <!-- Refresh Button -->
+                        <Button Classes="primary small"
+                                Command="{Binding RefreshCommand}"
+                                IsEnabled="{Binding !IsRefreshing}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="RefreshCw" Size="14"/>
+                                <TextBlock Text="Refresh"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Metric Cards Row -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*" Margin="0,0,0,20">
+                <!-- Active Messages Card -->
+                <Border Grid.Column="0" Classes="card" Padding="20" Margin="0,0,10,0">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="{DynamicResource AccentBrand}" 
+                                    CornerRadius="6" 
+                                    Padding="8">
+                                <LucideIcon Kind="Inbox" Size="18" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="Active Messages" 
+                                       Classes="caption" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Dead Letter Card -->
+                <Border Grid.Column="1" Classes="card" Padding="20" Margin="5,0,5,0">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="{DynamicResource TextDanger}" 
+                                    CornerRadius="6" 
+                                    Padding="8">
+                                <LucideIcon Kind="TriangleAlert" Size="18" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="Dead Letters" 
+                                       Classes="caption" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Scheduled Card -->
+                <Border Grid.Column="2" Classes="card" Padding="20" Margin="5,0,5,0">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="{DynamicResource TextWarning}" 
+                                    CornerRadius="6" 
+                                    Padding="8">
+                                <LucideIcon Kind="Clock" Size="18" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="Scheduled" 
+                                       Classes="caption" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <controls:MetricCard DataContext="{Binding ScheduledCard}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Size Card -->
+                <Border Grid.Column="3" Classes="card" Padding="20" Margin="10,0,0,0">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="{DynamicResource TextSuccess}" 
+                                    CornerRadius="6" 
+                                    Padding="8">
+                                <LucideIcon Kind="HardDrive" Size="18" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="Total Size" 
+                                       Classes="caption" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <controls:MetricCard DataContext="{Binding SizeCard}"/>
+                    </StackPanel>
+                </Border>
             </Grid>
 
-            <!-- Metric Cards -->
-            <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
-                <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
-                <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
-                <controls:MetricCard DataContext="{Binding ScheduledCard}"/>
-                <controls:MetricCard DataContext="{Binding SizeCard}"/>
-            </UniformGrid>
-
             <!-- Top Entities Lists -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,16">
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,20">
                 <controls:TopEntitiesList Grid.Column="0"
-                                         DataContext="{Binding TopQueues}"/>
+                                         DataContext="{Binding TopQueues}"
+                                         Margin="0,0,10,0"/>
                 <controls:TopEntitiesList Grid.Column="1"
-                                         DataContext="{Binding TopTopics}"/>
+                                         DataContext="{Binding TopTopics}"
+                                         Margin="10,0,0,0"/>
             </Grid>
 
             <!-- Charts Grid (3x2) -->
-            <UniformGrid Grid.Row="3" Columns="3">
-                <ItemsControl ItemsSource="{Binding Charts}">
+            <Grid Grid.Row="3" RowDefinitions="Auto,Auto">
+                <ItemsControl Grid.Row="0" ItemsSource="{Binding Charts}" Margin="0,0,0,10">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid ColumnDefinitions="*,*,*"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <controls:DashboardChart DataContext="{Binding}"/>
+                            <controls:DashboardChart DataContext="{Binding}" Margin="0,0,10,0"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </UniformGrid>
+            </Grid>
         </Grid>
     </ScrollViewer>
 </UserControl>
