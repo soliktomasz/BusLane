@@ -3,6 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:models="clr-namespace:BusLane.Models.Dashboard;assembly=BusLane"
+             xmlns:converters="clr-namespace:BusLane.Converters;assembly=BusLane"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.TopEntitiesList"
              x:DataType="vm:TopEntitiesListViewModel">
@@ -10,14 +12,14 @@
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header -->
-            <Border Grid.Row="0" 
-                    BorderBrush="{DynamicResource BorderDefault}" 
-                    BorderThickness="0,0,0,1" 
-                    Padding="16">
+            <Border Grid.Row="0"
+                    BorderBrush="{DynamicResource BorderDefault}"
+                    BorderThickness="0,0,0,1"
+                    Padding="16,12">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <LucideIcon Kind="ListOrdered" Size="18" Foreground="{DynamicResource AccentBrand}"/>
+                    <LucideIcon Kind="ListOrdered" Size="16" Foreground="{DynamicResource AccentBrand}"/>
                     <TextBlock Text="{Binding Title}"
-                               FontSize="16"
+                               FontSize="14"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                VerticalAlignment="Center"/>
@@ -27,50 +29,88 @@
             <!-- Entities List -->
             <ScrollViewer Grid.Row="1"
                          VerticalScrollBarVisibility="Auto"
-                         MaxHeight="300">
-                <ItemsControl ItemsSource="{Binding Entities}" Margin="16,12">
+                         MaxHeight="350">
+                <ItemsControl ItemsSource="{Binding Entities}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnDefinitions="Auto,*,Auto" 
-                                  Margin="0,0,0,12">
-                                <!-- Entity Icon -->
-                                <Border Grid.Column="0"
-                                       Background="{DynamicResource HoverBackground}"
-                                       CornerRadius="4"
-                                       Padding="8,6"
-                                       Margin="0,0,12,0">
-                                    <TextBlock Text="{Binding Type, Converter={StaticResource EntityTypeToIconConverter}}"
-                                              FontSize="14"
-                                              VerticalAlignment="Center"/>
-                                </Border>
+                        <DataTemplate DataType="models:TopEntityInfo">
+                            <Border BorderBrush="{DynamicResource BorderMuted}"
+                                   BorderThickness="0,0,0,1"
+                                   Padding="16,10"
+                                   Background="Transparent">
+                                <Border.Styles>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                    </Style>
+                                </Border.Styles>
+                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                      VerticalAlignment="Center">
+                                    <!-- Entity Icon -->
+                                    <!-- Entity Icon -->
+                                    <Border Grid.Column="0"
+                                           Background="{DynamicResource SurfaceBrand}"
+                                           CornerRadius="6"
+                                           Width="28"
+                                           Height="28"
+                                           Margin="0,0,12,0">
+                                        <LucideIcon VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   Size="14"
+                                                   Foreground="{DynamicResource AccentBrand}">
+                                            <LucideIcon.Kind>
+                                                <Binding Path="Type" Converter="{StaticResource EntityTypeToIconConverter}"/>
+                                            </LucideIcon.Kind>
+                                        </LucideIcon>
+                                    </Border>
 
-                                <!-- Entity Name -->
-                                <TextBlock Grid.Column="1"
-                                          Text="{Binding Name}"
-                                          FontSize="14"
-                                          Foreground="{DynamicResource TextPrimary}"
-                                          VerticalAlignment="Center"
-                                          TextTrimming="CharacterEllipsis"/>
+                                    <!-- Entity Name & Subtitle -->
+                                    <StackPanel Grid.Column="1"
+                                               VerticalAlignment="Center"
+                                               Spacing="2">
+                                        <TextBlock Text="{Binding Name}"
+                                                  FontSize="13"
+                                                  FontWeight="Medium"
+                                                  Foreground="{DynamicResource TextPrimary}"
+                                                  VerticalAlignment="Center"
+                                                  TextTrimming="CharacterEllipsis"
+                                                  MaxWidth="200"
+                                                  ToolTip.Tip="{Binding Name}"/>
+                                        <TextBlock Text="{Binding DisplaySubtitle}"
+                                                  FontSize="11"
+                                                  Foreground="{DynamicResource SubtleForeground}"
+                                                  VerticalAlignment="Center"
+                                                  IsVisible="{Binding DisplaySubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </StackPanel>
 
-                                <!-- Progress Bar with Count -->
-                                <StackPanel Grid.Column="2"
-                                           Orientation="Horizontal"
-                                           HorizontalAlignment="Right"
-                                           Spacing="12">
-                                    <ProgressBar Value="{Binding PercentageOfTotal}"
-                                                Maximum="100"
-                                                Width="80"
-                                                Height="6"
-                                                Background="{DynamicResource InputBackground}"
-                                                Foreground="{DynamicResource AccentBrand}"/>
-                                    <TextBlock Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
-                                              FontSize="13"
-                                              Foreground="{DynamicResource SubtleForeground}"
-                                              Width="55"
-                                              TextAlignment="Right"
-                                              VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
+                                    <!-- Progress Bar with Percentage and Count -->
+                                    <StackPanel Grid.Column="2"
+                                               Orientation="Horizontal"
+                                               HorizontalAlignment="Right"
+                                               Spacing="8"
+                                               VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <ProgressBar Value="{Binding PercentageOfTotal}"
+                                                        Maximum="100"
+                                                        Width="60"
+                                                        Height="4"
+                                                        Background="{DynamicResource InputBackground}"
+                                                        Foreground="{DynamicResource AccentBrand}"/>
+                                            <TextBlock Text="{Binding PercentageOfTotal, StringFormat='{}{0:F0}%'}"
+                                                      FontSize="11"
+                                                      Foreground="{DynamicResource MutedForeground}"
+                                                      Width="32"
+                                                      TextAlignment="Left"
+                                                      VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
+                                                  FontSize="12"
+                                                  FontWeight="SemiBold"
+                                                  Foreground="{DynamicResource TextPrimary}"
+                                                  Width="50"
+                                                  TextAlignment="Right"
+                                                  VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

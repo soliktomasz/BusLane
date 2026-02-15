@@ -67,7 +67,7 @@ public class TrendToColorConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts EntityType to an icon symbol.
+/// Converts EntityType to a Lucide icon name string.
 /// </summary>
 public class EntityTypeToIconConverter : IValueConverter
 {
@@ -77,17 +77,43 @@ public class EntityTypeToIconConverter : IValueConverter
         {
             return type switch
             {
-                EntityType.Queue => "📥",
-                EntityType.Topic => "📤",
-                EntityType.Subscription => "📋",
-                _ => "📦"
+                EntityType.Queue => "Inbox",
+                EntityType.Topic => "Send",
+                EntityType.Subscription => "BookOpen",
+                _ => "Box"
             };
         }
-        return "📦";
+        return "Box";
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Compares a string value to a parameter and returns true if they are equal.
+/// Used for RadioButton binding where IsChecked should be true when value matches parameter.
+/// </summary>
+public class StringEqualsConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string strValue && parameter is string strParam)
+        {
+            return strValue.Equals(strParam, StringComparison.OrdinalIgnoreCase);
+        }
+        return false;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        // When RadioButton is checked (true), return the parameter as the new value
+        if (value is true && parameter is string strParam)
+        {
+            return strParam;
+        }
+        return Avalonia.Data.BindingOperations.DoNothing;
     }
 }

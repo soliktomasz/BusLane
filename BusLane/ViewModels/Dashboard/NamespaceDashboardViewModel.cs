@@ -1,5 +1,6 @@
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
+using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
@@ -9,6 +10,7 @@ namespace BusLane.ViewModels.Dashboard;
 public partial class NamespaceDashboardViewModel : ObservableObject
 {
     private readonly IDashboardRefreshService _refreshService;
+    private IServiceBusOperations? _operations;
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
@@ -24,6 +26,9 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTimeOffset? _lastRefreshTime;
+
+    [ObservableProperty]
+    private string? _currentNamespaceId;
 
     // Metric Cards
     public MetricCardViewModel ActiveMessagesCard { get; }
@@ -85,7 +90,28 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     partial void OnAutoRefreshEnabledChanged(bool value)
     {
-        // TODO: Start/stop auto refresh
+        if (value && _operations != null)
+        {
+            _refreshService.StartAutoRefresh(
+                CurrentNamespaceId ?? "current-namespace",
+                _operations,
+                TimeSpan.FromSeconds(RefreshIntervalSeconds));
+        }
+        else
+        {
+            _refreshService.StopAutoRefresh();
+        }
+    }
+
+    partial void OnRefreshIntervalSecondsChanged(int value)
+    {
+        if (AutoRefreshEnabled && _operations != null)
+        {
+            _refreshService.StartAutoRefresh(
+                CurrentNamespaceId ?? "current-namespace",
+                _operations,
+                TimeSpan.FromSeconds(value));
+        }
     }
 
     [RelayCommand]
@@ -94,12 +120,44 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         IsRefreshing = true;
         try
         {
-            await _refreshService.RefreshAsync("current-namespace");
+            var namespaceId = CurrentNamespaceId ?? "current-namespace";
+            await _refreshService.RefreshAsync(namespaceId, _operations);
         }
         finally
         {
             IsRefreshing = false;
             LastRefreshTime = DateTimeOffset.Now;
+        }
+    }
+
+    /// <summary>
+    /// Sets the Service Bus operations instance and triggers a refresh.
+    /// Called when connecting to a namespace.
+    /// </summary>
+    public void SetOperations(IServiceBusOperations? operations, string? namespaceId = null)
+    {
+        _operations = operations;
+
+        if (!string.IsNullOrEmpty(namespaceId))
+        {
+            CurrentNamespaceId = namespaceId;
+        }
+
+        if (_operations != null)
+        {
+            _ = RefreshAsync();
+
+            if (AutoRefreshEnabled)
+            {
+                _refreshService.StartAutoRefresh(
+                    CurrentNamespaceId ?? "current-namespace",
+                    _operations,
+                    TimeSpan.FromSeconds(RefreshIntervalSeconds));
+            }
+        }
+        else
+        {
+            _refreshService.StopAutoRefresh();
         }
     }
 

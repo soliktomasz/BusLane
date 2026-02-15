@@ -25,6 +25,8 @@
             <!-- Dashboard Metric Trend Converters -->
             <converters:TrendToArrowConverter x:Key="TrendToArrowConverter"/>
             <converters:TrendToColorConverter x:Key="TrendToColorConverter"/>
+            <converters:EntityTypeToIconConverter x:Key="EntityTypeToIconConverter"/>
+            <converters:StringEqualsConverter x:Key="StringEqualsConverter"/>
             
             <!-- Grid Layout Converters -->
             <viewsConverters:GridColumnToWidthConverter x:Key="GridColumnToWidthConverter"/>

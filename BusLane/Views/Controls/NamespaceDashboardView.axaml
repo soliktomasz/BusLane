@@ -31,17 +31,19 @@
                                 <RadioButton Content="15m" 
                                            GroupName="TimeRange"
                                            Classes="segment-button"
-                                           IsChecked="{Binding SelectedTimeRange, Converter={x:Static StringConverters.IsNotNullOrEmpty}, ConverterParameter=15 Minutes}"/>
+                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=15 Minutes}"/>
                                 <RadioButton Content="1h" 
                                            GroupName="TimeRange"
                                            Classes="segment-button"
-                                           IsChecked="True"/>
+                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=1 Hour}"/>
                                 <RadioButton Content="6h" 
                                            GroupName="TimeRange"
-                                           Classes="segment-button"/>
+                                           Classes="segment-button"
+                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=6 Hours}"/>
                                 <RadioButton Content="24h" 
                                            GroupName="TimeRange"
-                                           Classes="segment-button"/>
+                                           Classes="segment-button"
+                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=24 Hours}"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

@@ -297,6 +297,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void SetOperations(IServiceBusOperations? operations)
     {
         _operations = operations;
+
+        // Update dashboard with operations and namespace info
+        var namespaceId = ActiveTab?.Namespace?.Id ?? ActiveTab?.SavedConnection?.Name ?? "current-namespace";
+        NamespaceDashboard.SetOperations(operations, namespaceId);
     }
 
     /// <summary>
@@ -1197,6 +1201,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected) or nameof(ConnectionTabViewModel.Mode))
         {
             NotifyActiveTabDependentProperties();
+        }
+
+        // Update dashboard operations when connection state changes
+        if (e.PropertyName == nameof(ConnectionTabViewModel.IsConnected))
+        {
+            var tab = sender as ConnectionTabViewModel;
+            if (tab?.IsConnected == true)
+            {
+                var namespaceId = tab.Namespace?.Id ?? tab.SavedConnection?.Name ?? "current-namespace";
+                NamespaceDashboard.SetOperations(tab.Operations, namespaceId);
+            }
         }
 
         // Also notify for SavedConnection and Namespace so bindings update properly
