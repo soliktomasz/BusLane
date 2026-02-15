@@ -1,7 +1,7 @@
+namespace BusLane.ViewModels.Core;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Manages confirmation dialog state and actions.

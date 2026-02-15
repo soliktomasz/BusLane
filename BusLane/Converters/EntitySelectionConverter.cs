@@ -1,10 +1,10 @@
+namespace BusLane.Converters;
+
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
-
-namespace BusLane.Converters;
 
 /// <summary>
 /// Converts entity selection state to a boolean by comparing the current item with the selected item.

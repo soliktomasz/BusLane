@@ -1,6 +1,6 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace BusLane.ViewModels.Core;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 public partial class PaginationState : ObservableObject
 {

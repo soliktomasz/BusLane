@@ -1,7 +1,7 @@
+namespace BusLane.Models;
+
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace BusLane.Models;
 
 /// <summary>
 /// Represents an Azure Service Bus topic with its properties.

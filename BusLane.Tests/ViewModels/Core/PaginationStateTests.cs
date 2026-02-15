@@ -1,8 +1,8 @@
+namespace BusLane.Tests.ViewModels.Core;
+
 using BusLane.ViewModels.Core;
 using FluentAssertions;
 using Xunit;
-
-namespace BusLane.Tests.ViewModels.Core;
 
 public class PaginationStateTests
 {

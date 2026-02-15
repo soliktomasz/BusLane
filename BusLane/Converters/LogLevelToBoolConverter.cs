@@ -1,9 +1,9 @@
+namespace BusLane.Converters;
+
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using BusLane.Models.Logging;
-
-namespace BusLane.Converters;
 
 /// <summary>
 /// Converts LogLevel enum to boolean for conditional class assignment.

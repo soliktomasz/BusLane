@@ -1,3 +1,5 @@
+namespace BusLane.ViewModels.Core;
+
 using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Models.Logging;
@@ -8,8 +10,6 @@ using BusLane.Services.ServiceBus;
 using BusLane.Services.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Manages connection tabs: create, close, switch, and persist session state.

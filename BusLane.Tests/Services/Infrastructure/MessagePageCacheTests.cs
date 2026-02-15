@@ -1,9 +1,9 @@
+namespace BusLane.Tests.Services.Infrastructure;
+
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
 using FluentAssertions;
 using Xunit;
-
-namespace BusLane.Tests.Services.Infrastructure;
 
 public class MessagePageCacheTests
 {

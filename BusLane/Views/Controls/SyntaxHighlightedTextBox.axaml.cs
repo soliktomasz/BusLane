@@ -1,3 +1,5 @@
+namespace BusLane.Views.Controls;
+
 using System.Reflection;
 using System.Xml;
 using Avalonia;
@@ -5,8 +7,6 @@ using Avalonia.Controls;
 using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
-
-namespace BusLane.Views.Controls;
 
 public partial class SyntaxHighlightedTextBox : UserControl
 {

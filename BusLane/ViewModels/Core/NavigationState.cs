@@ -1,8 +1,8 @@
+namespace BusLane.ViewModels.Core;
+
 using System.Collections.ObjectModel;
 using BusLane.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Holds the current navigation state - selected entities and collections.

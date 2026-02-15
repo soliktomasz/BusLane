@@ -1,8 +1,8 @@
+namespace BusLane.ViewModels.Core;
+
 using BusLane.Models;
 using BusLane.Services.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Handles exporting messages to JSON files.

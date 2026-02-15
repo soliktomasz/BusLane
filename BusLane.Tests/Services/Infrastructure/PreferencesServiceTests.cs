@@ -1,8 +1,8 @@
+namespace BusLane.Tests.Services.Infrastructure;
+
 using BusLane.Services.Infrastructure;
 using FluentAssertions;
 using Xunit;
-
-namespace BusLane.Tests.Services.Infrastructure;
 
 public class PreferencesServiceTests
 {

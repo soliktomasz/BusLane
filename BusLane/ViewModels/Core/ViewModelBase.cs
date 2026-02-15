@@ -1,6 +1,6 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace BusLane.ViewModels.Core;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
 /// Base class for all ViewModels in the application.

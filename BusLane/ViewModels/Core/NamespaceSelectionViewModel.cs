@@ -1,9 +1,9 @@
+namespace BusLane.ViewModels.Core;
+
 using System.Collections.ObjectModel;
 using BusLane.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// ViewModel for the namespace selection slide-in panel.

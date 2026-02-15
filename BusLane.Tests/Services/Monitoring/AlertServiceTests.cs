@@ -1,8 +1,8 @@
+namespace BusLane.Tests.Services.Monitoring;
+
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using FluentAssertions;
-
-namespace BusLane.Tests.Services.Monitoring;
 
 public class AlertServiceTests
 {

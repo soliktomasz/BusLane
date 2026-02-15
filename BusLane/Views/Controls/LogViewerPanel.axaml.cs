@@ -1,6 +1,6 @@
-using Avalonia.Controls;
-
 namespace BusLane.Views.Controls;
+
+using Avalonia.Controls;
 
 /// <summary>
 /// Panel displaying activity logs with filtering and search capabilities.

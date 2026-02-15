@@ -1,12 +1,11 @@
+namespace BusLane.ViewModels;
+
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels;
-
 using Services.ServiceBus;
 
 public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable

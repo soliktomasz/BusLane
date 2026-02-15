@@ -1,3 +1,5 @@
+namespace BusLane.ViewModels;
+
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using Avalonia.Platform.Storage;
@@ -9,8 +11,6 @@ using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
-
-namespace BusLane.ViewModels;
 
 public partial class SendMessageViewModel : ViewModelBase
 {

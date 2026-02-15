@@ -1,3 +1,5 @@
+namespace BusLane.Tests.ViewModels.Core;
+
 // BusLane.Tests/ViewModels/Core/ConnectionTabViewModelTests.cs
 using Azure.Core;
 using BusLane.Models;
@@ -8,8 +10,6 @@ using BusLane.ViewModels;
 using BusLane.ViewModels.Core;
 using FluentAssertions;
 using NSubstitute;
-
-namespace BusLane.Tests.ViewModels.Core;
 
 public class ConnectionTabViewModelTests
 {

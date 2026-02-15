@@ -1,7 +1,7 @@
+namespace BusLane.Services.Infrastructure;
+
 using System.Runtime.InteropServices;
 using Avalonia.Input;
-
-namespace BusLane.Services.Infrastructure;
 
 /// <summary>
 /// Service for managing keyboard shortcuts in the application.

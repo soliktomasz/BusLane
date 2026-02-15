@@ -1,10 +1,10 @@
+namespace BusLane.Views.Controls;
+
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using BusLane.Models;
 using BusLane.ViewModels;
-
-namespace BusLane.Views.Controls;
 
 public partial class EntityTreeView : UserControl
 {

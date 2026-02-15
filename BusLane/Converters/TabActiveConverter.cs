@@ -1,10 +1,10 @@
+namespace BusLane.Converters;
+
 // BusLane/Converters/TabActiveConverter.cs
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
-
-namespace BusLane.Converters;
 
 /// <summary>
 /// Converts tab active state to background brush.

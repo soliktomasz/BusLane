@@ -1,10 +1,9 @@
-using Azure.ResourceManager.ServiceBus;
-using Serilog;
-
 namespace BusLane.Services.ServiceBus;
 
+using Azure.ResourceManager.ServiceBus;
 using BusLane.Models;
 using BusLane.Services.Auth;
+using Serilog;
 
 /// <summary>
 /// Implementation of Azure resource discovery using the Azure auth service.

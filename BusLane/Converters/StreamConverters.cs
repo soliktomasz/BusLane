@@ -1,9 +1,9 @@
+namespace BusLane.Converters;
+
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using BusLane.Models;
-
-namespace BusLane.Converters;
 
 /// <summary>
 /// Converts boolean streaming status to background brush using Fluent 2 semantic colors.

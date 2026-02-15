@@ -1,7 +1,7 @@
+namespace BusLane.Services.Abstractions;
+
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-
-namespace BusLane.Services.Abstractions;
 
 /// <summary>
 /// Interface for file dialog operations.

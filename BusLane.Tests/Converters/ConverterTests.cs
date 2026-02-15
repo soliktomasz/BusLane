@@ -1,10 +1,10 @@
+namespace BusLane.Tests.Converters;
+
 using System.Globalization;
 using Avalonia.Data;
 using BusLane.Converters;
 using BusLane.Models;
 using FluentAssertions;
-
-namespace BusLane.Tests.Converters;
 
 public class EntitySelectionConverterTests
 {

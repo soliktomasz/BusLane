@@ -1,3 +1,5 @@
+namespace BusLane.ViewModels;
+
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
@@ -6,8 +8,6 @@ using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels;
 
 /// <summary>
 /// ViewModel for the Log Viewer panel.
