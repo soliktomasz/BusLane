@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="BusLane.Views.Controls.TopEntitiesList"
+             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             x:DataType="vm:TopEntitiesListViewModel">
+
+    <Border Background="#2D2D2D"
+            CornerRadius="8"
+            Padding="20"
+            Margin="8">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding Title}"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="#FFFFFF"
+                       Margin="0,0,0,16"/>
+
+            <!-- Entities List -->
+            <ScrollViewer Grid.Row="1"
+                         VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Entities}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="Auto,*,Auto" 
+                                  Margin="0,8">
+                                <!-- Entity Icon -->
+                                <TextBlock Grid.Column="0"
+                                          Text="{Binding Type, Converter={StaticResource EntityTypeToIconConverter}}"
+                                          FontSize="16"
+                                          Margin="0,0,12,0"
+                                          VerticalAlignment="Center"/>
+
+                                <!-- Entity Name -->
+                                <TextBlock Grid.Column="1"
+                                          Text="{Binding Name}"
+                                          FontSize="14"
+                                          Foreground="#FFFFFF"
+                                          VerticalAlignment="Center"/>
+
+                                <!-- Progress Bar with Count -->
+                                <StackPanel Grid.Column="2"
+                                           Orientation="Horizontal"
+                                           HorizontalAlignment="Right">
+                                    <ProgressBar Value="{Binding PercentageOfTotal}"
+                                                Maximum="100"
+                                                Width="100"
+                                                Height="8"
+                                                Margin="0,0,12,0"
+                                                Background="#374151"
+                                                Foreground="#3B82F6"/>
+                                    <TextBlock Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
+                                              FontSize="14"
+                                              Foreground="#9CA3AF"
+                                              Width="60"
+                                              TextAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

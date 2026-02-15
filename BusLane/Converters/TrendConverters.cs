@@ -65,3 +65,29 @@ public class TrendToColorConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts EntityType to an icon symbol.
+/// </summary>
+public class EntityTypeToIconConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is EntityType type)
+        {
+            return type switch
+            {
+                EntityType.Queue => "📥",
+                EntityType.Topic => "📤",
+                EntityType.Subscription => "📋",
+                _ => "📦"
+            };
+        }
+        return "📦";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
