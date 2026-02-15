@@ -144,6 +144,10 @@ class Program
         services.AddSingleton<DashboardLayoutEngine>();
         services.AddSingleton<ViewModels.Dashboard.DashboardViewModel>();
 
+        // Add dashboard services
+        services.AddSingleton<IDashboardRefreshService, DashboardRefreshService>();
+        services.AddTransient<ViewModels.Dashboard.NamespaceDashboardViewModel>();
+
         // Main ViewModel with unified services
         services.AddSingleton<MainWindowViewModel>(sp => new MainWindowViewModel(
             sp.GetRequiredService<IAzureAuthService>(),
@@ -158,7 +162,8 @@ class Program
             sp.GetRequiredService<IKeyboardShortcutService>(),
             sp.GetRequiredService<IUpdateService>(),
             sp.GetRequiredService<ILogSink>(),
-            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>()
+            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
+            sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>()
         ));
 
     }

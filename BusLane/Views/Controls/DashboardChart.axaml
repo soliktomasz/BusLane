@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+             mc:Ignorable="d"
+             x:Class="BusLane.Views.Controls.DashboardChart"
+             x:DataType="vm:DashboardChartViewModel">
+
+    <Border Classes="card" Padding="0">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header with Title and Time Range -->
+            <Border Grid.Row="0" 
+                    BorderBrush="{DynamicResource BorderDefault}" 
+                    BorderThickness="0,0,0,1" 
+                    Padding="16,12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Title}"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               VerticalAlignment="Center"/>
+
+                    <Border Grid.Column="1"
+                           Background="{DynamicResource InputBackground}"
+                           CornerRadius="4"
+                           Padding="8,4">
+                        <ComboBox ItemsSource="{Binding TimeRangeOptions}"
+                                 SelectedItem="{Binding SelectedTimeRange}"
+                                 Width="100"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 FontSize="12"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Chart -->
+            <lvc:CartesianChart Grid.Row="1"
+                               Height="180"
+                               Margin="12"
+                               Series="{Binding Series}"
+                               XAxes="{Binding XAxes}"
+                               YAxes="{Binding YAxes}"
+                               Background="Transparent"
+                               TooltipPosition="Top"/>
+        </Grid>
+    </Border>
+</UserControl>

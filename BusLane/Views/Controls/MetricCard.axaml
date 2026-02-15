@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+             mc:Ignorable="d"
+             x:Class="BusLane.Views.Controls.MetricCard"
+             x:DataType="vm:MetricCardViewModel">
+
+    <StackPanel Spacing="8">
+        <!-- Value and Trend -->
+        <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Text="{Binding Value, StringFormat='{}{0:N0}'}"
+                       FontSize="32"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimary}"/>
+            
+            <StackPanel Orientation="Horizontal"
+                       VerticalAlignment="Center">
+                <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
+                           VerticalAlignment="Center"/>
+                
+                <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:+0.0;-0.0;0}%'}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Sparkline -->
+        <lvc:CartesianChart 
+            Height="40"
+            Series="{Binding SparklineSeries}"
+            XAxes="{Binding XAxes}"
+            YAxes="{Binding YAxes}"
+            DrawMargin="0"
+            Background="Transparent"
+            TooltipPosition="Hidden"/>
+    </StackPanel>
+</UserControl>

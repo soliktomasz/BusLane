@@ -22,6 +22,10 @@
             <converters:SeverityToColorConverter x:Key="SeverityToColorConverter"/>
             <converters:SeverityToBackgroundConverter x:Key="SeverityToBackgroundConverter"/>
             
+            <!-- Dashboard Metric Trend Converters -->
+            <converters:TrendToArrowConverter x:Key="TrendToArrowConverter"/>
+            <converters:TrendToColorConverter x:Key="TrendToColorConverter"/>
+            
             <!-- Grid Layout Converters -->
             <viewsConverters:GridColumnToWidthConverter x:Key="GridColumnToWidthConverter"/>
             <viewsConverters:GridRowToHeightConverter x:Key="GridRowToHeightConverter"/>
