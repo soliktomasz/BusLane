@@ -115,7 +115,7 @@ public class DashboardRefreshService : IDashboardRefreshService
             _lastSummary = summary;
 
             // Build top entities list
-            var topEntities = BuildTopEntitiesList(queues, allSubscriptions);
+            var topEntities = BuildTopEntitiesList(queues, topics, allSubscriptions);
 
             SummaryUpdated?.Invoke(this, summary);
             TopEntitiesUpdated?.Invoke(this, topEntities);
@@ -139,6 +139,7 @@ public class DashboardRefreshService : IDashboardRefreshService
 
     private static IReadOnlyList<TopEntityInfo> BuildTopEntitiesList(
         List<QueueInfo> queues,
+        List<TopicInfo> topics,
         List<SubscriptionInfo> subscriptions)
     {
         var entities = new List<TopEntityInfo>();
@@ -157,6 +158,21 @@ public class DashboardRefreshService : IDashboardRefreshService
                 MessageCount: queue.MessageCount,
                 PercentageOfTotal: percentage,
                 Type: EntityType.Queue
+            ));
+        }
+
+        // Add topics (using SizeInBytes as metric since topics don't hold messages directly)
+        foreach (var topic in topics)
+        {
+            double percentage = totalMessageCount > 0
+                ? ((double)topic.SizeInBytes / totalMessageCount) * 100.0
+                : 0.0;
+
+            entities.Add(new TopEntityInfo(
+                Name: topic.Name,
+                MessageCount: topic.SizeInBytes,
+                PercentageOfTotal: percentage,
+                Type: EntityType.Topic
             ));
         }
 

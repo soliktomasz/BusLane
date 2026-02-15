@@ -117,3 +117,5 @@ public class StringEqualsConverter : IValueConverter
         return Avalonia.Data.BindingOperations.DoNothing;
     }
 }
+
+
