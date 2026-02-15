@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="BusLane.Views.Controls.NamespaceDashboardView"
+             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
+             x:DataType="vm:NamespaceDashboardViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+              Margin="16">
+            
+            <!-- Header -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                <TextBlock Grid.Column="0"
+                           Text="Namespace Overview"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="#FFFFFF"/>
+
+                <StackPanel Grid.Column="1" 
+                            Orientation="Horizontal"
+                            Spacing="12">
+                    <!-- Time Range -->
+                    <ComboBox SelectedItem="{Binding SelectedTimeRange}"
+                             ItemsSource="{Binding TimeRangeOptions}"
+                             Width="120"/>
+
+                    <!-- Auto Refresh -->
+                    <ToggleSwitch IsChecked="{Binding AutoRefreshEnabled}"
+                                 Content="Auto Refresh"/>
+
+                    <NumericUpDown Value="{Binding RefreshIntervalSeconds}"
+                                  Minimum="5"
+                                  Maximum="300"
+                                  Width="80"
+                                  IsVisible="{Binding AutoRefreshEnabled}"/>
+
+                    <!-- Refresh Button -->
+                    <Button Command="{Binding RefreshCommand}"
+                           IsEnabled="{Binding !IsRefreshing}"
+                           Background="#3B82F6"
+                           Foreground="#FFFFFF">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE72C;" 
+                                      FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                      Margin="0,0,8,0"/>
+                            <TextBlock Text="Refresh"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Metric Cards -->
+            <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
+                <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
+                <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
+                <controls:MetricCard DataContext="{Binding ScheduledCard}"/>
+                <controls:MetricCard DataContext="{Binding SizeCard}"/>
+            </UniformGrid>
+
+            <!-- Top Entities Lists -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,16">
+                <controls:TopEntitiesList Grid.Column="0"
+                                         DataContext="{Binding TopQueues}"/>
+                <controls:TopEntitiesList Grid.Column="1"
+                                         DataContext="{Binding TopTopics}"/>
+            </Grid>
+
+            <!-- Charts Grid (3x2) -->
+            <UniformGrid Grid.Row="3" Columns="3">
+                <ItemsControl ItemsSource="{Binding Charts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <controls:DashboardChart DataContext="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </UniformGrid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

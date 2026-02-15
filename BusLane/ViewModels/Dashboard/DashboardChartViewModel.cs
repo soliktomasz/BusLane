@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
 using System.Collections.ObjectModel;
 
 namespace BusLane.ViewModels.Dashboard;
@@ -11,6 +12,18 @@ public partial class DashboardChartViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _series = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Axis> _xAxes = new()
+    {
+        new Axis { LabelsPaint = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(255, 255, 255)) }
+    };
+
+    [ObservableProperty]
+    private ObservableCollection<Axis> _yAxes = new()
+    {
+        new Axis { LabelsPaint = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(255, 255, 255)) }
+    };
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
