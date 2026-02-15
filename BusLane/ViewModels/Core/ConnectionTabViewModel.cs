@@ -1,3 +1,5 @@
+namespace BusLane.ViewModels.Core;
+
 // BusLane/ViewModels/Core/ConnectionTabViewModel.cs
 using Azure.Core;
 using BusLane.Models;
@@ -5,8 +7,6 @@ using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Represents a single connection tab with its own navigation state and message operations.

@@ -105,30 +105,6 @@ public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
         return $"{GetMetricDisplayName()} Over Time";
     }
 
-    private string GetMetricDisplayName()
-    {
-        return Widget.Configuration.MetricName switch
-        {
-            "ActiveMessageCount" => "Active Messages",
-            "DeadLetterCount" => "Dead Letters",
-            "ScheduledCount" => "Scheduled Messages",
-            "SizeInBytes" => "Size (Bytes)",
-            _ => Widget.Configuration.MetricName
-        };
-    }
-
-    private SKColor GetMetricColor()
-    {
-        return Widget.Configuration.MetricName switch
-        {
-            "ActiveMessageCount" => SKColors.DodgerBlue,
-            "DeadLetterCount" => SKColors.OrangeRed,
-            "ScheduledCount" => SKColors.Green,
-            "SizeInBytes" => SKColors.Purple,
-            _ => SKColors.DodgerBlue
-        };
-    }
-
     private TimeSpan GetTimeSpan()
     {
         return Widget.Configuration.TimeRange switch

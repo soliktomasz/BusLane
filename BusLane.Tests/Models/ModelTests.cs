@@ -1,7 +1,7 @@
+namespace BusLane.Tests.Models;
+
 using BusLane.Models;
 using FluentAssertions;
-
-namespace BusLane.Tests.Models;
 
 public class AlertRuleTests
 {

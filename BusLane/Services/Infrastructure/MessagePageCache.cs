@@ -1,7 +1,6 @@
-using System.Collections.Generic;
-using BusLane.Models;
-
 namespace BusLane.Services.Infrastructure;
+
+using BusLane.Models;
 
 public class MessagePageCache
 {

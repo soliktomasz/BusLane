@@ -1,11 +1,11 @@
+namespace BusLane.Views;
+
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.Views;
 
 public partial class MainWindow : Window
 {

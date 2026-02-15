@@ -1,3 +1,5 @@
+namespace BusLane.ViewModels;
+
 using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
@@ -8,9 +10,6 @@ using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
-
-namespace BusLane.ViewModels;
-
 using Services.Monitoring;
 
 public partial class ChartsViewModel : ViewModelBase

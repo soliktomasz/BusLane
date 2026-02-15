@@ -1,11 +1,11 @@
+namespace BusLane.ViewModels;
+
 using Avalonia.Threading;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Update;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {

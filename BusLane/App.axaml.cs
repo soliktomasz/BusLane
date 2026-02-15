@@ -1,3 +1,5 @@
+namespace BusLane;
+
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -10,8 +12,6 @@ using BusLane.Services.Abstractions;
 using BusLane.ViewModels;
 using BusLane.Views;
 using Microsoft.Extensions.DependencyInjection;
-
-namespace BusLane;
 
 public partial class App : Application
 {

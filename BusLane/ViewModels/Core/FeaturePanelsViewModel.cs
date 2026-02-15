@@ -1,12 +1,12 @@
+namespace BusLane.ViewModels.Core;
+
+using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using BusLane.Services.ServiceBus;
 using BusLane.ViewModels.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Manages feature panel visibility and lifecycle (Live Stream, Charts, Alerts).

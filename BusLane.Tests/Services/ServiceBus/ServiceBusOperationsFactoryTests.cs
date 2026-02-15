@@ -1,10 +1,10 @@
+namespace BusLane.Tests.Services.ServiceBus;
+
 using Azure.Core;
 using Azure.ResourceManager;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
 using NSubstitute;
-
-namespace BusLane.Tests.Services.ServiceBus;
 
 public class ServiceBusOperationsFactoryTests
 {

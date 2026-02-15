@@ -1,10 +1,10 @@
+namespace BusLane.Tests.Services.Storage;
+
 using BusLane.Models;
 using BusLane.Services.Infrastructure;
 using BusLane.Services.Storage;
 using FluentAssertions;
 using NSubstitute;
-
-namespace BusLane.Tests.Services.Storage;
 
 public class ConnectionStorageServiceTests : IDisposable
 {

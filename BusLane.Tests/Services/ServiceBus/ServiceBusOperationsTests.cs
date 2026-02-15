@@ -1,10 +1,10 @@
+namespace BusLane.Tests.Services.ServiceBus;
+
 using Azure.Messaging.ServiceBus;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
 using NSubstitute;
 using Xunit;
-
-namespace BusLane.Tests.Services.ServiceBus;
 
 public class ServiceBusOperationsTests
 {

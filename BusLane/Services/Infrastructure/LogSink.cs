@@ -1,6 +1,6 @@
-using BusLane.Models.Logging;
-
 namespace BusLane.Services.Infrastructure;
+
+using BusLane.Models.Logging;
 
 /// <summary>
 /// In-memory log sink implementation with a bounded circular buffer.

@@ -1,12 +1,11 @@
+namespace BusLane.ViewModels.Core;
+
 using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Handles bulk message operations: purge, delete, resend, and resubmit dead letters.

@@ -1,10 +1,10 @@
+namespace BusLane.Tests.Converters;
+
 using System.Globalization;
 using Avalonia.Media;
 using BusLane.Converters;
 using BusLane.Models;
 using FluentAssertions;
-
-namespace BusLane.Tests.Converters;
 
 /// <summary>
 /// Tests for BoolToColorConverter which uses Fluent 2 theme resources.

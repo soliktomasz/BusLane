@@ -1,8 +1,8 @@
+namespace BusLane.Services.Infrastructure;
+
 using System.Text.Json;
 using BusLane.Services.Abstractions;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
-
-namespace BusLane.Services.Infrastructure;
 
 /// <summary>
 /// Implementation of IPreferencesService that persists preferences to a JSON file.

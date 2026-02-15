@@ -1,5 +1,6 @@
+namespace BusLane.ViewModels.Core;
+
 using System.Collections.ObjectModel;
-using System.Threading;
 using Avalonia.Threading;
 using BusLane.Models;
 using BusLane.Models.Logging;
@@ -8,8 +9,6 @@ using BusLane.Services.Infrastructure;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-namespace BusLane.ViewModels.Core;
 
 /// <summary>
 /// Handles all message-related operations: loading, filtering, selection, bulk operations.

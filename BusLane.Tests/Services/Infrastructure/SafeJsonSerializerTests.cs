@@ -1,8 +1,8 @@
+namespace BusLane.Tests.Services.Infrastructure;
+
 using System.Text.Json;
 using BusLane.Services.Infrastructure;
 using FluentAssertions;
-
-namespace BusLane.Tests.Services.Infrastructure;
 
 public class SafeJsonSerializerTests
 {

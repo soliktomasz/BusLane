@@ -1,9 +1,9 @@
+namespace BusLane.Tests.Converters;
+
 using BusLane.Converters;
 using BusLane.Models.Logging;
 using FluentAssertions;
 using System.Globalization;
-
-namespace BusLane.Tests.Converters;
 
 public class LogSourceToStringConverterTests
 {

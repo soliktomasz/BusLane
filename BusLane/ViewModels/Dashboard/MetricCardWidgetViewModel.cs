@@ -76,7 +76,7 @@ public partial class MetricCardWidgetViewModel : DashboardWidgetViewModel
         return GetMetricDisplayName();
     }
 
-    private string GetMetricDisplayName()
+    private new string GetMetricDisplayName()
     {
         return Widget.Configuration.MetricName switch
         {

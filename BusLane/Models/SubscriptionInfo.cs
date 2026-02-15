@@ -1,6 +1,6 @@
-using BusLane.Models.Entities;
-
 namespace BusLane.Models;
+
+using BusLane.Models.Entities;
 
 /// <summary>
 /// Represents an Azure Service Bus topic subscription with its properties and metrics.
