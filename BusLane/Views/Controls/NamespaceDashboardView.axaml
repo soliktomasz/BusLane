@@ -22,30 +22,6 @@
                         <TextBlock Text="Namespace Overview" 
                                    Classes="heading"
                                    VerticalAlignment="Center"/>
-                        
-                        <!-- Time Range Selector -->
-                        <Border Background="{DynamicResource InputBackground}" 
-                                CornerRadius="6" 
-                                Padding="4">
-                            <StackPanel Orientation="Horizontal" Spacing="2">
-                                <RadioButton Content="15m" 
-                                           GroupName="TimeRange"
-                                           Classes="segment-button"
-                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=15 Minutes}"/>
-                                <RadioButton Content="1h" 
-                                           GroupName="TimeRange"
-                                           Classes="segment-button"
-                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=1 Hour}"/>
-                                <RadioButton Content="6h" 
-                                           GroupName="TimeRange"
-                                           Classes="segment-button"
-                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=6 Hours}"/>
-                                <RadioButton Content="24h" 
-                                           GroupName="TimeRange"
-                                           Classes="segment-button"
-                                           IsChecked="{Binding SelectedTimeRange, Converter={StaticResource StringEqualsConverter}, ConverterParameter=24 Hours}"/>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" 
@@ -57,11 +33,17 @@
                             <ToggleSwitch IsChecked="{Binding AutoRefreshEnabled}"
                                          OnContent="Auto"
                                          OffContent="Auto"/>
-                            <NumericUpDown Value="{Binding RefreshIntervalSeconds}"
-                                          Minimum="5"
-                                          Maximum="300"
-                                          Width="70"
-                                          IsVisible="{Binding AutoRefreshEnabled}"/>
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="4"
+                                        VerticalAlignment="Center"
+                                        IsVisible="{Binding AutoRefreshEnabled}">
+                                <ComboBox ItemsSource="{Binding RefreshIntervalOptions}"
+                                          SelectedItem="{Binding RefreshIntervalSeconds}"
+                                          Width="78"/>
+                                <TextBlock Text="sec"
+                                           Classes="caption"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Refresh Button -->
@@ -158,21 +140,23 @@
                                          Margin="10,0,0,0"/>
             </Grid>
 
-            <!-- Charts Grid (3x2) -->
-            <Grid Grid.Row="3" RowDefinitions="Auto,Auto">
-                <ItemsControl Grid.Row="0" ItemsSource="{Binding Charts}" Margin="0,0,0,10">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Grid ColumnDefinitions="*,*,*"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <controls:DashboardChart DataContext="{Binding}" Margin="0,0,10,0"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Grid>
+            <!-- Charts Grid -->
+            <ItemsControl Grid.Row="3"
+                          ItemsSource="{Binding Charts}"
+                          HorizontalAlignment="Stretch">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:DashboardChart DataContext="{Binding}"
+                                                 HorizontalAlignment="Stretch"
+                                                 Margin="0,0,12,12"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </ScrollViewer>
 </UserControl>

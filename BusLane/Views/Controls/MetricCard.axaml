@@ -17,7 +17,8 @@
                        Foreground="{DynamicResource TextPrimary}"/>
             
             <StackPanel Orientation="Horizontal"
-                       VerticalAlignment="Center">
+                       VerticalAlignment="Center"
+                       ToolTip.Tip="Change compared to previous refresh">
                 <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
                            FontSize="18"
                            FontWeight="Bold"
@@ -28,6 +29,10 @@
                            FontSize="14"
                            FontWeight="SemiBold"
                            Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"/>
+                <TextBlock Text="vs prev"
+                           Classes="caption"
                            VerticalAlignment="Center"
                            Margin="4,0,0,0"/>
             </StackPanel>

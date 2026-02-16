@@ -28,7 +28,7 @@ public class NamespaceDashboardViewModelTests
         vm.SizeCard.Should().NotBeNull();
         vm.TopQueues.Should().NotBeNull();
         vm.TopTopics.Should().NotBeNull();
-        vm.Charts.Should().HaveCount(6);
+        vm.Charts.Should().HaveCount(4);
     }
 
     [Fact]

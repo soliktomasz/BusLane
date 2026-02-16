@@ -1,6 +1,7 @@
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
-using LiveChartsCore;
+using LiveChartsCore.Defaults;
+using LiveChartsCore.SkiaSharpView;
 using Xunit;
 
 namespace BusLane.Tests.ViewModels.Dashboard;
@@ -30,5 +31,25 @@ public class DashboardChartViewModelTests
 
         // Assert
         vm.SelectedTimeRange.Should().Be("1 Hour");
+    }
+
+    [Fact]
+    public void UpdateData_CreatesLineSeriesWithPoints()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Test");
+        var now = DateTime.Now;
+        var points = new[]
+        {
+            new DateTimePoint(now.AddMinutes(-5), 10),
+            new DateTimePoint(now, 15)
+        };
+
+        // Act
+        vm.UpdateData(points);
+
+        // Assert
+        vm.Series.Should().ContainSingle();
+        vm.Series[0].Should().BeOfType<LineSeries<DateTimePoint>>();
     }
 }

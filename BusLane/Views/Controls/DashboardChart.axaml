@@ -8,7 +8,7 @@
              x:Class="BusLane.Views.Controls.DashboardChart"
              x:DataType="vm:DashboardChartViewModel">
 
-    <Border Classes="card" Padding="0">
+    <Border Classes="card" Padding="0" HorizontalAlignment="Stretch">
         <Grid RowDefinitions="Auto,*">
             <!-- Header with Title and Time Range -->
             <Border Grid.Row="0" 
@@ -24,28 +24,31 @@
                                VerticalAlignment="Center"/>
 
                     <Border Grid.Column="1"
-                           Background="{DynamicResource InputBackground}"
-                           CornerRadius="4"
-                           Padding="8,4">
+                            Background="{DynamicResource InputBackground}"
+                            CornerRadius="4"
+                            Padding="6,2">
                         <ComboBox ItemsSource="{Binding TimeRangeOptions}"
-                                 SelectedItem="{Binding SelectedTimeRange}"
-                                 Width="100"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 FontSize="12"/>
+                                  SelectedItem="{Binding SelectedTimeRange}"
+                                  Width="95"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  FontSize="11"/>
                     </Border>
                 </Grid>
             </Border>
 
             <!-- Chart -->
             <lvc:CartesianChart Grid.Row="1"
-                               Height="180"
-                               Margin="12"
-                               Series="{Binding Series}"
-                               XAxes="{Binding XAxes}"
-                               YAxes="{Binding YAxes}"
-                               Background="Transparent"
-                               TooltipPosition="Top"/>
+                                MinHeight="240"
+                                Margin="12"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Series="{Binding Series}"
+                                XAxes="{Binding XAxes}"
+                                YAxes="{Binding YAxes}"
+                                ZoomMode="X"
+                                Background="Transparent"
+                                TooltipPosition="Top"/>
         </Grid>
     </Border>
 </UserControl>

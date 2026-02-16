@@ -42,23 +42,24 @@
                         <Style Selector="ItemsControl > ContentPresenter:nth-child(2n)">
                             <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
                         </Style>
-                        <!-- Top item highlight -->
-                        <Style Selector="ItemsControl > ContentPresenter:nth-child(1)">
-                            <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
-                        </Style>
                     </ItemsControl.Styles>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:TopEntityInfo">
                             <Border Padding="12,10">
-                                <Grid ColumnDefinitions="Auto,*,Auto"
-                                      VerticalAlignment="Center">
+                                <Grid ColumnDefinitions="Auto,*"
+                                      RowDefinitions="Auto,Auto,Auto"
+                                      VerticalAlignment="Center"
+                                      RowSpacing="6">
                                     <!-- Entity Icon -->
                                     <Border Grid.Column="0"
-                                           Background="{DynamicResource SurfaceBrand}"
+                                           Grid.Row="0"
+                                           Grid.RowSpan="3"
+                                           Background="{DynamicResource InputBackground}"
                                            CornerRadius="6"
                                            Width="28"
                                            Height="28"
-                                           Margin="0,0,10,0">
+                                           Margin="0,2,10,0"
+                                           VerticalAlignment="Top">
                                         <LucideIcon VerticalAlignment="Center"
                                                    HorizontalAlignment="Center"
                                                    Size="14"
@@ -69,53 +70,56 @@
                                         </LucideIcon>
                                     </Border>
 
-                                    <!-- Entity Name & Subtitle -->
-                                    <StackPanel Grid.Column="1"
-                                               VerticalAlignment="Center"
-                                               Spacing="2">
+                                    <!-- Entity Name -->
+                                    <Grid Grid.Column="1"
+                                          Grid.Row="0"
+                                          ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
                                         <TextBlock Text="{Binding Name}"
                                                   FontSize="13"
                                                   FontWeight="Medium"
-                                                  Foreground="{DynamicResource TextPrimary}"
-                                                  VerticalAlignment="Center"
-                                                  TextTrimming="CharacterEllipsis"
-                                                  MaxWidth="170"
+                                                  Foreground="{DynamicResource AppForeground}"
+                                                  VerticalAlignment="Top"
+                                                  TextWrapping="Wrap"
                                                   ToolTip.Tip="{Binding Name}"/>
-                                        <TextBlock Text="{Binding DisplaySubtitle}"
+                                        <TextBlock Grid.Column="1"
+                                                  Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
+                                                  FontSize="12"
+                                                  FontWeight="SemiBold"
+                                                  Foreground="{DynamicResource AppForeground}"
+                                                  VerticalAlignment="Top"
+                                                  HorizontalAlignment="Right"/>
+                                    </Grid>
+
+                                    <!-- Subtitle -->
+                                    <TextBlock Grid.Column="1"
+                                              Grid.Row="1"
+                                              Text="{Binding DisplaySubtitle}"
+                                              FontSize="11"
+                                              Foreground="{DynamicResource SubtleForeground}"
+                                              VerticalAlignment="Center"
+                                              IsVisible="{Binding DisplaySubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                                    <!-- Slim Progress -->
+                                    <Grid Grid.Column="1"
+                                          Grid.Row="2"
+                                          ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8"
+                                          VerticalAlignment="Center">
+                                        <ProgressBar Grid.Column="0"
+                                                    Value="{Binding PercentageOfTotal}"
+                                                    Maximum="100"
+                                                    Height="3"
+                                                    MinWidth="120"
+                                                    Background="{DynamicResource InputBackground}"
+                                                    Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Grid.Column="1"
+                                                  Text="{Binding PercentageOfTotal, StringFormat='{}{0:F0}%'}"
                                                   FontSize="11"
                                                   Foreground="{DynamicResource SubtleForeground}"
                                                   VerticalAlignment="Center"
-                                                  IsVisible="{Binding DisplaySubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                    </StackPanel>
-
-                                    <!-- Progress Bar with Percentage and Count -->
-                                    <StackPanel Grid.Column="2"
-                                               Orientation="Horizontal"
-                                               HorizontalAlignment="Right"
-                                               Spacing="8"
-                                               VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <ProgressBar Value="{Binding PercentageOfTotal}"
-                                                        Maximum="100"
-                                                        Width="50"
-                                                        Height="4"
-                                                        Background="{DynamicResource InputBackground}"
-                                                        Foreground="{DynamicResource AccentBrand}"/>
-                                            <TextBlock Text="{Binding PercentageOfTotal, StringFormat='{}{0:F0}%'}"
-                                                      FontSize="11"
-                                                      Foreground="{DynamicResource MutedForeground}"
-                                                      Width="28"
-                                                      TextAlignment="Left"
-                                                      VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
-                                                  FontSize="12"
-                                                  FontWeight="SemiBold"
-                                                  Foreground="{DynamicResource TextPrimary}"
-                                                  Width="45"
-                                                  TextAlignment="Right"
-                                                  VerticalAlignment="Center"/>
-                                    </StackPanel>
+                                                  HorizontalAlignment="Right"/>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </DataTemplate>

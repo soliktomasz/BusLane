@@ -143,14 +143,37 @@ public class DashboardRefreshService : IDashboardRefreshService
         List<SubscriptionInfo> subscriptions)
     {
         var entities = new List<TopEntityInfo>();
-        long totalMessageCount = queues.Sum(q => q.MessageCount) +
-                                  subscriptions.Sum(s => s.ActiveMessageCount + s.DeadLetterCount);
+        var queueCounts = queues
+            .Select(q => new
+            {
+                q.Name,
+                MessageCount = GetQueueMessageCount(q)
+            })
+            .ToList();
+
+        var subscriptionCountsByTopic = subscriptions
+            .GroupBy(s => s.TopicName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(GetSubscriptionMessageCount),
+                StringComparer.OrdinalIgnoreCase);
+
+        var topicCounts = topics
+            .Select(t => new
+            {
+                t.Name,
+                MessageCount = subscriptionCountsByTopic.GetValueOrDefault(t.Name, 0L)
+            })
+            .ToList();
+
+        long totalQueueMessages = queueCounts.Sum(q => q.MessageCount);
+        long totalTopicMessages = topicCounts.Sum(t => t.MessageCount);
 
         // Add queues
-        foreach (var queue in queues)
+        foreach (var queue in queueCounts)
         {
-            double percentage = totalMessageCount > 0
-                ? ((double)queue.MessageCount / totalMessageCount) * 100.0
+            double percentage = totalQueueMessages > 0
+                ? ((double)queue.MessageCount / totalQueueMessages) * 100.0
                 : 0.0;
 
             entities.Add(new TopEntityInfo(
@@ -161,43 +184,47 @@ public class DashboardRefreshService : IDashboardRefreshService
             ));
         }
 
-        // Add topics (using SizeInBytes as metric since topics don't hold messages directly)
-        foreach (var topic in topics)
+        // Add topics based on aggregated subscription message counts
+        foreach (var topic in topicCounts)
         {
-            double percentage = totalMessageCount > 0
-                ? ((double)topic.SizeInBytes / totalMessageCount) * 100.0
+            double percentage = totalTopicMessages > 0
+                ? ((double)topic.MessageCount / totalTopicMessages) * 100.0
                 : 0.0;
 
             entities.Add(new TopEntityInfo(
                 Name: topic.Name,
-                MessageCount: topic.SizeInBytes,
+                MessageCount: topic.MessageCount,
                 PercentageOfTotal: percentage,
                 Type: EntityType.Topic
             ));
         }
 
-        // Add subscriptions (grouped by topic)
-        foreach (var sub in subscriptions)
-        {
-            long subMessageCount = sub.ActiveMessageCount + sub.DeadLetterCount;
-            double percentage = totalMessageCount > 0
-                ? ((double)subMessageCount / totalMessageCount) * 100.0
-                : 0.0;
-
-            entities.Add(new TopEntityInfo(
-                Name: sub.Name,
-                MessageCount: subMessageCount,
-                PercentageOfTotal: percentage,
-                Type: EntityType.Subscription,
-                TopicName: sub.TopicName
-            ));
-        }
-
-        // Sort by message count descending and take top 20
+        // Keep both lists in this collection; each UI list filters by entity type.
         return entities
             .OrderByDescending(e => e.MessageCount)
             .Take(20)
             .ToList();
+    }
+
+    private static long GetQueueMessageCount(QueueInfo queue)
+    {
+        if (queue.MessageCount > 0)
+        {
+            return queue.MessageCount;
+        }
+
+        // Fallback for providers that don't populate MessageCount consistently.
+        return Math.Max(0, queue.ActiveMessageCount + queue.DeadLetterCount + queue.ScheduledCount);
+    }
+
+    private static long GetSubscriptionMessageCount(SubscriptionInfo subscription)
+    {
+        if (subscription.MessageCount > 0)
+        {
+            return subscription.MessageCount;
+        }
+
+        return Math.Max(0, subscription.ActiveMessageCount + subscription.DeadLetterCount);
     }
 
     public void StartAutoRefresh(string namespaceId, IServiceBusOperations? operations = null, TimeSpan? interval = null)
