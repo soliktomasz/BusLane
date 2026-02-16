@@ -3,6 +3,7 @@
              xmlns:converters="using:BusLane.Converters"
              xmlns:viewsConverters="using:BusLane.Views.Converters"
              x:Class="BusLane.App"
+             Name="BusLane"
              RequestedThemeVariant="Default">
     <Application.Styles>
         <FluentTheme />
