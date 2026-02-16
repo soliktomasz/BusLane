@@ -3,18 +3,24 @@ namespace BusLane;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using BusLane.Services.Abstractions;
+using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
 using BusLane.Views;
+using BusLane.Views.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 
 public partial class App : Application
 {
+    private const string AboutDescription = "A desktop workspace for Azure Service Bus operations and troubleshooting.";
+    private const string GitHubRepositoryUrl = "https://github.com/soliktomasz/BusLane";
+
     public static App? Instance { get; private set; }
     
     /// <summary>
@@ -47,6 +53,7 @@ public partial class App : Application
             vm.SetFileDialogService(fileDialogService);
             
             desktop.MainWindow = mainWindow;
+            ConfigureMacOSMainMenu(mainWindow, vm);
         }
         base.OnFrameworkInitializationCompleted();
     }
@@ -93,8 +100,8 @@ public partial class App : Application
                 objc_msgSend(sharedApp, setApplicationIconImage, image);
             }
 
-            // Set the application name in the menu bar
-            SetMacOSMenuBarTitle(sharedApp);
+            // Remove default "About Avalonia" item from the application menu.
+            RemoveDefaultMacOSAboutMenuItem(sharedApp);
         }
         catch
         {
@@ -102,7 +109,70 @@ public partial class App : Application
         }
     }
 
-    private static void SetMacOSMenuBarTitle(IntPtr nsApp)
+    private static void ConfigureMacOSMainMenu(Window mainWindow, MainWindowViewModel viewModel)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return;
+
+        var menu = CreateMacMenu(
+            (_, _) => ToggleFullscreen(mainWindow),
+            (_, _) => ShowLogViewer(viewModel),
+            async (_, _) => await ShowAboutDialogAsync(mainWindow));
+        NativeMenu.SetMenu(mainWindow, menu);
+    }
+
+    internal static NativeMenu CreateMacMenu(
+        EventHandler onToggleFullscreenClick,
+        EventHandler onShowLogViewerClick,
+        EventHandler onAboutClick)
+    {
+        var toggleFullscreenItem = new NativeMenuItem("Toggle Fullscreen");
+        toggleFullscreenItem.Click += onToggleFullscreenClick;
+
+        var showLogViewerItem = new NativeMenuItem("Show Log Viewer");
+        showLogViewerItem.Click += onShowLogViewerClick;
+
+        var viewMenu = new NativeMenu();
+        viewMenu.Add(toggleFullscreenItem);
+        viewMenu.Add(showLogViewerItem);
+
+        var aboutItem = new NativeMenuItem("About BusLane");
+        aboutItem.Click += onAboutClick;
+
+        var helpMenu = new NativeMenu();
+        helpMenu.Add(aboutItem);
+
+        var rootMenu = new NativeMenu();
+        rootMenu.Add(new NativeMenuItem("View")
+        {
+            Menu = viewMenu
+        });
+        rootMenu.Add(new NativeMenuItem("Help")
+        {
+            Menu = helpMenu
+        });
+
+        return rootMenu;
+    }
+
+    private static void ToggleFullscreen(Window mainWindow)
+    {
+        mainWindow.WindowState = mainWindow.WindowState == WindowState.FullScreen
+            ? WindowState.Normal
+            : WindowState.FullScreen;
+    }
+
+    private static void ShowLogViewer(MainWindowViewModel viewModel) => viewModel.LogViewer.Open();
+
+    private static async Task ShowAboutDialogAsync(Window owner)
+    {
+        var versionService = Program.Services?.GetService<IVersionService>();
+        var version = versionService?.DisplayVersion ?? "v0.0.0";
+        var dialog = new AboutDialog(version, AboutDescription, GitHubRepositoryUrl);
+        await dialog.ShowDialog(owner);
+    }
+
+    private static void RemoveDefaultMacOSAboutMenuItem(IntPtr nsApp)
     {
         try
         {
@@ -124,25 +194,16 @@ public partial class App : Application
 
                     if (appMenu != IntPtr.Zero)
                     {
-                        // Set the title of the first menu item to "BusLane"
-                        var setTitleSelector = sel_registerName("setTitle:");
-                        var nsString = objc_getClass("NSString");
-                        var stringWithUTF8String = sel_registerName("stringWithUTF8String:");
-                        var titleString = objc_msgSend(nsString, stringWithUTF8String, "BusLane");
-
-                        // Get the first item in the submenu (About item)
-                        var firstItem = objc_msgSend(appMenu, itemAtIndexSelector, (IntPtr)0);
-                        if (firstItem != IntPtr.Zero)
-                        {
-                            objc_msgSend(firstItem, setTitleSelector, titleString);
-                        }
+                        // First entry is the default About item; remove it.
+                        var removeItemAtIndexSelector = sel_registerName("removeItemAtIndex:");
+                        objc_msgSend(appMenu, removeItemAtIndexSelector, (IntPtr)0);
                     }
                 }
             }
         }
         catch
         {
-            // Silently fail if we can't set the menu title
+            // Silently fail if we can't modify the menu
         }
     }
     

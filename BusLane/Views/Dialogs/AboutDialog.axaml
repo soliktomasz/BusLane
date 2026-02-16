@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dialogs="using:BusLane.Views.Dialogs"
+        x:Class="BusLane.Views.Dialogs.AboutDialog"
+        x:DataType="dialogs:AboutDialog"
+        Title="About BusLane"
+        Width="460"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <Border Padding="24">
+        <StackPanel Spacing="12">
+            <TextBlock Text="About BusLane" Classes="heading"/>
+            <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding VersionLabel}" FontWeight="SemiBold"/>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="GitHub" FontWeight="SemiBold"/>
+                <SelectableTextBlock Text="{Binding RepositoryUrl}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8"
+                        Margin="0,8,0,0">
+                <Button Classes="secondary"
+                        Content="Open GitHub"
+                        Click="OnOpenGitHubClick"/>
+                <Button Classes="primary"
+                        Content="Close"
+                        Click="OnCloseClick"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
