@@ -44,6 +44,9 @@ public partial class SendMessageViewModel : ViewModelBase
     [ObservableProperty] private bool _showSaveDialog;
     [ObservableProperty] private bool _showLoadDialog;
     [ObservableProperty] private SavedMessage? _selectedSavedMessage;
+    [ObservableProperty] private bool _isComposeTabSelected = true;
+    [ObservableProperty] private bool _isPropertiesTabSelected;
+    [ObservableProperty] private bool _isCustomTabSelected;
 
     public ObservableCollection<CustomProperty> CustomProperties { get; } = new();
     public ObservableCollection<SavedMessage> SavedMessages { get; } = new();
@@ -510,4 +513,3 @@ public partial class SendMessageViewModel : ViewModelBase
         }
     }
 }
-

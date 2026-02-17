@@ -1,138 +1,100 @@
 # BusLane Roadmap
 
-This document outlines the planned features and improvements for BusLane. Items are organized by priority and timeline, though this may change based on community feedback and contributions.
+This roadmap reflects the current BusLane codebase and planned feature work as of February 17, 2026.
 
-> 💡 **Have a suggestion?** Open an [issue](https://github.com/soliktomasz/BusLane/issues) or start a [discussion](https://github.com/soliktomasz/BusLane/discussions)!
+> Have a feature request? Open an [issue](https://github.com/soliktomasz/BusLane/issues) or start a [discussion](https://github.com/soliktomasz/BusLane/discussions).
 
----
+## Current Baseline (Already in Product)
 
-## ✅ Completed
+- Multi-connection tab workflow with session restore
+- Queue/topic/subscription browsing with DLQ support
+- Message operations: peek, send, filter/search, bulk actions, export/import
+- Live stream, charts, alerts, and namespace dashboard
+- Connection library with encrypted storage
+- Keyboard shortcuts and improved desktop UX (including app menu/About)
+- Update checking/downloading infrastructure and cross-platform packaging groundwork
 
-### v0.9.0 — Multi-Connection Tabs
+## 2026 Feature Roadmap
 
-- [x] **Tab Management** — Open multiple Service Bus connections simultaneously in tabs
-- [x] **Session Persistence** — Restore open tabs on application restart
-- [x] **Lucide Icons** — Migrated to modern, consistent icon system
-- [x] **Tab Keyboard Shortcuts** — Ctrl+T (new), Ctrl+W (close), Ctrl+Tab (next)
-- [x] **Tab-Specific Operations** — Each tab maintains independent message operations state
-- [x] **Improved UX** — Better loading states and connection handling
+## Horizon 1: Message Workflow Excellence (Q1 2026)
 
-### v0.8.0 — Developer Experience
+### 1. Message Templates v2
+- [ ] Parameterized templates (tokens like `{{OrderId}}`)
+- [ ] Template categories/tags and quick search
+- [ ] Duplicate/edit from existing message payload
 
-- [x] **Keyboard Shortcuts** — Quick actions (Ctrl+R refresh, Ctrl+N new message, etc.)
-- [x] **Syntax Highlighting** — JSON/XML highlighting in message body
-- [x] **JSON Formatter** — Format and validate JSON message bodies
-- [x] **Better Namespace Explorer** — Improve namespace selector for better clarity and functionality
-- [x] **Recent Connections** — Quick access to recently used connections
+### 2. Safer Bulk Operations
+- [ ] Dry-run preview for bulk delete/resend actions
+- [ ] Progress + partial-failure summary UI
+- [ ] Optional operation confirmation rules for destructive actions
 
-### v0.7.0 — Enhanced Message Management
+### 3. Session-Aware Operations
+- [ ] Better tools for session-enabled queues (session drill-down and diagnostics)
+- [ ] Persist last-used session filters per tab
 
-- [x] **Message Search & Filter** — Search messages by content, properties, or metadata
-- [x] **Bulk Operations** — Select multiple messages for delete/move operations
-- [x] **Export Messages** — Export messages to JSON/XML files
-- [x] **Import Messages** — Send messages from JSON/XML files
-- [x] **Resend from DLQ** — Resend dead-letter messages to original queue
+## Horizon 2: Monitoring & Incident Response (Q2 2026)
 
----
+### 4. Historical Metrics
+- [ ] Persist metric snapshots locally with configurable retention
+- [ ] Time-range comparisons (last hour/day/week)
+- [ ] Trend overlays for queue depth and DLQ growth
 
-## 📅 Planned
+### 5. Dashboard Presets
+- [ ] Save/load dashboard presets per namespace
+- [ ] One-click reset to default layout
+- [ ] Import/export dashboard configuration
 
-### v0.10.0 — Advanced Monitoring
+### 6. Alerting Improvements
+- [ ] Quiet hours and rule cooldown windows
+- [ ] Better rule testing experience and alert history panel
+- [ ] Optional notification channels beyond in-app toast (pluggable)
 
-- [ ] **Historical Metrics** — Store and display metric history
-- [ ] **Custom Dashboards** — Configurable dashboard layouts
-- [ ] **Export Charts** — Save charts as images or PDF
-- [ ] **Metric Comparison** — Compare metrics across queues/namespaces
-- [ ] **Scheduled Reports** — Generate periodic health reports
+## Horizon 3: 1.0 Readiness (Q3 2026)
 
-### v1.0.0 — Production Ready
+### 7. Distribution & Trust
+- [ ] Production-ready installers/signing pipeline
+- [ ] macOS notarization, Windows installer polish, Linux package validation
+- [ ] Release quality gates and smoke-check checklist
 
-- [ ] **Auto-Update** — In-app update notifications and installation
-- [ ] **Windows Installer** — MSI/MSIX package
-- [ ] **macOS Signing** — Code signing and notarization
-- [ ] **Linux Packages** — AppImage, Flatpak, or Snap
-- [ ] **Comprehensive Documentation** — User guide and API docs
-- [ ] **Logging** — Integrated logging with Serilog
-- [ ] **Telemetry** — Optional anonymous usage analytics
+### 8. Reliability & Performance
+- [ ] Performance pass for large message/entity sets
+- [ ] Better reconnection handling for intermittent network/auth failures
+- [ ] Memory usage guardrails for long-running live stream sessions
 
----
+### 9. Documentation & Onboarding
+- [ ] End-to-end user guide with common workflows
+- [ ] Troubleshooting playbooks (auth, permissions, connectivity)
+- [ ] Feature walkthroughs for dashboards, alerts, and bulk operations
 
-## 🔮 Future Considerations
+## Future / Discovery Backlog
 
-These items are being considered for future releases but are not yet scheduled:
+These are intentionally unscheduled until core 1.0 goals are complete.
 
-### Additional Azure Services
 - [ ] Azure Event Hubs support
 - [ ] Azure Storage Queues support
-- [ ] Azure Event Grid integration
+- [ ] Message scheduling calendar and replay tooling
+- [ ] Shared team profiles/connection bundles (secure)
+- [ ] AI-assisted search/triage helpers
 
-### Collaboration
-- [ ] Export/Import connection configurations (encrypted)
-- [ ] Shared message templates
-- [ ] Operation audit log
+## Prioritization Rules
 
-### Advanced Tooling
-- [ ] Message scheduling calendar view
-- [ ] Load testing (send N messages)
-- [ ] Schema registry integration
-- [ ] Message transformation pipelines
-- [ ] Request/response testing mode
+When tradeoffs are needed, prioritize work in this order:
 
-### UI/UX Enhancements
-- [ ] Light/Dark theme toggle
-- [ ] Customizable message list columns
-- [ ] Notification sounds for alerts
-- [ ] Drag-and-drop support
-- [ ] Multi-window support
+1. Reliability and data safety
+2. High-frequency operator workflows
+3. Monitoring signal quality
+4. Platform distribution polish
+5. Experimental features
 
-### AI-Powered Features
-- [ ] Natural language message search
-- [ ] Anomaly detection in message patterns
-- [ ] Smart property suggestions
-- [ ] Auto-generate test messages from schema
+## Definition of Done for Roadmap Items
+
+Each item is considered complete only when:
+
+- [ ] Unit/integration tests are added or updated
+- [ ] UI behavior is validated on macOS, Windows, and Linux paths where applicable
+- [ ] User-facing docs are updated
+- [ ] No secrets or sensitive data are introduced in logs/telemetry
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! If you'd like to work on any roadmap item:
-
-1. Check [existing issues](https://github.com/soliktomasz/BusLane/issues) to avoid duplicates
-2. Open an issue to discuss your approach
-3. Fork the repository and create a feature branch
-4. Submit a pull request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
----
-
-## 📊 Priority Matrix
-
-| Priority | Impact | Effort | Items |
-|----------|--------|--------|-------|
-| 🔴 High | High | Low | Auto-update, Windows Installer |
-| 🟠 Medium | High | Medium | Historical metrics, Custom dashboards |
-| 🟡 Medium | Medium | Medium | macOS Signing, Linux Packages |
-| 🟢 Low | Medium | High | Additional Azure services, AI features |
-
----
-
-## 📝 Version History
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
-
-| Version | Date | Highlights |
-|---------|------|------------|
-| v0.9.0 | 2026 | Multi-Connection Tabs, Session Persistence, Lucide Icons Migration |
-| v0.8.0 | 2026 | Developer Experience, Keyboard Shortcuts, Syntax Highlighting, JSON Formatter |
-| v0.7.0 | 2026 | Enhanced Message Management, Search & Filter, Bulk Operations, Export/Import |
-| v0.6.0 | 2025 | Live Charts, Alert system |
-| v0.5.x | 2025 | Connection library, Message templates |
-| v0.4.x | 2024 | Session support, DLQ improvements |
-| v0.3.x | 2024 | Initial public release |
-
----
-
-<p align="center">
-  <i>This roadmap is a living document and will be updated as the project evolves.</i>
-</p>
+This roadmap is a living document and will be updated as priorities evolve.
