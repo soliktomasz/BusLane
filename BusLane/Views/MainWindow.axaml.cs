@@ -261,13 +261,17 @@ public partial class MainWindow : Window
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         SetViewModel(DataContext as MainWindowViewModel);
+        ApplyTerminalLayoutRows();
         EnsureTerminalWindowState();
     }
 
     private void OnTerminalPropertyChanged(object? _, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(TerminalHostViewModel.ShowTerminalPanel) or nameof(TerminalHostViewModel.TerminalIsDocked))
+        if (e.PropertyName is nameof(TerminalHostViewModel.ShowTerminalPanel)
+            or nameof(TerminalHostViewModel.TerminalIsDocked)
+            or nameof(TerminalHostViewModel.TerminalDockHeight))
         {
+            ApplyTerminalLayoutRows();
             EnsureTerminalWindowState();
         }
     }
@@ -303,6 +307,8 @@ public partial class MainWindow : Window
         {
             _viewModel.Terminal.PropertyChanged += OnTerminalPropertyChanged;
         }
+
+        ApplyTerminalLayoutRows();
     }
 
     private void EnsureTerminalWindowState()
@@ -470,7 +476,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var terminalRow = grid.RowDefinitions[4];
+        var terminalRow = grid.RowDefinitions[3];
         var height = terminalRow.ActualHeight > 0 ? terminalRow.ActualHeight : terminalRow.Height.Value;
         if (height <= 0)
         {
@@ -478,5 +484,22 @@ public partial class MainWindow : Window
         }
 
         _viewModel.Terminal.TerminalDockHeight = height;
+    }
+
+    private void ApplyTerminalLayoutRows()
+    {
+        if (_viewModel?.Terminal is not { } terminal)
+        {
+            return;
+        }
+
+        if (this.FindControl<Grid>("MainContentGrid") is not { } grid || grid.RowDefinitions.Count <= 3)
+        {
+            return;
+        }
+
+        grid.RowDefinitions[3].Height = terminal.IsDockedVisible
+            ? new GridLength(Math.Max(0, terminal.TerminalDockHeight))
+            : new GridLength(0);
     }
 }

@@ -1,6 +1,7 @@
 using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Services.ServiceBus;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ public class DashboardRefreshService : IDashboardRefreshService
     private string? _currentNamespaceId;
     private IServiceBusOperations? _currentOperations;
     private NamespaceDashboardSummary? _lastSummary;
+    private int _autoRefreshTickInProgress;
 
     public async Task RefreshAsync(string namespaceId, IServiceBusOperations? operations = null, CancellationToken ct = default)
     {
@@ -240,11 +242,32 @@ public class DashboardRefreshService : IDashboardRefreshService
 
         _refreshTimer?.Dispose();
         _refreshTimer = new Timer(
-            async _ => await RefreshAsync(namespaceId, _currentOperations),
+            _ => _ = OnAutoRefreshTickAsync(namespaceId),
             null,
             TimeSpan.Zero,
             actualInterval
         );
+    }
+
+    private async Task OnAutoRefreshTickAsync(string namespaceId)
+    {
+        if (Interlocked.CompareExchange(ref _autoRefreshTickInProgress, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await RefreshAsync(namespaceId, _currentOperations);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Dashboard auto-refresh tick failed");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
+        }
     }
 
     public void StopAutoRefresh()
@@ -254,5 +277,6 @@ public class DashboardRefreshService : IDashboardRefreshService
         _currentNamespaceId = null;
         _currentOperations = null;
         _lastSummary = null;
+        Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
     }
 }

@@ -62,6 +62,13 @@
                                 Padding="6">
                             <LucideIcon Kind="ArrowDownToLine" Size="13"/>
                         </Button>
+
+                        <Button Classes="icon-button"
+                                Command="{Binding CloseCommand}"
+                                ToolTip.Tip="Close terminal"
+                                Padding="6">
+                            <LucideIcon Kind="X" Size="13"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>

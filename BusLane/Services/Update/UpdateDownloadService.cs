@@ -1,6 +1,7 @@
 namespace BusLane.Services.Update;
 
 using System.IO;
+using System.Net;
 using BusLane.Models.Update;
 using Serilog;
 
@@ -45,6 +46,7 @@ public class UpdateDownloadService
             Log.Information("Downloading update from {Url} to {Path}", asset.DownloadUrl, filePath);
 
             using var request = new HttpRequestMessage(HttpMethod.Get, asset.DownloadUrl);
+            var isResuming = existingLength > 0;
             if (existingLength > 0)
             {
                 request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(existingLength, null);
@@ -55,6 +57,14 @@ public class UpdateDownloadService
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
+
+            if (isResuming && response.StatusCode == HttpStatusCode.OK)
+            {
+                // Some servers ignore Range and return the full file with 200.
+                // Restart the file to avoid appending full content to a partial file.
+                Log.Warning("Server ignored range request; restarting download from the beginning");
+                existingLength = 0;
+            }
 
             response.EnsureSuccessStatusCode();
 

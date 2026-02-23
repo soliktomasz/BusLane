@@ -40,6 +40,10 @@ public class UpdateCheckServiceTests
     [InlineData("0.10.0", "0.9.4", false)]
     [InlineData("0.10.0", "0.10.0", false)]
     [InlineData("1.0.0", "0.10.0", false)]
+    [InlineData("0.10.1-preview.0.1", "0.10.1", true)]
+    [InlineData("0.10.1", "0.10.1-preview.0.1", false)]
+    [InlineData("0.10.1-preview.0.1", "0.10.1-preview.0.2", true)]
+    [InlineData("0.10.1-preview.0.2", "0.10.1-preview.0.1", false)]
     public void IsNewerVersion_ComparesCorrectly(string current, string latest, bool expected)
     {
         // Act

@@ -28,12 +28,14 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DockedHeight))]
+    [NotifyPropertyChangedFor(nameof(SplitterHeight))]
     [NotifyPropertyChangedFor(nameof(IsDockedVisible))]
     [NotifyPropertyChangedFor(nameof(IsUndockedVisible))]
     private bool _showTerminalPanel;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DockedHeight))]
+    [NotifyPropertyChangedFor(nameof(SplitterHeight))]
     [NotifyPropertyChangedFor(nameof(IsDockedVisible))]
     [NotifyPropertyChangedFor(nameof(IsUndockedVisible))]
     private bool _terminalIsDocked;
@@ -63,6 +65,7 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
 
     public bool IsDockedVisible => ShowTerminalPanel && TerminalIsDocked;
     public bool IsUndockedVisible => ShowTerminalPanel && !TerminalIsDocked;
+    public double SplitterHeight => IsDockedVisible ? 6 : 0;
     public double DockedHeight => IsDockedVisible ? TerminalDockHeight : 0;
     public Guid SessionId => _terminalSession.SessionId;
     public string StatusIndicatorTooltip => SessionStatus;
@@ -149,6 +152,9 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
 
     [RelayCommand]
     private void ToggleVisibility() => ShowTerminalPanel = !ShowTerminalPanel;
+
+    [RelayCommand]
+    private void Close() => ShowTerminalPanel = false;
 
     [RelayCommand]
     private void Dock() => TerminalIsDocked = true;

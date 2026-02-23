@@ -54,8 +54,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="{Binding Terminal.DockedHeight}"/>
+                    <RowDefinition Height="0"/>
                 </Grid.RowDefinitions>
 
                 <!-- Welcome / Not Connected -->
@@ -289,15 +288,19 @@
             </Border>
 
             <GridSplitter Grid.Row="3"
-                          Height="6"
+                          Height="2"
                           ResizeDirection="Rows"
+                          VerticalAlignment="Top"
+                          Margin="0,-1,0,0"
                           Background="{DynamicResource BorderDefault}"
                           ShowsPreview="False"
                           PointerReleased="OnTerminalGridSplitterPointerReleased"
                           IsVisible="{Binding Terminal.IsDockedVisible}"/>
 
-            <controls:TerminalPanel Grid.Row="4"
-                                    Margin="0,12,0,0"
+            <controls:TerminalPanel Grid.Row="3"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Stretch"
+                                    HorizontalAlignment="Stretch"
                                     DataContext="{Binding Terminal}"
                                     IsVisible="{Binding IsDockedVisible}"/>
             </Grid>
