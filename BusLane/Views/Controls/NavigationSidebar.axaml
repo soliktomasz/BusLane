@@ -16,7 +16,7 @@
             <!-- App Header -->
             <Border DockPanel.Dock="Top" Classes="sidebar-header">
                 <StackPanel>
-                    <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                             <Viewbox Width="32" Height="32">
                                 <Canvas Width="512" Height="512">
@@ -80,23 +80,18 @@
                             </Viewbox>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="BusLane" Classes="heading-large"/>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="Service Bus Manager" Classes="caption" FontSize="11"/>
-                                    <Border Classes="badge-info" Padding="4,1">
-                                        <TextBlock Text="{Binding AppVersion}" FontSize="12" Foreground="{DynamicResource AccentBrand}"/>
-                                    </Border>
-                                </StackPanel>
+                                <TextBlock Text="Service Bus Manager" Classes="caption" FontSize="11"/>
                             </StackPanel>
                         </StackPanel>
                         
                         <!-- Toggle Panel Button -->
-                        <Button Grid.Column="2"
-                                Classes="subtle icon-button"
+                        <Button Grid.Column="1"
+                                Classes="panel-toggle"
                                 Command="{Binding ToggleNavigationPanelCommand}"
-                                ToolTip.Tip="Hide panel"
+                                ToolTip.Tip="Hide navigation panel"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Right"
-                                Margin="8,0,0,0"
+                                Margin="12,0,0,0"
                                 Padding="6">
                             <LucideIcon Kind="PanelLeftClose" Size="18"/>
                         </Button>

@@ -1128,6 +1128,34 @@
         <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
+    <!-- Sidebar panel toggle button -->
+    <Style Selector="Button.panel-toggle">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="30"/>
+        <Setter Property="MinHeight" Value="30"/>
+    </Style>
+
+    <Style Selector="Button.panel-toggle:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Button.panel-toggle:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Button.panel-toggle:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+    </Style>
+
     <Style Selector="ToggleButton.icon-button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
