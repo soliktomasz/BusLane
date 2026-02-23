@@ -126,9 +126,10 @@ public class LiveStreamService : ILiveStreamService
         }
     }
 
-    private async Task StartPeekStreamAsync(ServiceBusClient client, string entityName, string? subscriptionName, CancellationToken ct)
+    private Task StartPeekStreamAsync(ServiceBusClient client, string entityName, string? subscriptionName, CancellationToken ct)
     {
         _peekCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var peekCts = _peekCts;
 
         _peekReceiver = subscriptionName != null
             ? client.CreateReceiver(entityName, subscriptionName, new ServiceBusReceiverOptions
@@ -139,6 +140,7 @@ public class LiveStreamService : ILiveStreamService
             {
                 ReceiveMode = ServiceBusReceiveMode.PeekLock
             });
+        var peekReceiver = _peekReceiver;
 
         long lastSequenceNumber = 0;
         var pollingInterval = TimeSpan.FromSeconds(
@@ -146,82 +148,76 @@ public class LiveStreamService : ILiveStreamService
                 ? _preferencesService.LiveStreamPollingIntervalSeconds
                 : DefaultPollingIntervalSeconds);
 
-        try
+        _peekStreamTask = Task.Run(async () =>
         {
-            _peekStreamTask = Task.Run(async () =>
+            while (!peekCts.Token.IsCancellationRequested)
             {
-                while (!_peekCts.Token.IsCancellationRequested)
+                try
                 {
+                    using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(DefaultPeekTimeoutSeconds));
+                    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                        peekCts.Token,
+                        timeoutCts.Token
+                    );
+
+                    var messages = await peekReceiver.PeekMessagesAsync(DefaultPeekBatchSize, lastSequenceNumber + 1, linkedCts.Token);
+
+                    foreach (var msg in messages)
+                    {
+                        if (msg.SequenceNumber > lastSequenceNumber)
+                        {
+                            lastSequenceNumber = msg.SequenceNumber;
+
+                            var liveMessage = new LiveStreamMessage(
+                                msg.MessageId,
+                                msg.CorrelationId,
+                                msg.ContentType,
+                                msg.Body.ToString(),
+                                DateTimeOffset.UtcNow,
+                                subscriptionName ?? entityName,
+                                subscriptionName != null ? "Subscription" : "Queue",
+                                subscriptionName != null ? entityName : null,
+                                msg.SequenceNumber,
+                                msg.SessionId,
+                                msg.ApplicationProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                            );
+
+                            EmitMessage(liveMessage);
+                        }
+                    }
+
+                    await Task.Delay(pollingInterval, peekCts.Token);
+                }
+                catch (OperationCanceledException) when (!peekCts.Token.IsCancellationRequested)
+                {
+                    Log.Debug("Peek timeout, continuing to poll");
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException) when (peekCts.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error in peek stream for {EntityName}", entityName);
+                    StreamError?.Invoke(this, ex);
+
                     try
                     {
-                        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(DefaultPeekTimeoutSeconds));
-                        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                            _peekCts.Token,
-                            timeoutCts.Token
-                        );
-
-                        var messages = await _peekReceiver.PeekMessagesAsync(DefaultPeekBatchSize, lastSequenceNumber + 1, linkedCts.Token);
-
-                        foreach (var msg in messages)
-                        {
-                            if (msg.SequenceNumber > lastSequenceNumber)
-                            {
-                                lastSequenceNumber = msg.SequenceNumber;
-
-                                var liveMessage = new LiveStreamMessage(
-                                    msg.MessageId,
-                                    msg.CorrelationId,
-                                    msg.ContentType,
-                                    msg.Body.ToString(),
-                                    DateTimeOffset.UtcNow,
-                                    subscriptionName ?? entityName,
-                                    subscriptionName != null ? "Subscription" : "Queue",
-                                    subscriptionName != null ? entityName : null,
-                                    msg.SequenceNumber,
-                                    msg.SessionId,
-                                    msg.ApplicationProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-                                );
-
-                                EmitMessage(liveMessage);
-                            }
-                        }
-
-                        await Task.Delay(pollingInterval, _peekCts.Token);
-                    }
-                    catch (OperationCanceledException) when (!_peekCts.Token.IsCancellationRequested)
-                    {
-                        Log.Debug("Peek timeout, continuing to poll");
+                        await Task.Delay(TimeSpan.FromSeconds(ErrorRetryDelaySeconds), peekCts.Token);
                     }
                     catch (OperationCanceledException)
                     {
                         break;
                     }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Error in peek stream for {EntityName}", entityName);
-                        StreamError?.Invoke(this, ex);
-                        await Task.Delay(TimeSpan.FromSeconds(ErrorRetryDelaySeconds), _peekCts.Token);
-                    }
                 }
-            }, _peekCts.Token);
-
-            await _peekStreamTask;
-        }
-        finally
-        {
-            if (_peekReceiver != null)
-            {
-                try
-                {
-                    await _peekReceiver.DisposeAsync();
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Error disposing peek receiver");
-                }
-                _peekReceiver = null;
             }
-        }
+        }, peekCts.Token);
+
+        return Task.CompletedTask;
     }
 
     private async Task StartProcessorStreamAsync(ServiceBusClient client, string entityName, string? subscriptionName)

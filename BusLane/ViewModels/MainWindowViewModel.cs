@@ -13,6 +13,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Terminal;
 using Services.Update;
 
 /// <summary>
@@ -57,6 +58,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
     public LogViewerViewModel LogViewer { get; }
+    public TerminalHostViewModel Terminal { get; }
     public NamespaceSelectionViewModel NamespaceSelection { get; }
     public UpdateNotificationViewModel UpdateNotification { get; }
 
@@ -171,6 +173,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
         IUpdateService updateService,
+        ITerminalSessionService terminalSessionService,
         ILogSink logSink,
         ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
@@ -194,6 +197,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Initialize composed components
         Navigation = new NavigationState();
         LogViewer = new LogViewerViewModel(logSink);
+        Terminal = new TerminalHostViewModel(terminalSessionService, _preferencesService, msg => StatusMessage = msg);
 
         NamespaceSelection = new NamespaceSelectionViewModel(
             Navigation,
@@ -953,6 +957,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void ToggleLogViewer() => LogViewer.Toggle();
 
     [RelayCommand]
+    private void ToggleTerminal() => Terminal.ToggleVisibilityCommand.Execute(null);
+
+    [RelayCommand]
+    private void DockTerminal() => Terminal.DockCommand.Execute(null);
+
+    [RelayCommand]
+    private void UndockTerminal() => Terminal.UndockCommand.Execute(null);
+
+    [RelayCommand]
+    private void ClearTerminal() => Terminal.ClearOutputCommand.Execute(null);
+
+    [RelayCommand]
+    private async Task RestartTerminalAsync() => await Terminal.RestartCommand.ExecuteAsync(null);
+
+    [RelayCommand]
     private async Task CopyDeviceCodeAsync()
     {
         if (string.IsNullOrEmpty(DeviceCodeUserCode)) return;
@@ -1293,6 +1312,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
+        Terminal?.Dispose();
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();
@@ -1314,6 +1334,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer = null;
 
         LogViewer?.Dispose();
+        await Terminal.DisposeAsync();
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();

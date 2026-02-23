@@ -78,4 +78,56 @@ public class DashboardRefreshServiceTests
         queueA.PercentageOfTotal.Should().BeApproximately(80.0, 0.001);
         queueB.PercentageOfTotal.Should().BeApproximately(20.0, 0.001);
     }
+
+    [Fact]
+    public async Task StartAutoRefresh_WhenRefreshTakesLongerThanInterval_DoesNotRunOverlappingRefreshes()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var activeRefreshCalls = 0;
+        var maxConcurrentRefreshCalls = 0;
+
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns(async _ =>
+            {
+                var inFlight = Interlocked.Increment(ref activeRefreshCalls);
+                UpdateMaxValue(ref maxConcurrentRefreshCalls, inFlight);
+                await Task.Delay(TimeSpan.FromMilliseconds(120));
+                Interlocked.Decrement(ref activeRefreshCalls);
+
+                return
+                [
+                    new QueueInfo("queue-a", 1, 1, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))
+                ];
+            });
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns([]);
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        // Act
+        _sut.StartAutoRefresh("ns", operations, TimeSpan.FromMilliseconds(20));
+        await Task.Delay(TimeSpan.FromMilliseconds(280));
+        _sut.StopAutoRefresh();
+
+        // Assert
+        maxConcurrentRefreshCalls.Should().Be(1);
+    }
+
+    private static void UpdateMaxValue(ref int target, int candidate)
+    {
+        while (true)
+        {
+            var current = target;
+            if (candidate <= current)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref target, candidate, current) == current)
+            {
+                return;
+            }
+        }
+    }
 }

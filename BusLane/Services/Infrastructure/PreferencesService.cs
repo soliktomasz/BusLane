@@ -20,6 +20,10 @@ public class PreferencesService : IPreferencesService
     public bool ShowDeadLetterBadges { get; set; } = true;
     public bool EnableMessagePreview { get; set; } = true;
     public bool ShowNavigationPanel { get; set; } = true;
+    public bool ShowTerminalPanel { get; set; }
+    public bool TerminalIsDocked { get; set; } = true;
+    public double TerminalDockHeight { get; set; } = 260;
+    public string? TerminalWindowBoundsJson { get; set; }
     public string Theme { get; set; } = "Light";
     public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
 
@@ -62,6 +66,10 @@ public class PreferencesService : IPreferencesService
                     ShowDeadLetterBadges = data.ShowDeadLetterBadges;
                     EnableMessagePreview = data.EnableMessagePreview;
                     ShowNavigationPanel = data.ShowNavigationPanel;
+                    ShowTerminalPanel = data.ShowTerminalPanel;
+                    TerminalIsDocked = data.TerminalIsDocked;
+                    TerminalDockHeight = data.TerminalDockHeight > 0 ? data.TerminalDockHeight : TerminalDockHeight;
+                    TerminalWindowBoundsJson = data.TerminalWindowBoundsJson;
                     Theme = data.Theme ?? "Light";
                     LiveStreamPollingIntervalSeconds = data.LiveStreamPollingIntervalSeconds;
                     RestoreTabsOnStartup = data.RestoreTabsOnStartup;
@@ -97,6 +105,10 @@ public class PreferencesService : IPreferencesService
                 ShowDeadLetterBadges = ShowDeadLetterBadges,
                 EnableMessagePreview = EnableMessagePreview,
                 ShowNavigationPanel = ShowNavigationPanel,
+                ShowTerminalPanel = ShowTerminalPanel,
+                TerminalIsDocked = TerminalIsDocked,
+                TerminalDockHeight = TerminalDockHeight,
+                TerminalWindowBoundsJson = TerminalWindowBoundsJson,
                 Theme = Theme,
                 LiveStreamPollingIntervalSeconds = LiveStreamPollingIntervalSeconds,
                 RestoreTabsOnStartup = RestoreTabsOnStartup,
@@ -130,6 +142,10 @@ public class PreferencesService : IPreferencesService
         public bool ShowDeadLetterBadges { get; set; }
         public bool EnableMessagePreview { get; set; }
         public bool ShowNavigationPanel { get; set; } = true;
+        public bool ShowTerminalPanel { get; set; }
+        public bool TerminalIsDocked { get; set; } = true;
+        public double TerminalDockHeight { get; set; } = 260;
+        public string? TerminalWindowBoundsJson { get; set; }
         public string? Theme { get; set; }
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;

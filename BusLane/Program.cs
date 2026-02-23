@@ -16,6 +16,7 @@ using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
 using Services.Dashboard;
+using Services.Terminal;
 using Services.Update;
 using ViewModels;
 
@@ -134,6 +135,7 @@ class Program
         services.AddSingleton<IMetricsService, MetricsService>();
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<ITerminalSessionService, TerminalSessionService>();
 
         // Update services
         services.AddSingleton<UpdateDownloadService>();
@@ -161,6 +163,7 @@ class Program
             sp.GetRequiredService<INotificationService>(),
             sp.GetRequiredService<IKeyboardShortcutService>(),
             sp.GetRequiredService<IUpdateService>(),
+            sp.GetRequiredService<ITerminalSessionService>(),
             sp.GetRequiredService<ILogSink>(),
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
             sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>()

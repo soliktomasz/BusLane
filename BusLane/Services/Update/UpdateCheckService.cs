@@ -124,6 +124,12 @@ public static class UpdateCheckService
 
     public static bool IsNewerVersion(string current, string latest)
     {
+        if (TryParseSemanticVersion(current, out var currentSemanticVersion) &&
+            TryParseSemanticVersion(latest, out var latestSemanticVersion))
+        {
+            return CompareSemanticVersions(latestSemanticVersion, currentSemanticVersion) > 0;
+        }
+
         try
         {
             var currentVersion = Version.Parse(current);
@@ -136,6 +142,95 @@ public static class UpdateCheckService
             return string.Compare(latest, current, StringComparison.Ordinal) > 0;
         }
     }
+
+    private static bool TryParseSemanticVersion(string value, out SemanticVersion version)
+    {
+        version = default;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var withoutBuildMetadata = value.Split('+')[0];
+        var parts = withoutBuildMetadata.Split('-', 2);
+        var core = parts[0];
+        var coreParts = core.Split('.');
+
+        if (coreParts.Length != 3 ||
+            !int.TryParse(coreParts[0], out var major) ||
+            !int.TryParse(coreParts[1], out var minor) ||
+            !int.TryParse(coreParts[2], out var patch) ||
+            major < 0 || minor < 0 || patch < 0)
+        {
+            return false;
+        }
+
+        string[] prereleaseIdentifiers = [];
+        if (parts.Length == 2)
+        {
+            prereleaseIdentifiers = parts[1].Split('.');
+            if (prereleaseIdentifiers.Any(string.IsNullOrWhiteSpace))
+            {
+                return false;
+            }
+        }
+
+        version = new SemanticVersion(major, minor, patch, prereleaseIdentifiers);
+        return true;
+    }
+
+    private static int CompareSemanticVersions(SemanticVersion left, SemanticVersion right)
+    {
+        var majorComparison = left.Major.CompareTo(right.Major);
+        if (majorComparison != 0) return majorComparison;
+
+        var minorComparison = left.Minor.CompareTo(right.Minor);
+        if (minorComparison != 0) return minorComparison;
+
+        var patchComparison = left.Patch.CompareTo(right.Patch);
+        if (patchComparison != 0) return patchComparison;
+
+        var leftHasPrerelease = left.PrereleaseIdentifiers.Length > 0;
+        var rightHasPrerelease = right.PrereleaseIdentifiers.Length > 0;
+
+        if (!leftHasPrerelease && !rightHasPrerelease) return 0;
+        if (!leftHasPrerelease) return 1;
+        if (!rightHasPrerelease) return -1;
+
+        var minLength = Math.Min(left.PrereleaseIdentifiers.Length, right.PrereleaseIdentifiers.Length);
+        for (var i = 0; i < minLength; i++)
+        {
+            var leftIdentifier = left.PrereleaseIdentifiers[i];
+            var rightIdentifier = right.PrereleaseIdentifiers[i];
+
+            var leftIsNumeric = int.TryParse(leftIdentifier, out var leftNumeric);
+            var rightIsNumeric = int.TryParse(rightIdentifier, out var rightNumeric);
+
+            if (leftIsNumeric && rightIsNumeric)
+            {
+                var numericComparison = leftNumeric.CompareTo(rightNumeric);
+                if (numericComparison != 0) return numericComparison;
+                continue;
+            }
+
+            if (leftIsNumeric != rightIsNumeric)
+            {
+                return leftIsNumeric ? -1 : 1;
+            }
+
+            var stringComparison = string.Compare(leftIdentifier, rightIdentifier, StringComparison.Ordinal);
+            if (stringComparison != 0) return stringComparison;
+        }
+
+        return left.PrereleaseIdentifiers.Length.CompareTo(right.PrereleaseIdentifiers.Length);
+    }
+
+    private readonly record struct SemanticVersion(
+        int Major,
+        int Minor,
+        int Patch,
+        string[] PrereleaseIdentifiers);
 
     public static bool MatchesPlatform(string filename, string platform)
     {

@@ -117,6 +117,7 @@ public partial class App : Application
         var menu = CreateMacMenu(
             (_, _) => ToggleFullscreen(mainWindow),
             (_, _) => ShowLogViewer(viewModel),
+            (_, _) => ShowTerminal(viewModel),
             async (_, _) => await ShowAboutDialogAsync(mainWindow));
         NativeMenu.SetMenu(mainWindow, menu);
     }
@@ -124,6 +125,7 @@ public partial class App : Application
     internal static NativeMenu CreateMacMenu(
         EventHandler onToggleFullscreenClick,
         EventHandler onShowLogViewerClick,
+        EventHandler onShowTerminalClick,
         EventHandler onAboutClick)
     {
         var toggleFullscreenItem = new NativeMenuItem("Toggle Fullscreen");
@@ -132,9 +134,13 @@ public partial class App : Application
         var showLogViewerItem = new NativeMenuItem("Show Log Viewer");
         showLogViewerItem.Click += onShowLogViewerClick;
 
+        var showTerminalItem = new NativeMenuItem("Show Terminal");
+        showTerminalItem.Click += onShowTerminalClick;
+
         var viewMenu = new NativeMenu();
         viewMenu.Add(toggleFullscreenItem);
         viewMenu.Add(showLogViewerItem);
+        viewMenu.Add(showTerminalItem);
 
         var aboutItem = new NativeMenuItem("About BusLane");
         aboutItem.Click += onAboutClick;
@@ -163,6 +169,7 @@ public partial class App : Application
     }
 
     private static void ShowLogViewer(MainWindowViewModel viewModel) => viewModel.LogViewer.Open();
+    private static void ShowTerminal(MainWindowViewModel viewModel) => viewModel.Terminal.Open();
 
     private static async Task ShowAboutDialogAsync(Window owner)
     {

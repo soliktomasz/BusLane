@@ -49,11 +49,12 @@
             </Grid>
 
             <!-- Content Area -->
-            <Grid Grid.Row="1" Margin="24">
+            <Grid Grid.Row="1" Margin="24" x:Name="MainContentGrid">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="0"/>
                 </Grid.RowDefinitions>
 
                 <!-- Welcome / Not Connected -->
@@ -240,7 +241,7 @@
 
             <!-- Status Bar -->
             <Border Grid.Row="2" Margin="0,12,0,0">
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                     <ProgressBar Grid.Column="0"
                                  IsIndeterminate="True"
                                  IsVisible="{Binding IsLoading}"
@@ -264,8 +265,18 @@
                                                      DataContext="{Binding UpdateNotification}"
                                                      VerticalAlignment="Center"/>
 
-                    <!-- Log Viewer Toggle Button -->
+                    <!-- Terminal Toggle Button -->
                     <ToggleButton Grid.Column="3"
+                                  Classes="subtle icon-button"
+                                  IsChecked="{Binding Terminal.ShowTerminalPanel}"
+                                  Padding="6"
+                                  Margin="8,0,0,0"
+                                  ToolTip.Tip="Toggle terminal">
+                        <LucideIcon Kind="Terminal" Size="14"/>
+                    </ToggleButton>
+
+                    <!-- Log Viewer Toggle Button -->
+                    <ToggleButton Grid.Column="4"
                                   Classes="subtle icon-button"
                                   IsChecked="{Binding LogViewer.IsOpen}"
                                   Padding="6"
@@ -275,6 +286,23 @@
                     </ToggleButton>
                 </Grid>
             </Border>
+
+            <GridSplitter Grid.Row="3"
+                          Height="2"
+                          ResizeDirection="Rows"
+                          VerticalAlignment="Top"
+                          Margin="0,-1,0,0"
+                          Background="{DynamicResource BorderDefault}"
+                          ShowsPreview="False"
+                          PointerReleased="OnTerminalGridSplitterPointerReleased"
+                          IsVisible="{Binding Terminal.IsDockedVisible}"/>
+
+            <controls:TerminalPanel Grid.Row="3"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Stretch"
+                                    HorizontalAlignment="Stretch"
+                                    DataContext="{Binding Terminal}"
+                                    IsVisible="{Binding IsDockedVisible}"/>
             </Grid>
         </Grid>
 

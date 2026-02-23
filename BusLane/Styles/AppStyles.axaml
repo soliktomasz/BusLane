@@ -1179,4 +1179,11 @@
     <Style Selector="ToggleButton.icon-button:focus-visible /template/ ContentPresenter">
         <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
+
+    <Style Selector="Border.terminal-panel">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="10"/>
+    </Style>
 </Styles>
