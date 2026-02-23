@@ -1,15 +1,24 @@
 namespace BusLane.Views;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
+using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.Input;
 
 public partial class MainWindow : Window
 {
+    private const int TerminalBoundsSaveDebounceMilliseconds = 250;
+
     private readonly Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>> _shortcutHandlers;
+    private MainWindowViewModel? _viewModel;
+    private TerminalWindow? _terminalWindow;
+    private CancellationTokenSource? _saveTerminalBoundsCts;
+    private bool _isClosing;
+    private bool _isProgrammaticTerminalWindowClose;
 
     public MainWindow()
     {
@@ -28,6 +37,9 @@ public partial class MainWindow : Window
 
         // Handle keyboard shortcuts
         KeyDown += OnKeyDown;
+        DataContextChanged += OnDataContextChanged;
+        Closing += OnMainWindowClosing;
+        Closed += OnMainWindowClosed;
     }
 
     private Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>> BuildShortcutHandlers()
@@ -91,6 +103,9 @@ public partial class MainWindow : Window
 
             [KeyboardShortcutAction.OpenAlerts] = vm =>
                 Execute(vm.OpenAlertsCommand),
+
+            [KeyboardShortcutAction.ToggleTerminal] = vm =>
+                Execute(vm.ToggleTerminalCommand),
 
             [KeyboardShortcutAction.OpenSettings] = vm =>
                 Execute(vm.OpenSettingsCommand),
@@ -241,5 +256,227 @@ public partial class MainWindow : Window
             return true;
         }
         return false;
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        SetViewModel(DataContext as MainWindowViewModel);
+        EnsureTerminalWindowState();
+    }
+
+    private void OnTerminalPropertyChanged(object? _, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(TerminalHostViewModel.ShowTerminalPanel) or nameof(TerminalHostViewModel.TerminalIsDocked))
+        {
+            EnsureTerminalWindowState();
+        }
+    }
+
+    private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        _isClosing = true;
+        UpdateDockedTerminalHeight();
+        CloseTerminalWindow();
+    }
+
+    private void OnMainWindowClosed(object? sender, EventArgs e)
+    {
+        SetViewModel(null);
+        CancelPendingTerminalBoundsSave();
+    }
+
+    private void SetViewModel(MainWindowViewModel? viewModel)
+    {
+        if (ReferenceEquals(_viewModel, viewModel))
+        {
+            return;
+        }
+
+        if (_viewModel != null)
+        {
+            _viewModel.Terminal.PropertyChanged -= OnTerminalPropertyChanged;
+        }
+
+        _viewModel = viewModel;
+
+        if (_viewModel != null)
+        {
+            _viewModel.Terminal.PropertyChanged += OnTerminalPropertyChanged;
+        }
+    }
+
+    private void EnsureTerminalWindowState()
+    {
+        if (_viewModel == null)
+        {
+            return;
+        }
+
+        var terminal = _viewModel.Terminal;
+        if (terminal.IsUndockedVisible)
+        {
+            EnsureTerminalWindowOpen(terminal);
+            return;
+        }
+
+        CloseTerminalWindow();
+    }
+
+    private void EnsureTerminalWindowOpen(TerminalHostViewModel terminal)
+    {
+        if (_terminalWindow is { } existingWindow)
+        {
+            if (!existingWindow.IsVisible)
+            {
+                existingWindow.Show();
+            }
+            existingWindow.Activate();
+            return;
+        }
+
+        var window = new TerminalWindow
+        {
+            DataContext = terminal
+        };
+        window.Closing += OnTerminalWindowClosing;
+        window.PositionChanged += OnTerminalWindowPositionChanged;
+        window.SizeChanged += OnTerminalWindowSizeChanged;
+
+        var bounds = terminal.GetWindowBounds();
+        if (bounds != null)
+        {
+            window.WindowStartupLocation = WindowStartupLocation.Manual;
+            window.Position = new PixelPoint(bounds.X, bounds.Y);
+            window.Width = bounds.Width;
+            window.Height = bounds.Height;
+        }
+
+        _terminalWindow = window;
+        window.Show(this);
+        window.Activate();
+    }
+
+    private void CloseTerminalWindow()
+    {
+        if (_terminalWindow is not { } window)
+        {
+            return;
+        }
+
+        CancelPendingTerminalBoundsSave();
+        SaveTerminalWindowBounds();
+
+        window.Closing -= OnTerminalWindowClosing;
+        window.PositionChanged -= OnTerminalWindowPositionChanged;
+        window.SizeChanged -= OnTerminalWindowSizeChanged;
+        _terminalWindow = null;
+
+        _isProgrammaticTerminalWindowClose = true;
+        try
+        {
+            window.Close();
+        }
+        finally
+        {
+            _isProgrammaticTerminalWindowClose = false;
+        }
+    }
+
+    private void OnTerminalWindowClosing(object? _, WindowClosingEventArgs e)
+    {
+        if (_isClosing || _isProgrammaticTerminalWindowClose || _viewModel == null)
+        {
+            return;
+        }
+
+        var terminal = _viewModel.Terminal;
+        if (!terminal.IsUndockedVisible)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        SaveTerminalWindowBounds();
+        terminal.DockCommand.Execute(null);
+    }
+
+    private void OnTerminalWindowPositionChanged(object? sender, PixelPointEventArgs e) => DebounceSaveTerminalWindowBounds();
+
+    private void OnTerminalWindowSizeChanged(object? sender, SizeChangedEventArgs e) => DebounceSaveTerminalWindowBounds();
+
+    private void OnTerminalGridSplitterPointerReleased(object? sender, PointerReleasedEventArgs e) => UpdateDockedTerminalHeight();
+
+    private void SaveTerminalWindowBounds()
+    {
+        if (_viewModel?.Terminal is not { } terminal || _terminalWindow is not { } window)
+        {
+            return;
+        }
+
+        var size = window.ClientSize;
+        if (size.Width <= 0 || size.Height <= 0)
+        {
+            return;
+        }
+
+        var position = window.Position;
+        terminal.UpdateWindowBounds(position.X, position.Y, size.Width, size.Height);
+    }
+
+    private void DebounceSaveTerminalWindowBounds()
+    {
+        CancelPendingTerminalBoundsSave();
+
+        var cts = new CancellationTokenSource();
+        _saveTerminalBoundsCts = cts;
+        _ = SaveTerminalWindowBoundsDebouncedAsync(cts.Token);
+    }
+
+    private async Task SaveTerminalWindowBoundsDebouncedAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(TerminalBoundsSaveDebounceMilliseconds, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (ct.IsCancellationRequested)
+        {
+            return;
+        }
+
+        SaveTerminalWindowBounds();
+    }
+
+    private void CancelPendingTerminalBoundsSave()
+    {
+        _saveTerminalBoundsCts?.Cancel();
+        _saveTerminalBoundsCts?.Dispose();
+        _saveTerminalBoundsCts = null;
+    }
+
+    private void UpdateDockedTerminalHeight()
+    {
+        if (_viewModel?.Terminal.IsDockedVisible != true)
+        {
+            return;
+        }
+
+        if (this.FindControl<Grid>("MainContentGrid") is not { } grid || grid.RowDefinitions.Count <= 4)
+        {
+            return;
+        }
+
+        var terminalRow = grid.RowDefinitions[4];
+        var height = terminalRow.ActualHeight > 0 ? terminalRow.ActualHeight : terminalRow.Height.Value;
+        if (height <= 0)
+        {
+            return;
+        }
+
+        _viewModel.Terminal.TerminalDockHeight = height;
     }
 }

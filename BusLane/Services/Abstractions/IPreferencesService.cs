@@ -15,6 +15,10 @@ public interface IPreferencesService
     bool ShowDeadLetterBadges { get; set; }
     bool EnableMessagePreview { get; set; }
     bool ShowNavigationPanel { get; set; }
+    bool ShowTerminalPanel { get; set; }
+    bool TerminalIsDocked { get; set; }
+    double TerminalDockHeight { get; set; }
+    string? TerminalWindowBoundsJson { get; set; }
     string Theme { get; set; }
     int LiveStreamPollingIntervalSeconds { get; set; }
 

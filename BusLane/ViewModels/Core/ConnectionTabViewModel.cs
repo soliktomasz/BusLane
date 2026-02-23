@@ -329,6 +329,10 @@ public partial class ConnectionTabViewModel : ViewModelBase
         public bool ShowDeadLetterBadges { get; set; } = true;
         public bool EnableMessagePreview { get; set; } = true;
         public bool ShowNavigationPanel { get; set; } = true;
+        public bool ShowTerminalPanel { get; set; }
+        public bool TerminalIsDocked { get; set; } = true;
+        public double TerminalDockHeight { get; set; } = 260;
+        public string? TerminalWindowBoundsJson { get; set; }
         public string Theme { get; set; } = "System";
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;

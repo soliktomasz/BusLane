@@ -327,6 +327,17 @@
                         </Border>
                     </Grid>
                 </Button>
+
+                <!-- Terminal Button -->
+                <Button Classes="subtle"
+                        Command="{Binding ToggleTerminalCommand}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,12">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <LucideIcon Kind="Terminal" Size="16"/>
+                        <TextBlock Text="Terminal" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <!-- Settings Button - Docked to bottom -->

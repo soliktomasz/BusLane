@@ -45,6 +45,7 @@ public enum KeyboardShortcutAction
     OpenLiveStream,
     OpenCharts,
     OpenAlerts,
+    ToggleTerminal,
     OpenSettings,
     
     // Connections
@@ -180,6 +181,10 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             [KeyboardShortcutAction.OpenAlerts] = new(
                 KeyboardShortcutAction.OpenAlerts, "Features", "Open alerts",
                 primary | KeyModifiers.Shift, Key.E),
+
+            [KeyboardShortcutAction.ToggleTerminal] = new(
+                KeyboardShortcutAction.ToggleTerminal, "Features", "Toggle terminal",
+                primary | KeyModifiers.Shift, Key.T),
             
             [KeyboardShortcutAction.OpenSettings] = new(
                 KeyboardShortcutAction.OpenSettings, "Features", "Open settings",
@@ -279,4 +284,3 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         return new KeyGesture(shortcut.Key, shortcut.Modifiers);
     }
 }
-

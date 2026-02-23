@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:BusLane.Views.Controls"
+        xmlns:vm="using:BusLane.ViewModels.Core"
+        x:Class="BusLane.Views.TerminalWindow"
+        x:DataType="vm:TerminalHostViewModel"
+        Title="BusLane Terminal"
+        Width="900"
+        Height="420"
+        MinWidth="600"
+        MinHeight="220"
+        WindowStartupLocation="CenterOwner">
+
+    <controls:TerminalPanel DataContext="{Binding}"/>
+</Window>
