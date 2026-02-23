@@ -471,7 +471,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (this.FindControl<Grid>("MainContentGrid") is not { } grid || grid.RowDefinitions.Count <= 4)
+        if (this.FindControl<Grid>("MainContentGrid") is not { } grid || grid.RowDefinitions.Count <= 3)
         {
             return;
         }
