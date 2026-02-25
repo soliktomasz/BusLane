@@ -14,7 +14,8 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
   <a href="#installation">Installation</a> |
   <a href="#features">Features</a> |
   <a href="ROADMAP.md">Roadmap</a> |
-  <a href="SECURITY.md">Security</a>
+  <a href="SECURITY.md">Security</a> |
+  <a href="https://deepwiki.com/soliktomasz/BusLane">Documentation</a>
 </p>
 
 ---
