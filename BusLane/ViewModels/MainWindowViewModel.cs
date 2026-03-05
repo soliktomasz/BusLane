@@ -44,6 +44,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly IAlertService _alertService;
     private readonly IPreferencesService _preferencesService;
     private readonly IConnectionStorageService _connectionStorage;
+    private readonly IConnectionBackupService _connectionBackupService;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
     private readonly IUpdateService _updateService;
     private readonly ILogSink _logSink;
@@ -166,6 +167,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IAzureResourceService azureResources,
         IServiceBusOperationsFactory operationsFactory,
         IConnectionStorageService connectionStorage,
+        IConnectionBackupService connectionBackupService,
         IVersionService versionService,
         IPreferencesService preferencesService,
         ILiveStreamService liveStreamService,
@@ -183,6 +185,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _azureResources = azureResources;
         _operationsFactory = operationsFactory;
         _connectionStorage = connectionStorage;
+        _connectionBackupService = connectionBackupService;
         _versionService = versionService;
         _alertService = alertService;
         _preferencesService = preferencesService;
@@ -1071,7 +1074,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     {
         Connection.ConnectionLibraryViewModel = new ConnectionLibraryViewModel(
             _connectionStorage,
+            _connectionBackupService,
             _operationsFactory,
+            _fileDialogService,
             _logSink,
             async conn =>
             {

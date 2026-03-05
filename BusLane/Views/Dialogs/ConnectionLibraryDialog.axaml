@@ -87,22 +87,54 @@
                             <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
                                     IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
                                 <Border Padding="16">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Classes="primary"
-                                                Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="Plus" Size="16"/>
-                                                <TextBlock Text="Add Connection"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Classes="subtle"
-                                                Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
-                                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Trash2" Size="16"/>
-                                                <TextBlock Text="Clear All"/>
-                                            </StackPanel>
-                                        </Button>
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button Classes="primary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="Plus" Size="16"/>
+                                                    <TextBlock Text="Add Connection"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="secondary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
+                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Download" Size="16"/>
+                                                    <TextBlock Text="Export Backup"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="secondary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Upload" Size="16"/>
+                                                    <TextBlock Text="Import Backup"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="subtle"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
+                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Trash2" Size="16"/>
+                                                    <TextBlock Text="Clear All"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="Backup passphrase" FontWeight="Medium" FontSize="13"/>
+                                            <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
+                                                     PasswordChar="●"
+                                                     Watermark="Required for encrypted export/import"
+                                                     MaxWidth="400"/>
+                                            <TextBlock Text="Use the same passphrase when importing this backup later."
+                                                       Classes="caption"
+                                                       FontSize="11"/>
+                                            <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage}"
+                                                       Foreground="{DynamicResource TextDanger}"
+                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </Border>
