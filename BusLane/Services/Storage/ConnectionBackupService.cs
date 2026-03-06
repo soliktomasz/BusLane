@@ -20,6 +20,7 @@ public class ConnectionBackupService : IConnectionBackupService
     private const int NonceSizeBytes = 12;
     private const int TagSizeBytes = 16;
     private const int KeyDerivationIterations = 210000;
+    private const int MaxKeyDerivationIterations = 1000000;
 
     public Task ExportAsync(IEnumerable<SavedConnection> connections, string filePath, string passphrase)
     {
@@ -202,6 +203,11 @@ public class ConnectionBackupService : IConnectionBackupService
         if (backupFile.Iterations <= 0)
         {
             throw new InvalidDataException("Backup key derivation iterations are invalid.");
+        }
+
+        if (backupFile.Iterations > MaxKeyDerivationIterations)
+        {
+            throw new InvalidDataException("Backup key derivation iterations exceed the supported maximum.");
         }
 
         if (string.IsNullOrWhiteSpace(backupFile.Salt)

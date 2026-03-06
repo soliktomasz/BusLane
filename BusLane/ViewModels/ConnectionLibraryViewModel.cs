@@ -21,6 +21,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     private readonly Action<SavedConnection> _onConnectionSelected;
     private readonly Action<string> _onStatusUpdate;
     private readonly Func<Task>? _onFavoritesChanged;
+    private readonly Func<Task>? _onConnectionsChanged;
 
     private const string ConnectionStringMask = "••••••••••••••••••••••••••••••••";
     private string? _originalEditConnectionString;
@@ -66,7 +67,8 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         ILogSink logSink,
         Action<SavedConnection> onConnectionSelected,
         Action<string> onStatusUpdate,
-        Func<Task>? onFavoritesChanged = null)
+        Func<Task>? onFavoritesChanged = null,
+        Func<Task>? onConnectionsChanged = null)
     {
         _connectionStorage = connectionStorage;
         _connectionBackupService = connectionBackupService;
@@ -76,6 +78,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
         _onConnectionSelected = onConnectionSelected;
         _onStatusUpdate = onStatusUpdate;
         _onFavoritesChanged = onFavoritesChanged;
+        _onConnectionsChanged = onConnectionsChanged;
     }
 
     public async Task LoadConnectionsAsync()
@@ -551,6 +554,11 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             }
 
             await LoadConnectionsAsync();
+
+            if (_onConnectionsChanged != null)
+            {
+                await _onConnectionsChanged();
+            }
 
             _onStatusUpdate($"Imported {importedConnections.Count} connection(s) from {Path.GetFileName(filePath)}");
             _logSink.Log(new LogEntry(

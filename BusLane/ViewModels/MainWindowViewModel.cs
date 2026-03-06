@@ -1085,7 +1085,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 await Tabs.OpenTabForConnectionAsync(conn);
             },
             msg => StatusMessage = msg,
-            Connection.RefreshFavoriteConnectionsAsync
+            Connection.RefreshFavoriteConnectionsAsync,
+            Connection.LoadSavedConnectionsAsync
         );
         await Connection.ConnectionLibraryViewModel.LoadConnectionsAsync();
         Connection.ShowConnectionLibrary = true;

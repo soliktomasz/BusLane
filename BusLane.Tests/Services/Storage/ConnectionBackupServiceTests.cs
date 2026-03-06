@@ -87,6 +87,26 @@ public class ConnectionBackupServiceTests : IDisposable
         await act.Should().ThrowAsync<System.Security.Cryptography.CryptographicException>();
     }
 
+    [Fact]
+    public async Task ImportAsync_WithExcessiveIterations_ThrowsInvalidDataException()
+    {
+        // Arrange
+        await _sut.ExportAsync(
+            [CreateConnection("id-1", "Prod")],
+            _backupPath,
+            "correct-passphrase");
+
+        var backupJson = await File.ReadAllTextAsync(_backupPath);
+        backupJson = backupJson.Replace("\"iterations\": 210000", "\"iterations\": 2147483647");
+        await File.WriteAllTextAsync(_backupPath, backupJson);
+
+        // Act
+        var act = async () => await _sut.ImportAsync(_backupPath, "correct-passphrase");
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidDataException>();
+    }
+
     private static SavedConnection CreateConnection(
         string id,
         string name,
