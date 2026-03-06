@@ -70,6 +70,27 @@ public class ConnectionBackupServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportAsync_WithLargePayload_DoesNotCompleteSynchronously()
+    {
+        // Arrange
+        const string passphrase = "backup-secret";
+        var largeConnectionString =
+            "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey="
+            + new string('x', 8 * 1024 * 1024);
+        var connections = new List<SavedConnection>
+        {
+            CreateConnection("id-1", "Large", largeConnectionString)
+        };
+
+        // Act
+        var exportTask = _sut.ExportAsync(connections, _backupPath, passphrase);
+
+        // Assert
+        exportTask.IsCompleted.Should().BeFalse();
+        await exportTask;
+    }
+
+    [Fact]
     public async Task ImportAsync_WithWrongPassphrase_ThrowsCryptographicException()
     {
         // Arrange

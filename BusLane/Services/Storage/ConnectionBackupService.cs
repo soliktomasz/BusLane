@@ -22,7 +22,7 @@ public class ConnectionBackupService : IConnectionBackupService
     private const int KeyDerivationIterations = 210000;
     private const int MaxKeyDerivationIterations = 1000000;
 
-    public Task ExportAsync(IEnumerable<SavedConnection> connections, string filePath, string passphrase)
+    public async Task ExportAsync(IEnumerable<SavedConnection> connections, string filePath, string passphrase)
     {
         ArgumentNullException.ThrowIfNull(connections);
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -45,7 +45,7 @@ public class ConnectionBackupService : IConnectionBackupService
         };
 
         var payloadJson = Serialize(payload);
-        var encrypted = EncryptPayload(payloadJson, passphrase);
+        var encrypted = await EncryptPayloadAsync(payloadJson, passphrase);
 
         var backupFile = new ConnectionBackupFile
         {
@@ -60,9 +60,7 @@ public class ConnectionBackupService : IConnectionBackupService
         };
 
         var backupJson = Serialize(backupFile);
-        AppPaths.CreateSecureFile(filePath, backupJson);
-
-        return Task.CompletedTask;
+        await AppPaths.CreateSecureFileAsync(filePath, backupJson);
     }
 
     public async Task<IReadOnlyList<SavedConnection>> ImportAsync(string filePath, string passphrase)
@@ -139,6 +137,11 @@ public class ConnectionBackupService : IConnectionBackupService
         }
 
         return new EncryptedPayload(salt, nonce, cipherText, tag);
+    }
+
+    private static Task<EncryptedPayload> EncryptPayloadAsync(string plainText, string passphrase)
+    {
+        return Task.Run(() => EncryptPayload(plainText, passphrase));
     }
 
     private static string? DecryptPayload(ConnectionBackupFile backupFile, string passphrase)
