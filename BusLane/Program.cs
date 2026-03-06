@@ -129,6 +129,7 @@ class Program
         });
         services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
+        services.AddSingleton<IConnectionBackupService, ConnectionBackupService>();
 
         // Monitoring services for Live Stream, Charts, and Alerts
         services.AddSingleton<ILiveStreamService, LiveStreamService>();
@@ -156,6 +157,7 @@ class Program
             sp.GetRequiredService<IAzureResourceService>(),
             sp.GetRequiredService<IServiceBusOperationsFactory>(),
             sp.GetRequiredService<IConnectionStorageService>(),
+            sp.GetRequiredService<IConnectionBackupService>(),
             sp.GetRequiredService<IVersionService>(),
             sp.GetRequiredService<IPreferencesService>(),
             sp.GetRequiredService<ILiveStreamService>(),

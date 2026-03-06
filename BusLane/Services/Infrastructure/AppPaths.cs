@@ -45,6 +45,16 @@ internal static class AppPaths
         }
     }
 
+    /// <summary>
+    /// Creates a file with secure permissions (owner read/write only) on a background thread.
+    /// </summary>
+    /// <param name="path">The full path to the file to create.</param>
+    /// <param name="content">The content to write to the file.</param>
+    public static Task CreateSecureFileAsync(string path, string content)
+    {
+        return Task.Run(() => CreateSecureFile(path, content));
+    }
+
     [SupportedOSPlatform("windows")]
     private static void CreateSecureFileWindows(string path, string content)
     {

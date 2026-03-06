@@ -3,26 +3,38 @@ namespace BusLane.ViewModels;
 using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Models.Logging;
+using BusLane.Services.Abstractions;
+using BusLane.Services.Storage;
 using BusLane.ViewModels.Core;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Services.ServiceBus;
-using Services.Storage;
 
 public partial class ConnectionLibraryViewModel : ViewModelBase
 {
     private readonly IConnectionStorageService _connectionStorage;
+    private readonly IConnectionBackupService _connectionBackupService;
     private readonly IServiceBusOperationsFactory _operationsFactory;
+    private readonly IFileDialogService? _fileDialogService;
     private readonly ILogSink _logSink;
     private readonly Action<SavedConnection> _onConnectionSelected;
     private readonly Action<string> _onStatusUpdate;
     private readonly Func<Task>? _onFavoritesChanged;
+    private readonly Func<Task>? _onConnectionsChanged;
 
     private const string ConnectionStringMask = "••••••••••••••••••••••••••••••••";
     private string? _originalEditConnectionString;
+    private static readonly FilePickerFileType BackupFileType = new("BusLane Connection Backup")
+    {
+        Patterns = ["*.blbackup"],
+        MimeTypes = ["application/json"]
+    };
 
     [ObservableProperty] private string _newConnectionName = "";
     [ObservableProperty] private string _newConnectionString = "";
+    [ObservableProperty] private string _backupPassphrase = "";
+    [ObservableProperty] private string? _backupErrorMessage;
     [ObservableProperty] private bool _isValidating;
     [ObservableProperty] private string? _validationMessage;
     [ObservableProperty] private bool _isAddingConnection;
@@ -49,18 +61,24 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
 
     public ConnectionLibraryViewModel(
         IConnectionStorageService connectionStorage,
+        IConnectionBackupService connectionBackupService,
         IServiceBusOperationsFactory operationsFactory,
+        IFileDialogService? fileDialogService,
         ILogSink logSink,
         Action<SavedConnection> onConnectionSelected,
         Action<string> onStatusUpdate,
-        Func<Task>? onFavoritesChanged = null)
+        Func<Task>? onFavoritesChanged = null,
+        Func<Task>? onConnectionsChanged = null)
     {
         _connectionStorage = connectionStorage;
+        _connectionBackupService = connectionBackupService;
         _operationsFactory = operationsFactory;
+        _fileDialogService = fileDialogService;
         _logSink = logSink;
         _onConnectionSelected = onConnectionSelected;
         _onStatusUpdate = onStatusUpdate;
         _onFavoritesChanged = onFavoritesChanged;
+        _onConnectionsChanged = onConnectionsChanged;
     }
 
     public async Task LoadConnectionsAsync()
@@ -95,6 +113,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     [RelayCommand]
     private void StartAddConnection()
     {
+        BackupErrorMessage = null;
         IsAddingConnection = true;
         IsEditingConnection = false;
         EditingConnection = null;
@@ -110,6 +129,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     [RelayCommand]
     private void StartEditConnection(SavedConnection connection)
     {
+        BackupErrorMessage = null;
         IsAddingConnection = true;
         IsEditingConnection = true;
         EditingConnection = connection;
@@ -125,6 +145,7 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
     [RelayCommand]
     private void CancelAddConnection()
     {
+        BackupErrorMessage = null;
         IsAddingConnection = false;
         IsEditingConnection = false;
         EditingConnection = null;
@@ -428,5 +449,133 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
             isFavorite
                 ? $"Added '{connection.Name}' to favorites"
                 : $"Removed '{connection.Name}' from favorites"));
+    }
+
+    [RelayCommand]
+    private async Task ExportConnectionsBackupAsync()
+    {
+        BackupErrorMessage = null;
+
+        if (_fileDialogService == null)
+        {
+            BackupErrorMessage = "File dialog service is not available.";
+            return;
+        }
+
+        if (SavedConnections.Count == 0)
+        {
+            BackupErrorMessage = "No saved connections to export.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(BackupPassphrase))
+        {
+            BackupErrorMessage = "Enter a backup passphrase first.";
+            return;
+        }
+
+        try
+        {
+            var defaultFileName = $"BusLane_Connections_{DateTime.Now:yyyyMMdd_HHmmss}.blbackup";
+            var filePath = await _fileDialogService.SaveFileAsync(
+                "Export Connection Backup",
+                defaultFileName,
+                [BackupFileType]);
+
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return;
+            }
+
+            await _connectionBackupService.ExportAsync(SavedConnections, filePath, BackupPassphrase);
+
+            _onStatusUpdate($"Exported {SavedConnections.Count} connection(s) to {Path.GetFileName(filePath)}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Exported {SavedConnections.Count} connection(s) backup"));
+        }
+        catch (Exception ex)
+        {
+            BackupErrorMessage = $"Export failed: {ex.Message}";
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                "Connection backup export failed",
+                ex.Message));
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportConnectionsBackupAsync()
+    {
+        BackupErrorMessage = null;
+
+        if (_fileDialogService == null)
+        {
+            BackupErrorMessage = "File dialog service is not available.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(BackupPassphrase))
+        {
+            BackupErrorMessage = "Enter a backup passphrase first.";
+            return;
+        }
+
+        try
+        {
+            var filePath = await _fileDialogService.OpenFileAsync(
+                "Import Connection Backup",
+                [BackupFileType]);
+
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return;
+            }
+
+            var importedConnections = await _connectionBackupService.ImportAsync(filePath, BackupPassphrase);
+            if (importedConnections.Count == 0)
+            {
+                BackupErrorMessage = "No valid connections found in the backup file.";
+                return;
+            }
+
+            foreach (var connection in importedConnections)
+            {
+                await _connectionStorage.SaveConnectionAsync(connection);
+            }
+
+            if (_onFavoritesChanged != null)
+            {
+                await _onFavoritesChanged();
+            }
+
+            await LoadConnectionsAsync();
+
+            if (_onConnectionsChanged != null)
+            {
+                await _onConnectionsChanged();
+            }
+
+            _onStatusUpdate($"Imported {importedConnections.Count} connection(s) from {Path.GetFileName(filePath)}");
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Info,
+                $"Imported {importedConnections.Count} connection(s) from backup"));
+        }
+        catch (Exception ex)
+        {
+            BackupErrorMessage = $"Import failed: {ex.Message}";
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Error,
+                "Connection backup import failed",
+                ex.Message));
+        }
     }
 }
