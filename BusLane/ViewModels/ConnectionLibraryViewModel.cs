@@ -545,6 +545,11 @@ public partial class ConnectionLibraryViewModel : ViewModelBase
                 await _connectionStorage.SaveConnectionAsync(connection);
             }
 
+            if (_onFavoritesChanged != null)
+            {
+                await _onFavoritesChanged();
+            }
+
             await LoadConnectionsAsync();
 
             _onStatusUpdate($"Imported {importedConnections.Count} connection(s) from {Path.GetFileName(filePath)}");
