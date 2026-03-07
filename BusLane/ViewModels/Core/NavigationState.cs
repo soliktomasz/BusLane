@@ -63,6 +63,8 @@ public partial class NavigationState : ViewModelBase
     public bool HasTopics => Topics.Count > 0;
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
+    public bool CanShowSessionInspector => CurrentEntityRequiresSession && !string.IsNullOrWhiteSpace(CurrentEntityName);
+    public bool IsSessionInspectorTabSelected => SelectedMessageTabIndex == 2;
 
     /// <summary>
     /// Gets the current entity name for message operations.
@@ -121,6 +123,25 @@ public partial class NavigationState : ViewModelBase
     partial void OnSelectedMessageTabIndexChanged(int value)
     {
         ShowDeadLetter = value == 1;
+        OnPropertyChanged(nameof(IsSessionInspectorTabSelected));
+    }
+
+    partial void OnSelectedQueueChanged(QueueInfo? value)
+    {
+        _ = value;
+        OnCurrentEntitySelectionChanged();
+    }
+
+    partial void OnSelectedTopicChanged(TopicInfo? value)
+    {
+        _ = value;
+        OnCurrentEntitySelectionChanged();
+    }
+
+    partial void OnSelectedSubscriptionChanged(SubscriptionInfo? value)
+    {
+        _ = value;
+        OnCurrentEntitySelectionChanged();
     }
 
     /// <summary>
@@ -153,5 +174,18 @@ public partial class NavigationState : ViewModelBase
         SelectedTopic = null;
         SelectedSubscription = null;
         SelectedEntity = null;
+    }
+
+    private void OnCurrentEntitySelectionChanged()
+    {
+        OnPropertyChanged(nameof(CurrentEntityName));
+        OnPropertyChanged(nameof(CurrentSubscriptionName));
+        OnPropertyChanged(nameof(CurrentEntityRequiresSession));
+        OnPropertyChanged(nameof(CanShowSessionInspector));
+
+        if (!CurrentEntityRequiresSession && SelectedMessageTabIndex == 2)
+        {
+            SelectedMessageTabIndex = 0;
+        }
     }
 }

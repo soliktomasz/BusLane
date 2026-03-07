@@ -31,6 +31,12 @@ public interface IServiceBusOperations : IAsyncDisposable
         long? fromSequenceNumber,
         bool deadLetter,
         bool requiresSession = false,
+        string? sessionId = null,
+        CancellationToken ct = default);
+
+    Task<IReadOnlyList<SessionInspectorItem>> GetSessionInspectorItemsAsync(
+        string entityName,
+        string? subscription,
         CancellationToken ct = default);
 
     Task SendMessageAsync(
