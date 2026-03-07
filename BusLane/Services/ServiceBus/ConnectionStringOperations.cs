@@ -207,11 +207,40 @@ public class ConnectionStringOperations : IConnectionStringOperations
         await ServiceBusOperations.PurgeMessagesAsync(GetClient(), entityName, subscription, deadLetter, ct);
     }
 
+    public async Task<BulkOperationPreview> PreviewPurgeMessagesAsync(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        CancellationToken ct = default)
+    {
+        var (count, requiresSession) = await GetEstimatedCountAsync(entityName, subscription, deadLetter, ct);
+        return BuildPurgePreview(entityName, subscription, deadLetter, count, requiresSession);
+    }
+
+    public async Task<BulkOperationExecutionResult> PurgeMessagesDetailedAsync(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        CancellationToken ct = default)
+    {
+        return await ServiceBusOperations.PurgeMessagesDetailedAsync(GetClient(), entityName, subscription, deadLetter, ct);
+    }
+
     public async Task<int> DeleteMessagesAsync(
         string entityName, string? subscription, IEnumerable<long> sequenceNumbers,
         bool deadLetter = false, CancellationToken ct = default)
     {
         return await ServiceBusOperations.DeleteMessagesAsync(GetClient(), entityName, subscription, sequenceNumbers, deadLetter, ct);
+    }
+
+    public async Task<BulkOperationExecutionResult> DeleteMessagesDetailedAsync(
+        string entityName,
+        string? subscription,
+        IEnumerable<MessageIdentifier> messages,
+        bool deadLetter = false,
+        CancellationToken ct = default)
+    {
+        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
@@ -223,6 +252,14 @@ public class ConnectionStringOperations : IConnectionStringOperations
         return resent;
     }
 
+    public async Task<BulkOperationExecutionResult> ResendMessagesDetailedAsync(
+        string entityName,
+        IEnumerable<MessageInfo> messages,
+        CancellationToken ct = default)
+    {
+        return await ServiceBusOperations.ResendMessagesDetailedAsync(GetClient(), entityName, messages, ct);
+    }
+
     public async Task<int> ResubmitDeadLetterMessagesAsync(
         string entityName, string? subscription, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
@@ -231,6 +268,48 @@ public class ConnectionStringOperations : IConnectionStringOperations
         var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(GetClient(), entityName, subscription, messageList, ct);
         Log.Information("Resubmitted {ResubmittedCount} dead letter messages from {EntityName}", resubmitted, entityName);
         return resubmitted;
+    }
+
+    public async Task<BulkOperationExecutionResult> ResubmitDeadLetterMessagesDetailedAsync(
+        string entityName,
+        string? subscription,
+        IEnumerable<MessageInfo> messages,
+        CancellationToken ct = default)
+    {
+        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct);
+    }
+
+    public async Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
+            await foreach (var _ in AdminClient.GetQueuesAsync(timeoutCts.Token))
+            {
+                break;
+            }
+
+            return new ConnectionHealthReport(ConnectionHealthState.Healthy, "Connection healthy");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return new ConnectionHealthReport(ConnectionHealthState.AuthExpired, ex.Message, "Sign in again or refresh the connection.");
+        }
+        catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.ServiceBusy)
+        {
+            return new ConnectionHealthReport(ConnectionHealthState.Throttled, ex.Message, "Retry later or reduce refresh frequency.");
+        }
+        catch (ServiceBusException ex) when (
+            ex.Reason == ServiceBusFailureReason.ServiceCommunicationProblem ||
+            ex.Reason == ServiceBusFailureReason.ServiceTimeout)
+        {
+            return new ConnectionHealthReport(ConnectionHealthState.NetworkFailed, ex.Message, "Check connectivity to the namespace endpoint.");
+        }
+        catch (Exception ex)
+        {
+            return new ConnectionHealthReport(ConnectionHealthState.Degraded, ex.Message, "Review diagnostics and retry the connection.");
+        }
     }
 
     public async Task<(bool IsValid, string? EntityName, string? Endpoint, string? ErrorMessage)> ValidateAsync(CancellationToken ct = default)
@@ -320,6 +399,56 @@ public class ConnectionStringOperations : IConnectionStringOperations
         }
 
         return (endpoint, entityPath);
+    }
+
+    private async Task<(int Count, bool RequiresSession)> GetEstimatedCountAsync(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(subscription))
+        {
+            var subscriptions = await GetSubscriptionsAsync(entityName, ct);
+            var match = subscriptions.FirstOrDefault(s => s.Name == subscription);
+            if (match != null)
+            {
+                return ((int)(deadLetter ? match.DeadLetterCount : match.ActiveMessageCount), match.RequiresSession);
+            }
+        }
+
+        var queue = await GetQueueInfoAsync(entityName, ct);
+        if (queue != null)
+        {
+            return ((int)(deadLetter ? queue.DeadLetterCount : queue.ActiveMessageCount), queue.RequiresSession);
+        }
+
+        return (0, false);
+    }
+
+    private static BulkOperationPreview BuildPurgePreview(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        int estimatedCount,
+        bool requiresSession)
+    {
+        var scope = subscription != null
+            ? $"{entityName}/{subscription}{(deadLetter ? " (DLQ)" : string.Empty)}"
+            : $"{entityName}{(deadLetter ? " (DLQ)" : string.Empty)}";
+
+        var warnings = new List<string>();
+        if (requiresSession)
+        {
+            warnings.Add("Session-enabled entities may require multiple receive cycles to drain fully.");
+        }
+
+        if (estimatedCount == 0)
+        {
+            warnings.Add("No currently known messages matched this purge scope.");
+        }
+
+        return new BulkOperationPreview(BulkOperationType.Purge, scope, estimatedCount, [], warnings, requiresSession);
     }
 
     #endregion

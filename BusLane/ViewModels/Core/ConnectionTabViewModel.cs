@@ -27,6 +27,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private string? _statusMessage;
+    [ObservableProperty] private ConnectionHealthReport _connectionHealth = new(ConnectionHealthState.Healthy, "Connection healthy");
 
     // Composed components
     public NavigationState Navigation { get; }
@@ -103,6 +104,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
             IsConnected = true;
             StatusMessage = "Connected";
+            ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Healthy, "Connection healthy");
             LogActivity(LogLevel.Info, $"Tab '{TabTitle}': connection established");
         }
         catch (Exception ex)
@@ -146,6 +148,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
             IsConnected = true;
             StatusMessage = "Connected";
+            ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Healthy, "Connection healthy");
             LogActivity(LogLevel.Info, $"Tab '{TabTitle}': Azure connection established");
         }
         catch (Exception ex)
@@ -180,6 +183,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         MessageOps.Clear();
 
         StatusMessage = "Disconnected";
+        ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, "Disconnected");
         LogActivity(LogLevel.Info, $"Tab '{tabTitle}': disconnected");
         return Task.CompletedTask;
     }
@@ -284,6 +288,89 @@ public partial class ConnectionTabViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    public async Task<ConnectionHealthReport> ProbeConnectionHealthAsync(CancellationToken ct = default)
+    {
+        if (_operations == null)
+        {
+            ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, "No active connection");
+            StatusMessage = ConnectionHealth.Summary;
+            return ConnectionHealth;
+        }
+
+        try
+        {
+            ConnectionHealth = await _operations.CheckConnectionHealthAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, ex.Message);
+        }
+
+        StatusMessage = ConnectionHealth.Summary;
+
+        return ConnectionHealth;
+    }
+
+    public TabSessionState CreateSessionState(int tabOrder)
+    {
+        var selectedEntityName = !string.IsNullOrWhiteSpace(Navigation.CurrentSubscriptionName) &&
+            !string.IsNullOrWhiteSpace(Navigation.CurrentEntityName)
+                ? $"{Navigation.CurrentEntityName}/{Navigation.CurrentSubscriptionName}"
+                : Navigation.CurrentEntityName;
+
+        return new TabSessionState
+        {
+            TabId = TabId,
+            Mode = Mode,
+            ConnectionId = SavedConnection?.Id,
+            NamespaceId = Namespace?.Id,
+            SelectedEntityName = selectedEntityName,
+            EntityFilter = Navigation.EntityFilter,
+            MessageSearchText = MessageOps.MessageSearchText,
+            ShowDeadLetter = Navigation.ShowDeadLetter,
+            SelectedMessageTabIndex = Navigation.SelectedMessageTabIndex,
+            TabOrder = tabOrder
+        };
+    }
+
+    public void ApplySessionState(TabSessionState state)
+    {
+        Navigation.EntityFilter = state.EntityFilter ?? string.Empty;
+        Navigation.SelectedMessageTabIndex = state.SelectedMessageTabIndex;
+        Navigation.ShowDeadLetter = state.ShowDeadLetter;
+        MessageOps.MessageSearchText = state.MessageSearchText ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(state.SelectedEntityName))
+        {
+            return;
+        }
+
+        var queue = Navigation.Queues.FirstOrDefault(q => q.Name == state.SelectedEntityName);
+        if (queue != null)
+        {
+            Navigation.SelectedQueue = queue;
+            Navigation.SelectedEntity = queue;
+            return;
+        }
+
+        var topic = Navigation.Topics.FirstOrDefault(t => t.Name == state.SelectedEntityName);
+        if (topic != null)
+        {
+            Navigation.SelectedTopic = topic;
+            Navigation.SelectedEntity = topic;
+            return;
+        }
+
+        var subscription = Navigation.TopicSubscriptions.FirstOrDefault(s =>
+            s.TopicName == state.SelectedEntityName ||
+            $"{s.TopicName}/{s.Name}" == state.SelectedEntityName);
+        if (subscription != null)
+        {
+            Navigation.SelectedSubscription = subscription;
+            Navigation.SelectedEntity = subscription;
         }
     }
 

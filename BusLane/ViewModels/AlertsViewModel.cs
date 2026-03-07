@@ -21,6 +21,7 @@ public partial class AlertsViewModel : ViewModelBase
     // Tab navigation
     [ObservableProperty] private bool _isActiveAlertsTabSelected = true;
     [ObservableProperty] private bool _isRulesTabSelected;
+    [ObservableProperty] private bool _isHistoryTabSelected;
 
     // New/Edit rule form
     [ObservableProperty] private string _ruleName = "";
@@ -29,9 +30,14 @@ public partial class AlertsViewModel : ViewModelBase
     [ObservableProperty] private double _threshold = 10;
     [ObservableProperty] private string _entityPattern = "";
     [ObservableProperty] private bool _ruleEnabled = true;
+    [ObservableProperty] private double _cooldownMinutes;
+    [ObservableProperty] private int _quietHoursStartHour;
+    [ObservableProperty] private int _quietHoursEndHour;
+    [ObservableProperty] private string _webhookUrl = "";
 
     public ObservableCollection<AlertRule> Rules { get; } = [];
     public ObservableCollection<AlertEvent> ActiveAlerts { get; } = [];
+    public ObservableCollection<AlertHistoryEntry> AlertHistory { get; } = [];
 
     public AlertType[] AvailableAlertTypes { get; } = Enum.GetValues<AlertType>();
     public AlertSeverity[] AvailableSeverities { get; } = Enum.GetValues<AlertSeverity>();
@@ -71,6 +77,12 @@ public partial class AlertsViewModel : ViewModelBase
             ActiveAlerts.Add(alert);
         }
 
+        AlertHistory.Clear();
+        foreach (var historyEntry in _alertService.History.OrderByDescending(h => h.Timestamp).Take(100))
+        {
+            AlertHistory.Add(historyEntry);
+        }
+
         OnPropertyChanged(nameof(UnacknowledgedCount));
         OnPropertyChanged(nameof(HasAlerts));
     }
@@ -91,6 +103,7 @@ public partial class AlertsViewModel : ViewModelBase
         IsEditingRule = false;
         IsActiveAlertsTabSelected = false;
         IsRulesTabSelected = true;
+        IsHistoryTabSelected = false;
         OnPropertyChanged(nameof(FormTitle));
     }
 
@@ -101,9 +114,14 @@ public partial class AlertsViewModel : ViewModelBase
         RuleName = rule.Name;
         EntityPattern = rule.EntityPattern ?? "";
         RuleEnabled = rule.IsEnabled;
+        CooldownMinutes = rule.Cooldown?.TotalMinutes ?? 0;
+        QuietHoursStartHour = rule.QuietHours?.StartHour ?? 0;
+        QuietHoursEndHour = rule.QuietHours?.EndHour ?? 0;
+        WebhookUrl = rule.DeliveryTargets?.FirstOrDefault(t => t.ChannelType == AlertDeliveryChannelType.Webhook)?.Target ?? "";
 
         IsActiveAlertsTabSelected = false;
         IsRulesTabSelected = true;
+        IsHistoryTabSelected = false;
         IsAddingRule = true; // Show the form
         IsEditingRule = true;
         OnPropertyChanged(nameof(FormTitle));
@@ -122,7 +140,14 @@ public partial class AlertsViewModel : ViewModelBase
             SelectedSeverity,
             Threshold,
             RuleEnabled,
-            string.IsNullOrWhiteSpace(EntityPattern) ? null : EntityPattern
+            string.IsNullOrWhiteSpace(EntityPattern) ? null : EntityPattern,
+            CooldownMinutes > 0 ? TimeSpan.FromMinutes(CooldownMinutes) : null,
+            QuietHoursStartHour == QuietHoursEndHour
+                ? null
+                : new QuietHoursWindow(QuietHoursStartHour, QuietHoursEndHour),
+            string.IsNullOrWhiteSpace(WebhookUrl)
+                ? null
+                : [new AlertDeliveryTarget(AlertDeliveryChannelType.Webhook, WebhookUrl)]
         );
 
         if (IsEditingRule)
@@ -202,6 +227,10 @@ public partial class AlertsViewModel : ViewModelBase
         Threshold = 10;
         EntityPattern = "";
         RuleEnabled = true;
+        CooldownMinutes = 0;
+        QuietHoursStartHour = 0;
+        QuietHoursEndHour = 0;
+        WebhookUrl = "";
     }
 
     public static string GetAlertTypeDisplayName(AlertType type) => type switch
@@ -220,4 +249,3 @@ public partial class AlertsViewModel : ViewModelBase
         _ => "#666666"
     };
 }
-

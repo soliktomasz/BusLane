@@ -13,6 +13,7 @@ using Services.Infrastructure;
 using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
+using Services.Diagnostics;
 using Services.Terminal;
 using Services.Update;
 
@@ -47,6 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly IConnectionBackupService _connectionBackupService;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
     private readonly IUpdateService _updateService;
+    private readonly IDiagnosticBundleService _diagnosticBundleService;
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
 
@@ -175,6 +177,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         INotificationService notificationService,
         IKeyboardShortcutService keyboardShortcutService,
         IUpdateService updateService,
+        IDiagnosticBundleService diagnosticBundleService,
         ITerminalSessionService terminalSessionService,
         ILogSink logSink,
         ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
@@ -191,6 +194,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _preferencesService = preferencesService;
         _keyboardShortcutService = keyboardShortcutService;
         _updateService = updateService;
+        _diagnosticBundleService = diagnosticBundleService;
         _logSink = logSink;
         _fileDialogService = fileDialogService;
 
@@ -726,9 +730,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         if (await BulkOps.ShouldConfirmPurgeAsync())
         {
+            var confirmationMessage = await BulkOps.GetPurgeConfirmationMessageAsync();
             Confirmation.ShowConfirmation(
                 "Confirm Purge",
-                BulkOps.GetPurgeConfirmationMessage(),
+                confirmationMessage,
                 "Purge",
                 async () =>
                 {
@@ -751,13 +756,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = CurrentMessageOps.SelectedMessagesCount;
-
         if (await BulkOps.ShouldConfirmBulkResendAsync())
         {
             Confirmation.ShowConfirmation(
                 "Confirm Bulk Resend",
-                BulkOps.GetBulkResendConfirmationMessage(count),
+                BulkOps.GetBulkResendConfirmationMessage(CurrentMessageOps.SelectedMessages),
                 "Resend",
                 async () =>
                 {
@@ -782,11 +785,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = CurrentMessageOps.SelectedMessagesCount;
-
         Confirmation.ShowConfirmation(
             "Confirm Bulk Delete",
-            BulkOps.GetBulkDeleteConfirmationMessage(count),
+            BulkOps.GetBulkDeleteConfirmationMessage(CurrentMessageOps.SelectedMessages),
             "Delete",
             async () =>
             {
@@ -804,11 +805,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = CurrentMessageOps.SelectedMessagesCount;
-
         Confirmation.ShowConfirmation(
             "Confirm Resubmit Dead Letters",
-            BulkOps.GetResubmitDeadLettersConfirmationMessage(count),
+            BulkOps.GetResubmitDeadLettersConfirmationMessage(CurrentMessageOps.SelectedMessages),
             "Resubmit",
             async () =>
             {
@@ -936,7 +935,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private void OpenSettings()
     {
-        SettingsViewModel = new SettingsViewModel(CloseSettings, _preferencesService, this, _updateService);
+        SettingsViewModel = new SettingsViewModel(CloseSettings, _preferencesService, this, _updateService, _diagnosticBundleService);
         ShowSettings = true;
     }
 

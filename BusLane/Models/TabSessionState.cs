@@ -34,6 +34,26 @@ public record TabSessionState
     public string? SelectedEntityName { get; init; }
 
     /// <summary>
+    /// Current entity filter text.
+    /// </summary>
+    public string? EntityFilter { get; init; }
+
+    /// <summary>
+    /// Current message search text.
+    /// </summary>
+    public string? MessageSearchText { get; init; }
+
+    /// <summary>
+    /// Whether the dead-letter queue was active.
+    /// </summary>
+    public bool ShowDeadLetter { get; init; }
+
+    /// <summary>
+    /// Selected message tab index.
+    /// </summary>
+    public int SelectedMessageTabIndex { get; init; }
+
+    /// <summary>
     /// Position of this tab in the tab bar.
     /// </summary>
     public int TabOrder { get; init; }

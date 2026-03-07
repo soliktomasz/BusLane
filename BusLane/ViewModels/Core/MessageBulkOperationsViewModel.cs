@@ -51,22 +51,36 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         return _preferencesService.ConfirmBeforePurge;
     }
 
-    public string GetPurgeConfirmationMessage()
+    public async Task<string> GetPurgeConfirmationMessageAsync()
     {
-        var entityName = _getNavigation().CurrentEntityName ?? "";
-        var subscription = _getNavigation().CurrentSubscriptionName;
-        var queueType = _getNavigation().ShowDeadLetter ? "dead letter queue" : "queue";
-        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
-        return $"Are you sure you want to purge all messages from {queueType} of '{targetName}'? This action cannot be undone.";
+        var preview = await BuildPurgePreviewAsync();
+        var warnings = preview?.Warnings.Any() == true
+            ? $"{Environment.NewLine}{Environment.NewLine}Warnings:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", preview.Warnings)}"
+            : string.Empty;
+
+        return preview == null
+            ? "Are you sure you want to purge all messages? This action cannot be undone."
+            : $"Purge scope: {preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{warnings}";
     }
 
     public async Task ExecutePurgeAsync()
     {
+        _ = await ExecutePurgeDetailedAsync();
+    }
+
+    public async Task<BulkOperationExecutionResult> ExecutePurgeDetailedAsync()
+    {
         var operations = _getOperations();
-        if (operations == null) return;
+        if (operations == null)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Purge, "No active connection");
+        }
 
         var entityName = _getNavigation().CurrentEntityName;
-        if (entityName == null) return;
+        if (entityName == null)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Purge, "No entity selected");
+        }
 
         var subscription = _getNavigation().CurrentSubscriptionName;
         var entityDisplay = GetEntityDisplayName();
@@ -81,13 +95,14 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
         try
         {
-            await operations.PurgeMessagesAsync(entityName, subscription, _getNavigation().ShowDeadLetter);
-            _setStatus("Purge complete");
+            var result = await operations.PurgeMessagesDetailedAsync(entityName, subscription, _getNavigation().ShowDeadLetter);
+            _setStatus(result.Summary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"Purged messages from {entityDisplay}"));
+                $"{result.Summary} from {entityDisplay}"));
+            return result;
         }
         catch (Exception ex)
         {
@@ -99,6 +114,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
                 LogLevel.Error,
                 errorMsg,
                 ex.Message));
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Purge, $"Error: {ex.Message}");
         }
         finally
         {
@@ -114,19 +130,30 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         return Task.FromResult(_preferencesService.ConfirmBeforePurge);
     }
 
-    public string GetBulkResendConfirmationMessage(int count)
+    public string GetBulkResendConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
-        var entityName = _getNavigation().CurrentEntityName ?? "";
-        return $"Are you sure you want to resend {count} message(s) to '{entityName}'?";
+        return FormatPreview(BuildBulkResendPreview(selectedMessages));
     }
 
     public async Task<int> ExecuteBulkResendAsync(ObservableCollection<MessageInfo> selectedMessages)
     {
+        var result = await ExecuteBulkResendDetailedAsync(selectedMessages);
+        return result.SucceededCount;
+    }
+
+    public async Task<BulkOperationExecutionResult> ExecuteBulkResendDetailedAsync(ObservableCollection<MessageInfo> selectedMessages)
+    {
         var operations = _getOperations();
-        if (operations == null || selectedMessages.Count == 0) return 0;
+        if (operations == null || selectedMessages.Count == 0)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Resend, "No messages selected");
+        }
 
         var entityName = _getNavigation().CurrentEntityName;
-        if (entityName == null) return 0;
+        if (entityName == null)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Resend, "No entity selected");
+        }
 
         var entityDisplay = GetEntityDisplayName();
 
@@ -142,15 +169,15 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         try
         {
             var messagesToResend = selectedMessages.ToList();
-            var sentCount = await operations.ResendMessagesAsync(entityName, messagesToResend);
+            var result = await operations.ResendMessagesDetailedAsync(entityName, messagesToResend);
 
-            _setStatus($"Successfully resent {sentCount} of {count} message(s)");
+            _setStatus(result.Summary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"Resent {sentCount}/{count} messages to {entityDisplay}"));
-            return sentCount;
+                $"{result.Summary} to {entityDisplay}"));
+            return result;
         }
         catch (Exception ex)
         {
@@ -162,7 +189,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
                 LogLevel.Error,
                 errorMsg,
                 ex.Message));
-            return 0;
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Resend, $"Error: {ex.Message}");
         }
         finally
         {
@@ -173,21 +200,30 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// <summary>
     /// Deletes multiple messages from the current entity.
     /// </summary>
-    public string GetBulkDeleteConfirmationMessage(int count)
+    public string GetBulkDeleteConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
-        var entityName = _getNavigation().CurrentEntityName ?? "";
-        var subscription = _getNavigation().CurrentSubscriptionName;
-        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
-        return $"Are you sure you want to delete {count} message(s) from '{targetName}'? This action cannot be undone.";
+        return FormatPreview(BuildBulkDeletePreview(selectedMessages));
     }
 
     public async Task<int> ExecuteBulkDeleteAsync(ObservableCollection<MessageInfo> selectedMessages)
     {
+        var result = await ExecuteBulkDeleteDetailedAsync(selectedMessages);
+        return result.SucceededCount;
+    }
+
+    public async Task<BulkOperationExecutionResult> ExecuteBulkDeleteDetailedAsync(ObservableCollection<MessageInfo> selectedMessages)
+    {
         var operations = _getOperations();
-        if (operations == null || selectedMessages.Count == 0) return 0;
+        if (operations == null || selectedMessages.Count == 0)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Delete, "No messages selected");
+        }
 
         var entityName = _getNavigation().CurrentEntityName;
-        if (entityName == null) return 0;
+        if (entityName == null)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Delete, "No entity selected");
+        }
 
         var subscription = _getNavigation().CurrentSubscriptionName;
         var entityDisplay = GetEntityDisplayName();
@@ -203,16 +239,18 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
         try
         {
-            var sequenceNumbers = selectedMessages.Select(m => m.SequenceNumber).ToList();
-            var deletedCount = await operations.DeleteMessagesAsync(entityName, subscription, sequenceNumbers, _getNavigation().ShowDeadLetter);
+            var identifiers = selectedMessages
+                .Select(m => new MessageIdentifier(m.SequenceNumber, m.MessageId))
+                .ToList();
+            var result = await operations.DeleteMessagesDetailedAsync(entityName, subscription, identifiers, _getNavigation().ShowDeadLetter);
 
-            _setStatus($"Successfully deleted {deletedCount} of {count} message(s)");
+            _setStatus(result.Summary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"Deleted {deletedCount}/{count} messages from {entityDisplay}"));
-            return deletedCount;
+                $"{result.Summary} from {entityDisplay}"));
+            return result;
         }
         catch (Exception ex)
         {
@@ -224,7 +262,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
                 LogLevel.Error,
                 errorMsg,
                 ex.Message));
-            return 0;
+            return BulkOperationExecutionResult.Empty(BulkOperationType.Delete, $"Error: {ex.Message}");
         }
         finally
         {
@@ -235,21 +273,30 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// <summary>
     /// Resubmits dead letter messages back to the main entity.
     /// </summary>
-    public string GetResubmitDeadLettersConfirmationMessage(int count)
+    public string GetResubmitDeadLettersConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
-        var entityName = _getNavigation().CurrentEntityName ?? "";
-        var subscription = _getNavigation().CurrentSubscriptionName;
-        var targetName = subscription != null ? $"{entityName}/{subscription}" : entityName;
-        return $"Are you sure you want to resubmit {count} message(s) from the dead letter queue back to '{targetName}'?";
+        return FormatPreview(BuildResubmitDeadLetterPreview(selectedMessages));
     }
 
     public async Task<int> ExecuteResubmitDeadLettersAsync(ObservableCollection<MessageInfo> selectedMessages)
     {
+        var result = await ExecuteResubmitDeadLettersDetailedAsync(selectedMessages);
+        return result.SucceededCount;
+    }
+
+    public async Task<BulkOperationExecutionResult> ExecuteResubmitDeadLettersDetailedAsync(ObservableCollection<MessageInfo> selectedMessages)
+    {
         var operations = _getOperations();
-        if (operations == null || selectedMessages.Count == 0 || !_getNavigation().ShowDeadLetter) return 0;
+        if (operations == null || selectedMessages.Count == 0 || !_getNavigation().ShowDeadLetter)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.ResubmitDeadLetter, "No dead-letter messages selected");
+        }
 
         var entityName = _getNavigation().CurrentEntityName;
-        if (entityName == null) return 0;
+        if (entityName == null)
+        {
+            return BulkOperationExecutionResult.Empty(BulkOperationType.ResubmitDeadLetter, "No entity selected");
+        }
 
         var subscription = _getNavigation().CurrentSubscriptionName;
         var entityDisplay = GetEntityDisplayName();
@@ -266,15 +313,15 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         try
         {
             var messagesToResubmit = selectedMessages.ToList();
-            var resubmittedCount = await operations.ResubmitDeadLetterMessagesAsync(entityName, subscription, messagesToResubmit);
+            var result = await operations.ResubmitDeadLetterMessagesDetailedAsync(entityName, subscription, messagesToResubmit);
 
-            _setStatus($"Successfully resubmitted {resubmittedCount} of {count} message(s)");
+            _setStatus(result.Summary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"Resubmitted {resubmittedCount}/{count} dead letter messages to {entityDisplay}"));
-            return resubmittedCount;
+                $"{result.Summary} to {entityDisplay}"));
+            return result;
         }
         catch (Exception ex)
         {
@@ -286,11 +333,73 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
                 LogLevel.Error,
                 errorMsg,
                 ex.Message));
-            return 0;
+            return BulkOperationExecutionResult.Empty(BulkOperationType.ResubmitDeadLetter, $"Error: {ex.Message}");
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    public BulkOperationPreview BuildBulkDeletePreview(IReadOnlyCollection<MessageInfo> selectedMessages) =>
+        BuildSelectionPreview(BulkOperationType.Delete, selectedMessages, "Delete");
+
+    public BulkOperationPreview BuildBulkResendPreview(IReadOnlyCollection<MessageInfo> selectedMessages) =>
+        BuildSelectionPreview(BulkOperationType.Resend, selectedMessages, "Resend");
+
+    public BulkOperationPreview BuildResubmitDeadLetterPreview(IReadOnlyCollection<MessageInfo> selectedMessages) =>
+        BuildSelectionPreview(BulkOperationType.ResubmitDeadLetter, selectedMessages, "Resubmit");
+
+    public async Task<BulkOperationPreview?> BuildPurgePreviewAsync()
+    {
+        var operations = _getOperations();
+        var entityName = _getNavigation().CurrentEntityName;
+        if (operations == null || string.IsNullOrWhiteSpace(entityName))
+        {
+            return null;
+        }
+
+        return await operations.PreviewPurgeMessagesAsync(
+            entityName,
+            _getNavigation().CurrentSubscriptionName,
+            _getNavigation().ShowDeadLetter);
+    }
+
+    private BulkOperationPreview BuildSelectionPreview(
+        BulkOperationType operationType,
+        IReadOnlyCollection<MessageInfo> selectedMessages,
+        string verb)
+    {
+        var requiresSession = _getNavigation().CurrentEntityRequiresSession || selectedMessages.Any(m => !string.IsNullOrWhiteSpace(m.SessionId));
+        var warnings = new List<string>();
+        if (requiresSession)
+        {
+            warnings.Add("Selected messages span a session-enabled entity.");
+        }
+
+        if (_getNavigation().ShowDeadLetter && operationType == BulkOperationType.Delete)
+        {
+            warnings.Add("Deleting from the dead-letter queue is irreversible.");
+        }
+
+        return new BulkOperationPreview(
+            operationType,
+            GetEntityDisplayName(),
+            selectedMessages.Count,
+            selectedMessages.Select(m => m.MessageId).Where(id => !string.IsNullOrWhiteSpace(id)).Cast<string>().Take(5).ToList(),
+            warnings,
+            requiresSession);
+    }
+
+    private static string FormatPreview(BulkOperationPreview preview)
+    {
+        var sampleMessageIds = preview.SampleMessageIds.Any()
+            ? $"{Environment.NewLine}Sample message IDs: {string.Join(", ", preview.SampleMessageIds)}"
+            : string.Empty;
+        var warnings = preview.Warnings.Any()
+            ? $"{Environment.NewLine}{Environment.NewLine}Warnings:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", preview.Warnings)}"
+            : string.Empty;
+
+        return $"{preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{sampleMessageIds}{warnings}";
     }
 }

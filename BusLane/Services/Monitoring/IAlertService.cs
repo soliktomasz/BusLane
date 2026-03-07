@@ -15,6 +15,11 @@ public interface IAlertService
     IReadOnlyList<AlertEvent> ActiveAlerts { get; }
 
     /// <summary>
+    /// Historical alert outcomes for triggered, suppressed, and delivered alerts.
+    /// </summary>
+    IReadOnlyList<AlertHistoryEntry> History { get; }
+
+    /// <summary>
     /// Add a new alert rule
     /// </summary>
     void AddRule(AlertRule rule);
@@ -76,4 +81,3 @@ public interface IAlertService
     /// </summary>
     void TestRule(AlertRule rule);
 }
-

@@ -43,4 +43,26 @@ public class TabSessionStateTests
         state.NamespaceId.Should().NotBeNullOrEmpty();
         state.ConnectionId.Should().BeNull();
     }
+
+    [Fact]
+    public void Create_WithNavigationContext_PreservesFiltersAndDeadLetterMode()
+    {
+        var state = new TabSessionState
+        {
+            TabId = "tab-3",
+            Mode = ConnectionMode.ConnectionString,
+            ConnectionId = "conn-3",
+            SelectedEntityName = "orders",
+            EntityFilter = "ord",
+            MessageSearchText = "customer-42",
+            ShowDeadLetter = true,
+            SelectedMessageTabIndex = 1,
+            TabOrder = 2
+        };
+
+        state.EntityFilter.Should().Be("ord");
+        state.MessageSearchText.Should().Be("customer-42");
+        state.ShowDeadLetter.Should().BeTrue();
+        state.SelectedMessageTabIndex.Should().Be(1);
+    }
 }

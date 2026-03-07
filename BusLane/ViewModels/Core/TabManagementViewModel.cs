@@ -279,15 +279,7 @@ public partial class TabManagementViewModel : ViewModelBase
     {
         try
         {
-            var states = ConnectionTabs.Select((tab, index) => new TabSessionState
-            {
-                TabId = tab.TabId,
-                Mode = tab.Mode,
-                ConnectionId = tab.SavedConnection?.Id,
-                NamespaceId = tab.Namespace?.Id,
-                SelectedEntityName = tab.Navigation.CurrentEntityName,
-                TabOrder = index
-            }).ToList();
+            var states = ConnectionTabs.Select((tab, index) => tab.CreateSessionState(index)).ToList();
 
             var openTabsJson = Serialize(states);
             if (string.Equals(openTabsJson, _lastSavedTabsJson, StringComparison.Ordinal))
@@ -374,6 +366,7 @@ public partial class TabManagementViewModel : ViewModelBase
                     if (connection != null)
                     {
                         await OpenTabForConnectionAsync(connection);
+                        ActiveTab?.ApplySessionState(state);
                     }
                 }
             }

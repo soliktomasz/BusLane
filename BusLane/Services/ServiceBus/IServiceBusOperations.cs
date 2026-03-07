@@ -56,6 +56,18 @@ public interface IServiceBusOperations : IAsyncDisposable
         bool deadLetter,
         CancellationToken ct = default);
 
+    Task<BulkOperationPreview> PreviewPurgeMessagesAsync(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        CancellationToken ct = default);
+
+    Task<BulkOperationExecutionResult> PurgeMessagesDetailedAsync(
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        CancellationToken ct = default);
+
     Task<int> DeleteMessagesAsync(
         string entityName,
         string? subscription,
@@ -63,7 +75,19 @@ public interface IServiceBusOperations : IAsyncDisposable
         bool deadLetter = false,
         CancellationToken ct = default);
 
+    Task<BulkOperationExecutionResult> DeleteMessagesDetailedAsync(
+        string entityName,
+        string? subscription,
+        IEnumerable<MessageIdentifier> messages,
+        bool deadLetter = false,
+        CancellationToken ct = default);
+
     Task<int> ResendMessagesAsync(
+        string entityName,
+        IEnumerable<MessageInfo> messages,
+        CancellationToken ct = default);
+
+    Task<BulkOperationExecutionResult> ResendMessagesDetailedAsync(
         string entityName,
         IEnumerable<MessageInfo> messages,
         CancellationToken ct = default);
@@ -73,6 +97,14 @@ public interface IServiceBusOperations : IAsyncDisposable
         string? subscription,
         IEnumerable<MessageInfo> messages,
         CancellationToken ct = default);
+
+    Task<BulkOperationExecutionResult> ResubmitDeadLetterMessagesDetailedAsync(
+        string entityName,
+        string? subscription,
+        IEnumerable<MessageInfo> messages,
+        CancellationToken ct = default);
+
+    Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default);
 }
 
 /// <summary>

@@ -16,6 +16,7 @@ using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
 using Services.Dashboard;
+using Services.Diagnostics;
 using Services.Terminal;
 using Services.Update;
 using ViewModels;
@@ -133,10 +134,15 @@ class Program
 
         // Monitoring services for Live Stream, Charts, and Alerts
         services.AddSingleton<ILiveStreamService, LiveStreamService>();
-        services.AddSingleton<IMetricsService, MetricsService>();
-        services.AddSingleton<IAlertService, AlertService>();
+        services.AddSingleton<IMetricsHistoryStore, MetricsHistoryStore>();
+        services.AddSingleton<IMetricsService>(sp => new MetricsService(sp.GetRequiredService<IMetricsHistoryStore>()));
+        services.AddSingleton<INotificationChannel, WebhookNotificationChannel>();
+        services.AddSingleton<IHealthCheckService, HealthCheckService>();
+        services.AddSingleton<IAlertService>(sp => new AlertService(
+            notificationChannels: sp.GetServices<INotificationChannel>()));
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<ITerminalSessionService, TerminalSessionService>();
+        services.AddSingleton<IDiagnosticBundleService, DiagnosticBundleService>();
 
         // Update services
         services.AddSingleton<UpdateDownloadService>();
@@ -165,6 +171,7 @@ class Program
             sp.GetRequiredService<INotificationService>(),
             sp.GetRequiredService<IKeyboardShortcutService>(),
             sp.GetRequiredService<IUpdateService>(),
+            sp.GetRequiredService<IDiagnosticBundleService>(),
             sp.GetRequiredService<ITerminalSessionService>(),
             sp.GetRequiredService<ILogSink>(),
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),

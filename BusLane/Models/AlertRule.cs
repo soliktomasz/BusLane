@@ -21,7 +21,10 @@ public record AlertRule(
     AlertSeverity Severity,
     double Threshold,
     bool IsEnabled = true,
-    string? EntityPattern = null // null = all entities, or regex pattern
+    string? EntityPattern = null,
+    TimeSpan? Cooldown = null,
+    QuietHoursWindow? QuietHours = null,
+    IReadOnlyList<AlertDeliveryTarget>? DeliveryTargets = null
 );
 
 public record AlertEvent(
@@ -40,4 +43,3 @@ public record MetricDataPoint(
     string MetricName,
     double Value
 );
-

@@ -754,6 +754,95 @@
         <Setter Property="Margin" Value="0,4"/>
     </Style>
 
+    <Style Selector="Button.entity-tree-row">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <Style Selector="Button.entity-tree-row:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Button.entity-tree-row:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Button.entity-tree-row:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader">
+        <Setter Property="Padding" Value="6,3"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-section-icon">
+        <Setter Property="Width" Value="18"/>
+        <Setter Property="Height" Value="18"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-section-count">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="CornerRadius" Value="9"/>
+        <Setter Property="Padding" Value="6,1"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-row-surface">
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="Padding" Value="6,4"/>
+        <Setter Property="Margin" Value="4,0,0,0"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-loading">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-connector">
+        <Setter Property="Width" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-badge">
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Padding" Value="4,1"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-badge TextBlock">
+        <Setter Property="FontSize" Value="9"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-divider">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="Margin" Value="8,4"/>
+    </Style>
+
     <!-- Entity Icon Container -->
     <Style Selector="Border.entity-icon">
         <Setter Property="Width" Value="28"/>

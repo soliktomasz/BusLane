@@ -1,5 +1,6 @@
 namespace BusLane.Tests.Services.Monitoring;
 
+using System.Collections.Concurrent;
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using FluentAssertions;
@@ -7,12 +8,13 @@ using FluentAssertions;
 public class AlertServiceTests
 {
     private readonly AlertService _sut;
+    private readonly string _rulesPath = Path.Combine(Path.GetTempPath(), $"alert-rules-{Guid.NewGuid():N}.json");
+    private readonly string _historyPath = Path.Combine(Path.GetTempPath(), $"alert-history-{Guid.NewGuid():N}.json");
+    private readonly DateTimeOffset _now = new(2026, 3, 7, 10, 0, 0, TimeSpan.Zero);
 
     public AlertServiceTests()
     {
-        // Create service - note: this will try to load from file system
-        // For proper isolation, we'd need to refactor to inject file path
-        _sut = new AlertService();
+        _sut = new AlertService(_rulesPath, _historyPath, nowProvider: () => _now);
         
         // Clear any loaded/default rules for clean tests
         foreach (var rule in _sut.Rules.ToList())
@@ -98,6 +100,20 @@ public class AlertServiceTests
     #endregion
 
     #region Alert Evaluation Tests
+
+    [Fact]
+    public void AlertService_UsesThreadSafeCooldownTimestampStore()
+    {
+        // Arrange
+        var field = typeof(AlertService).GetField("_lastTriggeredAtByKey",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        // Act
+        var value = field?.GetValue(_sut);
+
+        // Assert
+        value.Should().BeOfType<ConcurrentDictionary<string, DateTimeOffset>>();
+    }
 
     [Fact]
     public async Task EvaluateAlertsAsync_WithQueueExceedingThreshold_TriggersAlert()
@@ -325,6 +341,106 @@ public class AlertServiceTests
         triggeredAlert!.EntityName.Should().Be("test-queue");
     }
 
+    [Fact]
+    public async Task EvaluateAlertsAsync_WithCooldown_SuppressesDuplicateTriggerAndAddsHistory()
+    {
+        // Arrange
+        var rule = CreateTestRule(threshold: 10) with { Cooldown = TimeSpan.FromMinutes(30) };
+        _sut.AddRule(rule);
+        var queues = new[] { CreateQueueInfo("test-queue", deadLetterCount: 20) };
+
+        // Act
+        await _sut.EvaluateAlertsAsync(queues, Enumerable.Empty<SubscriptionInfo>());
+        var suppressed = await _sut.EvaluateAlertsAsync(queues, Enumerable.Empty<SubscriptionInfo>());
+
+        // Assert
+        suppressed.Should().BeEmpty();
+        _sut.History.Should().Contain(h =>
+            h.EntityName == "test-queue" &&
+            h.Status == AlertHistoryStatus.Suppressed &&
+            h.Reason == AlertSuppressionReason.Cooldown);
+    }
+
+    [Fact]
+    public async Task EvaluateAlertsAsync_DuringQuietHours_DoesNotTriggerAndStoresSuppressionHistory()
+    {
+        // Arrange
+        var quietService = new AlertService(
+            _rulesPath,
+            _historyPath,
+            nowProvider: () => new DateTimeOffset(2026, 3, 7, 22, 0, 0, TimeSpan.Zero));
+        var rule = CreateTestRule(threshold: 10) with
+        {
+            QuietHours = new QuietHoursWindow(21, 6)
+        };
+        quietService.AddRule(rule);
+
+        // Act
+        var alerts = await quietService.EvaluateAlertsAsync(
+            [CreateQueueInfo("night-queue", deadLetterCount: 50)],
+            Enumerable.Empty<SubscriptionInfo>());
+
+        // Assert
+        alerts.Should().BeEmpty();
+        quietService.History.Should().ContainSingle(h =>
+            h.EntityName == "night-queue" &&
+            h.Reason == AlertSuppressionReason.QuietHours);
+    }
+
+    [Fact]
+    public async Task EvaluateAlertsAsync_WithMultipleSuppressedAlerts_PersistsHistoryOnceAtEndOfPass()
+    {
+        // Arrange
+        var rulesPath = Path.Combine(Path.GetTempPath(), $"alert-rules-{Guid.NewGuid():N}.json");
+        var historyPath = Path.Combine(Path.GetTempPath(), $"alert-history-{Guid.NewGuid():N}.json");
+        var quietService = new AlertService(
+            rulesPath,
+            historyPath,
+            nowProvider: () => new DateTimeOffset(2026, 3, 7, 22, 0, 0, TimeSpan.Zero));
+        var rule = CreateTestRule(threshold: 10) with
+        {
+            QuietHours = new QuietHoursWindow(21, 6)
+        };
+        quietService.AddRule(rule);
+
+        var queues = Enumerable.Range(1, 250)
+            .Select(index => CreateQueueInfo($"night-queue-{index}", deadLetterCount: 50))
+            .ToArray();
+
+        using var cts = new CancellationTokenSource();
+        var protectFileTask = Task.Run(async () =>
+        {
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    if (File.Exists(historyPath))
+                    {
+                        SetFileReadOnly(historyPath);
+                        return;
+                    }
+
+                    await Task.Delay(1, cts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        });
+
+        // Act
+        var alerts = await quietService.EvaluateAlertsAsync(queues, Enumerable.Empty<SubscriptionInfo>());
+        cts.Cancel();
+        await Task.WhenAny(protectFileTask, Task.Delay(250));
+
+        var reloadedService = new AlertService(rulesPath, historyPath);
+
+        // Assert
+        alerts.Should().BeEmpty();
+        reloadedService.History.Should().HaveCount(queues.Length);
+        reloadedService.History.Should().OnlyContain(h => h.Reason == AlertSuppressionReason.QuietHours);
+    }
+
     #endregion
 
     #region Alert Acknowledgement Tests
@@ -482,6 +598,16 @@ public class AlertServiceTests
         );
     }
 
+    private static void SetFileReadOnly(string path)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            new FileInfo(path).IsReadOnly = true;
+            return;
+        }
+
+        File.SetUnixFileMode(path, UnixFileMode.UserRead);
+    }
+
     #endregion
 }
-

@@ -270,6 +270,177 @@ public class ConnectionTabViewModelTests
         tab.Navigation.SelectedNamespace.Should().Be(ns);
     }
 
+    [Fact]
+    public async Task ProbeConnectionHealthAsync_StoresExplicitHealthState()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        operations.CheckConnectionHealthAsync(Arg.Any<CancellationToken>())
+            .Returns(new ConnectionHealthReport(ConnectionHealthState.Throttled, "Server busy", "Retry later"));
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        var report = await tab.ProbeConnectionHealthAsync();
+
+        // Assert
+        report.State.Should().Be(ConnectionHealthState.Throttled);
+        tab.ConnectionHealth.State.Should().Be(ConnectionHealthState.Throttled);
+        tab.StatusMessage.Should().Contain("Server busy");
+    }
+
+    [Fact]
+    public async Task ProbeConnectionHealthAsync_UpdatesStatusMessageForHealthyReport()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        operations.CheckConnectionHealthAsync(Arg.Any<CancellationToken>())
+            .Returns(new ConnectionHealthReport(ConnectionHealthState.Healthy, "Health probe succeeded"));
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        var report = await tab.ProbeConnectionHealthAsync();
+
+        // Assert
+        report.State.Should().Be(ConnectionHealthState.Healthy);
+        tab.ConnectionHealth.Should().Be(report);
+        tab.StatusMessage.Should().Be("Health probe succeeded");
+    }
+
+    [Fact]
+    public async Task ProbeConnectionHealthAsync_ConvertsHealthCheckExceptionsToDegradedReport()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        operations.CheckConnectionHealthAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<ConnectionHealthReport>(new InvalidOperationException("Health probe failed")));
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        var report = await tab.ProbeConnectionHealthAsync();
+
+        // Assert
+        report.State.Should().Be(ConnectionHealthState.Degraded);
+        report.Summary.Should().Be("Health probe failed");
+        tab.ConnectionHealth.Should().Be(report);
+        tab.StatusMessage.Should().Be("Health probe failed");
+    }
+
+    [Fact]
+    public void CreateSessionState_CapturesEntityAndFilterContext()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink)
+        {
+            Mode = ConnectionMode.ConnectionString
+        };
+
+        tab.Navigation.EntityFilter = "orders";
+        tab.Navigation.ShowDeadLetter = true;
+        tab.Navigation.SelectedMessageTabIndex = 1;
+        tab.MessageOps.MessageSearchText = "order-42";
+        tab.Navigation.SelectedQueue = new QueueInfo(
+            "orders",
+            MessageCount: 1,
+            ActiveMessageCount: 1,
+            DeadLetterCount: 0,
+            ScheduledCount: 0,
+            SizeInBytes: 0,
+            AccessedAt: DateTimeOffset.UtcNow,
+            RequiresSession: false,
+            DefaultMessageTtl: TimeSpan.FromDays(14),
+            LockDuration: TimeSpan.FromMinutes(1));
+
+        // Act
+        var state = tab.CreateSessionState(0);
+
+        // Assert
+        state.SelectedEntityName.Should().Be("orders");
+        state.EntityFilter.Should().Be("orders");
+        state.ShowDeadLetter.Should().BeTrue();
+        state.SelectedMessageTabIndex.Should().Be(1);
+        state.MessageSearchText.Should().Be("order-42");
+    }
+
+    [Fact]
+    public void CreateSessionState_WithSelectedSubscription_SerializesTopicAndSubscriptionName()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink)
+        {
+            Mode = ConnectionMode.ConnectionString
+        };
+
+        tab.Navigation.SelectedSubscription = new SubscriptionInfo(
+            Name: "processor",
+            TopicName: "orders",
+            MessageCount: 1,
+            ActiveMessageCount: 1,
+            DeadLetterCount: 0,
+            AccessedAt: DateTimeOffset.UtcNow,
+            RequiresSession: false);
+
+        // Act
+        var state = tab.CreateSessionState(0);
+
+        // Assert
+        state.SelectedEntityName.Should().Be("orders/processor");
+    }
+
     private sealed class TestTokenCredential : TokenCredential
     {
         public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken) =>

@@ -38,4 +38,33 @@ public class DashboardPersistenceServiceTests
 
         Assert.Equal(4, loaded.Widgets.Count);
     }
+
+    [Fact]
+    public void SavePresetAndLoadPreset_Roundtrip_PreservesNamedPreset()
+    {
+        var service = new DashboardPersistenceService(_testPath);
+        var config = new DashboardConfiguration
+        {
+            Widgets =
+            [
+                new DashboardWidget
+                {
+                    Type = WidgetType.MetricCard,
+                    Row = 0,
+                    Column = 0,
+                    Width = 4,
+                    Height = 2,
+                    Configuration = new WidgetConfiguration { Title = "Health", TimeRange = "1 Day" }
+                }
+            ]
+        };
+
+        service.SavePreset(new DashboardPreset("health", "Health", "namespace-1", "ConnectionString", config));
+        var preset = service.LoadPreset("health");
+
+        Assert.NotNull(preset);
+        Assert.Equal("Health", preset!.Name);
+        Assert.Single(preset.Configuration.Widgets);
+        Assert.Equal("1 Day", preset.Configuration.Widgets[0].Configuration.TimeRange);
+    }
 }
