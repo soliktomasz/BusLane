@@ -74,6 +74,25 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
+    public void Constructor_WithPreferencesService_InitializesSessionInspector()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var logSink = CreateMockLogSink();
+
+        // Act
+        var tab = new ConnectionTabViewModel(
+            "test-id",
+            "Test Tab",
+            "test.servicebus.windows.net",
+            preferencesService,
+            logSink);
+
+        // Assert
+        tab.SessionInspector.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task ConnectWithConnectionStringAsync_SetsConnectionState()
     {
         // Arrange
@@ -135,6 +154,62 @@ public class ConnectionTabViewModelTests
         // Assert
         tab.IsConnected.Should().BeFalse();
         tab.Mode.Should().Be(ConnectionMode.None);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_ClearsSessionInspectorState()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        preferencesService.MessagesPerPage.Returns(25);
+        preferencesService.MaxTotalMessages.Returns(500);
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        operations.GetSessionInspectorItemsAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new[]
+            {
+                new SessionInspectorItem(
+                    "session-a",
+                    ActiveMessageCount: 3,
+                    DeadLetterMessageCount: 0,
+                    LastActivityAt: DateTimeOffset.UtcNow,
+                    LockedUntil: null,
+                    State: null)
+            });
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+        tab.Navigation.SelectedQueue = new QueueInfo(
+            "orders",
+            MessageCount: 3,
+            ActiveMessageCount: 3,
+            DeadLetterCount: 0,
+            ScheduledCount: 0,
+            SizeInBytes: 0,
+            AccessedAt: DateTimeOffset.UtcNow,
+            RequiresSession: true,
+            DefaultMessageTtl: TimeSpan.FromDays(14),
+            LockDuration: TimeSpan.FromMinutes(1));
+        await tab.SessionInspector.LoadSessionsAsync();
+
+        // Act
+        await tab.DisconnectAsync();
+
+        // Assert
+        tab.SessionInspector.Sessions.Should().BeEmpty();
     }
 
     [Fact]

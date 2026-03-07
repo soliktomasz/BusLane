@@ -19,6 +19,20 @@
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
+                            <Border Classes="badge-info"
+                                    Padding="8,4"
+                                    IsVisible="{Binding CurrentMessageOps.IsSessionScoped}">
+                                <TextBlock Text="{Binding CurrentMessageOps.SessionScopeLabel}" FontSize="12"/>
+                            </Border>
+                            <Button Classes="subtle small"
+                                    Command="{Binding CurrentMessageOps.ClearSessionScopeCommand}"
+                                    IsVisible="{Binding CurrentMessageOps.IsSessionScoped}"
+                                    Padding="8,6">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <LucideIcon Kind="X" Size="12"/>
+                                    <TextBlock Text="Clear Session"/>
+                                </StackPanel>
+                            </Button>
                             <!-- Send Message Button (compact, inline) -->
                             <Button Classes="primary small"
                                     Command="{Binding OpenSendMessagePopupCommand}"
@@ -29,14 +43,20 @@
                                     <TextBlock Text="Send"/>
                                 </StackPanel>
                                 <Button.IsVisible>
-                                    <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                        <Binding Path="CurrentNavigation.SelectedQueue" Converter="{x:Static ObjectConverters.IsNotNull}"/>
-                                        <Binding Path="CurrentNavigation.SelectedTopic" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.IsSessionInspectorTabSelected" Converter="{x:Static BoolConverters.Not}"/>
+                                        <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                            <Binding Path="CurrentNavigation.SelectedQueue" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                            <Binding Path="CurrentNavigation.SelectedTopic" Converter="{x:Static ObjectConverters.IsNotNull}"/>
+                                        </MultiBinding>
                                     </MultiBinding>
                                 </Button.IsVisible>
                             </Button>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="6"
+                                    IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
                             <!-- Multi-select toggle button -->
                             <ToggleButton Classes="pill"
                                           IsChecked="{Binding CurrentMessageOps.IsMultiSelectMode, Mode=TwoWay}"
@@ -77,8 +97,14 @@
                             CornerRadius="6"
                             Padding="12,8"
                             BorderThickness="1"
-                            BorderBrush="{DynamicResource BorderMuted}"
-                            IsVisible="{Binding CurrentMessageOps.IsMultiSelectMode}">
+                            BorderBrush="{DynamicResource BorderMuted}">
+                        <Border.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="CurrentMessageOps.IsMultiSelectMode"/>
+                                <Binding Path="CurrentNavigation.IsSessionInspectorTabSelected"
+                                         Converter="{x:Static BoolConverters.Not}"/>
+                            </MultiBinding>
+                        </Border.IsVisible>
                         <StackPanel Spacing="8">
                             <!-- Selection info row -->
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -134,7 +160,8 @@
                     <Border Grid.Row="2"
                             Background="{DynamicResource SurfaceSubtle}"
                             CornerRadius="6"
-                            Padding="8,8">
+                            Padding="8,8"
+                            IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0"
                                       Kind="Search"
@@ -531,8 +558,151 @@
                         </Grid>
                     </TabItem.Content>
                 </TabItem>
+
+                <TabItem Header="Sessions"
+                         IsVisible="{Binding CurrentNavigation.CanShowSessionInspector}">
+                    <TabItem.Content>
+                        <Grid RowDefinitions="Auto,*,Auto">
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource SurfaceSubtle}"
+                                    CornerRadius="6"
+                                    Padding="12,10"
+                                    Margin="8,8,8,0">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="Discovered sessions"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="13"/>
+                                        <TextBlock Text="Session IDs are discovered from active and dead-letter message peeks."
+                                                   Classes="caption"
+                                                   Foreground="{DynamicResource SubtleForeground}"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Classes="subtle small"
+                                            Command="{Binding CurrentSessionInspector.LoadSessionsCommand}"
+                                            Padding="10,8">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <LucideIcon Kind="RefreshCw" Size="12"/>
+                                            <TextBlock Text="Refresh Sessions"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <ListBox Grid.Row="1"
+                                     ItemsSource="{Binding CurrentSessionInspector.Sessions}"
+                                     SelectedItem="{Binding CurrentSessionInspector.SelectedSession}"
+                                     Background="Transparent"
+                                     Padding="8"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:SessionInspectorItem">
+                                        <Border Classes="card" Padding="12" Margin="0,0,0,8">
+                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Spacing="4">
+                                                        <TextBlock Text="{Binding SessionId}"
+                                                                   FontWeight="SemiBold"
+                                                                   FontSize="13"/>
+                                                        <TextBlock Text="{Binding State, StringFormat='State: {0}'}"
+                                                                   Classes="caption"
+                                                                   Foreground="{DynamicResource SubtleForeground}"
+                                                                   IsVisible="{Binding State, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1"
+                                                            Classes="primary small"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentSessionInspector.OpenSessionMessagesCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="10,8">
+                                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                                            <LucideIcon Kind="ArrowRight" Size="12"/>
+                                                            <TextBlock Text="Open Messages"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                                                    <Border Classes="badge-muted" Padding="6,3">
+                                                        <TextBlock Text="{Binding ActiveMessageCount, StringFormat='Active: {0}'}"
+                                                                   FontSize="10"
+                                                                   Foreground="{DynamicResource SubtleForeground}"/>
+                                                    </Border>
+                                                    <Border Classes="badge-muted" Padding="6,3">
+                                                        <TextBlock Text="{Binding DeadLetterMessageCount, StringFormat='DLQ: {0}'}"
+                                                                   FontSize="10"
+                                                                   Foreground="{DynamicResource SubtleForeground}"/>
+                                                    </Border>
+                                                    <Border Classes="badge-info"
+                                                            Padding="6,3"
+                                                            IsVisible="{Binding HasDeadLetter}">
+                                                        <TextBlock Text="Dead Letter Present" FontSize="10"/>
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="2" Spacing="2">
+                                                    <TextBlock Text="{Binding LastActivityAt, StringFormat='Last activity: {0:yyyy-MM-dd HH:mm:ss}'}"
+                                                               Classes="caption"
+                                                               Foreground="{DynamicResource SubtleForeground}"/>
+                                                    <TextBlock Text="{Binding LockedUntil, StringFormat='Locked until: {0:yyyy-MM-dd HH:mm:ss}'}"
+                                                               Classes="caption"
+                                                               Foreground="{DynamicResource SubtleForeground}"
+                                                               IsVisible="{Binding LockedUntil, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Border Grid.RowSpan="3"
+                                    IsVisible="{Binding CurrentSessionInspector.IsLoadingSessions}"
+                                    Background="{DynamicResource LoadingOverlay}"
+                                    IsHitTestVisible="True">
+                                <Border Background="{DynamicResource CardBackground}"
+                                        Padding="32,24"
+                                        CornerRadius="12"
+                                        BorderThickness="1"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BoxShadow="0 8 24 0 #32000000"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        MinWidth="280">
+                                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                                        <ProgressBar IsIndeterminate="True"
+                                                     Width="200"
+                                                     Height="4"
+                                                     Foreground="{DynamicResource AccentBrand}"
+                                                     Background="{DynamicResource BorderDefault}"/>
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <TextBlock Text="Loading Sessions"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppForeground}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Please wait while we inspect the available sessions..."
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource SubtleForeground}"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Border>
+                        </Grid>
+                    </TabItem.Content>
+                </TabItem>
             </TabControl>
         </Grid>
     </Border>
 </UserControl>
-

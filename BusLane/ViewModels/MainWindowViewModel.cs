@@ -58,6 +58,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     // Composed components
     public NavigationState Navigation { get; }
     public MessageOperationsViewModel MessageOps { get; }
+    public SessionInspectorViewModel SessionInspector { get; }
     public ConnectionViewModel Connection { get; }
     public FeaturePanelsViewModel FeaturePanels { get; }
     public LogViewerViewModel LogViewer { get; }
@@ -82,6 +83,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
     [NotifyPropertyChangedFor(nameof(CurrentNavigation))]
     [NotifyPropertyChangedFor(nameof(CurrentMessageOps))]
+    [NotifyPropertyChangedFor(nameof(CurrentSessionInspector))]
     [NotifyPropertyChangedFor(nameof(HasActiveConnectionTab))]
     [NotifyPropertyChangedFor(nameof(IsActiveTabAzureMode))]
     [NotifyPropertyChangedFor(nameof(IsActiveTabConnectionStringMode))]
@@ -120,6 +122,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// Gets the message operations for the active tab, or the legacy message ops if no tab is active.
     /// </summary>
     public MessageOperationsViewModel CurrentMessageOps => ActiveTab?.MessageOps ?? MessageOps;
+
+    /// <summary>
+    /// Gets the session inspector for the active tab, or the legacy session inspector if no tab is active.
+    /// </summary>
+    public SessionInspectorViewModel CurrentSessionInspector => ActiveTab?.SessionInspector ?? SessionInspector;
 
     // UI State
     [ObservableProperty] private bool _isLoading;
@@ -230,6 +237,16 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             () => GetKnownMessageCount(),
             msg => StatusMessage = msg);
 
+        SessionInspector = new SessionInspectorViewModel(
+            () => _operations,
+            MessageOps,
+            _logSink,
+            () => Navigation.CurrentEntityName,
+            () => Navigation.CurrentSubscriptionName,
+            () => Navigation.CurrentEntityRequiresSession,
+            index => Navigation.SelectedMessageTabIndex = index,
+            msg => StatusMessage = msg);
+
         FeaturePanels = new FeaturePanelsViewModel(
             liveStreamService, alertService, notificationService,
             dashboardViewModel,
@@ -273,6 +290,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 FireAndForget(LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id), nameof(LoadNamespacesAsync));
             else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
                 FireAndForget(MessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
+            else if (e.PropertyName == nameof(Navigation.SelectedMessageTabIndex) && Navigation.IsSessionInspectorTabSelected)
+                FireAndForget(SessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
         };
 
         // Wire up device code authentication event
@@ -345,6 +364,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         SetOperations(null);
         Navigation.Clear();
         MessageOps.Clear();
+        SessionInspector.Clear();
         FeaturePanels.CloseAll();
         return Task.CompletedTask;
     }
@@ -516,6 +536,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         CurrentNavigation.SelectedSubscription = null;
         CurrentNavigation.SelectedEntity = queue;
         CurrentNavigation.TopicSubscriptions.Clear();
+        CurrentMessageOps.ClearSessionScope();
+        CurrentSessionInspector.Clear();
+
+        if (CurrentNavigation.IsSessionInspectorTabSelected)
+        {
+            await CurrentSessionInspector.LoadSessionsAsync();
+            return;
+        }
+
         await CurrentMessageOps.LoadMessagesAsync();
     }
 
@@ -531,6 +560,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         CurrentNavigation.SelectedSubscription = null;
         CurrentNavigation.SelectedEntity = topic;
         CurrentMessageOps.Clear();
+        CurrentSessionInspector.Clear();
         CurrentNavigation.TopicSubscriptions.Clear();
 
         IsLoading = true;
@@ -561,6 +591,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         CurrentNavigation.SelectedSubscription = sub;
         CurrentNavigation.SelectedQueue = null;
         CurrentNavigation.SelectedEntity = sub;
+        CurrentMessageOps.ClearSessionScope();
+        CurrentSessionInspector.Clear();
+
+        if (CurrentNavigation.IsSessionInspectorTabSelected)
+        {
+            await CurrentSessionInspector.LoadSessionsAsync();
+            return;
+        }
+
         await CurrentMessageOps.LoadMessagesAsync();
     }
 
@@ -1209,6 +1248,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Keep fallback operations in sync with active tab operations.
         SetOperations(newValue?.Operations);
 
+        if (CurrentNavigation.IsSessionInspectorTabSelected)
+        {
+            FireAndForget(CurrentSessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
+        }
+
     }
 
     private void OnActiveTabNavigationPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1216,6 +1260,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (e.PropertyName == nameof(NavigationState.ShowDeadLetter))
         {
             FireAndForget(CurrentMessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
+        }
+        else if (e.PropertyName == nameof(NavigationState.SelectedMessageTabIndex) && CurrentNavigation.IsSessionInspectorTabSelected)
+        {
+            FireAndForget(CurrentSessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
         }
     }
 
@@ -1253,6 +1301,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(ShowWelcome));
         OnPropertyChanged(nameof(CurrentNavigation));
         OnPropertyChanged(nameof(CurrentMessageOps));
+        OnPropertyChanged(nameof(CurrentSessionInspector));
     }
 
     /// <summary>

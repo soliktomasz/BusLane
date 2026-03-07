@@ -53,6 +53,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
     private bool _sortDescending = true;
 
     [ObservableProperty] private string _messageSearchText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSessionScoped))]
+    [NotifyPropertyChangedFor(nameof(SessionScopeLabel))]
+    private string? _scopedSessionId;
 
     public ObservableCollection<MessageInfo> Messages { get; } = [];
     public ObservableCollection<MessageInfo> FilteredMessages { get; } = [];
@@ -65,6 +69,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     private bool _currentDeadLetter;
     private bool _currentRequiresSession;
     private long _knownTotalCount;
+    private long _scopedKnownActiveCount;
+    private long _scopedKnownDeadLetterCount;
     private long? _nextFromSequenceNumber;
     private CancellationTokenSource? _messageFilterCts;
     private const int MessageFilterDebounceMilliseconds = 150;
@@ -73,6 +79,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public int SelectedMessagesCount => SelectedMessages.Count;
     public bool CanResubmitDeadLetters => HasSelectedMessages && _getShowDeadLetter();
     public string SortButtonText => SortDescending ? "↓ Newest" : "↑ Oldest";
+    public bool IsSessionScoped => !string.IsNullOrWhiteSpace(ScopedSessionId);
+    public string? SessionScopeLabel => IsSessionScoped ? $"Session: {ScopedSessionId}" : null;
 
     public bool IsMessageBodyJson
     {
@@ -280,7 +288,9 @@ public partial class MessageOperationsViewModel : ViewModelBase
         var entityName = _getEntityName();
         if (entityName == null) return;
 
-        var knownCount = _getKnownMessageCount();
+        var knownCount = IsSessionScoped
+            ? (_getShowDeadLetter() ? _scopedKnownDeadLetterCount : _scopedKnownActiveCount)
+            : _getKnownMessageCount();
         await LoadFirstPageAsync(entityName, _getSubscriptionName(), _getShowDeadLetter(), _getRequiresSession(), knownCount);
     }
 
@@ -539,7 +549,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
             count,
             fromSequenceNumber,
             _currentDeadLetter,
-            _currentRequiresSession)).ToList();
+            _currentRequiresSession,
+            ScopedSessionId)).ToList();
 
         var sorted = SortDescending
             ? messages.OrderByDescending(m => m.EnqueuedTime)
@@ -596,7 +607,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
             scanCount,
             null,
             _currentDeadLetter,
-            _currentRequiresSession);
+            _currentRequiresSession,
+            ScopedSessionId);
 
         var ordered = SortDescending
             ? messages.OrderByDescending(m => m.EnqueuedTime)
@@ -642,6 +654,30 @@ public partial class MessageOperationsViewModel : ViewModelBase
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
+
+    public void OpenSessionScope(string sessionId, long knownTotalCount = 0, long knownDeadLetterCount = 0)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+        ScopedSessionId = sessionId;
+        _scopedKnownActiveCount = knownTotalCount;
+        _scopedKnownDeadLetterCount = knownDeadLetterCount;
+    }
+
+    [RelayCommand]
+    public void ClearSessionScope()
+    {
+        ScopedSessionId = null;
+        _scopedKnownActiveCount = 0;
+        _scopedKnownDeadLetterCount = 0;
+        _nextFromSequenceNumber = null;
+        _pageCache.Clear();
+        Pagination.Reset();
+        Messages.Clear();
+        FilteredMessages.Clear();
+        SelectedMessages.Clear();
+        SelectedMessage = null;
+        IsMultiSelectMode = false;
+    }
 
     public void ClearSelectedMessage() => SelectedMessage = null;
 
@@ -723,6 +759,9 @@ public partial class MessageOperationsViewModel : ViewModelBase
         SelectedMessages.Clear();
         SelectedMessage = null;
         IsMultiSelectMode = false;
+        ScopedSessionId = null;
+        _scopedKnownActiveCount = 0;
+        _scopedKnownDeadLetterCount = 0;
         MessageSearchText = "";
         _pageCache.Clear();
         Pagination.Reset();

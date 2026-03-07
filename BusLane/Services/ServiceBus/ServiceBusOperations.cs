@@ -58,6 +58,16 @@ internal static class ServiceBusOperations
     public static int MaxEmptyBatches => Options.MaxEmptyBatches;
     public static int ResendBatchSize => Options.ResendBatchSize;
 
+    internal static readonly TimeSpan SessionAcceptTimeout = TimeSpan.FromSeconds(5);
+    internal static readonly int SessionInspectorPeekBatchSize = 100;
+
+    internal record SessionMessageSnapshot(
+        string SessionId,
+        long MessageCount,
+        DateTimeOffset? LastActivityAt,
+        DateTimeOffset? LockedUntil,
+        string? State);
+
     /// <summary>
     /// Maps a ServiceBusReceivedMessage to our MessageInfo model.
     /// </summary>
@@ -85,6 +95,26 @@ internal static class ServiceBusOperations
         m.DeadLetterReason,
         m.DeadLetterErrorDescription
     );
+
+    public static SessionInspectorItem BuildSessionInspectorItem(
+        SessionMessageSnapshot? activeSnapshot,
+        SessionMessageSnapshot? deadLetterSnapshot)
+    {
+        var sessionId = activeSnapshot?.SessionId ?? deadLetterSnapshot?.SessionId;
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+
+        var lastActivity = MaxDate(activeSnapshot?.LastActivityAt, deadLetterSnapshot?.LastActivityAt);
+        var lockedUntil = MaxDate(activeSnapshot?.LockedUntil, deadLetterSnapshot?.LockedUntil);
+        var state = activeSnapshot?.State ?? deadLetterSnapshot?.State;
+
+        return new SessionInspectorItem(
+            sessionId,
+            activeSnapshot?.MessageCount ?? 0,
+            deadLetterSnapshot?.MessageCount ?? 0,
+            lastActivity,
+            lockedUntil,
+            state);
+    }
 
     /// <summary>
     /// Applies message properties to a ServiceBusMessage.
@@ -256,6 +286,83 @@ internal static class ServiceBusOperations
         return allMessages;
     }
 
+    public static async Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekSessionMessagesAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        string sessionId,
+        int count,
+        long? fromSequenceNumber,
+        bool deadLetter,
+        CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+
+        await using var receiver = await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter, ct);
+
+        var allMessages = new List<ServiceBusReceivedMessage>(count);
+        var nextFromSequenceNumber = fromSequenceNumber;
+
+        while (allMessages.Count < count)
+        {
+            var remaining = count - allMessages.Count;
+            var batch = nextFromSequenceNumber.HasValue
+                ? await receiver.PeekMessagesAsync(remaining, nextFromSequenceNumber.Value, cancellationToken: ct)
+                : await receiver.PeekMessagesAsync(remaining, cancellationToken: ct);
+
+            if (batch.Count == 0)
+            {
+                break;
+            }
+
+            allMessages.AddRange(batch);
+
+            var lastSequenceNumber = batch[^1].SequenceNumber;
+            if (lastSequenceNumber == long.MaxValue)
+            {
+                break;
+            }
+
+            nextFromSequenceNumber = lastSequenceNumber + 1;
+        }
+
+        return allMessages;
+    }
+
+    public static async Task<IReadOnlyList<SessionInspectorItem>> GetSessionInspectorItemsAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        CancellationToken ct)
+    {
+        var maxSessions = Math.Max(MaxSessionsToCheck, 25);
+        var activeSessions = await DiscoverSessionIdsAsync(client, entityName, subscription, deadLetter: false, maxSessions, ct);
+        var deadLetterSessions = await DiscoverSessionIdsAsync(client, entityName, subscription, deadLetter: true, maxSessions, ct);
+        var allSessionIds = activeSessions.Concat(deadLetterSessions).Distinct(StringComparer.Ordinal).ToList();
+
+        var items = new List<SessionInspectorItem>(allSessionIds.Count);
+        foreach (var sessionId in allSessionIds)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var activeSnapshot = await GetSessionSnapshotAsync(client, entityName, subscription, sessionId, deadLetter: false, ct);
+            var deadLetterSnapshot = await GetSessionSnapshotAsync(client, entityName, subscription, sessionId, deadLetter: true, ct);
+
+            if (activeSnapshot == null && deadLetterSnapshot == null)
+            {
+                Log.Debug("Skipping session {SessionId} because it was drained before snapshotting completed", sessionId);
+                continue;
+            }
+
+            items.Add(BuildSessionInspectorItem(activeSnapshot, deadLetterSnapshot));
+        }
+
+        return items
+            .OrderByDescending(static session => session.LastActivityAt ?? DateTimeOffset.MinValue)
+            .ThenBy(static session => session.SessionId, StringComparer.Ordinal)
+            .ToList();
+    }
+
     /// <summary>
     /// Accepts the next available session receiver.
     /// </summary>
@@ -278,6 +385,184 @@ internal static class ServiceBusOperations
         return deadLetter
             ? await client.AcceptNextSessionAsync($"{entityName}/$DeadLetterQueue", sessionOptions, ct)
             : await client.AcceptNextSessionAsync(entityName, sessionOptions, ct);
+    }
+
+    public static async Task<ServiceBusSessionReceiver> AcceptSessionReceiverAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        string sessionId,
+        bool deadLetter,
+        CancellationToken ct)
+    {
+        var sessionOptions = new ServiceBusSessionReceiverOptions { ReceiveMode = ServiceBusReceiveMode.PeekLock };
+
+        if (subscription != null)
+        {
+            return deadLetter
+                ? await client.AcceptSessionAsync($"{entityName}/Subscriptions/{subscription}/$DeadLetterQueue", sessionId, sessionOptions, ct)
+                : await client.AcceptSessionAsync(entityName, subscription, sessionId, sessionOptions, ct);
+        }
+
+        return deadLetter
+            ? await client.AcceptSessionAsync($"{entityName}/$DeadLetterQueue", sessionId, sessionOptions, ct)
+            : await client.AcceptSessionAsync(entityName, sessionId, sessionOptions, ct);
+    }
+
+    private static async Task<HashSet<string>> DiscoverSessionIdsAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        int maxSessions,
+        CancellationToken ct)
+    {
+        var sessionIds = new HashSet<string>(StringComparer.Ordinal);
+        var acquiredReceivers = new List<ServiceBusSessionReceiver>();
+
+        try
+        {
+            while (sessionIds.Count < maxSessions)
+            {
+                try
+                {
+                    using var acceptTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    acceptTimeoutCts.CancelAfter(SessionAcceptTimeout);
+                    var receiver = await AcceptNextSessionReceiverAsync(client, entityName, subscription, deadLetter, acceptTimeoutCts.Token);
+
+                    if (!sessionIds.Add(receiver.SessionId))
+                    {
+                        await receiver.DisposeAsync();
+                        break;
+                    }
+
+                    acquiredReceivers.Add(receiver);
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (ServiceBusException ex) when (ex.Reason is ServiceBusFailureReason.ServiceTimeout or ServiceBusFailureReason.SessionCannotBeLocked)
+                {
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            foreach (var receiver in acquiredReceivers)
+            {
+                try
+                {
+                    await receiver.DisposeAsync();
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+
+        return sessionIds;
+    }
+
+    private static async Task<SessionMessageSnapshot?> GetSessionSnapshotAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        string sessionId,
+        bool deadLetter,
+        CancellationToken ct)
+    {
+        try
+        {
+            using var acceptTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            acceptTimeoutCts.CancelAfter(SessionAcceptTimeout);
+
+            await using var receiver = await AcceptSessionReceiverAsync(
+                client,
+                entityName,
+                subscription,
+                sessionId,
+                deadLetter,
+                acceptTimeoutCts.Token);
+
+            var state = await receiver.GetSessionStateAsync(ct);
+            var count = 0L;
+            DateTimeOffset? lastActivity = null;
+            long? nextFromSequenceNumber = null;
+
+            while (true)
+            {
+                var batch = nextFromSequenceNumber.HasValue
+                    ? await receiver.PeekMessagesAsync(SessionInspectorPeekBatchSize, nextFromSequenceNumber.Value, cancellationToken: ct)
+                    : await receiver.PeekMessagesAsync(SessionInspectorPeekBatchSize, cancellationToken: ct);
+
+                if (batch.Count == 0)
+                {
+                    break;
+                }
+
+                count += batch.Count;
+                var batchLastActivity = batch.Max(static message => message.EnqueuedTime);
+                lastActivity = MaxDate(lastActivity, batchLastActivity);
+
+                var lastSequenceNumber = batch[^1].SequenceNumber;
+                if (lastSequenceNumber == long.MaxValue)
+                {
+                    break;
+                }
+
+                nextFromSequenceNumber = lastSequenceNumber + 1;
+            }
+
+            return new SessionMessageSnapshot(
+                sessionId,
+                count,
+                lastActivity,
+                receiver.SessionLockedUntil,
+                FormatSessionState(state));
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (ServiceBusException ex) when (ex.Reason is ServiceBusFailureReason.ServiceTimeout or ServiceBusFailureReason.SessionCannotBeLocked)
+        {
+            return null;
+        }
+    }
+
+    private static string? FormatSessionState(BinaryData? state)
+    {
+        if (state == null || state.ToMemory().IsEmpty)
+        {
+            return null;
+        }
+
+        try
+        {
+            return state.ToString();
+        }
+        catch
+        {
+            return Convert.ToBase64String(state.ToArray());
+        }
+    }
+
+    private static DateTimeOffset? MaxDate(DateTimeOffset? left, DateTimeOffset? right)
+    {
+        if (!left.HasValue)
+        {
+            return right;
+        }
+
+        if (!right.HasValue)
+        {
+            return left;
+        }
+
+        return left.Value >= right.Value ? left : right;
     }
 
     /// <summary>

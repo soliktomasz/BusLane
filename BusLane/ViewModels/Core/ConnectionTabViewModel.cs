@@ -32,6 +32,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     // Composed components
     public NavigationState Navigation { get; }
     public MessageOperationsViewModel MessageOps { get; }
+    public SessionInspectorViewModel SessionInspector { get; }
 
     // Connection resources (set after connection)
     private IServiceBusOperations? _operations;
@@ -71,6 +72,16 @@ public partial class ConnectionTabViewModel : ViewModelBase
             () => Navigation.CurrentEntityRequiresSession,
             () => Navigation.ShowDeadLetter,
             () => GetKnownMessageCount(),
+            msg => StatusMessage = msg);
+
+        SessionInspector = new SessionInspectorViewModel(
+            () => _operations,
+            MessageOps,
+            logSink,
+            () => Navigation.CurrentEntityName,
+            () => Navigation.CurrentSubscriptionName,
+            () => Navigation.CurrentEntityRequiresSession,
+            index => Navigation.SelectedMessageTabIndex = index,
             msg => StatusMessage = msg);
     }
 
@@ -181,6 +192,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
         Navigation.Clear();
         MessageOps.Clear();
+        SessionInspector.Clear();
 
         StatusMessage = "Disconnected";
         ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, "Disconnected");
