@@ -15,4 +15,13 @@ public interface IDashboardPersistenceService
 
     /// <summary>Returns the default dashboard configuration with preset widgets.</summary>
     DashboardConfiguration GetDefaultConfiguration();
+
+    /// <summary>Gets all saved dashboard presets.</summary>
+    IReadOnlyList<DashboardPreset> GetPresets();
+
+    /// <summary>Saves or updates a named dashboard preset.</summary>
+    void SavePreset(DashboardPreset preset);
+
+    /// <summary>Loads a preset by its identifier.</summary>
+    DashboardPreset? LoadPreset(string presetId);
 }

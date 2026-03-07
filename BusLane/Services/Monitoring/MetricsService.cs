@@ -109,13 +109,15 @@ public class MetricsService : IMetricsService, IDisposable
     private readonly List<MetricDataPoint> _pendingMetrics = new();
     private readonly object _batchLock = new();
     private readonly System.Timers.Timer _batchTimer;
+    private readonly IMetricsHistoryStore? _historyStore;
     private bool _disposed;
 
     public event EventHandler<MetricDataPoint>? MetricRecorded;
     public event EventHandler<IReadOnlyList<MetricDataPoint>>? MetricsBatchRecorded;
 
-    public MetricsService()
+    public MetricsService(IMetricsHistoryStore? historyStore = null)
     {
+        _historyStore = historyStore;
         _batchTimer = new System.Timers.Timer(BatchIntervalMilliseconds);
         _batchTimer.Elapsed += OnBatchTimerElapsed;
         _batchTimer.AutoReset = false;
@@ -140,6 +142,7 @@ public class MetricsService : IMetricsService, IDisposable
     {
         var key = GetMetricKey(entityName, metricName);
         var dataPoint = new MetricDataPoint(DateTimeOffset.UtcNow, entityName, metricName, value);
+        _historyStore?.RecordSnapshots([new MetricSnapshot(dataPoint.Timestamp, entityName, metricName, value)]);
 
         _metrics.AddOrUpdate(
             key,

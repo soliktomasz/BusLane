@@ -24,7 +24,13 @@ public class AlertService : IAlertService
 
     private readonly List<AlertRule> _rules = [];
     private readonly List<AlertEvent> _activeAlerts = [];
+    private readonly List<AlertHistoryEntry> _history = [];
     private readonly HashSet<string> _triggeredAlertKeys = []; // To prevent duplicate alerts
+    private readonly Dictionary<string, DateTimeOffset> _lastTriggeredAtByKey = new();
+    private readonly IEnumerable<INotificationChannel> _notificationChannels;
+    private readonly Func<DateTimeOffset> _nowProvider;
+    private readonly string _rulesPath;
+    private readonly string _historyPath;
 
     public IReadOnlyList<AlertRule> Rules
     {
@@ -48,12 +54,32 @@ public class AlertService : IAlertService
         }
     }
 
+    public IReadOnlyList<AlertHistoryEntry> History
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _history.ToList().AsReadOnly();
+            }
+        }
+    }
+
     public event EventHandler<AlertEvent>? AlertTriggered;
     public event EventHandler? AlertsChanged;
 
-    public AlertService()
+    public AlertService(
+        string? rulesPath = null,
+        string? historyPath = null,
+        IEnumerable<INotificationChannel>? notificationChannels = null,
+        Func<DateTimeOffset>? nowProvider = null)
     {
+        _rulesPath = rulesPath ?? AppPaths.AlertRules;
+        _historyPath = historyPath ?? AppPaths.AlertHistory;
+        _notificationChannels = notificationChannels ?? [];
+        _nowProvider = nowProvider ?? (() => DateTimeOffset.UtcNow);
         LoadRules();
+        LoadHistory();
         // No default rules - let users create their own when needed (YAGNI principle)
     }
 
@@ -136,10 +162,15 @@ public class AlertService : IAlertService
                 if (!MatchesEntityPattern(queue.Name, rule.EntityPattern))
                     continue;
 
-                var alertEvent = EvaluateRule(rule, queue.Name, "Queue", queue);
-                if (alertEvent != null)
+                var evaluation = EvaluateRule(rule, queue.Name, "Queue", queue);
+                if (evaluation.SuppressHistory != null)
                 {
-                    newAlerts.Add(alertEvent);
+                    RecordHistory(evaluation.SuppressHistory);
+                }
+
+                if (evaluation.Alert != null)
+                {
+                    newAlerts.Add(evaluation.Alert);
                 }
             }
 
@@ -150,10 +181,15 @@ public class AlertService : IAlertService
                 if (!MatchesEntityPattern(entityName, rule.EntityPattern))
                     continue;
 
-                var alertEvent = EvaluateRuleForSubscription(rule, entityName, sub);
-                if (alertEvent != null)
+                var evaluation = EvaluateRuleForSubscription(rule, entityName, sub);
+                if (evaluation.SuppressHistory != null)
                 {
-                    newAlerts.Add(alertEvent);
+                    RecordHistory(evaluation.SuppressHistory);
+                }
+
+                if (evaluation.Alert != null)
+                {
+                    newAlerts.Add(evaluation.Alert);
                 }
             }
         }
@@ -171,10 +207,21 @@ public class AlertService : IAlertService
                 {
                     _triggeredAlertKeys.Add(key);
                     _activeAlerts.Add(alert);
+                    _lastTriggeredAtByKey[key] = _nowProvider();
                     triggeredAlerts.Add(alert);
                     alertsToFire.Add(alert);
+                    _history.Add(new AlertHistoryEntry(
+                        Guid.NewGuid().ToString(),
+                        alert.Rule.Id,
+                        alert.Rule.Name,
+                        alert.EntityName,
+                        alert.EntityType,
+                        alert.CurrentValue,
+                        _nowProvider(),
+                        AlertHistoryStatus.Triggered));
                 }
             }
+            SaveHistoryInternal();
         }
 
         // Fire events outside lock to avoid potential deadlocks
@@ -183,6 +230,7 @@ public class AlertService : IAlertService
             AlertTriggered?.Invoke(this, alert);
             Log.Warning("Alert triggered: {AlertType} on {EntityName} - Current value: {CurrentValue}, Threshold: {Threshold}",
                 alert.Rule.Type, alert.EntityName, alert.CurrentValue, alert.Rule.Threshold);
+            _ = DispatchNotificationsAsync(alert);
         }
 
         if (triggeredAlerts.Count > 0)
@@ -194,7 +242,7 @@ public class AlertService : IAlertService
         return Task.FromResult<IEnumerable<AlertEvent>>(triggeredAlerts);
     }
 
-    private AlertEvent? EvaluateRule(AlertRule rule, string entityName, string entityType, QueueInfo queue)
+    private AlertEvaluationResult EvaluateRule(AlertRule rule, string entityName, string entityType, QueueInfo queue)
     {
         double currentValue = rule.Type switch
         {
@@ -204,22 +252,10 @@ public class AlertService : IAlertService
             _ => 0
         };
 
-        if (currentValue >= rule.Threshold)
-        {
-            return new AlertEvent(
-                Guid.NewGuid().ToString(),
-                rule,
-                entityName,
-                entityType,
-                currentValue,
-                DateTimeOffset.UtcNow
-            );
-        }
-
-        return null;
+        return BuildEvaluationResult(rule, entityName, entityType, currentValue);
     }
 
-    private AlertEvent? EvaluateRuleForSubscription(AlertRule rule, string entityName, SubscriptionInfo sub)
+    private AlertEvaluationResult EvaluateRuleForSubscription(AlertRule rule, string entityName, SubscriptionInfo sub)
     {
         double currentValue = rule.Type switch
         {
@@ -228,19 +264,62 @@ public class AlertService : IAlertService
             _ => 0
         };
 
-        if (currentValue >= rule.Threshold)
+        return BuildEvaluationResult(rule, entityName, "Subscription", currentValue);
+    }
+
+    private AlertEvaluationResult BuildEvaluationResult(AlertRule rule, string entityName, string entityType, double currentValue)
+    {
+        if (currentValue < rule.Threshold)
         {
-            return new AlertEvent(
+            return new AlertEvaluationResult(null, null);
+        }
+
+        var now = _nowProvider();
+        var alertKey = $"{rule.Id}:{entityName}:{rule.Type}";
+
+        if (rule.QuietHours != null && rule.QuietHours.Contains(now.Hour))
+        {
+            return new AlertEvaluationResult(
+                null,
+                new AlertHistoryEntry(
+                    Guid.NewGuid().ToString(),
+                    rule.Id,
+                    rule.Name,
+                    entityName,
+                    entityType,
+                    currentValue,
+                    now,
+                    AlertHistoryStatus.Suppressed,
+                    AlertSuppressionReason.QuietHours));
+        }
+
+        if (rule.Cooldown.HasValue &&
+            _lastTriggeredAtByKey.TryGetValue(alertKey, out var lastTriggeredAt) &&
+            now - lastTriggeredAt < rule.Cooldown.Value)
+        {
+            return new AlertEvaluationResult(
+                null,
+                new AlertHistoryEntry(
+                    Guid.NewGuid().ToString(),
+                    rule.Id,
+                    rule.Name,
+                    entityName,
+                    entityType,
+                    currentValue,
+                    now,
+                    AlertHistoryStatus.Suppressed,
+                    AlertSuppressionReason.Cooldown));
+        }
+
+        return new AlertEvaluationResult(
+            new AlertEvent(
                 Guid.NewGuid().ToString(),
                 rule,
                 entityName,
-                "Subscription",
+                entityType,
                 currentValue,
-                DateTimeOffset.UtcNow
-            );
-        }
-
-        return null;
+                now),
+            null);
     }
 
     private static bool MatchesEntityPattern(string entityName, string? pattern)
@@ -286,6 +365,16 @@ public class AlertService : IAlertService
                 var key = GetAlertKey(alert);
                 _triggeredAlertKeys.Remove(key);
                 acknowledged = true;
+                _history.Add(new AlertHistoryEntry(
+                    Guid.NewGuid().ToString(),
+                    alert.Rule.Id,
+                    alert.Rule.Name,
+                    alert.EntityName,
+                    alert.EntityType,
+                    alert.CurrentValue,
+                    _nowProvider(),
+                    AlertHistoryStatus.Acknowledged));
+                SaveHistoryInternal();
             }
         }
 
@@ -318,6 +407,16 @@ public class AlertService : IAlertService
         lock (_lock)
         {
             _activeAlerts.Add(testAlert);
+            _history.Add(new AlertHistoryEntry(
+                Guid.NewGuid().ToString(),
+                rule.Id,
+                rule.Name,
+                "[Test Entity]",
+                "Test",
+                rule.Threshold,
+                _nowProvider(),
+                AlertHistoryStatus.Triggered));
+            SaveHistoryInternal();
         }
         AlertTriggered?.Invoke(this, testAlert);
         AlertsChanged?.Invoke(this, EventArgs.Empty);
@@ -348,15 +447,19 @@ public class AlertService : IAlertService
                 Severity = r.Severity.ToString(),
                 Threshold = r.Threshold,
                 IsEnabled = r.IsEnabled,
-                EntityPattern = r.EntityPattern
+                EntityPattern = r.EntityPattern,
+                CooldownMinutes = r.Cooldown?.TotalMinutes,
+                QuietHoursStartHour = r.QuietHours?.StartHour,
+                QuietHoursEndHour = r.QuietHours?.EndHour,
+                DeliveryTargets = r.DeliveryTargets?.ToList()
             }).ToList();
 
             var json = JsonSerializer.Serialize(data, JsonOptions);
-            AppPaths.CreateSecureFile(AppPaths.AlertRules, json);
+            AppPaths.CreateSecureFile(_rulesPath, json);
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Failed to save alert rules to {Path}", AppPaths.AlertRules);
+            Log.Warning(ex, "Failed to save alert rules to {Path}", _rulesPath);
         }
     }
 
@@ -366,9 +469,9 @@ public class AlertService : IAlertService
         {
             try
             {
-                if (File.Exists(AppPaths.AlertRules))
+                if (File.Exists(_rulesPath))
                 {
-                    var json = File.ReadAllText(AppPaths.AlertRules);
+                    var json = File.ReadAllText(_rulesPath);
                     var data = Deserialize<List<AlertRuleData>>(json);
 
                     if (data != null)
@@ -386,7 +489,12 @@ public class AlertService : IAlertService
                                     severity,
                                     item.Threshold,
                                     item.IsEnabled,
-                                    item.EntityPattern
+                                    item.EntityPattern,
+                                    item.CooldownMinutes.HasValue ? TimeSpan.FromMinutes(item.CooldownMinutes.Value) : null,
+                                    item.QuietHoursStartHour.HasValue && item.QuietHoursEndHour.HasValue
+                                        ? new QuietHoursWindow(item.QuietHoursStartHour.Value, item.QuietHoursEndHour.Value)
+                                        : null,
+                                    item.DeliveryTargets
                                 ));
                             }
                         }
@@ -395,8 +503,77 @@ public class AlertService : IAlertService
             }
             catch (Exception ex)
             {
-                Log.Debug(ex, "Failed to load alert rules from {Path}, using defaults", AppPaths.AlertRules);
+                Log.Debug(ex, "Failed to load alert rules from {Path}, using defaults", _rulesPath);
             }
+        }
+    }
+
+    private async Task DispatchNotificationsAsync(AlertEvent alert)
+    {
+        if (alert.Rule.DeliveryTargets == null || alert.Rule.DeliveryTargets.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var target in alert.Rule.DeliveryTargets)
+        {
+            var channel = _notificationChannels.FirstOrDefault(c => c.ChannelType == target.ChannelType);
+            if (channel == null)
+            {
+                continue;
+            }
+
+            var historyEntry = await channel.SendAsync(alert, target);
+            RecordHistory(historyEntry);
+        }
+    }
+
+    private void RecordHistory(AlertHistoryEntry historyEntry)
+    {
+        lock (_lock)
+        {
+            _history.Add(historyEntry);
+            SaveHistoryInternal();
+        }
+    }
+
+    private void LoadHistory()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                if (!File.Exists(_historyPath))
+                {
+                    return;
+                }
+
+                var json = File.ReadAllText(_historyPath);
+                var data = Deserialize<List<AlertHistoryEntry>>(json);
+                if (data != null)
+                {
+                    _history.Clear();
+                    _history.AddRange(data);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Failed to load alert history from {Path}", _historyPath);
+            }
+        }
+    }
+
+    private void SaveHistoryInternal()
+    {
+        try
+        {
+            AppPaths.EnsureDirectoryExists();
+            var json = JsonSerializer.Serialize(_history, JsonOptions);
+            AppPaths.CreateSecureFile(_historyPath, json);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Failed to save alert history to {Path}", _historyPath);
         }
     }
 
@@ -409,6 +586,11 @@ public class AlertService : IAlertService
         public double Threshold { get; set; }
         public bool IsEnabled { get; set; }
         public string? EntityPattern { get; set; }
+        public double? CooldownMinutes { get; set; }
+        public int? QuietHoursStartHour { get; set; }
+        public int? QuietHoursEndHour { get; set; }
+        public List<AlertDeliveryTarget>? DeliveryTargets { get; set; }
     }
-}
 
+    private sealed record AlertEvaluationResult(AlertEvent? Alert, AlertHistoryEntry? SuppressHistory);
+}

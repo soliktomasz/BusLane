@@ -117,6 +117,21 @@ internal static class AppPaths
     public static string DashboardConfig => Path.Combine(AppDataFolder, "dashboard.json");
 
     /// <summary>
+    /// Path to the persisted metric history file.
+    /// </summary>
+    public static string MetricsHistory => Path.Combine(AppDataFolder, "metrics-history.json");
+
+    /// <summary>
+    /// Path to the alert history file.
+    /// </summary>
+    public static string AlertHistory => Path.Combine(AppDataFolder, "alert-history.json");
+
+    /// <summary>
+    /// Directory used for diagnostic bundle exports.
+    /// </summary>
+    public static string DiagnosticBundles => Path.Combine(AppDataFolder, "diagnostics");
+
+    /// <summary>
     /// Ensures the application data directory exists.
     /// </summary>
     public static void EnsureDirectoryExists()

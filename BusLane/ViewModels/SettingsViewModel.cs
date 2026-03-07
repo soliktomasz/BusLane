@@ -2,6 +2,7 @@ namespace BusLane.ViewModels;
 
 using Avalonia.Threading;
 using BusLane.Services.Abstractions;
+using BusLane.Services.Diagnostics;
 using BusLane.Services.Update;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,6 +14,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly MainWindowViewModel? _mainViewModel;
     private readonly IPreferencesService _preferencesService;
     private readonly IUpdateService? _updateService;
+    private readonly IDiagnosticBundleService? _diagnosticBundleService;
     private string _originalTheme = "Light";
     private bool _isLoading;
 
@@ -30,6 +32,8 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _enableTelemetry;
     [ObservableProperty] private bool _autoCheckForUpdates = true;
     [ObservableProperty] private bool _isCheckingForUpdates;
+    [ObservableProperty] private bool _isExportingDiagnosticBundle;
+    [ObservableProperty] private string? _diagnosticBundleStatus;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
@@ -41,12 +45,14 @@ public partial class SettingsViewModel : ViewModelBase
         Action onClose,
         IPreferencesService preferencesService,
         MainWindowViewModel? mainViewModel = null,
-        IUpdateService? updateService = null)
+        IUpdateService? updateService = null,
+        IDiagnosticBundleService? diagnosticBundleService = null)
     {
         _onClose = onClose;
         _preferencesService = preferencesService;
         _mainViewModel = mainViewModel;
         _updateService = updateService;
+        _diagnosticBundleService = diagnosticBundleService;
 
         // Capture original theme BEFORE loading to avoid any binding interference
         _originalTheme = preferencesService.Theme;
@@ -181,5 +187,27 @@ public partial class SettingsViewModel : ViewModelBase
             IsCheckingForUpdates = false;
         }
     }
-}
 
+    [RelayCommand]
+    private async Task ExportDiagnosticBundleAsync()
+    {
+        if (_diagnosticBundleService == null || IsExportingDiagnosticBundle)
+            return;
+
+        try
+        {
+            IsExportingDiagnosticBundle = true;
+            DiagnosticBundleStatus = "Creating diagnostic bundle...";
+            var bundlePath = await _diagnosticBundleService.ExportAsync(includeMessageBodies: false);
+            DiagnosticBundleStatus = $"Diagnostic bundle saved to {bundlePath}";
+        }
+        catch (Exception ex)
+        {
+            DiagnosticBundleStatus = $"Diagnostic export failed: {ex.Message}";
+        }
+        finally
+        {
+            IsExportingDiagnosticBundle = false;
+        }
+    }
+}

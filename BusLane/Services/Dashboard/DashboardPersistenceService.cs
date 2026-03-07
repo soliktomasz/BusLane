@@ -17,35 +17,39 @@ public class DashboardPersistenceService : IDashboardPersistenceService
 
     public DashboardConfiguration Load()
     {
-        if (!File.Exists(_filePath))
-        {
-            return GetDefaultConfiguration();
-        }
-
-        try
-        {
-            var json = File.ReadAllText(_filePath);
-            var config = Deserialize<DashboardConfiguration>(json);
-            return config ?? GetDefaultConfiguration();
-        }
-        catch
-        {
-            var backupPath = _filePath + ".backup";
-            File.Copy(_filePath, backupPath, true);
-            return GetDefaultConfiguration();
-        }
+        return LoadEnvelope().Current ?? GetDefaultConfiguration();
     }
 
     public void Save(DashboardConfiguration config)
     {
-        var directory = Path.GetDirectoryName(_filePath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        var envelope = LoadEnvelope();
+        envelope.Current = config;
+        SaveEnvelope(envelope);
+    }
+
+    public IReadOnlyList<DashboardPreset> GetPresets() => LoadEnvelope().Presets;
+
+    public void SavePreset(DashboardPreset preset)
+    {
+        var envelope = LoadEnvelope();
+        var presets = envelope.Presets.ToList();
+        var existingIndex = presets.FindIndex(p => p.Id == preset.Id);
+        if (existingIndex >= 0)
         {
-            Directory.CreateDirectory(directory);
+            presets[existingIndex] = preset;
+        }
+        else
+        {
+            presets.Add(preset);
         }
 
-        var json = Serialize(config);
-        File.WriteAllText(_filePath, json);
+        envelope.Presets = presets;
+        SaveEnvelope(envelope);
+    }
+
+    public DashboardPreset? LoadPreset(string presetId)
+    {
+        return LoadEnvelope().Presets.FirstOrDefault(p => p.Id == presetId);
     }
 
     public DashboardConfiguration GetDefaultConfiguration()
@@ -60,5 +64,62 @@ public class DashboardPersistenceService : IDashboardPersistenceService
                 new DashboardWidget { Type = WidgetType.BarChart, Row = 8, Column = 6, Width = 6, Height = 4, Configuration = new WidgetConfiguration { Title = "Entity Comparison", MetricName = "ActiveMessageCount", TopEntities = 10, ShowSecondaryMetric = true } }
             ]
         };
+    }
+
+    private DashboardEnvelope LoadEnvelope()
+    {
+        if (!File.Exists(_filePath))
+        {
+            return new DashboardEnvelope
+            {
+                Current = GetDefaultConfiguration(),
+                Presets = []
+            };
+        }
+
+        try
+        {
+            var json = File.ReadAllText(_filePath);
+            var envelope = Deserialize<DashboardEnvelope>(json);
+            if (envelope?.Current != null)
+            {
+                return envelope;
+            }
+
+            var legacy = Deserialize<DashboardConfiguration>(json);
+            return new DashboardEnvelope
+            {
+                Current = legacy ?? GetDefaultConfiguration(),
+                Presets = []
+            };
+        }
+        catch
+        {
+            var backupPath = _filePath + ".backup";
+            File.Copy(_filePath, backupPath, true);
+            return new DashboardEnvelope
+            {
+                Current = GetDefaultConfiguration(),
+                Presets = []
+            };
+        }
+    }
+
+    private void SaveEnvelope(DashboardEnvelope envelope)
+    {
+        var directory = Path.GetDirectoryName(_filePath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        var json = Serialize(envelope);
+        File.WriteAllText(_filePath, json);
+    }
+
+    private sealed record DashboardEnvelope
+    {
+        public DashboardConfiguration? Current { get; set; }
+        public List<DashboardPreset> Presets { get; set; } = [];
     }
 }
