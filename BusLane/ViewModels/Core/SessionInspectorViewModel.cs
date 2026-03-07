@@ -20,6 +20,7 @@ public partial class SessionInspectorViewModel : ViewModelBase
     private readonly Func<bool> _getRequiresSession;
     private readonly Action<int> _setSelectedMessageTabIndex;
     private readonly Action<string> _setStatus;
+    private CancellationTokenSource? _sessionLoadCts;
 
     [ObservableProperty] private bool _isLoadingSessions;
     [ObservableProperty] private SessionInspectorItem? _selectedSession;
@@ -49,16 +50,27 @@ public partial class SessionInspectorViewModel : ViewModelBase
     [RelayCommand]
     public async Task LoadSessionsAsync()
     {
-        if (IsLoadingSessions)
-        {
-            return;
-        }
+        var sessionLoadCts = new CancellationTokenSource();
+        var previousSessionLoadCts = Interlocked.Exchange(ref _sessionLoadCts, sessionLoadCts);
+        previousSessionLoadCts?.Cancel();
 
         var entityName = _getEntityName();
         var operations = _getOperations();
         if (operations == null || string.IsNullOrWhiteSpace(entityName) || !_getRequiresSession())
         {
-            Clear();
+            if (TryCompleteCurrentSessionLoad(sessionLoadCts))
+            {
+                Clear();
+                IsLoadingSessions = false;
+            }
+
+            sessionLoadCts.Dispose();
+            return;
+        }
+
+        if (!IsCurrentSessionLoad(sessionLoadCts))
+        {
+            sessionLoadCts.Dispose();
             return;
         }
 
@@ -67,9 +79,15 @@ public partial class SessionInspectorViewModel : ViewModelBase
 
         try
         {
-            var items = await operations.GetSessionInspectorItemsAsync(entityName, _getSubscriptionName());
+            var items = await operations.GetSessionInspectorItemsAsync(entityName, _getSubscriptionName(), sessionLoadCts.Token);
+
+            if (!IsCurrentSessionLoad(sessionLoadCts))
+            {
+                return;
+            }
 
             Sessions.Clear();
+            SelectedSession = null;
             foreach (var item in items)
             {
                 Sessions.Add(item);
@@ -77,8 +95,16 @@ public partial class SessionInspectorViewModel : ViewModelBase
 
             _setStatus(items.Count == 0 ? "No sessions discovered" : $"Loaded {items.Count} session(s)");
         }
+        catch (OperationCanceledException) when (sessionLoadCts.IsCancellationRequested)
+        {
+        }
         catch (Exception ex)
         {
+            if (!IsCurrentSessionLoad(sessionLoadCts))
+            {
+                return;
+            }
+
             _setStatus($"Error loading sessions: {ex.Message}");
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
@@ -89,7 +115,12 @@ public partial class SessionInspectorViewModel : ViewModelBase
         }
         finally
         {
-            IsLoadingSessions = false;
+            if (TryCompleteCurrentSessionLoad(sessionLoadCts))
+            {
+                IsLoadingSessions = false;
+            }
+
+            sessionLoadCts.Dispose();
         }
     }
 
@@ -106,5 +137,15 @@ public partial class SessionInspectorViewModel : ViewModelBase
     {
         Sessions.Clear();
         SelectedSession = null;
+    }
+
+    private bool IsCurrentSessionLoad(CancellationTokenSource sessionLoadCts)
+    {
+        return ReferenceEquals(Interlocked.CompareExchange(ref _sessionLoadCts, null, null), sessionLoadCts);
+    }
+
+    private bool TryCompleteCurrentSessionLoad(CancellationTokenSource sessionLoadCts)
+    {
+        return ReferenceEquals(Interlocked.CompareExchange(ref _sessionLoadCts, null, sessionLoadCts), sessionLoadCts);
     }
 }

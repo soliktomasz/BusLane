@@ -669,6 +669,14 @@ public partial class MessageOperationsViewModel : ViewModelBase
         ScopedSessionId = null;
         _scopedKnownActiveCount = 0;
         _scopedKnownDeadLetterCount = 0;
+        _nextFromSequenceNumber = null;
+        _pageCache.Clear();
+        Pagination.Reset();
+        Messages.Clear();
+        FilteredMessages.Clear();
+        SelectedMessages.Clear();
+        SelectedMessage = null;
+        IsMultiSelectMode = false;
     }
 
     public void ClearSelectedMessage() => SelectedMessage = null;

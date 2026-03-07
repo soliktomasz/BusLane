@@ -1,5 +1,6 @@
 namespace BusLane.Tests.Services.ServiceBus;
 
+using Azure.Messaging.ServiceBus;
 using BusLane.Models;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
@@ -35,5 +36,50 @@ public class SessionInspectorSupportTests
         item.LastActivityAt.Should().Be(DateTimeOffset.Parse("2026-03-07T10:25:00Z"));
         item.LockedUntil.Should().Be(DateTimeOffset.Parse("2026-03-07T10:20:00Z"));
         item.State.Should().Be("active-state");
+    }
+
+    [Fact]
+    public async Task GetSessionInspectorItemsAsync_WhenDiscoveredSessionIsDrained_SkipsSession()
+    {
+        // Arrange
+        var client = new DrainedSessionServiceBusClient();
+
+        // Act
+        var items = await ServiceBusOperations.GetSessionInspectorItemsAsync(client, "orders", null, CancellationToken.None);
+
+        // Assert
+        items.Should().BeEmpty();
+    }
+
+    private sealed class DrainedSessionServiceBusClient : ServiceBusClient
+    {
+        public override Task<ServiceBusSessionReceiver> AcceptNextSessionAsync(
+            string queueName,
+            ServiceBusSessionReceiverOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            return queueName.EndsWith("/$DeadLetterQueue", StringComparison.Ordinal)
+                ? Task.FromException<ServiceBusSessionReceiver>(new OperationCanceledException())
+                : Task.FromResult<ServiceBusSessionReceiver>(new FakeSessionReceiver("session-a"));
+        }
+
+        public override Task<ServiceBusSessionReceiver> AcceptSessionAsync(
+            string queueName,
+            string sessionId,
+            ServiceBusSessionReceiverOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<ServiceBusSessionReceiver>(new OperationCanceledException());
+        }
+    }
+
+    private sealed class FakeSessionReceiver(string sessionId) : ServiceBusSessionReceiver
+    {
+        public override string SessionId => sessionId;
+
+        public override ValueTask DisposeAsync()
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 }

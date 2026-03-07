@@ -347,6 +347,13 @@ internal static class ServiceBusOperations
 
             var activeSnapshot = await GetSessionSnapshotAsync(client, entityName, subscription, sessionId, deadLetter: false, ct);
             var deadLetterSnapshot = await GetSessionSnapshotAsync(client, entityName, subscription, sessionId, deadLetter: true, ct);
+
+            if (activeSnapshot == null && deadLetterSnapshot == null)
+            {
+                Log.Debug("Skipping session {SessionId} because it was drained before snapshotting completed", sessionId);
+                continue;
+            }
+
             items.Add(BuildSessionInspectorItem(activeSnapshot, deadLetterSnapshot));
         }
 

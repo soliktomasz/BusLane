@@ -58,6 +58,78 @@ public class SessionInspectorViewModelTests
     }
 
     [Fact]
+    public async Task LoadSessionsAsync_WhenCalledAgainDuringAnInFlightLoad_AppliesLatestSessionsOnly()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var firstLoadStarted = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstLoadResult = new TaskCompletionSource<IReadOnlyList<SessionInspectorItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var invocationCount = 0;
+
+        var staleSession = new SessionInspectorItem(
+            "session-stale",
+            ActiveMessageCount: 1,
+            DeadLetterMessageCount: 0,
+            LastActivityAt: DateTimeOffset.UtcNow.AddMinutes(-12),
+            LockedUntil: null,
+            State: "stale");
+
+        var freshSession = new SessionInspectorItem(
+            "session-fresh",
+            ActiveMessageCount: 3,
+            DeadLetterMessageCount: 1,
+            LastActivityAt: DateTimeOffset.UtcNow.AddMinutes(-1),
+            LockedUntil: DateTimeOffset.UtcNow.AddMinutes(4),
+            State: "ready");
+
+        operations.GetSessionInspectorItemsAsync("orders", null, Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                invocationCount++;
+                var ct = callInfo.ArgAt<CancellationToken>(2);
+
+                if (invocationCount == 1)
+                {
+                    firstLoadStarted.TrySetResult(null);
+                    return firstLoadResult.Task.WaitAsync(ct);
+                }
+
+                return Task.FromResult<IReadOnlyList<SessionInspectorItem>>([freshSession]);
+            });
+
+        var preferences = CreatePreferences();
+        var logSink = Substitute.For<ILogSink>();
+        var messageOps = CreateMessageOperations(() => operations, preferences, logSink);
+        var sut = new SessionInspectorViewModel(
+            () => operations,
+            messageOps,
+            logSink,
+            () => "orders",
+            () => null,
+            () => true,
+            _ => { },
+            _ => { });
+
+        sut.SelectedSession = staleSession;
+
+        // Act
+        var firstLoadTask = sut.LoadSessionsAsync();
+        await firstLoadStarted.Task;
+
+        var secondLoadTask = sut.LoadSessionsAsync();
+        await secondLoadTask;
+
+        firstLoadResult.TrySetResult([staleSession]);
+        await firstLoadTask;
+
+        // Assert
+        await operations.Received(2).GetSessionInspectorItemsAsync("orders", null, Arg.Any<CancellationToken>());
+        sut.Sessions.Should().ContainSingle().Which.SessionId.Should().Be("session-fresh");
+        sut.SelectedSession.Should().BeNull();
+        sut.IsLoadingSessions.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task OpenSessionMessagesAsync_SetsMessageScopeAndSwitchesToActiveMessagesTab()
     {
         // Arrange
