@@ -12,6 +12,45 @@ using NSubstitute;
 public class MessageBulkOperationsViewModelTests
 {
     [Fact]
+    public async Task GetPurgeConfirmationMessageAsync_WhenPreviewAvailable_FormatsScopeEstimateAndWarnings()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PreviewPurgeMessagesAsync("orders", null, true, Arg.Any<CancellationToken>())
+            .Returns(new BulkOperationPreview(
+                BulkOperationType.Purge,
+                "orders (DLQ)",
+                42,
+                [],
+                ["Session-enabled entity", "Irreversible operation"]));
+
+        var preferences = Substitute.For<IPreferencesService>();
+        var logSink = Substitute.For<ILogSink>();
+        var navigation = new NavigationState
+        {
+            SelectedQueue = CreateQueueInfo("orders"),
+            ShowDeadLetter = true
+        };
+
+        var sut = new MessageBulkOperationsViewModel(
+            () => operations,
+            () => navigation,
+            preferences,
+            logSink,
+            _ => { });
+
+        // Act
+        var message = await sut.GetPurgeConfirmationMessageAsync();
+
+        // Assert
+        message.Should().Contain("Purge scope: orders (DLQ)");
+        message.Should().Contain("Estimated messages: 42");
+        message.Should().Contain("Warnings:");
+        message.Should().Contain("Session-enabled entity");
+        message.Should().Contain("Irreversible operation");
+    }
+
+    [Fact]
     public void BuildBulkDeletePreview_WithSessionMessages_IncludesScopeWarnings()
     {
         // Arrange
@@ -50,6 +89,54 @@ public class MessageBulkOperationsViewModelTests
         preview.RequiresSession.Should().BeTrue();
         preview.SampleMessageIds.Should().ContainInOrder("msg-1", "msg-2", "msg-3");
         preview.Warnings.Should().Contain(w => w.Contains("session", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ConfirmationMessages_WithSelectedMessages_IncludeSampleIdsAndSelectionWarnings()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var preferences = Substitute.For<IPreferencesService>();
+        var logSink = Substitute.For<ILogSink>();
+        var navigation = new NavigationState
+        {
+            SelectedQueue = CreateQueueInfo("orders", requiresSession: true),
+            SelectedEntity = CreateQueueInfo("orders", requiresSession: true),
+            ShowDeadLetter = true
+        };
+
+        var sut = new MessageBulkOperationsViewModel(
+            () => operations,
+            () => navigation,
+            preferences,
+            logSink,
+            _ => { });
+
+        var selectedMessages = new ObservableCollection<MessageInfo>
+        {
+            CreateMessage("msg-1", 101, "session-a"),
+            CreateMessage("msg-2", 102, "session-b")
+        };
+
+        // Act
+        var resendMessage = sut.GetBulkResendConfirmationMessage(selectedMessages);
+        var deleteMessage = sut.GetBulkDeleteConfirmationMessage(selectedMessages);
+        var resubmitMessage = sut.GetResubmitDeadLettersConfirmationMessage(selectedMessages);
+
+        // Assert
+        resendMessage.Should().Contain("Estimated messages: 2");
+        resendMessage.Should().Contain("Sample message IDs:");
+        resendMessage.Should().Contain("msg-1");
+        resendMessage.Should().Contain("msg-2");
+        resendMessage.Should().Contain("session-enabled entity");
+
+        deleteMessage.Should().Contain("Sample message IDs:");
+        deleteMessage.Should().Contain("msg-1");
+        deleteMessage.Should().Contain("Deleting from the dead-letter queue is irreversible.");
+
+        resubmitMessage.Should().Contain("Sample message IDs:");
+        resubmitMessage.Should().Contain("msg-1");
+        resubmitMessage.Should().Contain("session-enabled entity");
     }
 
     [Fact]

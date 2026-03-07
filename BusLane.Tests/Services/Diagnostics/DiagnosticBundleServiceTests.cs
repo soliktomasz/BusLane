@@ -1,6 +1,7 @@
 namespace BusLane.Tests.Services.Diagnostics;
 
 using System.IO.Compression;
+using System.Text.Json;
 using BusLane.Models;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
@@ -76,16 +77,65 @@ public class DiagnosticBundleServiceTests : IDisposable
 
         using var reader = new StreamReader(manifestEntry!.Open());
         var manifestJson = await reader.ReadToEndAsync();
+        using var manifest = JsonDocument.Parse(manifestJson);
+        var connection = manifest.RootElement.GetProperty("connections")[0];
 
-        manifestJson.Should().Contain("Prod");
         manifestJson.Should().NotContain("super-secret");
         manifestJson.Should().NotContain("SharedAccessKey=");
+        connection.GetProperty("name").GetString().Should().Be("Prod");
+        connection.GetProperty("endpoint").GetString().Should().Be("<redacted>");
+        connection.GetProperty("hasConnectionString").GetBoolean().Should().BeTrue();
+        connection.TryGetProperty("connectionString", out _).Should().BeFalse();
 
         var logsEntry = archive.GetEntry("logs.json");
         logsEntry.Should().NotBeNull();
         using var logsReader = new StreamReader(logsEntry!.Open());
         var logsJson = await logsReader.ReadToEndAsync();
         logsJson.Should().NotContain("secret.servicebus.windows.net");
+    }
+
+    [Fact]
+    public async Task ExportAsync_WhenCancellationIsRequested_ThrowsBeforeCreatingBundle()
+    {
+        // Arrange
+        Directory.CreateDirectory(_bundleDirectory);
+        var logSink = new LogSink();
+
+        var preferences = Substitute.For<IPreferencesService>();
+        var alertService = Substitute.For<IAlertService>();
+        alertService.Rules.Returns([]);
+        alertService.ActiveAlerts.Returns([]);
+        alertService.History.Returns([]);
+
+        var dashboardPersistence = Substitute.For<IDashboardPersistenceService>();
+        dashboardPersistence.Load().Returns(new DashboardConfiguration());
+        dashboardPersistence.GetPresets().Returns([]);
+
+        var connectionStorage = Substitute.For<IConnectionStorageService>();
+        connectionStorage.GetConnectionsAsync().Returns(Task.FromResult<IEnumerable<SavedConnection>>([]));
+
+        var versionService = Substitute.For<IVersionService>();
+        versionService.DisplayVersion.Returns("0.11.0");
+
+        var sut = new DiagnosticBundleService(
+            logSink,
+            preferences,
+            alertService,
+            dashboardPersistence,
+            connectionStorage,
+            versionService,
+            _bundleDirectory);
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var act = () => sut.ExportAsync(includeMessageBodies: false, cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        _ = connectionStorage.DidNotReceive().GetConnectionsAsync();
+        Directory.EnumerateFiles(_bundleDirectory).Should().BeEmpty();
     }
 
     public void Dispose()

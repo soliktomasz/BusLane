@@ -296,27 +296,38 @@ public partial class ConnectionTabViewModel : ViewModelBase
         if (_operations == null)
         {
             ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, "No active connection");
+            StatusMessage = ConnectionHealth.Summary;
             return ConnectionHealth;
         }
 
-        ConnectionHealth = await _operations.CheckConnectionHealthAsync(ct);
-        if (ConnectionHealth.State != ConnectionHealthState.Healthy)
+        try
         {
-            StatusMessage = ConnectionHealth.Summary;
+            ConnectionHealth = await _operations.CheckConnectionHealthAsync(ct);
         }
+        catch (Exception ex)
+        {
+            ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, ex.Message);
+        }
+
+        StatusMessage = ConnectionHealth.Summary;
 
         return ConnectionHealth;
     }
 
     public TabSessionState CreateSessionState(int tabOrder)
     {
+        var selectedEntityName = !string.IsNullOrWhiteSpace(Navigation.CurrentSubscriptionName) &&
+            !string.IsNullOrWhiteSpace(Navigation.CurrentEntityName)
+                ? $"{Navigation.CurrentEntityName}/{Navigation.CurrentSubscriptionName}"
+                : Navigation.CurrentEntityName;
+
         return new TabSessionState
         {
             TabId = TabId,
             Mode = Mode,
             ConnectionId = SavedConnection?.Id,
             NamespaceId = Namespace?.Id,
-            SelectedEntityName = Navigation.CurrentEntityName,
+            SelectedEntityName = selectedEntityName,
             EntityFilter = Navigation.EntityFilter,
             MessageSearchText = MessageOps.MessageSearchText,
             ShowDeadLetter = Navigation.ShowDeadLetter,

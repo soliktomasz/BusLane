@@ -730,9 +730,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         if (await BulkOps.ShouldConfirmPurgeAsync())
         {
+            var confirmationMessage = await BulkOps.GetPurgeConfirmationMessageAsync();
             Confirmation.ShowConfirmation(
                 "Confirm Purge",
-                BulkOps.GetPurgeConfirmationMessage(),
+                confirmationMessage,
                 "Purge",
                 async () =>
                 {
@@ -755,13 +756,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = CurrentMessageOps.SelectedMessagesCount;
-
         if (await BulkOps.ShouldConfirmBulkResendAsync())
         {
             Confirmation.ShowConfirmation(
                 "Confirm Bulk Resend",
-                BulkOps.GetBulkResendConfirmationMessage(count),
+                BulkOps.GetBulkResendConfirmationMessage(CurrentMessageOps.SelectedMessages),
                 "Resend",
                 async () =>
                 {
@@ -786,11 +785,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = CurrentMessageOps.SelectedMessagesCount;
-
         Confirmation.ShowConfirmation(
             "Confirm Bulk Delete",
-            BulkOps.GetBulkDeleteConfirmationMessage(count),
+            BulkOps.GetBulkDeleteConfirmationMessage(CurrentMessageOps.SelectedMessages),
             "Delete",
             async () =>
             {
@@ -808,11 +805,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        var count = CurrentMessageOps.SelectedMessagesCount;
-
         Confirmation.ShowConfirmation(
             "Confirm Resubmit Dead Letters",
-            BulkOps.GetResubmitDeadLettersConfirmationMessage(count),
+            BulkOps.GetResubmitDeadLettersConfirmationMessage(CurrentMessageOps.SelectedMessages),
             "Resubmit",
             async () =>
             {

@@ -2,6 +2,7 @@ namespace BusLane.Services.Diagnostics;
 
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using BusLane.Models;
 using BusLane.Models.Diagnostics;
@@ -15,6 +16,18 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class DiagnosticBundleService : IDiagnosticBundleService
 {
+    private static readonly Regex SharedAccessKeyPattern = new(
+        @"SharedAccessKey=[^;\s]+",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex EndpointPattern = new(
+        @"Endpoint=sb://[^;/\s]+/?",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex ServiceBusHostPattern = new(
+        @"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.servicebus\.windows\.net",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private readonly ILogSink _logSink;
     private readonly IPreferencesService _preferencesService;
     private readonly IAlertService _alertService;
@@ -43,29 +56,36 @@ public class DiagnosticBundleService : IDiagnosticBundleService
 
     public async Task<string> ExportAsync(bool includeMessageBodies = false, CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
         Directory.CreateDirectory(_bundleDirectory);
         var bundlePath = Path.Combine(_bundleDirectory, $"buslane-diagnostics-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip");
+        var preferencesSnapshot = BuildPreferencesSnapshot();
+        var connectionsSnapshot = await BuildConnectionsSnapshotAsync(ct);
+        var alertsHistory = _alertService.History;
+        var logSnapshot = BuildLogSnapshot();
 
         var manifest = new DiagnosticBundleManifest(
             _versionService.DisplayVersion,
             DateTimeOffset.UtcNow,
             RuntimeInformation.OSDescription,
             Environment.Version.ToString(),
-            BuildPreferencesSnapshot(),
-            await BuildConnectionsSnapshotAsync(),
-            _alertService.History,
-            BuildLogSnapshot());
+            preferencesSnapshot,
+            connectionsSnapshot,
+            alertsHistory,
+            logSnapshot);
 
+        ct.ThrowIfCancellationRequested();
         using var archive = ZipFile.Open(bundlePath, ZipArchiveMode.Create);
-        WriteJsonEntry(archive, "manifest.json", manifest);
-        WriteJsonEntry(archive, "preferences.json", BuildPreferencesSnapshot());
-        WriteJsonEntry(archive, "alerts.json", new { rules = _alertService.Rules, history = _alertService.History });
+        WriteJsonEntry(archive, "manifest.json", manifest, ct);
+        WriteJsonEntry(archive, "preferences.json", preferencesSnapshot, ct);
+        WriteJsonEntry(archive, "alerts.json", new { rules = _alertService.Rules, history = alertsHistory }, ct);
         WriteJsonEntry(archive, "dashboard.json", new
         {
             current = _dashboardPersistenceService.Load(),
             presets = _dashboardPersistenceService.GetPresets()
-        });
-        WriteJsonEntry(archive, "logs.json", BuildLogSnapshot());
+        }, ct);
+        WriteJsonEntry(archive, "logs.json", logSnapshot, ct);
 
         return bundlePath;
     }
@@ -82,9 +102,12 @@ public class DiagnosticBundleService : IDiagnosticBundleService
         };
     }
 
-    private async Task<IReadOnlyList<object>> BuildConnectionsSnapshotAsync()
+    private async Task<IReadOnlyList<object>> BuildConnectionsSnapshotAsync(CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         var connections = await _connectionStorageService.GetConnectionsAsync();
+        ct.ThrowIfCancellationRequested();
+
         return connections
             .Select(c => (object)new
             {
@@ -110,12 +133,14 @@ public class DiagnosticBundleService : IDiagnosticBundleService
             .ToList();
     }
 
-    private static void WriteJsonEntry(ZipArchive archive, string entryName, object payload)
+    private static void WriteJsonEntry(ZipArchive archive, string entryName, object payload, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
         using var stream = entry.Open();
         using var writer = new StreamWriter(stream);
         writer.Write(Serialize(payload));
+        ct.ThrowIfCancellationRequested();
     }
 
     private static string? RedactSecrets(string? value)
@@ -125,9 +150,8 @@ public class DiagnosticBundleService : IDiagnosticBundleService
             return value;
         }
 
-        return value
-            .Replace("SharedAccessKey=", "SharedAccessKey=<redacted>", StringComparison.OrdinalIgnoreCase)
-            .Replace("Endpoint=sb://", "Endpoint=sb://<redacted>/", StringComparison.OrdinalIgnoreCase)
-            .Replace(".servicebus.windows.net", ".<redacted>", StringComparison.OrdinalIgnoreCase);
+        var redacted = SharedAccessKeyPattern.Replace(value, "SharedAccessKey=<redacted>");
+        redacted = EndpointPattern.Replace(redacted, "Endpoint=sb://<redacted>/");
+        return ServiceBusHostPattern.Replace(redacted, "<redacted>");
     }
 }

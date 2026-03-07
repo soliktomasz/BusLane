@@ -26,7 +26,7 @@ public class AlertService : IAlertService
     private readonly List<AlertEvent> _activeAlerts = [];
     private readonly List<AlertHistoryEntry> _history = [];
     private readonly HashSet<string> _triggeredAlertKeys = []; // To prevent duplicate alerts
-    private readonly Dictionary<string, DateTimeOffset> _lastTriggeredAtByKey = new();
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _lastTriggeredAtByKey = new();
     private readonly IEnumerable<INotificationChannel> _notificationChannels;
     private readonly Func<DateTimeOffset> _nowProvider;
     private readonly string _rulesPath;
@@ -146,6 +146,7 @@ public class AlertService : IAlertService
         IEnumerable<SubscriptionInfo> subscriptions)
     {
         var newAlerts = new List<AlertEvent>();
+        var suppressedHistory = new List<AlertHistoryEntry>();
 
         // Take a snapshot of enabled rules to avoid holding lock during evaluation
         List<AlertRule> enabledRules;
@@ -165,7 +166,7 @@ public class AlertService : IAlertService
                 var evaluation = EvaluateRule(rule, queue.Name, "Queue", queue);
                 if (evaluation.SuppressHistory != null)
                 {
-                    RecordHistory(evaluation.SuppressHistory);
+                    suppressedHistory.Add(evaluation.SuppressHistory);
                 }
 
                 if (evaluation.Alert != null)
@@ -184,7 +185,7 @@ public class AlertService : IAlertService
                 var evaluation = EvaluateRuleForSubscription(rule, entityName, sub);
                 if (evaluation.SuppressHistory != null)
                 {
-                    RecordHistory(evaluation.SuppressHistory);
+                    suppressedHistory.Add(evaluation.SuppressHistory);
                 }
 
                 if (evaluation.Alert != null)
@@ -200,6 +201,11 @@ public class AlertService : IAlertService
 
         lock (_lock)
         {
+            if (suppressedHistory.Count > 0)
+            {
+                _history.AddRange(suppressedHistory);
+            }
+
             foreach (var alert in newAlerts)
             {
                 var key = GetAlertKey(alert);
@@ -221,7 +227,11 @@ public class AlertService : IAlertService
                         AlertHistoryStatus.Triggered));
                 }
             }
-            SaveHistoryInternal();
+
+            if (suppressedHistory.Count > 0 || triggeredAlerts.Count > 0)
+            {
+                SaveHistoryInternal();
+            }
         }
 
         // Fire events outside lock to avoid potential deadlocks

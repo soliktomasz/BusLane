@@ -1,5 +1,6 @@
 namespace BusLane.Tests.Services.Monitoring;
 
+using System.Collections.Concurrent;
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using FluentAssertions;
@@ -99,6 +100,20 @@ public class AlertServiceTests
     #endregion
 
     #region Alert Evaluation Tests
+
+    [Fact]
+    public void AlertService_UsesThreadSafeCooldownTimestampStore()
+    {
+        // Arrange
+        var field = typeof(AlertService).GetField("_lastTriggeredAtByKey",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        // Act
+        var value = field?.GetValue(_sut);
+
+        // Assert
+        value.Should().BeOfType<ConcurrentDictionary<string, DateTimeOffset>>();
+    }
 
     [Fact]
     public async Task EvaluateAlertsAsync_WithQueueExceedingThreshold_TriggersAlert()
@@ -372,6 +387,60 @@ public class AlertServiceTests
             h.Reason == AlertSuppressionReason.QuietHours);
     }
 
+    [Fact]
+    public async Task EvaluateAlertsAsync_WithMultipleSuppressedAlerts_PersistsHistoryOnceAtEndOfPass()
+    {
+        // Arrange
+        var rulesPath = Path.Combine(Path.GetTempPath(), $"alert-rules-{Guid.NewGuid():N}.json");
+        var historyPath = Path.Combine(Path.GetTempPath(), $"alert-history-{Guid.NewGuid():N}.json");
+        var quietService = new AlertService(
+            rulesPath,
+            historyPath,
+            nowProvider: () => new DateTimeOffset(2026, 3, 7, 22, 0, 0, TimeSpan.Zero));
+        var rule = CreateTestRule(threshold: 10) with
+        {
+            QuietHours = new QuietHoursWindow(21, 6)
+        };
+        quietService.AddRule(rule);
+
+        var queues = Enumerable.Range(1, 250)
+            .Select(index => CreateQueueInfo($"night-queue-{index}", deadLetterCount: 50))
+            .ToArray();
+
+        using var cts = new CancellationTokenSource();
+        var protectFileTask = Task.Run(async () =>
+        {
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    if (File.Exists(historyPath))
+                    {
+                        SetFileReadOnly(historyPath);
+                        return;
+                    }
+
+                    await Task.Delay(1, cts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        });
+
+        // Act
+        var alerts = await quietService.EvaluateAlertsAsync(queues, Enumerable.Empty<SubscriptionInfo>());
+        cts.Cancel();
+        await Task.WhenAny(protectFileTask, Task.Delay(250));
+
+        var reloadedService = new AlertService(rulesPath, historyPath);
+
+        // Assert
+        alerts.Should().BeEmpty();
+        reloadedService.History.Should().HaveCount(queues.Length);
+        reloadedService.History.Should().OnlyContain(h => h.Reason == AlertSuppressionReason.QuietHours);
+    }
+
     #endregion
 
     #region Alert Acknowledgement Tests
@@ -527,6 +596,17 @@ public class AlertServiceTests
             AccessedAt: DateTimeOffset.UtcNow,
             RequiresSession: false
         );
+    }
+
+    private static void SetFileReadOnly(string path)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            new FileInfo(path).IsReadOnly = true;
+            return;
+        }
+
+        File.SetUnixFileMode(path, UnixFileMode.UserRead);
     }
 
     #endregion

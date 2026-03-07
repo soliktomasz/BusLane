@@ -51,9 +51,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         return _preferencesService.ConfirmBeforePurge;
     }
 
-    public string GetPurgeConfirmationMessage()
+    public async Task<string> GetPurgeConfirmationMessageAsync()
     {
-        var preview = BuildPurgePreviewAsync().GetAwaiter().GetResult();
+        var preview = await BuildPurgePreviewAsync();
         var warnings = preview?.Warnings.Any() == true
             ? $"{Environment.NewLine}{Environment.NewLine}Warnings:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", preview.Warnings)}"
             : string.Empty;
@@ -130,10 +130,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         return Task.FromResult(_preferencesService.ConfirmBeforePurge);
     }
 
-    public string GetBulkResendConfirmationMessage(int count)
+    public string GetBulkResendConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
-        return FormatPreview(BuildBulkResendPreview(new ObservableCollection<MessageInfo>(
-            Enumerable.Range(0, count).Select(_ => new MessageInfo("", null, null, "", DateTimeOffset.UtcNow, null, 0, 0, null, new Dictionary<string, object>())))));
+        return FormatPreview(BuildBulkResendPreview(selectedMessages));
     }
 
     public async Task<int> ExecuteBulkResendAsync(ObservableCollection<MessageInfo> selectedMessages)
@@ -201,9 +200,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// <summary>
     /// Deletes multiple messages from the current entity.
     /// </summary>
-    public string GetBulkDeleteConfirmationMessage(int count)
+    public string GetBulkDeleteConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
-        return $"{count} selected message(s) will be deleted from {GetEntityDisplayName()}. This action cannot be undone.";
+        return FormatPreview(BuildBulkDeletePreview(selectedMessages));
     }
 
     public async Task<int> ExecuteBulkDeleteAsync(ObservableCollection<MessageInfo> selectedMessages)
@@ -274,9 +273,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// <summary>
     /// Resubmits dead letter messages back to the main entity.
     /// </summary>
-    public string GetResubmitDeadLettersConfirmationMessage(int count)
+    public string GetResubmitDeadLettersConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
-        return $"{count} dead-letter message(s) will be resubmitted from {GetEntityDisplayName()} to the active entity.";
+        return FormatPreview(BuildResubmitDeadLetterPreview(selectedMessages));
     }
 
     public async Task<int> ExecuteResubmitDeadLettersAsync(ObservableCollection<MessageInfo> selectedMessages)
@@ -394,10 +393,13 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
     private static string FormatPreview(BulkOperationPreview preview)
     {
+        var sampleMessageIds = preview.SampleMessageIds.Any()
+            ? $"{Environment.NewLine}Sample message IDs: {string.Join(", ", preview.SampleMessageIds)}"
+            : string.Empty;
         var warnings = preview.Warnings.Any()
             ? $"{Environment.NewLine}{Environment.NewLine}Warnings:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", preview.Warnings)}"
             : string.Empty;
 
-        return $"{preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{warnings}";
+        return $"{preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{sampleMessageIds}{warnings}";
     }
 }
