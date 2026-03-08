@@ -450,38 +450,6 @@ jobs:
         with:
           path: artifacts
 
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          # Get the previous tag
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
-          if [ -z "$PREVIOUS_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
-          else
-            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s" --no-merges)
-          fi
-          
-          echo "## What's Changed" > release_notes.md
-          echo "" >> release_notes.md
-          echo "### Changes" >> release_notes.md
-          echo "$COMMITS" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "### Download" >> release_notes.md
-          echo "- **macOS ARM64** (Apple Silicon M1/M2/M3): \`BusLane-*-osx-arm64.dmg\`" >> release_notes.md
-          echo "- **macOS x64** (Intel): \`BusLane-*-osx-x64.dmg\`" >> release_notes.md
-          echo "- **Windows Installer**: \`BusLane-*-win-x64-setup.exe\`" >> release_notes.md
-          echo "- **Windows Portable**: \`BusLane-*-win-x64.zip\`" >> release_notes.md
-          echo "- **Linux Flatpak**: \`BusLane-*-linux-x64.flatpak\`" >> release_notes.md
-          echo "- **Linux AppImage**: \`BusLane-*-linux-x64.AppImage\`" >> release_notes.md
-          echo "- **Linux Snap**: \`BusLane-*-linux-x64.snap\`" >> release_notes.md
-          echo "- **Linux DEB (Ubuntu/Debian)**: \`BusLane-*-linux-x64.deb\`" >> release_notes.md
-          echo "- **Linux RPM (Fedora/RHEL/openSUSE)**: \`BusLane-*-linux-x64.rpm\`" >> release_notes.md
-          echo "- **Linux (gzip)**: \`BusLane-*-linux-x64.tar.gz\`" >> release_notes.md
-          echo "- **Linux (zstd)**: \`BusLane-*-linux-x64.tar.zst\`" >> release_notes.md
-          
-          cat release_notes.md
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -497,7 +465,7 @@ jobs:
             artifacts/**/*.flatpak
             artifacts/**/*.AppImage
             artifacts/**/*.snap
-          body_path: release_notes.md
+          generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.event.inputs.version, 'alpha') || contains(github.event.inputs.version, 'beta') || contains(github.event.inputs.version, 'rc') }}
         env:
