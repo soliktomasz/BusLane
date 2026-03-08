@@ -9,7 +9,7 @@
              x:DataType="vm:NamespaceDashboardViewModel">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
               Margin="24">
             
             <!-- Header -->
@@ -130,8 +130,13 @@
                 </Border>
             </Grid>
 
+            <!-- Priority Inbox -->
+            <controls:NamespaceInboxView Grid.Row="2"
+                                         DataContext="{Binding Inbox}"
+                                         Margin="0,0,0,20"/>
+
             <!-- Top Entities Lists -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,20">
+            <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,0,0,20">
                 <controls:TopEntitiesList Grid.Column="0"
                                          DataContext="{Binding TopQueues}"
                                          Margin="0,0,10,0"/>
@@ -141,7 +146,7 @@
             </Grid>
 
             <!-- Charts Grid -->
-            <ItemsControl Grid.Row="3"
+            <ItemsControl Grid.Row="4"
                           ItemsSource="{Binding Charts}"
                           HorizontalAlignment="Stretch">
                 <ItemsControl.ItemsPanel>
