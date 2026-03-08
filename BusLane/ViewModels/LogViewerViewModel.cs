@@ -38,6 +38,9 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    [ObservableProperty]
+    private bool _hasUnreadErrors;
+
     private ObservableCollection<LogEntry> _filteredLogs = new();
     public ObservableCollection<LogEntry> FilteredLogs => _filteredLogs;
 
@@ -111,6 +114,12 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         {
             _allLogs.Insert(0, entry);
             TrimLogCollection(_allLogs);
+
+            if (!IsOpen && entry.Level == LogLevel.Error)
+            {
+                HasUnreadErrors = true;
+            }
+
             // Reapply filters for consistency with filter-change behavior.
             // This avoids stale/blank item containers when logs stream in.
             ApplyFilters();
@@ -186,6 +195,14 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         ScheduleSearchFilter();
     }
 
+    partial void OnIsOpenChanged(bool value)
+    {
+        if (value)
+        {
+            HasUnreadErrors = false;
+        }
+    }
+
     partial void OnIsDebugModeEnabledChanged(bool value)
     {
         ApplyFilters();
@@ -237,6 +254,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         _logSink.Clear();
         _allLogs.Clear();
         _filteredLogs.Clear();
+        HasUnreadErrors = false;
         OnPropertyChanged(nameof(TotalLogCount));
         OnPropertyChanged(nameof(ShowingLogCount));
     }
