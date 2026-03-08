@@ -127,6 +127,11 @@ internal static class AppPaths
     public static string AlertHistory => Path.Combine(AppDataFolder, "alert-history.json");
 
     /// <summary>
+    /// Path to the namespace inbox review state file.
+    /// </summary>
+    public static string NamespaceInboxReviews => Path.Combine(AppDataFolder, "namespace-inbox-reviews.json");
+
+    /// <summary>
     /// Directory used for diagnostic bundle exports.
     /// </summary>
     public static string DiagnosticBundles => Path.Combine(AppDataFolder, "diagnostics");

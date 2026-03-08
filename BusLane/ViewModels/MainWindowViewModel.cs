@@ -2,6 +2,7 @@ namespace BusLane.ViewModels;
 
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -207,6 +208,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
+        NamespaceDashboard.Inbox.UpdateActions(OpenInboxMessages, OpenInboxDeadLetter, OpenInboxSessionInspector);
 
         // Initialize composed components
         Navigation = new NavigationState();
@@ -629,6 +631,101 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             topic.IsLoadingSubscriptions = false;
         }
+    }
+
+    private void OpenInboxMessages(NamespaceInboxItem item)
+    {
+        FireAndForget(OpenInboxEntityAsync(item, selectedTabIndex: 0), nameof(OpenInboxMessages));
+    }
+
+    private void OpenInboxDeadLetter(NamespaceInboxItem item)
+    {
+        FireAndForget(OpenInboxEntityAsync(item, selectedTabIndex: 1), nameof(OpenInboxDeadLetter));
+    }
+
+    private void OpenInboxSessionInspector(NamespaceInboxItem item)
+    {
+        FireAndForget(OpenInboxEntityAsync(item, selectedTabIndex: 2), nameof(OpenInboxSessionInspector));
+    }
+
+    private async Task OpenInboxEntityAsync(NamespaceInboxItem item, int selectedTabIndex)
+    {
+        switch (item.EntityType)
+        {
+            case EntityType.Queue:
+            {
+                var queue = CurrentNavigation.Queues.FirstOrDefault(q =>
+                    string.Equals(q.Name, item.EntityName, StringComparison.OrdinalIgnoreCase));
+
+                if (queue == null)
+                {
+                    StatusMessage = $"Queue not found: {item.EntityName}";
+                    return;
+                }
+
+                CurrentNavigation.SelectedQueue = queue;
+                CurrentNavigation.SelectedTopic = null;
+                CurrentNavigation.SelectedSubscription = null;
+                CurrentNavigation.SelectedEntity = queue;
+                CurrentNavigation.TopicSubscriptions.Clear();
+                break;
+            }
+            case EntityType.Subscription:
+            {
+                var subscriptionName = GetInboxSubscriptionName(item);
+                if (string.IsNullOrWhiteSpace(item.TopicName) || string.IsNullOrWhiteSpace(subscriptionName))
+                {
+                    StatusMessage = $"Subscription not found: {item.EntityName}";
+                    return;
+                }
+
+                var selectedTopic = CurrentNavigation.Topics.FirstOrDefault(topic =>
+                    string.Equals(topic.Name, item.TopicName, StringComparison.OrdinalIgnoreCase));
+
+                var subscription = new SubscriptionInfo(
+                    subscriptionName,
+                    item.TopicName,
+                    MessageCount: item.ActiveMessageCount + item.DeadLetterCount,
+                    ActiveMessageCount: item.ActiveMessageCount,
+                    DeadLetterCount: item.DeadLetterCount,
+                    AccessedAt: DateTimeOffset.UtcNow,
+                    RequiresSession: item.RequiresSession);
+
+                CurrentNavigation.SelectedTopic = selectedTopic;
+                CurrentNavigation.SelectedQueue = null;
+                CurrentNavigation.SelectedSubscription = subscription;
+                CurrentNavigation.SelectedEntity = subscription;
+                break;
+            }
+            default:
+                StatusMessage = $"Inbox navigation does not support {item.EntityType}";
+                return;
+        }
+
+        CurrentMessageOps.ClearSessionScope();
+        CurrentSessionInspector.Clear();
+        CurrentNavigation.SelectedMessageTabIndex = selectedTabIndex;
+
+        if (selectedTabIndex == 2)
+        {
+            await CurrentSessionInspector.LoadSessionsAsync();
+            return;
+        }
+
+        await CurrentMessageOps.LoadMessagesAsync();
+    }
+
+    private static string? GetInboxSubscriptionName(NamespaceInboxItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.TopicName))
+        {
+            return null;
+        }
+
+        var prefix = $"{item.TopicName}/";
+        return item.EntityName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? item.EntityName[prefix.Length..]
+            : null;
     }
 
     #endregion

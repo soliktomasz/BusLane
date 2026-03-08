@@ -136,6 +136,8 @@ class Program
         services.AddSingleton<ILiveStreamService, LiveStreamService>();
         services.AddSingleton<IMetricsHistoryStore, MetricsHistoryStore>();
         services.AddSingleton<IMetricsService>(sp => new MetricsService(sp.GetRequiredService<IMetricsHistoryStore>()));
+        services.AddSingleton<INamespaceInboxScoringService, NamespaceInboxScoringService>();
+        services.AddSingleton<INamespaceInboxReviewStore, NamespaceInboxReviewStore>();
         services.AddSingleton<INotificationChannel, WebhookNotificationChannel>();
         services.AddSingleton<IHealthCheckService, HealthCheckService>();
         services.AddSingleton<IAlertService>(sp => new AlertService(
@@ -155,6 +157,7 @@ class Program
 
         // Add dashboard services
         services.AddSingleton<IDashboardRefreshService, DashboardRefreshService>();
+        services.AddTransient<ViewModels.Dashboard.NamespaceInboxViewModel>();
         services.AddTransient<ViewModels.Dashboard.NamespaceDashboardViewModel>();
 
         // Main ViewModel with unified services

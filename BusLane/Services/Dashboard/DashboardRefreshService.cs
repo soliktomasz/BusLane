@@ -17,6 +17,7 @@ public class DashboardRefreshService : IDashboardRefreshService
 
     public event EventHandler<NamespaceDashboardSummary>? SummaryUpdated;
     public event EventHandler<IReadOnlyList<TopEntityInfo>>? TopEntitiesUpdated;
+    public event EventHandler<NamespaceEntitySnapshot>? EntitiesUpdated;
 
     private Timer? _refreshTimer;
     private string? _currentNamespaceId;
@@ -118,9 +119,14 @@ public class DashboardRefreshService : IDashboardRefreshService
 
             // Build top entities list
             var topEntities = BuildTopEntitiesList(queues, topics, allSubscriptions);
+            var entitySnapshot = new NamespaceEntitySnapshot(
+                queues,
+                allSubscriptions,
+                DateTimeOffset.UtcNow);
 
             SummaryUpdated?.Invoke(this, summary);
             TopEntitiesUpdated?.Invoke(this, topEntities);
+            EntitiesUpdated?.Invoke(this, entitySnapshot);
             LastRefreshTime = DateTimeOffset.UtcNow;
         }
         finally

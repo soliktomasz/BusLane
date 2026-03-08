@@ -1,5 +1,6 @@
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
+using BusLane.Services.Monitoring;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +13,7 @@ namespace BusLane.ViewModels.Dashboard;
 public partial class NamespaceDashboardViewModel : ObservableObject
 {
     private readonly IDashboardRefreshService _refreshService;
+    private readonly IAlertService _alertService;
     private IServiceBusOperations? _operations;
     private readonly List<NamespaceDashboardSummary> _summaryHistory = [];
 
@@ -42,6 +44,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     // Top Entities Lists
     public TopEntitiesListViewModel TopQueues { get; }
     public TopEntitiesListViewModel TopTopics { get; }
+    public NamespaceInboxViewModel Inbox { get; }
 
     // Charts
     public ObservableCollection<DashboardChartViewModel> Charts { get; }
@@ -56,11 +59,17 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     public int[] RefreshIntervalOptions { get; } = [5, 10, 15, 30, 60, 120, 300];
 
-    public NamespaceDashboardViewModel(IDashboardRefreshService refreshService)
+    public NamespaceDashboardViewModel(
+        IDashboardRefreshService refreshService,
+        IAlertService alertService,
+        NamespaceInboxViewModel inboxViewModel)
     {
         _refreshService = refreshService;
+        _alertService = alertService;
+        Inbox = inboxViewModel;
         _refreshService.SummaryUpdated += OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated += OnTopEntitiesUpdated;
+        _refreshService.EntitiesUpdated += OnEntitiesUpdated;
 
         // Initialize metric cards
         ActiveMessagesCard = new MetricCardViewModel("Active Messages", "messages");
@@ -206,6 +215,21 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         TopTopics.UpdateEntities(topics);
     }
 
+    private void OnEntitiesUpdated(object? sender, NamespaceEntitySnapshot snapshot)
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => OnEntitiesUpdated(sender, snapshot));
+            return;
+        }
+
+        Inbox.Refresh(
+            CurrentNamespaceId ?? "current-namespace",
+            snapshot.Queues,
+            snapshot.Subscriptions,
+            _alertService.ActiveAlerts);
+    }
+
     public void Dispose()
     {
         foreach (var chart in Charts)
@@ -215,6 +239,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
         _refreshService.SummaryUpdated -= OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated -= OnTopEntitiesUpdated;
+        _refreshService.EntitiesUpdated -= OnEntitiesUpdated;
     }
 
     private void OnChartTimeRangeChanged(object? sender, string value)
