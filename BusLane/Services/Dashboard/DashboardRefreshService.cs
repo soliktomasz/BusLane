@@ -68,19 +68,20 @@ public class DashboardRefreshService : IDashboardRefreshService
             var topics = topicsTask.Result.ToList();
 
             // Fetch subscriptions for all topics to get complete message counts
-            var allSubscriptions = new List<SubscriptionInfo>();
-            foreach (var topic in topics)
+            var subscriptionTasks = topics.Select(async topic =>
             {
                 try
                 {
-                    var subs = await _currentOperations.GetSubscriptionsAsync(topic.Name, ct);
-                    allSubscriptions.AddRange(subs);
+                    return (await _currentOperations.GetSubscriptionsAsync(topic.Name, ct)).ToList();
                 }
                 catch (Exception)
                 {
                     // Ignore errors for individual topics
+                    return new List<SubscriptionInfo>();
                 }
-            }
+            }).ToList();
+            var subscriptionResults = await Task.WhenAll(subscriptionTasks);
+            var allSubscriptions = subscriptionResults.SelectMany(static subscriptions => subscriptions).ToList();
 
             // Calculate totals from queues
             long totalActiveMessages = queues.Sum(q => q.ActiveMessageCount);
@@ -250,7 +251,7 @@ public class DashboardRefreshService : IDashboardRefreshService
         _refreshTimer = new Timer(
             _ => _ = OnAutoRefreshTickAsync(namespaceId),
             null,
-            TimeSpan.Zero,
+            actualInterval,
             actualInterval
         );
     }

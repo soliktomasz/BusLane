@@ -10,10 +10,12 @@ using BusLane.ViewModels.Core;
 public partial class TerminalPanel : UserControl
 {
     private TerminalHostViewModel? _viewModel;
+    private readonly ScrollViewer? _terminalOutputScrollViewer;
 
     public TerminalPanel()
     {
         InitializeComponent();
+        _terminalOutputScrollViewer = this.FindControl<ScrollViewer>("TerminalOutputScrollViewer");
         DataContextChanged += OnDataContextChanged;
     }
 
@@ -37,9 +39,11 @@ public partial class TerminalPanel : UserControl
             return;
         }
 
-        if (this.FindControl<ScrollViewer>("TerminalOutputScrollViewer") is { } viewer)
+        if (_terminalOutputScrollViewer != null)
         {
-            viewer.Offset = new Avalonia.Vector(viewer.Offset.X, viewer.Extent.Height);
+            _terminalOutputScrollViewer.Offset = new Avalonia.Vector(
+                _terminalOutputScrollViewer.Offset.X,
+                _terminalOutputScrollViewer.Extent.Height);
         }
     }
 }

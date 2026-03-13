@@ -20,8 +20,7 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
     private readonly ITerminalSessionService _terminalSession;
     private readonly IPreferencesService _preferencesService;
     private readonly Action<string>? _setStatus;
-    private readonly Queue<string> _outputLines = new();
-    private readonly StringBuilder _currentLine = new();
+    private readonly TerminalOutputBuffer _outputBuffer = new(MaxOutputLines);
 
     private bool _isInitializing;
     private bool _disposed;
@@ -165,8 +164,7 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
     [RelayCommand]
     private void ClearOutput()
     {
-        _outputLines.Clear();
-        _currentLine.Clear();
+        _outputBuffer.Clear();
         OutputText = string.Empty;
     }
 
@@ -263,40 +261,19 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
 
     private void AppendOutput(string chunk)
     {
-        foreach (var ch in chunk)
+        var update = _outputBuffer.Append(chunk);
+        if (update.RequiresFullRefresh)
         {
-            if (ch == '\r')
-            {
-                continue;
-            }
-
-            if (ch == '\n')
-            {
-                CommitCurrentLine();
-            }
-            else
-            {
-                _currentLine.Append(ch);
-            }
+            OutputText = update.Text;
+            return;
         }
 
-        var lines = _outputLines.ToList();
-        if (_currentLine.Length > 0)
+        if (update.AppendedText.Length == 0)
         {
-            lines.Add(_currentLine.ToString());
+            return;
         }
-        OutputText = string.Join(Environment.NewLine, lines);
-    }
 
-    private void CommitCurrentLine()
-    {
-        _outputLines.Enqueue(_currentLine.ToString());
-        _currentLine.Clear();
-
-        while (_outputLines.Count > MaxOutputLines)
-        {
-            _outputLines.Dequeue();
-        }
+        OutputText += update.AppendedText;
     }
 
     private void PersistTerminalPreferences()

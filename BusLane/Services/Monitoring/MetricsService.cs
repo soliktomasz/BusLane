@@ -107,6 +107,7 @@ public class MetricsService : IMetricsService, IDisposable
     
     private readonly ConcurrentDictionary<string, MetricDataList> _metrics = new();
     private readonly List<MetricDataPoint> _pendingMetrics = new();
+    private readonly List<MetricSnapshot> _pendingSnapshots = new();
     private readonly object _batchLock = new();
     private readonly System.Timers.Timer _batchTimer;
     private readonly IMetricsHistoryStore? _historyStore;
@@ -128,6 +129,8 @@ public class MetricsService : IMetricsService, IDisposable
         if (_disposed) return;
         _disposed = true;
 
+        FlushBatch();
+
         _batchTimer?.Stop();
         _batchTimer?.Dispose();
 
@@ -142,7 +145,6 @@ public class MetricsService : IMetricsService, IDisposable
     {
         var key = GetMetricKey(entityName, metricName);
         var dataPoint = new MetricDataPoint(DateTimeOffset.UtcNow, entityName, metricName, value);
-        _historyStore?.RecordSnapshots([new MetricSnapshot(dataPoint.Timestamp, entityName, metricName, value)]);
 
         _metrics.AddOrUpdate(
             key,
@@ -161,6 +163,10 @@ public class MetricsService : IMetricsService, IDisposable
         lock (_batchLock)
         {
             _pendingMetrics.Add(dataPoint);
+            if (_historyStore != null)
+            {
+                _pendingSnapshots.Add(new MetricSnapshot(dataPoint.Timestamp, entityName, metricName, value));
+            }
             
             if (_pendingMetrics.Count >= MaxBatchSize)
             {
@@ -185,13 +191,24 @@ public class MetricsService : IMetricsService, IDisposable
     private void FlushBatch()
     {
         List<MetricDataPoint> batch;
+        List<MetricSnapshot>? snapshotsBatch = null;
         lock (_batchLock)
         {
             if (_pendingMetrics.Count == 0) return;
             
             batch = new List<MetricDataPoint>(_pendingMetrics);
             _pendingMetrics.Clear();
+            if (_pendingSnapshots.Count > 0)
+            {
+                snapshotsBatch = new List<MetricSnapshot>(_pendingSnapshots);
+                _pendingSnapshots.Clear();
+            }
             _batchTimer.Stop();
+        }
+
+        if (snapshotsBatch is { Count: > 0 })
+        {
+            _historyStore?.RecordSnapshots(snapshotsBatch);
         }
 
         MetricsBatchRecorded?.Invoke(this, batch.AsReadOnly());

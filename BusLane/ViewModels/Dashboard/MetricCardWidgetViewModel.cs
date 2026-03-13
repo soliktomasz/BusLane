@@ -18,12 +18,14 @@ public partial class MetricCardWidgetViewModel : DashboardWidgetViewModel
     {
         _metricsService = metricsService;
         MetricUnit = GetMetricUnit();
-        _metricsService.MetricRecorded += OnMetricRecorded;
+        _metricsService.MetricsBatchRecorded += OnMetricsBatchRecorded;
         RefreshData();
     }
 
-    private void OnMetricRecorded(object? sender, MetricDataPoint dataPoint)
+    private void OnMetricsBatchRecorded(object? sender, IReadOnlyList<MetricDataPoint> metrics)
     {
+        _ = sender;
+        _ = metrics;
         ScheduleRefresh();
     }
 
@@ -107,7 +109,7 @@ public partial class MetricCardWidgetViewModel : DashboardWidgetViewModel
     {
         if (disposing)
         {
-            _metricsService.MetricRecorded -= OnMetricRecorded;
+            _metricsService.MetricsBatchRecorded -= OnMetricsBatchRecorded;
         }
         base.Dispose(disposing);
     }

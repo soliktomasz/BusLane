@@ -3,6 +3,7 @@ namespace BusLane.Tests.Services.Monitoring;
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using FluentAssertions;
+using NSubstitute;
 
 public class MetricsServiceTests
 {
@@ -214,5 +215,28 @@ public class MetricsServiceTests
         // Assert
         metrics.Should().BeInAscendingOrder(m => m.Timestamp);
     }
-}
 
+    [Fact]
+    public async Task RecordMetric_WithHistoryStore_BatchesSnapshotsBeforePersisting()
+    {
+        // Arrange
+        var historyStore = Substitute.For<IMetricsHistoryStore>();
+        var recordedBatches = new List<IReadOnlyList<MetricSnapshot>>();
+        historyStore.When(store => store.RecordSnapshots(Arg.Any<IEnumerable<MetricSnapshot>>()))
+            .Do(callInfo => recordedBatches.Add(callInfo.Arg<IEnumerable<MetricSnapshot>>().ToList()));
+        using var sut = new MetricsService(historyStore);
+
+        // Act
+        sut.RecordMetric("queue1", "ActiveMessageCount", 10);
+        sut.RecordMetric("queue1", "ActiveMessageCount", 20);
+        await Task.Delay(TimeSpan.FromMilliseconds(250));
+
+        // Assert
+        recordedBatches.Should().ContainSingle();
+        recordedBatches[0].Should().HaveCount(2);
+        recordedBatches[0].Should().OnlyContain(snapshot =>
+            snapshot.EntityName == "queue1" &&
+            snapshot.MetricName == "ActiveMessageCount");
+        recordedBatches[0].Select(snapshot => snapshot.Value).Should().BeEquivalentTo([10d, 20d]);
+    }
+}

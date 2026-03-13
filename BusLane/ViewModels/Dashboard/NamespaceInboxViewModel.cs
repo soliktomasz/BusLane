@@ -74,12 +74,15 @@ public partial class NamespaceInboxViewModel : ViewModelBase
         _currentNamespaceId = namespaceId;
 
         var rankedItems = _scoringService.Rank(queues, subscriptions, activeAlerts);
+        var reviewStates = _reviewStore.LoadAll()
+            .Where(review => string.Equals(review.NamespaceId, namespaceId, StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(review => review.EntityName, StringComparer.OrdinalIgnoreCase);
 
         Items.Clear();
 
         foreach (var item in rankedItems)
         {
-            var reviewState = _reviewStore.Get(namespaceId, item.EntityName);
+            reviewStates.TryGetValue(item.EntityName, out var reviewState);
             Items.Add(new NamespaceInboxItemViewModel(
                 item,
                 activeMessageDelta: item.ActiveMessageCount - (reviewState?.ActiveMessageCount ?? item.ActiveMessageCount),

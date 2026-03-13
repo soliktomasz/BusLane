@@ -11,6 +11,8 @@ public class MetricsHistoryStore : IMetricsHistoryStore
     private readonly TimeSpan _retention;
     private readonly Func<DateTimeOffset> _nowProvider;
     private readonly object _lock = new();
+    private bool _isLoaded;
+    private List<MetricSnapshot> _snapshots = [];
 
     public MetricsHistoryStore(
         string? filePath = null,
@@ -26,9 +28,10 @@ public class MetricsHistoryStore : IMetricsHistoryStore
     {
         lock (_lock)
         {
-            var allSnapshots = LoadInternal();
-            allSnapshots.AddRange(snapshots);
-            SaveInternal(RemoveExpired(allSnapshots));
+            EnsureLoaded();
+            _snapshots.AddRange(snapshots);
+            _snapshots = RemoveExpired(_snapshots);
+            SaveInternal(_snapshots);
         }
     }
 
@@ -36,8 +39,9 @@ public class MetricsHistoryStore : IMetricsHistoryStore
     {
         lock (_lock)
         {
+            EnsureLoaded();
             var cutoff = _nowProvider() - duration;
-            return LoadInternal()
+            return _snapshots
                 .Where(s => s.EntityName == entityName && s.MetricName == metricName && s.Timestamp >= cutoff)
                 .OrderBy(s => s.Timestamp)
                 .ToList();
@@ -48,10 +52,11 @@ public class MetricsHistoryStore : IMetricsHistoryStore
     {
         lock (_lock)
         {
+            EnsureLoaded();
             var now = _nowProvider();
             var currentStart = now - window;
             var previousStart = currentStart - window;
-            var all = LoadInternal()
+            var all = _snapshots
                 .Where(s => s.EntityName == entityName && s.MetricName == metricName)
                 .ToList();
 
@@ -75,8 +80,21 @@ public class MetricsHistoryStore : IMetricsHistoryStore
     {
         lock (_lock)
         {
-            SaveInternal(RemoveExpired(LoadInternal()));
+            EnsureLoaded();
+            _snapshots = RemoveExpired(_snapshots);
+            SaveInternal(_snapshots);
         }
+    }
+
+    private void EnsureLoaded()
+    {
+        if (_isLoaded)
+        {
+            return;
+        }
+
+        _snapshots = LoadInternal();
+        _isLoaded = true;
     }
 
     private List<MetricSnapshot> RemoveExpired(List<MetricSnapshot> snapshots)

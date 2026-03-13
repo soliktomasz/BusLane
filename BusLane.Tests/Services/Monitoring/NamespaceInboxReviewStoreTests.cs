@@ -90,6 +90,25 @@ public class NamespaceInboxReviewStoreTests : IDisposable
         reviewStates.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Get_AfterInitialLoad_UsesCachedReviewState()
+    {
+        // Arrange
+        var sut = new NamespaceInboxReviewStore(_storePath);
+        var reviewState = CreateReviewState("prod-a", "orders", activeMessageCount: 42);
+        sut.Save(reviewState);
+
+        sut.Get("prod-a", "orders").Should().NotBeNull();
+        File.Delete(_storePath);
+
+        // Act
+        var cachedReviewState = sut.Get("prod-a", "orders");
+
+        // Assert
+        cachedReviewState.Should().NotBeNull();
+        cachedReviewState!.ActiveMessageCount.Should().Be(42);
+    }
+
     private static NamespaceInboxReviewState CreateReviewState(
         string namespaceId,
         string entityName,

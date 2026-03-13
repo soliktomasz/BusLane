@@ -279,44 +279,61 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private async Task FlushPendingMessagesAsync()
     {
         await Task.Delay(FlushDelayMilliseconds);
-        Avalonia.Threading.Dispatcher.UIThread.Post(FlushPendingMessages);
+        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        {
+            FlushPendingMessages();
+            return;
+        }
+
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(FlushPendingMessages);
     }
 
     private void FlushPendingMessages()
     {
-        LiveStreamMessage[] snapshot;
+        List<LiveStreamMessage> newMessages;
+        List<LiveStreamMessage> removedMessages = [];
 
         lock (_messageLock)
         {
-            if (_pendingMessages.Count > 0)
+            if (_pendingMessages.Count == 0)
             {
-                _messageBuffer.AddRange(_pendingMessages);
-                _pendingMessages.Clear();
-
-                var overflow = _messageBuffer.Count - MaxMessages;
-                if (overflow > 0)
+                Interlocked.Exchange(ref _isFlushScheduled, 0);
+                if (_pendingMessages.Count > 0)
                 {
-                    _messageBuffer.RemoveRange(0, overflow);
+                    ScheduleFlush();
                 }
+                return;
             }
 
-            snapshot = _messageBuffer.ToArray();
+            newMessages = new List<LiveStreamMessage>(_pendingMessages);
+            _pendingMessages.Clear();
+            _messageBuffer.AddRange(newMessages);
+
+            var overflow = _messageBuffer.Count - MaxMessages;
+            if (overflow > 0)
+            {
+                removedMessages = _messageBuffer.Take(overflow).ToList();
+                _messageBuffer.RemoveRange(0, overflow);
+            }
         }
 
-        Messages.Clear();
-        FilteredMessages.Clear();
-
-        for (var i = snapshot.Length - 1; i >= 0; i--)
+        foreach (var removedMessage in removedMessages)
         {
-            var message = snapshot[i];
-            Messages.Add(message);
+            Messages.Remove(removedMessage);
+            FilteredMessages.Remove(removedMessage);
+        }
+
+        for (var i = 0; i < newMessages.Count; i++)
+        {
+            var message = newMessages[i];
+            Messages.Insert(0, message);
             if (MatchesFilter(message))
             {
-                FilteredMessages.Add(message);
+                FilteredMessages.Insert(0, message);
             }
         }
 
-        MessageCount = snapshot.Length;
+        MessageCount = _messageBuffer.Count;
         Interlocked.Exchange(ref _isFlushScheduled, 0);
 
         lock (_messageLock)

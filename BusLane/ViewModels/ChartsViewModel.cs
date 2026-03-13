@@ -43,7 +43,7 @@ public partial class ChartsViewModel : ViewModelBase
     public ChartsViewModel(IMetricsService metricsService)
     {
         _metricsService = metricsService;
-        _metricsService.MetricRecorded += OnMetricRecorded;
+        _metricsService.MetricsBatchRecorded += OnMetricsBatchRecorded;
 
         // Initialize axes - DateTimePoint uses DateTime.Ticks as X value
         MessageCountXAxes = [new Axis
@@ -146,12 +146,17 @@ public partial class ChartsViewModel : ViewModelBase
         });
     }
 
-    private void OnMetricRecorded(object? sender, MetricDataPoint dataPoint)
+    private void OnMetricsBatchRecorded(object? sender, IReadOnlyList<MetricDataPoint> metrics)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        _ = sender;
+        _ = metrics;
+        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
         {
             RefreshCharts();
-        });
+            return;
+        }
+
+        Avalonia.Threading.Dispatcher.UIThread.Invoke(RefreshCharts);
     }
 
     partial void OnSelectedTimeRangeChanged(string value)
@@ -337,4 +342,3 @@ public partial class ChartsViewModel : ViewModelBase
         }
     }
 }
-

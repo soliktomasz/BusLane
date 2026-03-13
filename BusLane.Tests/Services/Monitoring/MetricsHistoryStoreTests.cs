@@ -77,6 +77,32 @@ public class MetricsHistoryStoreTests : IDisposable
         comparison.Delta.Should().Be(25);
     }
 
+    [Fact]
+    public void CompareWindows_AfterInitialLoad_UsesCachedSnapshots()
+    {
+        // Arrange
+        var now = new DateTimeOffset(2026, 3, 7, 10, 0, 0, TimeSpan.Zero);
+        var sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+        sut.RecordSnapshots(
+        [
+            new MetricSnapshot(now.AddMinutes(-50), "orders", "ActiveMessageCount", 10),
+            new MetricSnapshot(now.AddMinutes(-40), "orders", "ActiveMessageCount", 20),
+            new MetricSnapshot(now.AddMinutes(-20), "orders", "ActiveMessageCount", 30),
+            new MetricSnapshot(now.AddMinutes(-10), "orders", "ActiveMessageCount", 50)
+        ]);
+
+        sut.CompareWindows("orders", "ActiveMessageCount", TimeSpan.FromMinutes(30)).Delta.Should().Be(25);
+        File.Delete(_storePath);
+
+        // Act
+        var comparison = sut.CompareWindows("orders", "ActiveMessageCount", TimeSpan.FromMinutes(30));
+
+        // Assert
+        comparison.CurrentAverage.Should().Be(40);
+        comparison.PreviousAverage.Should().Be(15);
+        comparison.Delta.Should().Be(25);
+    }
+
     public void Dispose()
     {
         try

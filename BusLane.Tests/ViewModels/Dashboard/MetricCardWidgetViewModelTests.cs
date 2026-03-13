@@ -11,6 +11,14 @@ public class MetricCardWidgetViewModelTests
 
     private MetricCardWidgetViewModel CreateViewModel(string metricName = "ActiveMessageCount", string? entityFilter = null)
     {
+        return CreateViewModel(_metricsService, metricName, entityFilter);
+    }
+
+    private static MetricCardWidgetViewModel CreateViewModel(
+        IMetricsService metricsService,
+        string metricName = "ActiveMessageCount",
+        string? entityFilter = null)
+    {
         var widget = new DashboardWidget
         {
             Type = WidgetType.MetricCard,
@@ -21,7 +29,7 @@ public class MetricCardWidgetViewModelTests
                 TimeRange = "Previous Hour"
             }
         };
-        return new MetricCardWidgetViewModel(widget, _metricsService);
+        return new MetricCardWidgetViewModel(widget, metricsService);
     }
 
     [Fact]
@@ -100,5 +108,75 @@ public class MetricCardWidgetViewModelTests
     {
         var vm = CreateViewModel("DeadLetterCount");
         vm.Title.Should().Be("Dead Letters");
+    }
+
+    [Fact]
+    public async Task MetricsBatchRecorded_RefreshesCurrentValue()
+    {
+        using var metricsService = new BatchOnlyMetricsService();
+        var vm = CreateViewModel(metricsService);
+
+        metricsService.RecordMetric("queue1", "ActiveMessageCount", 50);
+        metricsService.RecordMetric("queue2", "ActiveMessageCount", 30);
+
+        // Act
+        metricsService.EmitBatch();
+        await Task.Delay(150);
+
+        // Assert
+        vm.CurrentValue.Should().Be(40);
+    }
+
+    private sealed class BatchOnlyMetricsService : IMetricsService
+    {
+        private readonly List<MetricDataPoint> _metrics = [];
+
+        public event EventHandler<MetricDataPoint>? MetricRecorded
+        {
+            add { }
+            remove { }
+        }
+        public event EventHandler<IReadOnlyList<MetricDataPoint>>? MetricsBatchRecorded;
+
+        public void RecordMetric(string entityName, string metricName, double value)
+        {
+            _metrics.Add(new MetricDataPoint(DateTimeOffset.UtcNow, entityName, metricName, value));
+        }
+
+        public IEnumerable<MetricDataPoint> GetMetricHistory(string entityName, string metricName, TimeSpan duration)
+        {
+            var cutoff = DateTimeOffset.UtcNow - duration;
+            return _metrics.Where(metric =>
+                metric.EntityName == entityName &&
+                metric.MetricName == metricName &&
+                metric.Timestamp >= cutoff);
+        }
+
+        public IEnumerable<MetricDataPoint> GetEntityMetrics(string entityName, TimeSpan duration)
+        {
+            var cutoff = DateTimeOffset.UtcNow - duration;
+            return _metrics.Where(metric => metric.EntityName == entityName && metric.Timestamp >= cutoff);
+        }
+
+        public IEnumerable<MetricDataPoint> GetAggregatedMetrics(string metricName, TimeSpan duration)
+        {
+            var cutoff = DateTimeOffset.UtcNow - duration;
+            return _metrics.Where(metric => metric.MetricName == metricName && metric.Timestamp >= cutoff);
+        }
+
+        public void CleanupOldMetrics(TimeSpan retentionPeriod)
+        {
+            var cutoff = DateTimeOffset.UtcNow - retentionPeriod;
+            _metrics.RemoveAll(metric => metric.Timestamp < cutoff);
+        }
+
+        public void EmitBatch()
+        {
+            MetricsBatchRecorded?.Invoke(this, _metrics.ToList().AsReadOnly());
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

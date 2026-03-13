@@ -51,12 +51,14 @@ public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
             GeometryStroke = new SolidColorPaint(GetMetricColor(), 2)
         });
 
-        _metricsService.MetricRecorded += OnMetricRecorded;
+        _metricsService.MetricsBatchRecorded += OnMetricsBatchRecorded;
         RefreshData();
     }
 
-    private void OnMetricRecorded(object? sender, MetricDataPoint dataPoint)
+    private void OnMetricsBatchRecorded(object? sender, IReadOnlyList<MetricDataPoint> metrics)
     {
+        _ = sender;
+        _ = metrics;
         ScheduleRefresh();
     }
 
@@ -121,7 +123,7 @@ public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
     {
         if (disposing)
         {
-            _metricsService.MetricRecorded -= OnMetricRecorded;
+            _metricsService.MetricsBatchRecorded -= OnMetricsBatchRecorded;
         }
         base.Dispose(disposing);
     }

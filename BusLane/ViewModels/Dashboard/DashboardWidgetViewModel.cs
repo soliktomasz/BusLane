@@ -1,5 +1,6 @@
 namespace BusLane.ViewModels.Dashboard;
 
+using Avalonia.Threading;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -132,7 +133,13 @@ public abstract partial class DashboardWidgetViewModel : ViewModelBase, IDisposa
         _refreshDebounceTimer?.Dispose();
         _refreshDebounceTimer = new Timer(_ =>
         {
-            Avalonia.Threading.Dispatcher.UIThread.Post(RefreshData);
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                RefreshData();
+                return;
+            }
+
+            Dispatcher.UIThread.Invoke(RefreshData);
         }, null, RefreshDebounceMs, Timeout.Infinite);
     }
 

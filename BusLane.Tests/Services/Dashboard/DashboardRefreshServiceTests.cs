@@ -114,6 +114,81 @@ public class DashboardRefreshServiceTests
         maxConcurrentRefreshCalls.Should().Be(1);
     }
 
+    [Fact]
+    public async Task StartAutoRefresh_WhenStartedAfterManualRefresh_WaitsUntilIntervalBeforeFirstTick()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var refreshCount = 0;
+
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                Interlocked.Increment(ref refreshCount);
+                return Task.FromResult<IEnumerable<QueueInfo>>(
+                [
+                    new QueueInfo("queue-a", 1, 1, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))
+                ]);
+            });
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns([]);
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        try
+        {
+            // Act
+            _sut.StartAutoRefresh("ns", operations, TimeSpan.FromMilliseconds(200));
+            await Task.Delay(TimeSpan.FromMilliseconds(75));
+
+            // Assert
+            refreshCount.Should().Be(0);
+        }
+        finally
+        {
+            _sut.StopAutoRefresh();
+        }
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WithMultipleTopics_FetchesSubscriptionsConcurrently()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var activeSubscriptionCalls = 0;
+        var maxConcurrentSubscriptionCalls = 0;
+
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(
+            [
+                new TopicInfo("topic-a", sizeInBytes: 1, subscriptionCount: 1, accessedAt: null, defaultMessageTtl: TimeSpan.FromMinutes(1)),
+                new TopicInfo("topic-b", sizeInBytes: 1, subscriptionCount: 1, accessedAt: null, defaultMessageTtl: TimeSpan.FromMinutes(1)),
+                new TopicInfo("topic-c", sizeInBytes: 1, subscriptionCount: 1, accessedAt: null, defaultMessageTtl: TimeSpan.FromMinutes(1))
+            ]);
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(async callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                var inFlight = Interlocked.Increment(ref activeSubscriptionCalls);
+                UpdateMaxValue(ref maxConcurrentSubscriptionCalls, inFlight);
+                await Task.Delay(TimeSpan.FromMilliseconds(50));
+                Interlocked.Decrement(ref activeSubscriptionCalls);
+
+                return (IEnumerable<SubscriptionInfo>)
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ];
+            });
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        maxConcurrentSubscriptionCalls.Should().BeGreaterThan(1);
+    }
+
     private static void UpdateMaxValue(ref int target, int candidate)
     {
         while (true)

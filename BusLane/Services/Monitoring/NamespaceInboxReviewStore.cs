@@ -11,6 +11,8 @@ public class NamespaceInboxReviewStore : INamespaceInboxReviewStore
 {
     private readonly object _lock = new();
     private readonly string _filePath;
+    private bool _isLoaded;
+    private List<NamespaceInboxReviewState> _reviews = [];
 
     public NamespaceInboxReviewStore(string? filePath = null)
     {
@@ -21,7 +23,8 @@ public class NamespaceInboxReviewStore : INamespaceInboxReviewStore
     {
         lock (_lock)
         {
-            return LoadInternal();
+            EnsureLoaded();
+            return _reviews.ToList();
         }
     }
 
@@ -29,7 +32,8 @@ public class NamespaceInboxReviewStore : INamespaceInboxReviewStore
     {
         lock (_lock)
         {
-            return LoadInternal().FirstOrDefault(review =>
+            EnsureLoaded();
+            return _reviews.FirstOrDefault(review =>
                 string.Equals(review.NamespaceId, namespaceId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(review.EntityName, entityName, StringComparison.OrdinalIgnoreCase));
         }
@@ -41,22 +45,33 @@ public class NamespaceInboxReviewStore : INamespaceInboxReviewStore
 
         lock (_lock)
         {
-            var reviews = LoadInternal();
-            var index = reviews.FindIndex(existing =>
+            EnsureLoaded();
+            var index = _reviews.FindIndex(existing =>
                 string.Equals(existing.NamespaceId, reviewState.NamespaceId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(existing.EntityName, reviewState.EntityName, StringComparison.OrdinalIgnoreCase));
 
             if (index >= 0)
             {
-                reviews[index] = reviewState;
+                _reviews[index] = reviewState;
             }
             else
             {
-                reviews.Add(reviewState);
+                _reviews.Add(reviewState);
             }
 
-            SaveInternal(reviews);
+            SaveInternal(_reviews);
         }
+    }
+
+    private void EnsureLoaded()
+    {
+        if (_isLoaded)
+        {
+            return;
+        }
+
+        _reviews = LoadInternal();
+        _isLoaded = true;
     }
 
     private List<NamespaceInboxReviewState> LoadInternal()
