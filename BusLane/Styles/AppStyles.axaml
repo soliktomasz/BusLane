@@ -1269,6 +1269,35 @@
         <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
+    <Style Selector="Button.entity-pane-restore-handle">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0,0,10,0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="30"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+    </Style>
+
+    <Style Selector="Button.entity-pane-restore-handle:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+
+    <Style Selector="Button.entity-pane-restore-handle:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+
+    <Style Selector="Button.entity-pane-restore-handle:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+    </Style>
+
     <Style Selector="Border.terminal-panel">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>

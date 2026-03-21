@@ -12,6 +12,9 @@ using CommunityToolkit.Mvvm.Input;
 public partial class MainWindow : Window
 {
     private const int TerminalBoundsSaveDebounceMilliseconds = 250;
+    private const double EntityPaneRestoreHandleWidth = 34;
+    private const double VisibleEntityPaneWidthWeight = 1.2;
+    private const double VisibleMessagesWidthWeight = 1.8;
 
     private readonly Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>> _shortcutHandlers;
     private MainWindowViewModel? _viewModel;
@@ -261,6 +264,7 @@ public partial class MainWindow : Window
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         SetViewModel(DataContext as MainWindowViewModel);
+        ApplyEntityPaneLayoutColumns();
         ApplyTerminalLayoutRows();
         EnsureTerminalWindowState();
     }
@@ -298,6 +302,7 @@ public partial class MainWindow : Window
 
         if (_viewModel != null)
         {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _viewModel.Terminal.PropertyChanged -= OnTerminalPropertyChanged;
         }
 
@@ -305,10 +310,23 @@ public partial class MainWindow : Window
 
         if (_viewModel != null)
         {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
             _viewModel.Terminal.PropertyChanged += OnTerminalPropertyChanged;
         }
 
+        ApplyEntityPaneLayoutColumns();
         ApplyTerminalLayoutRows();
+    }
+
+    private void OnViewModelPropertyChanged(object? _, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(MainWindowViewModel.ActiveTab)
+            or nameof(MainWindowViewModel.IsCurrentEntityPaneVisible)
+            or nameof(MainWindowViewModel.IsActiveTabAzureMode)
+            or nameof(MainWindowViewModel.IsActiveTabConnectionStringMode))
+        {
+            ApplyEntityPaneLayoutColumns();
+        }
     }
 
     private void EnsureTerminalWindowState()
@@ -501,5 +519,30 @@ public partial class MainWindow : Window
         grid.RowDefinitions[3].Height = terminal.IsDockedVisible
             ? new GridLength(Math.Max(0, terminal.TerminalDockHeight))
             : new GridLength(0);
+    }
+
+    private void ApplyEntityPaneLayoutColumns()
+    {
+        var isEntityPaneVisible = _viewModel?.IsCurrentEntityPaneVisible ?? true;
+        ApplyEntityPaneLayoutColumns("AzureWorkspaceGrid", isEntityPaneVisible);
+        ApplyEntityPaneLayoutColumns("ConnectionWorkspaceGrid", isEntityPaneVisible);
+    }
+
+    private void ApplyEntityPaneLayoutColumns(string gridName, bool isEntityPaneVisible)
+    {
+        if (this.FindControl<Grid>(gridName) is not { } grid || grid.ColumnDefinitions.Count < 3)
+        {
+            return;
+        }
+
+        grid.ColumnDefinitions[0].Width = isEntityPaneVisible
+            ? new GridLength(0)
+            : new GridLength(EntityPaneRestoreHandleWidth);
+        grid.ColumnDefinitions[1].Width = isEntityPaneVisible
+            ? new GridLength(VisibleEntityPaneWidthWeight, GridUnitType.Star)
+            : new GridLength(0);
+        grid.ColumnDefinitions[2].Width = isEntityPaneVisible
+            ? new GridLength(VisibleMessagesWidthWeight, GridUnitType.Star)
+            : new GridLength(1, GridUnitType.Star);
     }
 }

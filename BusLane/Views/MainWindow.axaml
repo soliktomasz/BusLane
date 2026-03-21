@@ -85,12 +85,24 @@
                 </Grid>
 
                 <!-- Main content grid -->
-                <Grid Grid.Row="1" ColumnDefinitions="1.2*,1.8*">
+                <Grid x:Name="AzureWorkspaceGrid"
+                      Grid.Row="1"
+                      ColumnDefinitions="0,1.2*,1.8*">
+                    <Button Grid.Column="0"
+                            Classes="entity-pane-restore-handle"
+                            Command="{Binding ShowEntityPaneCommand}"
+                            IsVisible="{Binding !IsCurrentEntityPaneVisible}"
+                            ToolTip.Tip="Show entity pane">
+                        <LucideIcon Kind="PanelLeftOpen" Size="14"/>
+                    </Button>
+
                     <!-- Service Bus Tree View -->
-                    <controls:AzureEntityTreeView Grid.Column="0" Margin="0,0,12,0"/>
+                    <controls:AzureEntityTreeView Grid.Column="1"
+                                                  Margin="0,0,12,0"
+                                                  IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
 
                     <!-- Messages Panel -->
-                    <controls:MessagesPanelView Grid.Column="1" Margin="12,0,0,0"/>
+                    <controls:MessagesPanelView Grid.Column="2" Margin="12,0,0,0"/>
                 </Grid>
             </Grid>
 
@@ -125,12 +137,24 @@
                 </Grid>
 
                 <!-- Main content for connection string mode -->
-                <Grid Grid.Row="1" ColumnDefinitions="1.2*,1.8*">
+                <Grid x:Name="ConnectionWorkspaceGrid"
+                      Grid.Row="1"
+                      ColumnDefinitions="0,1.2*,1.8*">
+                    <Button Grid.Column="0"
+                            Classes="entity-pane-restore-handle"
+                            Command="{Binding ShowEntityPaneCommand}"
+                            IsVisible="{Binding !IsCurrentEntityPaneVisible}"
+                            ToolTip.Tip="Show entity pane">
+                        <LucideIcon Kind="PanelLeftOpen" Size="14"/>
+                    </Button>
+
                     <!-- Entity Tree for connection string mode -->
-                    <controls:EntityTreeView Grid.Column="0" Margin="0,0,12,0"/>
+                    <controls:EntityTreeView Grid.Column="1"
+                                             Margin="0,0,12,0"
+                                             IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
 
                     <!-- Messages Panel (reusing same structure as Azure mode) -->
-                    <controls:MessagesPanelView Grid.Column="1" Margin="12,0,0,0"/>
+                    <controls:MessagesPanelView Grid.Column="2" Margin="12,0,0,0"/>
                 </Grid>
             </Grid>
 
