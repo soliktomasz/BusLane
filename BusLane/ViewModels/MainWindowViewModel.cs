@@ -110,6 +110,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
 
     /// <summary>
+    /// Gets whether the active tab's entity pane is currently visible.
+    /// </summary>
+    public bool IsCurrentEntityPaneVisible => ActiveTab?.IsEntityPaneVisible ?? true;
+
+    /// <summary>
     /// Gets whether to show the welcome screen (no active connection tab and not signed in).
     /// </summary>
     public bool ShowWelcome => !Connection.IsAuthenticated && !HasActiveConnectionTab;
@@ -1316,6 +1321,30 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         await Tabs.CloseActiveTabAsync();
     }
 
+    [RelayCommand]
+    public void HideEntityPane()
+    {
+        if (ActiveTab == null)
+        {
+            return;
+        }
+
+        ActiveTab.IsEntityPaneVisible = false;
+        Tabs.SaveTabSession();
+    }
+
+    [RelayCommand]
+    public void ShowEntityPane()
+    {
+        if (ActiveTab == null)
+        {
+            return;
+        }
+
+        ActiveTab.IsEntityPaneVisible = true;
+        Tabs.SaveTabSession();
+    }
+
     // Track the currently subscribed tab for property change notifications
     private ConnectionTabViewModel? _subscribedTab;
 
@@ -1371,6 +1400,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             NotifyActiveTabDependentProperties();
         }
+        else if (e.PropertyName == nameof(ConnectionTabViewModel.IsEntityPaneVisible))
+        {
+            OnPropertyChanged(nameof(IsCurrentEntityPaneVisible));
+        }
 
         // Update dashboard operations when connection state changes
         if (e.PropertyName == nameof(ConnectionTabViewModel.IsConnected))
@@ -1395,6 +1428,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(HasActiveConnectionTab));
         OnPropertyChanged(nameof(IsActiveTabAzureMode));
         OnPropertyChanged(nameof(IsActiveTabConnectionStringMode));
+        OnPropertyChanged(nameof(IsCurrentEntityPaneVisible));
         OnPropertyChanged(nameof(ShowWelcome));
         OnPropertyChanged(nameof(CurrentNavigation));
         OnPropertyChanged(nameof(CurrentMessageOps));
