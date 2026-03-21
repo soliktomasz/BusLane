@@ -221,22 +221,29 @@ public class MetricsServiceTests
     {
         // Arrange
         var historyStore = Substitute.For<IMetricsHistoryStore>();
-        var recordedBatches = new List<IReadOnlyList<MetricSnapshot>>();
+        var batchRecorded = new TaskCompletionSource<IReadOnlyList<MetricSnapshot>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         historyStore.When(store => store.RecordSnapshots(Arg.Any<IEnumerable<MetricSnapshot>>()))
-            .Do(callInfo => recordedBatches.Add(callInfo.Arg<IEnumerable<MetricSnapshot>>().ToList()));
+            .Do(callInfo =>
+            {
+                var snapshots = callInfo.Arg<IEnumerable<MetricSnapshot>>().ToList();
+                batchRecorded.TrySetResult(snapshots);
+            });
         using var sut = new MetricsService(historyStore);
 
         // Act
         sut.RecordMetric("queue1", "ActiveMessageCount", 10);
         sut.RecordMetric("queue1", "ActiveMessageCount", 20);
-        await Task.Delay(TimeSpan.FromMilliseconds(250));
+        var completedTask = await Task.WhenAny(batchRecorded.Task, Task.Delay(TimeSpan.FromSeconds(2)));
 
         // Assert
-        recordedBatches.Should().ContainSingle();
-        recordedBatches[0].Should().HaveCount(2);
-        recordedBatches[0].Should().OnlyContain(snapshot =>
+        completedTask.Should().Be(batchRecorded.Task);
+        var recordedBatch = await batchRecorded.Task;
+        historyStore.Received(1).RecordSnapshots(Arg.Any<IEnumerable<MetricSnapshot>>());
+        recordedBatch.Should().HaveCount(2);
+        recordedBatch.Should().OnlyContain(snapshot =>
             snapshot.EntityName == "queue1" &&
             snapshot.MetricName == "ActiveMessageCount");
-        recordedBatches[0].Select(snapshot => snapshot.Value).Should().BeEquivalentTo([10d, 20d]);
+        recordedBatch.Select(snapshot => snapshot.Value).Should().BeEquivalentTo([10d, 20d]);
     }
 }
