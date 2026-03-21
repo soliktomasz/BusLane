@@ -54,6 +54,12 @@ public record TabSessionState
     public int SelectedMessageTabIndex { get; init; }
 
     /// <summary>
+    /// Whether the entity pane is visible for this tab.
+    /// Defaults to visible for older saved sessions.
+    /// </summary>
+    public bool IsEntityPaneVisible { get; init; } = true;
+
+    /// <summary>
     /// Position of this tab in the tab bar.
     /// </summary>
     public int TabOrder { get; init; }

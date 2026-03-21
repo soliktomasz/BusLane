@@ -55,6 +55,16 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
+    public void Constructor_DefaultsEntityPaneToVisible()
+    {
+        // Arrange & Act
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+
+        // Assert
+        tab.IsEntityPaneVisible.Should().BeTrue();
+    }
+
+    [Fact]
     public void Constructor_WithPreferencesService_InitializesMessageOps()
     {
         // Arrange
@@ -311,6 +321,43 @@ public class ConnectionTabViewModelTests
         // Assert
         tab.Namespace.Should().Be(ns);
         tab.Navigation.SelectedNamespace.Should().Be(ns);
+    }
+
+    [Fact]
+    public void ApplySessionState_WithHiddenEntityPane_RestoresVisibility()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        var state = new TabSessionState
+        {
+            TabId = "test-id",
+            Mode = ConnectionMode.ConnectionString,
+            ConnectionId = "conn-1",
+            IsEntityPaneVisible = false,
+            TabOrder = 0
+        };
+
+        // Act
+        tab.ApplySessionState(state);
+
+        // Assert
+        tab.IsEntityPaneVisible.Should().BeFalse();
+    }
+
+    [Fact]
+    public void CreateSessionState_IncludesEntityPaneVisibility()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net")
+        {
+            IsEntityPaneVisible = false
+        };
+
+        // Act
+        var state = tab.CreateSessionState(2);
+
+        // Assert
+        state.IsEntityPaneVisible.Should().BeFalse();
     }
 
     [Fact]

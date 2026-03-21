@@ -65,4 +65,21 @@ public class TabSessionStateTests
         state.ShowDeadLetter.Should().BeTrue();
         state.SelectedMessageTabIndex.Should().Be(1);
     }
+
+    [Fact]
+    public void Create_WithHiddenEntityPane_PreservesVisibilityState()
+    {
+        // Arrange & Act
+        var state = new TabSessionState
+        {
+            TabId = "tab-4",
+            Mode = ConnectionMode.ConnectionString,
+            ConnectionId = "conn-4",
+            IsEntityPaneVisible = false,
+            TabOrder = 3
+        };
+
+        // Assert
+        state.IsEntityPaneVisible.Should().BeFalse();
+    }
 }

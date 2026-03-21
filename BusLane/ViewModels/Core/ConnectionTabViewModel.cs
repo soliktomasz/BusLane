@@ -26,6 +26,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     // State
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _isConnected;
+    [ObservableProperty] private bool _isEntityPaneVisible = true;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private ConnectionHealthReport _connectionHealth = new(ConnectionHealthState.Healthy, "Connection healthy");
 
@@ -344,6 +345,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             MessageSearchText = MessageOps.MessageSearchText,
             ShowDeadLetter = Navigation.ShowDeadLetter,
             SelectedMessageTabIndex = Navigation.SelectedMessageTabIndex,
+            IsEntityPaneVisible = IsEntityPaneVisible,
             TabOrder = tabOrder
         };
     }
@@ -354,6 +356,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         Navigation.SelectedMessageTabIndex = state.SelectedMessageTabIndex;
         Navigation.ShowDeadLetter = state.ShowDeadLetter;
         MessageOps.MessageSearchText = state.MessageSearchText ?? string.Empty;
+        IsEntityPaneVisible = state.IsEntityPaneVisible;
 
         if (string.IsNullOrWhiteSpace(state.SelectedEntityName))
         {
