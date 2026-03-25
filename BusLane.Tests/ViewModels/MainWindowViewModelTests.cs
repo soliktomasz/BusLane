@@ -164,6 +164,29 @@ public class MainWindowViewModelTests
         sut.ShowNamespaceSelectionPrompt.Should().BeFalse();
     }
 
+    [Fact]
+    public void ShowNamespaceSelectionPrompt_WithSelectedNamespaceAndNoActiveTab_RemainsTrue()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var selectedNamespace = new ServiceBusNamespace(
+            "ns-1",
+            "orders",
+            "rg-orders",
+            "sub-1",
+            "westeurope",
+            "sb://orders.servicebus.windows.net/");
+
+        // Act
+        sut.Connection.IsAuthenticated = true;
+        sut.Connection.CurrentMode = ConnectionMode.AzureAccount;
+        sut.Navigation.SelectedNamespace = selectedNamespace;
+
+        // Assert
+        sut.ShowNamespaceSelectionPrompt.Should().BeTrue();
+    }
+
     private static MainWindowViewModel CreateSut(TestPreferencesService preferences)
     {
         var auth = Substitute.For<IAzureAuthService>();

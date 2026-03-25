@@ -135,8 +135,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// </summary>
     public bool ShowNamespaceSelectionPrompt =>
         Connection.ShowAzureSections &&
-        !HasActiveConnectionTab &&
-        CurrentNavigation.SelectedNamespace == null;
+        !HasActiveConnectionTab;
 
     /// <summary>
     /// Gets the navigation state for the active tab, or the legacy navigation if no tab is active.
