@@ -1208,6 +1208,18 @@
         <Setter Property="BoxShadow" Value="0 8 24 0 #18000000"/>
     </Style>
 
+    <Style Selector="Grid.sidebar-workspace-header">
+        <Setter Property="Margin" Value="0,0,0,2"/>
+    </Style>
+
+    <Style Selector="WrapPanel.sidebar-workspace-meta">
+        <Setter Property="Margin" Value="0,-2,0,0"/>
+    </Style>
+
+    <Style Selector="Grid.sidebar-workspace-actions">
+        <Setter Property="Margin" Value="0,2,0,0"/>
+    </Style>
+
     <Style Selector="Border.sidebar-context-pill">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
         <Setter Property="CornerRadius" Value="10"/>
