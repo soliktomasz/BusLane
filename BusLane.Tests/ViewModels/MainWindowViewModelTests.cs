@@ -101,6 +101,92 @@ public class MainWindowViewModelTests
         changedProperties.Should().Contain(nameof(MainWindowViewModel.IsCurrentEntityPaneVisible));
     }
 
+    [Fact]
+    public void ActiveWorkspaceModeLabel_WithAzureTab_ReturnsAzureWorkspace()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var activeTab = CreateTab("tab-1", preferences);
+        activeTab.IsConnected = true;
+        activeTab.Mode = ConnectionMode.AzureAccount;
+
+        // Act
+        sut.ActiveTab = activeTab;
+
+        // Assert
+        sut.ActiveWorkspaceModeLabel.Should().Be("Azure workspace");
+    }
+
+    [Fact]
+    public void ActiveWorkspaceModeLabel_WithConnectionStringTab_ReturnsConnectionType()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var activeTab = CreateTab("tab-1", preferences);
+        activeTab.IsConnected = true;
+        activeTab.Mode = ConnectionMode.ConnectionString;
+        activeTab.SavedConnection = SavedConnection.Create(
+            "Orders",
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=key;SharedAccessKey=value",
+            ConnectionType.Queue,
+            entityName: "orders");
+
+        // Act
+        sut.ActiveTab = activeTab;
+
+        // Assert
+        sut.ActiveWorkspaceModeLabel.Should().Be("Queue connection");
+    }
+
+    [Fact]
+    public void ShowNamespaceSelectionPrompt_IsTrueOnlyWhenAzureIsReadyWithoutActiveConnection()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+
+        // Act
+        sut.Connection.IsAuthenticated = true;
+        sut.Connection.CurrentMode = ConnectionMode.AzureAccount;
+
+        // Assert
+        sut.ShowNamespaceSelectionPrompt.Should().BeTrue();
+
+        // Act
+        var activeTab = CreateTab("tab-1", preferences);
+        activeTab.IsConnected = true;
+        activeTab.Mode = ConnectionMode.AzureAccount;
+        sut.ActiveTab = activeTab;
+
+        // Assert
+        sut.ShowNamespaceSelectionPrompt.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShowNamespaceSelectionPrompt_WithSelectedNamespaceAndNoActiveTab_RemainsTrue()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var selectedNamespace = new ServiceBusNamespace(
+            "ns-1",
+            "orders",
+            "rg-orders",
+            "sub-1",
+            "westeurope",
+            "sb://orders.servicebus.windows.net/");
+
+        // Act
+        sut.Connection.IsAuthenticated = true;
+        sut.Connection.CurrentMode = ConnectionMode.AzureAccount;
+        sut.Navigation.SelectedNamespace = selectedNamespace;
+
+        // Assert
+        sut.ShowNamespaceSelectionPrompt.Should().BeTrue();
+    }
+
     private static MainWindowViewModel CreateSut(TestPreferencesService preferences)
     {
         var auth = Substitute.For<IAzureAuthService>();

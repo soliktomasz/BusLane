@@ -12,453 +12,414 @@
     </UserControl.Resources>
 
     <Border Classes="sidebar">
-        <DockPanel>
-            <!-- App Header -->
-            <Border DockPanel.Dock="Top" Classes="sidebar-header">
-                <StackPanel>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                            <Viewbox Width="32" Height="32">
-                                <Canvas Width="512" Height="512">
-                                    <!-- Background -->
-                                    <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#18181b"/>
-
-                                    <!-- Lane 1: top pills -->
-                                    <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-                                    <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-
-                                    <!-- Lane 2: active bus lane (indigo) -->
-                                    <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#6366f1"/>
-
-                                    <!-- Lane 3: bottom pill + dot -->
-                                    <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-                                    <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#27272a"/>
-                                </Canvas>
-                            </Viewbox>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="BusLane" Classes="heading-large"/>
-                                <TextBlock Text="Service Bus Manager" Classes="caption" FontSize="11"/>
-                            </StackPanel>
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0" Classes="sidebar-header">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                        <Viewbox Width="32" Height="32">
+                            <Canvas Width="512" Height="512">
+                                <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#18181b"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
+                                <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#6366f1"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
+                                <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#27272a"/>
+                            </Canvas>
+                        </Viewbox>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="BusLane" Classes="heading-large"/>
+                            <TextBlock Text="Workspace control rail" Classes="caption" FontSize="11"/>
                         </StackPanel>
-                        
-                        <!-- Toggle Panel Button -->
-                        <Button Grid.Column="1"
-                                Classes="panel-toggle"
-                                Command="{Binding ToggleNavigationPanelCommand}"
-                                ToolTip.Tip="Hide navigation panel"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Right"
-                                Margin="12,0,0,0"
-                                Padding="6">
-                            <LucideIcon Kind="PanelLeftClose" Size="18"/>
-                        </Button>
-                    </Grid>
-                </StackPanel>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Classes="panel-toggle"
+                            Command="{Binding ToggleNavigationPanelCommand}"
+                            ToolTip.Tip="Hide navigation panel"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right"
+                            Margin="12,0,0,0"
+                            Padding="6">
+                        <LucideIcon Kind="PanelLeftClose" Size="18"/>
+                    </Button>
+                </Grid>
             </Border>
 
-            <!-- Action Buttons -->
-            <StackPanel DockPanel.Dock="Top" Margin="12,16,12,12" Spacing="8">
-                <!-- Connection Library Button (always visible) -->
-                <Button Classes="primary"
-                        Command="{Binding OpenConnectionLibraryCommand}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Center"
-                        Padding="12,12">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <LucideIcon Kind="Library" Size="16"/>
-                        <TextBlock Text="My Connections" FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="12,16,12,16" Spacing="18">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Workspace" Classes="sidebar-section-label"/>
 
-                <!-- Azure Sign In (when not authenticated and not using connection string) -->
-                <Button Classes="secondary"
-                        Command="{Binding LoginCommand}"
-                        IsVisible="{Binding !Connection.IsAuthenticated}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Center"
-                        Padding="12,12">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <LucideIcon Kind="Cloud" Size="16"/>
-                        <TextBlock Text="Sign in with Azure"/>
-                    </StackPanel>
-                </Button>
-
-                <!-- Sign Out (when authenticated with Azure) -->
-                <Button Classes="secondary"
-                        Command="{Binding LogoutCommand}"
-                        IsVisible="{Binding Connection.IsAuthenticated}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Center"
-                        Padding="12,12">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <LucideIcon Kind="LogOut" Size="16"/>
-                        <TextBlock Text="Sign Out"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-
-            <Separator DockPanel.Dock="Top" Margin="12,0"/>
-
-            <!-- Favorite Connections Section -->
-            <StackPanel DockPanel.Dock="Top"
-                        IsVisible="{Binding Connection.HasFavoriteConnections}"
-                        Margin="12,12,12,0">
-                <ToggleButton Classes="subtle"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Stretch"
-                              Padding="8,6"
-                              IsChecked="True"
-                              x:Name="FavoritesToggleButton">
-                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-                        <Panel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
-                            <LucideIcon Kind="ChevronDown" Size="12"
-                                       Foreground="{DynamicResource SubtleForeground}"
-                                       IsVisible="{Binding #FavoritesToggleButton.IsChecked}"/>
-                            <LucideIcon Kind="ChevronRight" Size="12"
-                                       Foreground="{DynamicResource SubtleForeground}"
-                                       IsVisible="{Binding !#FavoritesToggleButton.IsChecked}"/>
-                        </Panel>
-                        <TextBlock Grid.Column="1" Text="Favorites"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource SubtleForeground}"
-                                   VerticalAlignment="Center"/>
-                        <Border Grid.Column="3" VerticalAlignment="Center" Margin="0,0,0,0"
-                                Background="{DynamicResource SurfaceBrand}"
-                                CornerRadius="10"
-                                Padding="6,2">
-                            <TextBlock Text="{Binding Connection.FavoriteConnections.Count}"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource AccentBrand}"/>
-                        </Border>
-                    </Grid>
-                </ToggleButton>
-
-                <ListBox ItemsSource="{Binding Connection.FavoriteConnections}"
-                         Margin="0,0,0,8"
-                         Classes="entity-list"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         IsVisible="{Binding #FavoritesToggleButton.IsChecked}">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:SavedConnection">
-                            <Button Classes="subtle"
-                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
-                                    CommandParameter="{Binding}"
-                                    HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Stretch"
-                                    Padding="0"
-                                    Margin="4,1">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <!-- Selection indicator bar -->
-                                    <Border Grid.Column="0" Classes="selection-indicator"
-                                            VerticalAlignment="Stretch"
-                                            Margin="0,6,0,6">
-                                        <Border.IsVisible>
-                                            <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
-                                                <Binding Path="."/>
-                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ActiveTab.SavedConnection"/>
-                                            </MultiBinding>
-                                        </Border.IsVisible>
-                                    </Border>
-
-                                    <!-- Connection content with selection background -->
-                                    <Border Grid.Column="1" Padding="10,8" CornerRadius="6">
-                                        <Border.Background>
-                                            <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
-                                                <Binding Path="."/>
-                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ActiveTab.SavedConnection"/>
-                                            </MultiBinding>
-                                        </Border.Background>
-                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <!-- Connection Type Icon -->
-                                            <Border Grid.Column="0"
-                                                    Width="32" Height="32"
-                                                    CornerRadius="6"
-                                                    Background="{DynamicResource SurfaceBrand}"
-                                                    Margin="0,0,10,0">
-                                                <LucideIcon Kind="Cable" Size="14"
-                                                          Foreground="{DynamicResource AccentBrand}"
-                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Classes="sidebar-workspace-card"
+                                IsVisible="{Binding HasActiveConnectionTab}">
+                            <StackPanel Spacing="14">
+                                <Grid Classes="sidebar-workspace-header"
+                                      ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="12">
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Border Classes="badge-success">
+                                                <TextBlock Text="Connected"/>
                                             </Border>
-
-                                            <!-- Connection Details -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                                <TextBlock Text="{Binding Name}"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="12"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{Binding TypeDisplayName}"
-                                                               Classes="caption"
-                                                               FontSize="11"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="·"
-                                                               Classes="caption"
-                                                               FontSize="11"
-                                                               IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                    <TextBlock Text="{Binding EntityName}"
-                                                               Classes="caption"
-                                                               FontSize="11"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="120"
-                                                               IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                </StackPanel>
-                                            </StackPanel>
-
-                                            <!-- Environment Badge -->
-                                            <Border Grid.Column="2"
-                                                    Classes="badge-env"
-                                                    VerticalAlignment="Center"
-                                                    Margin="6,0,0,0"
-                                                    Padding="5,2"
-                                                    IsVisible="{Binding HasEnvironment}">
-                                                <TextBlock Text="{Binding EnvironmentDisplayName}"
-                                                           FontSize="10"
-                                                           FontWeight="SemiBold"/>
+                                            <Border Classes="badge-info">
+                                                <TextBlock Text="{Binding ActiveWorkspaceModeLabel}"/>
                                             </Border>
-                                        </Grid>
+                                        </StackPanel>
+
+                                        <TextBlock Text="{Binding ActiveTab.TabTitle}"
+                                                   Classes="heading"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <TextBlock Text="{Binding ActiveTab.TabSubtitle}"
+                                                   Classes="caption"
+                                                   TextWrapping="Wrap"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   IsVisible="{Binding ActiveTab.TabSubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1"
+                                            Width="44"
+                                            Height="44"
+                                            CornerRadius="12"
+                                            Background="{DynamicResource SurfaceBrand}"
+                                            HorizontalAlignment="Right">
+                                        <LucideIcon Kind="Waypoints"
+                                                    Size="20"
+                                                    Foreground="{DynamicResource AccentBrand}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
                                     </Border>
                                 </Grid>
-                            </Button>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
 
-                <Separator Margin="12,4,12,0"/>
-            </StackPanel>
-
-            <!-- Live Stream, Charts, Alerts Buttons - Docked to bottom -->
-            <StackPanel DockPanel.Dock="Bottom" Margin="12,0,12,16" Spacing="4">
-                <Separator Margin="0,8,0,8"/>
-
-                <!-- Live Stream Button -->
-                <Button Classes="subtle"
-                        Command="{Binding OpenLiveStreamCommand}"
-                        HorizontalAlignment="Stretch"
-                        Padding="12,12">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="Radio" Size="16"/>
-                        <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <!-- Charts Button -->
-                <Button Classes="subtle"
-                        Command="{Binding OpenChartsCommand}"
-                        HorizontalAlignment="Stretch"
-                        Padding="12,12">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="ChartBar" Size="16"/>
-                        <TextBlock Text="Charts" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <!-- Alerts Button with Badge -->
-                <Button Classes="subtle"
-                        Command="{Binding OpenAlertsCommand}"
-                        HorizontalAlignment="Stretch"
-                        Padding="12,12">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="Bell" Size="16"/>
-                            <TextBlock Text="Alerts" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <Border Grid.Column="2"
-                                Background="{DynamicResource DangerBackground}"
-                                CornerRadius="10"
-                                Padding="8,2"
-                                IsVisible="{Binding FeaturePanels.ActiveAlertCount}"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="{Binding FeaturePanels.ActiveAlertCount}"
-                                       FontSize="11"
-                                       Foreground="White"
-                                       FontWeight="SemiBold"/>
-                        </Border>
-                    </Grid>
-                </Button>
-
-            </StackPanel>
-
-            <!-- Settings Button - Docked to bottom -->
-            <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12" Spacing="4">
-                <Button Classes="subtle"
-                        Command="{Binding OpenSettingsCommand}"
-                        HorizontalAlignment="Stretch"
-                        Padding="12,12">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="Settings" Size="16"/>
-                        <TextBlock Text="Settings" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-
-            <!-- Active tab connection card -->
-            <Border DockPanel.Dock="Bottom" Margin="12,12,12,8"
-                    IsVisible="{Binding HasActiveConnectionTab}"
-                    Classes="card" Padding="0">
-                <StackPanel>
-                    <!-- Connection Info -->
-                    <Border Background="{DynamicResource SurfaceSubtle}" CornerRadius="8,8,0,0" Padding="16,12" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Border Width="8" Height="8" CornerRadius="4" Background="{DynamicResource TextSuccess}"/>
-                                <TextBlock Text="Connected" Classes="caption" Foreground="{DynamicResource TextSuccess}"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding ActiveTab.TabTitle}"
-                                       FontWeight="SemiBold"
-                                       FontSize="16"
-                                       Margin="0,6,0,0"
-                                       TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding CurrentNavigation.CurrentEntityName}"
-                                       Classes="caption"
-                                       Margin="0,2,0,0"
-                                       TextTrimming="CharacterEllipsis"
-                                       IsVisible="{Binding CurrentNavigation.CurrentEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-
-                            <!-- Dead Letter Count Badge -->
-                            <Border Classes="badge-danger" Padding="8,4" Margin="0,8,0,0"
-                                    HorizontalAlignment="Left"
-                                    IsVisible="{Binding CurrentNavigation.HasDeadLetters}">
-                                <TextBlock Text="{Binding CurrentNavigation.TotalDeadLetterCount, StringFormat='{}{0} Dead Letters'}"
-                                           Foreground="White" FontSize="11" FontWeight="SemiBold"/>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Disconnect Button -->
-                    <Button Classes="danger-outline"
-                            Content="Disconnect"
-                            Command="{Binding DisconnectConnectionCommand}"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Center"
-                            Margin="12"
-                            Padding="12,6"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Azure Account Section (when authenticated) -->
-            <StackPanel DockPanel.Dock="Top"
-                        IsVisible="{Binding Connection.ShowAzureSections}"
-                        Margin="12,12,12,0">
-
-                <!-- Selected Namespace Card (when namespace is selected) -->
-                <Border Background="{DynamicResource CardBackground}"
-                        BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="0"
-                        IsVisible="{Binding CurrentNavigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNotNull}}">
-                    <StackPanel>
-                        <!-- Namespace Info -->
-                        <Border Background="{DynamicResource SurfaceSubtle}"
-                                CornerRadius="8,8,0,0"
-                                Padding="16,12"
-                                BorderBrush="{DynamicResource BorderDefault}"
-                                BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="Auto,*">
-                                <!-- Namespace Icon -->
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource AccentBrand}"
-                                        Margin="0,0,12,0">
-                                    <TextBlock Text="SB" FontWeight="Bold" FontSize="13"
-                                               Foreground="{DynamicResource TextOnBrand}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Classes="badge-danger"
+                                        HorizontalAlignment="Left"
+                                        IsVisible="{Binding CurrentNavigation.HasDeadLetters}">
+                                    <TextBlock Text="{Binding CurrentNavigation.TotalDeadLetterCount, StringFormat='{}{0} dead letters'}"
+                                               Foreground="White"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
                                 </Border>
 
-                                <!-- Namespace Details -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.Name}"
-                                               FontWeight="SemiBold"
-                                               FontSize="13"
-                                               TextTrimming="CharacterEllipsis"/>
+                                <WrapPanel Classes="sidebar-workspace-meta"
+                                           Orientation="Horizontal"
+                                           ItemHeight="28"
+                                           IsVisible="{Binding IsActiveTabConnectionStringMode}">
+                                    <Border Classes="badge-env"
+                                            Margin="0,0,6,6"
+                                            IsVisible="{Binding ActiveTab.SavedConnection.HasEnvironment}">
+                                        <TextBlock Text="{Binding ActiveTab.SavedConnection.EnvironmentDisplayName}"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+                                </WrapPanel>
+
+                                <StackPanel Classes="sidebar-workspace-actions"
+                                            Spacing="8">
+                                    <Button
+                                            Classes="secondary small"
+                                            Command="{Binding RefreshConnectionCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="RefreshCw" Size="14"/>
+                                            <TextBlock Text="Refresh"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button
+                                            Classes="secondary small"
+                                            Command="{Binding OpenNamespacePanelCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center"
+                                            IsVisible="{Binding IsActiveTabAzureMode}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="ArrowLeftRight" Size="14"/>
+                                            <TextBlock Text="Namespace"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <Button Classes="danger-outline"
+                                        Command="{Binding DisconnectConnectionCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <LucideIcon Kind="MapPin" Size="12"
-                                                  Foreground="{DynamicResource SubtleForeground}"/>
-                                        <TextBlock Text="{Binding CurrentNavigation.SelectedNamespace.Location}"
+                                        <LucideIcon Kind="PlugZap" Size="14"/>
+                                        <TextBlock Text="Disconnect"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card"
+                                IsVisible="{Binding ShowNamespaceSelectionPrompt}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource SurfaceBrand}">
+                                        <LucideIcon Kind="Server"
+                                                    Size="18"
+                                                    Foreground="{DynamicResource AccentBrand}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Choose a namespace" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="Pick the Azure workspace you want to browse."
                                                    Classes="caption"
-                                                   FontSize="11"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                                   TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </StackPanel>
+
+                                <Button Classes="primary"
+                                        Command="{Binding OpenNamespacePanelCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <LucideIcon Kind="Server" Size="16"/>
+                                        <TextBlock Text="Select Namespace" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Classes="secondary"
+                                Command="{Binding LogoutCommand}"
+                                IsVisible="{Binding Connection.IsAuthenticated}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <LucideIcon Kind="LogOut" Size="16"/>
+                                <TextBlock Text="Sign Out"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Border Classes="empty-state">
+                            <Border.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="!Connection.ShowAzureSections"/>
+                                    <Binding Path="!HasActiveConnectionTab"/>
+                                </MultiBinding>
+                            </Border.IsVisible>
+                            <StackPanel Spacing="14">
+                                <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                    <LucideIcon Kind="Rocket" Size="28"
+                                                HorizontalAlignment="Center"
+                                                Foreground="{DynamicResource AccentBrand}"/>
+                                    <TextBlock Text="Start a workspace"
+                                               FontWeight="SemiBold"
+                                               FontSize="16"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Open a saved connection or sign in to Azure to start browsing queues and topics."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <Button Classes="secondary"
+                                        Command="{Binding LoginCommand}"
+                                        IsVisible="{Binding !Connection.IsAuthenticated}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <LucideIcon Kind="Cloud" Size="16"/>
+                                        <TextBlock Text="Sign in with Azure"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Quick switch" Classes="sidebar-section-label"/>
+                            <Border Grid.Column="1"
+                                    Classes="badge-muted"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding Connection.HasFavoriteConnections}">
+                                <TextBlock Text="{Binding Connection.FavoriteConnections.Count}"/>
+                            </Border>
+                        </Grid>
+
+                        <Button Classes="secondary"
+                                Command="{Binding OpenConnectionLibraryCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                <Border Grid.Column="0"
+                                        Width="32"
+                                        Height="32"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource SurfaceBrand}">
+                                    <LucideIcon Kind="Library"
+                                                Size="14"
+                                                Foreground="{DynamicResource AccentBrand}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="My Connections" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Manage saved and recent connections"
+                                               Classes="caption"
+                                               FontSize="11"/>
+                                </StackPanel>
+                                <LucideIcon Grid.Column="2"
+                                            Kind="ChevronRight"
+                                            Size="14"
+                                            Foreground="{DynamicResource SubtleForeground}"
+                                            VerticalAlignment="Center"/>
                             </Grid>
-                        </Border>
-
-                        <!-- Change Namespace Button -->
-                        <Button Classes="subtle"
-                                Command="{Binding OpenNamespacePanelCommand}"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                Padding="12,12">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <LucideIcon Kind="ArrowLeftRight" Size="16"/>
-                                <TextBlock Text="Change Namespace" FontSize="12"/>
-                            </StackPanel>
                         </Button>
-                    </StackPanel>
-                </Border>
 
-                <!-- No Namespace Selected - Prompt to open panel -->
-                <Border Background="{DynamicResource SurfaceSubtle}"
-                        CornerRadius="8"
-                        Padding="16"
-                        IsVisible="{Binding CurrentNavigation.SelectedNamespace, Converter={x:Static ObjectConverters.IsNull}}">
-                    <StackPanel Spacing="12" HorizontalAlignment="Center">
-                        <Border Width="48" Height="48" CornerRadius="10" Background="{DynamicResource SurfaceBrand}" HorizontalAlignment="Center">
-                            <LucideIcon Kind="Server" Size="20"
-                                      Foreground="{DynamicResource AccentBrand}"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ListBox ItemsSource="{Binding Connection.FavoriteConnections}"
+                                 Classes="entity-list quick-switch-list"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 IsVisible="{Binding Connection.HasFavoriteConnections}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:SavedConnection">
+                                    <Button Classes="subtle sidebar-quick-switch-button"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="0"
+                                            Margin="0">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                            <Border Grid.Column="0"
+                                                    Classes="selection-indicator"
+                                                    VerticalAlignment="Stretch"
+                                                    Margin="0,6,0,6">
+                                                <Border.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                        <Binding Path="."/>
+                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ActiveTab.SavedConnection"/>
+                                                    </MultiBinding>
+                                                </Border.IsVisible>
+                                            </Border>
+
+                                            <Border Grid.Column="1"
+                                                    Classes="sidebar-quick-switch-item">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                                    <Border Grid.Column="0"
+                                                            Width="30"
+                                                            Height="30"
+                                                            CornerRadius="8"
+                                                            Background="{DynamicResource SurfaceBrand}">
+                                                        <LucideIcon Kind="Cable"
+                                                                    Size="13"
+                                                                    Foreground="{DynamicResource AccentBrand}"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"/>
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontWeight="SemiBold"
+                                                                   FontSize="12"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <TextBlock Text="{Binding TypeDisplayName}"
+                                                                       Classes="caption"
+                                                                       FontSize="11"/>
+                                                            <TextBlock Text="·"
+                                                                       Classes="caption"
+                                                                       FontSize="11"
+                                                                       IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                            <TextBlock Text="{Binding EntityName}"
+                                                                       Classes="caption"
+                                                                       FontSize="11"
+                                                                       MaxWidth="120"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       IsVisible="{Binding EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Border Grid.Column="2"
+                                                            Classes="badge-env"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding HasEnvironment}">
+                                                        <TextBlock Text="{Binding EnvironmentDisplayName}"
+                                                                   FontWeight="SemiBold"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Border Classes="sidebar-hint-card"
+                                IsVisible="{Binding !Connection.HasFavoriteConnections}">
+                            <TextBlock Text="Favorite connections will appear here for one-click switching."
+                                       Classes="caption"
+                                       TextWrapping="Wrap"/>
                         </Border>
-                        <TextBlock Text="No namespace selected"
-                                   FontWeight="SemiBold"
-                                   FontSize="13"
-                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="Select a namespace to browse&#10;queues and topics"
-                                   Classes="caption"
-                                   TextAlignment="Center"
-                                   LineHeight="18"/>
-                        <Button Classes="primary"
-                                Command="{Binding OpenNamespacePanelCommand}"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                Padding="16,10"
-                                Margin="0,4,0,0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <LucideIcon Kind="Server" Size="16"/>
-                                <TextBlock Text="Select Namespace" FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
                     </StackPanel>
-                </Border>
-            </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
 
-            <!-- Empty State when not authenticated and no active connection -->
-            <Border Margin="12,24,12,12"
-                    Classes="empty-state">
-                <Border.IsVisible>
-                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                        <Binding Path="!Connection.ShowAzureSections"/>
-                        <Binding Path="!HasActiveConnectionTab"/>
-                    </MultiBinding>
-                </Border.IsVisible>
-                <StackPanel HorizontalAlignment="Center" Spacing="12">
-                    <LucideIcon Kind="Cloud" Size="32" HorizontalAlignment="Center" Foreground="{DynamicResource SubtleForeground}"/>
-                    <TextBlock Text="Get Started" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Sign in with Azure or use a&#10;saved connection to browse&#10;your Service Bus resources."
-                               Classes="caption"
-                               TextAlignment="Center"
-                               LineHeight="18"/>
+            <Border Grid.Row="2" Classes="sidebar-utility-dock">
+                <StackPanel Margin="12,10,12,12" Spacing="4">
+                    <TextBlock Text="Utilities" Classes="sidebar-section-label" Margin="0,0,0,4"/>
+
+                    <Button Classes="subtle sidebar-utility-button"
+                            Command="{Binding OpenLiveStreamCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="Radio" Size="16"/>
+                            <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="subtle sidebar-utility-button"
+                            Command="{Binding OpenChartsCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="ChartBar" Size="16"/>
+                            <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="subtle sidebar-utility-button"
+                            Command="{Binding OpenAlertsCommand}"
+                            HorizontalAlignment="Stretch">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="Bell" Size="16"/>
+                                <TextBlock Text="Alerts" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource DangerBackground}"
+                                    CornerRadius="10"
+                                    Padding="8,2"
+                                    IsVisible="{Binding FeaturePanels.ActiveAlertCount}"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding FeaturePanels.ActiveAlertCount}"
+                                           FontSize="11"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"/>
+                            </Border>
+                        </Grid>
+                    </Button>
+
+                    <Button Classes="subtle sidebar-utility-button"
+                            Command="{Binding OpenSettingsCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="Settings" Size="16"/>
+                            <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Border>
-        </DockPanel>
+        </Grid>
     </Border>
 </UserControl>

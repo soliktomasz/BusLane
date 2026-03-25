@@ -1193,6 +1193,82 @@
         <Setter Property="Padding" Value="16"/>
     </Style>
 
+    <Style Selector="TextBlock.sidebar-section-label">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+
+    <Style Selector="Border.sidebar-workspace-card">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BoxShadow" Value="0 8 24 0 #18000000"/>
+    </Style>
+
+    <Style Selector="Grid.sidebar-workspace-header">
+        <Setter Property="Margin" Value="0,0,0,2"/>
+    </Style>
+
+    <Style Selector="WrapPanel.sidebar-workspace-meta">
+        <Setter Property="Margin" Value="0,-2,0,0"/>
+    </Style>
+
+    <Style Selector="Grid.sidebar-workspace-actions">
+        <Setter Property="Margin" Value="0,2,0,0"/>
+    </Style>
+
+    <Style Selector="Border.sidebar-context-pill">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="Border.sidebar-hint-card">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="ListBox.quick-switch-list">
+        <Setter Property="Margin" Value="0"/>
+    </Style>
+
+    <Style Selector="ListBox.quick-switch-list ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style Selector="Border.sidebar-quick-switch-item">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="Button.sidebar-quick-switch-button:pointerover Border.sidebar-quick-switch-item">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+
+    <Style Selector="Border.sidebar-utility-dock">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="Button.sidebar-utility-button">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="12,10"/>
+    </Style>
+
     <!-- Compact icon button for toolbar area -->
     <Style Selector="Button.icon-button">
         <Setter Property="Background" Value="Transparent"/>

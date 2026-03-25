@@ -110,6 +110,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
 
     /// <summary>
+    /// Gets a compact label describing the active workspace mode.
+    /// </summary>
+    public string ActiveWorkspaceModeLabel => ActiveTab?.Mode switch
+    {
+        ConnectionMode.AzureAccount => "Azure workspace",
+        ConnectionMode.ConnectionString when ActiveTab?.SavedConnection != null => $"{ActiveTab.SavedConnection.TypeDisplayName} connection",
+        ConnectionMode.ConnectionString => "Saved connection",
+        _ => "Workspace"
+    };
+
+    /// <summary>
     /// Gets whether the active tab's entity pane is currently visible.
     /// </summary>
     public bool IsCurrentEntityPaneVisible => ActiveTab?.IsEntityPaneVisible ?? true;
@@ -118,6 +129,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// Gets whether to show the welcome screen (no active connection tab and not signed in).
     /// </summary>
     public bool ShowWelcome => !Connection.IsAuthenticated && !HasActiveConnectionTab;
+
+    /// <summary>
+    /// Gets whether to show the namespace selection prompt for Azure users before a workspace is active.
+    /// </summary>
+    public bool ShowNamespaceSelectionPrompt =>
+        Connection.ShowAzureSections &&
+        !HasActiveConnectionTab;
 
     /// <summary>
     /// Gets the navigation state for the active tab, or the legacy navigation if no tab is active.
@@ -232,6 +250,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             OnConnectedAsync,
             OnDisconnectedAsync,
             open => { if (open) NamespaceSelection.Open(); else NamespaceSelection.Close(); });
+        Connection.PropertyChanged += OnConnectionPropertyChanged;
 
         MessageOps = new MessageOperationsViewModel(
             () => _operations,
@@ -293,13 +312,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Wire up property change handlers for cross-component dependencies
         Navigation.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
-                FireAndForget(LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id), nameof(LoadNamespacesAsync));
-            else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
-                FireAndForget(MessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
-            else if (e.PropertyName == nameof(Navigation.SelectedMessageTabIndex) && Navigation.IsSessionInspectorTabSelected)
-                FireAndForget(SessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
-        };
+        if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
+            FireAndForget(LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id), nameof(LoadNamespacesAsync));
+        else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
+            FireAndForget(MessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
+        else if (e.PropertyName == nameof(Navigation.SelectedMessageTabIndex) && Navigation.IsSessionInspectorTabSelected)
+            FireAndForget(SessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
+
+        if (e.PropertyName == nameof(Navigation.SelectedNamespace))
+        {
+            OnPropertyChanged(nameof(ShowNamespaceSelectionPrompt));
+        }
+    };
 
         // Wire up device code authentication event
         _auth.DeviceCodeRequired += (_, info) =>
@@ -1391,6 +1415,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             FireAndForget(CurrentSessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
         }
+
+        if (e.PropertyName == nameof(NavigationState.SelectedNamespace))
+        {
+            OnPropertyChanged(nameof(ShowNamespaceSelectionPrompt));
+        }
     }
 
     private void OnActiveTabPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1420,6 +1449,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (e.PropertyName is nameof(ConnectionTabViewModel.SavedConnection) or nameof(ConnectionTabViewModel.Namespace))
         {
             OnPropertyChanged(nameof(ActiveTab));
+            OnPropertyChanged(nameof(ActiveWorkspaceModeLabel));
+        }
+    }
+
+    private void OnConnectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ConnectionViewModel.IsAuthenticated)
+            or nameof(ConnectionViewModel.CurrentMode)
+            or nameof(ConnectionViewModel.ShowAzureSections))
+        {
+            OnPropertyChanged(nameof(ShowWelcome));
+            OnPropertyChanged(nameof(ShowNamespaceSelectionPrompt));
         }
     }
 
@@ -1428,8 +1469,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(HasActiveConnectionTab));
         OnPropertyChanged(nameof(IsActiveTabAzureMode));
         OnPropertyChanged(nameof(IsActiveTabConnectionStringMode));
+        OnPropertyChanged(nameof(ActiveWorkspaceModeLabel));
         OnPropertyChanged(nameof(IsCurrentEntityPaneVisible));
         OnPropertyChanged(nameof(ShowWelcome));
+        OnPropertyChanged(nameof(ShowNamespaceSelectionPrompt));
         OnPropertyChanged(nameof(CurrentNavigation));
         OnPropertyChanged(nameof(CurrentMessageOps));
         OnPropertyChanged(nameof(CurrentSessionInspector));

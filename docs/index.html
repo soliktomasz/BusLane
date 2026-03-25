@@ -12,12 +12,12 @@
     <meta property="og:url" content="https://soliktomasz.github.io/BusLane/">
     <meta property="og:title" content="BusLane | The Service Bus Workspace You've Been Waiting For">
     <meta property="og:description" content="A clean desktop app for Azure Service Bus operations.">
-    <meta property="og:image" content="https://soliktomasz.github.io/BusLane/MainScreen.png">
+    <meta property="og:image" content="https://soliktomasz.github.io/BusLane/pics/MainWindow.png">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="BusLane | The Service Bus Workspace You've Been Waiting For">
     <meta name="twitter:description" content="A clean desktop app for Azure Service Bus operations.">
-    <meta name="twitter:image" content="https://soliktomasz.github.io/BusLane/MainScreen.png">
+    <meta name="twitter:image" content="https://soliktomasz.github.io/BusLane/pics/MainWindow.png">
 
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/soliktomasz/BusLane/main/BusLane/Assets/icon.png">
 
@@ -329,6 +329,38 @@
             box-shadow: var(--shadow);
         }
 
+        .screenshot-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            justify-content: center;
+            margin-top: 0.9rem;
+        }
+
+        .gallery-tab {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-soft);
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 0.38rem 0.75rem;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .gallery-tab:hover {
+            border-color: #b8ded2;
+            color: var(--text);
+        }
+
+        .gallery-tab.active {
+            color: #4d2312;
+            border-color: #f0b89f;
+            background: var(--accent-soft);
+        }
+
         .action-shot {
             margin-top: 0.9rem;
             border: 1px solid var(--line);
@@ -515,7 +547,7 @@
             </div>
 
             <div class="hero-shot">
-                <img src="MainScreen.png" alt="BusLane editor interface screenshot">
+                <img src="pics/MainWindow.png" alt="BusLane editor interface screenshot">
             </div>
 
             <div class="quick-links">
@@ -568,8 +600,18 @@
                     <h2>BusLane in Action</h2>
                     <p>The main workspace is designed for high-frequency operational work: quick navigation, readable data, and low friction actions.</p>
                 </div>
+                <div class="screenshot-gallery">
+                    <button class="gallery-tab active" data-img="pics/MainWindow.png">Main</button>
+                    <button class="gallery-tab" data-img="pics/DashboardWindow.png">Dashboard</button>
+                    <button class="gallery-tab" data-img="pics/MessageDetailsWindow.png">Messages</button>
+                    <button class="gallery-tab" data-img="pics/SendMessageWindow.png">Send</button>
+                    <button class="gallery-tab" data-img="pics/ConnectionWindow.png">Connection</button>
+                    <button class="gallery-tab" data-img="pics/AlertsWindow.png">Alerts</button>
+                    <button class="gallery-tab" data-img="pics/ActivityLogWindow.png">Activity Log</button>
+                    <button class="gallery-tab" data-img="pics/SettingsWindow.png">Settings</button>
+                </div>
                 <div class="action-shot">
-                    <img src="MainScreen.png" alt="Main BusLane editor view in action">
+                    <img id="gallery-img" src="pics/MainWindow.png" alt="BusLane screenshot">
                 </div>
             </div>
         </section>
@@ -665,6 +707,17 @@ dotnet run --project BusLane/BusLane.csproj</pre>
 
                 event.preventDefault();
                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        const galleryTabs = document.querySelectorAll('.gallery-tab');
+        const galleryImg = document.getElementById('gallery-img');
+        galleryTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                galleryTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                galleryImg.src = tab.dataset.img;
+                galleryImg.alt = 'BusLane ' + tab.textContent + ' screenshot';
             });
         });
     </script>

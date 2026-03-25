@@ -13,15 +13,6 @@
         <TextBlock Text="Connect using a connection string or sign in with your Azure account to manage your Service Bus resources." 
                    Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,24" TextWrapping="Wrap" TextAlignment="Center"/>
         
-        <!-- Quick Actions -->
-        <StackPanel Spacing="12" HorizontalAlignment="Center">
-            <Button Classes="primary" 
-                    Content="Open Connection Library"
-                    Command="{Binding OpenConnectionLibraryCommand}"
-                    HorizontalAlignment="Center"
-                    Padding="20,10"/>
-        </StackPanel>
-        
         <!-- Saved Connections Preview -->
         <StackPanel Margin="0,32,0,0" IsVisible="{Binding Connection.SavedConnections.Count}">
             <TextBlock Text="Recent Connections" Classes="body-strong" HorizontalAlignment="Center" Margin="0,0,0,12"/>
@@ -50,4 +41,3 @@
         </StackPanel>
     </StackPanel>
 </UserControl>
-
