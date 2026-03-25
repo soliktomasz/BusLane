@@ -20,7 +20,7 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
 
 ---
 
-![BusLane Main Screen](docs/MainScreen.png)
+![BusLane Main Screen](docs/pics/MainWindow.png)
 
 ## Features
 
