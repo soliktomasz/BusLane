@@ -1268,19 +1268,35 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     #region Feature Panels (delegated)
 
     [RelayCommand]
-    private async Task OpenLiveStream() => await FeaturePanels.OpenLiveStream();
+    private async Task OpenLiveStream()
+    {
+        NamespaceDashboard.Deactivate();
+        await FeaturePanels.OpenLiveStream();
+    }
 
     [RelayCommand]
     private void CloseLiveStream() => FeaturePanels.CloseLiveStream();
 
     [RelayCommand]
-    private void OpenCharts() => FeaturePanels.OpenCharts();
+    private void OpenCharts()
+    {
+        FeaturePanels.OpenCharts();
+        NamespaceDashboard.Activate();
+    }
 
     [RelayCommand]
-    private void CloseCharts() => FeaturePanels.CloseCharts();
+    private void CloseCharts()
+    {
+        FeaturePanels.CloseCharts();
+        NamespaceDashboard.Deactivate();
+    }
 
     [RelayCommand]
-    private void OpenAlerts() => FeaturePanels.OpenAlerts();
+    private void OpenAlerts()
+    {
+        NamespaceDashboard.Deactivate();
+        FeaturePanels.OpenAlerts();
+    }
 
     [RelayCommand]
     private void CloseAlerts() => FeaturePanels.CloseAlerts();

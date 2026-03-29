@@ -16,6 +16,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private readonly IAlertService _alertService;
     private IServiceBusOperations? _operations;
     private readonly List<NamespaceDashboardSummary> _summaryHistory = [];
+    private bool _isActive;
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
@@ -105,17 +106,17 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         }
 
         UpdateCharts();
-        _ = RefreshAsync();
+        if (_isActive)
+        {
+            _ = RefreshAsync();
+        }
     }
 
     partial void OnAutoRefreshEnabledChanged(bool value)
     {
-        if (value && _operations != null)
+        if (_isActive && value && _operations != null)
         {
-            _refreshService.StartAutoRefresh(
-                CurrentNamespaceId ?? "current-namespace",
-                _operations,
-                TimeSpan.FromSeconds(RefreshIntervalSeconds));
+            StartAutoRefresh();
         }
         else
         {
@@ -125,12 +126,9 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     partial void OnRefreshIntervalSecondsChanged(int value)
     {
-        if (AutoRefreshEnabled && _operations != null)
+        if (_isActive && AutoRefreshEnabled && _operations != null)
         {
-            _refreshService.StartAutoRefresh(
-                CurrentNamespaceId ?? "current-namespace",
-                _operations,
-                TimeSpan.FromSeconds(value));
+            StartAutoRefresh();
         }
     }
 
@@ -165,20 +163,63 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
         if (_operations != null)
         {
-            _ = RefreshAsync();
-
-            if (AutoRefreshEnabled)
+            if (_isActive)
             {
-                _refreshService.StartAutoRefresh(
-                    CurrentNamespaceId ?? "current-namespace",
-                    _operations,
-                    TimeSpan.FromSeconds(RefreshIntervalSeconds));
+                _ = RefreshAsync();
+
+                if (AutoRefreshEnabled)
+                {
+                    StartAutoRefresh();
+                }
+            }
+            else
+            {
+                _refreshService.StopAutoRefresh();
             }
         }
         else
         {
             _refreshService.StopAutoRefresh();
         }
+    }
+
+    /// <summary>
+    /// Activates dashboard refresh while the dashboard overlay is visible.
+    /// </summary>
+    public void Activate()
+    {
+        if (_isActive)
+        {
+            return;
+        }
+
+        _isActive = true;
+
+        if (_operations == null)
+        {
+            return;
+        }
+
+        _ = RefreshAsync();
+
+        if (AutoRefreshEnabled)
+        {
+            StartAutoRefresh();
+        }
+    }
+
+    /// <summary>
+    /// Deactivates dashboard refresh when the dashboard overlay is hidden.
+    /// </summary>
+    public void Deactivate()
+    {
+        if (!_isActive)
+        {
+            return;
+        }
+
+        _isActive = false;
+        _refreshService.StopAutoRefresh();
     }
 
     private void OnSummaryUpdated(object? sender, NamespaceDashboardSummary summary)
@@ -245,6 +286,19 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private void OnChartTimeRangeChanged(object? sender, string value)
     {
         UpdateCharts();
+    }
+
+    private void StartAutoRefresh()
+    {
+        if (_operations == null)
+        {
+            return;
+        }
+
+        _refreshService.StartAutoRefresh(
+            CurrentNamespaceId ?? "current-namespace",
+            _operations,
+            TimeSpan.FromSeconds(RefreshIntervalSeconds));
     }
 
     private void PruneHistory()

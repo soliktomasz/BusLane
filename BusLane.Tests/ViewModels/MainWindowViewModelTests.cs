@@ -143,6 +143,79 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ConnectionStringTab_DoesNotStartDashboardRefreshUntilChartsAreOpened()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var dashboardRefreshService = Substitute.For<IDashboardRefreshService>();
+        using var sut = CreateSut(
+            preferences,
+            operationsFactory: operationsFactory,
+            dashboardRefreshService: dashboardRefreshService);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo(
+                "orders",
+                12,
+                10,
+                2,
+                0,
+                1024,
+                DateTimeOffset.UtcNow,
+                false,
+                TimeSpan.FromDays(14),
+                TimeSpan.FromMinutes(1)));
+
+        var tab = CreateTab("tab-1", preferences);
+        var connection = SavedConnection.Create(
+            "Orders",
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            ConnectionType.Queue,
+            entityName: "orders");
+
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+        sut.ConnectionTabs.Add(tab);
+
+        // Act
+        sut.ActiveTab = tab;
+
+        // Assert
+        _ = dashboardRefreshService.DidNotReceive().RefreshAsync(
+            "Orders",
+            operations,
+            Arg.Any<CancellationToken>());
+        dashboardRefreshService.DidNotReceive().StartAutoRefresh(
+            "Orders",
+            operations,
+            TimeSpan.FromSeconds(30));
+
+        // Act
+        sut.OpenChartsCommand.Execute(null);
+
+        // Assert
+        _ = dashboardRefreshService.Received(1).RefreshAsync(
+            "Orders",
+            operations,
+            Arg.Any<CancellationToken>());
+        dashboardRefreshService.Received(1).StartAutoRefresh(
+            "Orders",
+            operations,
+            TimeSpan.FromSeconds(30));
+        sut.FeaturePanels.ShowCharts.Should().BeTrue();
+        dashboardRefreshService.ClearReceivedCalls();
+
+        // Act
+        sut.CloseChartsCommand.Execute(null);
+
+        // Assert
+        dashboardRefreshService.Received(1).StopAutoRefresh();
+        sut.FeaturePanels.ShowCharts.Should().BeFalse();
+    }
+
+    [Fact]
     public void ShowNamespaceSelectionPrompt_IsTrueOnlyWhenAzureIsReadyWithoutActiveConnection()
     {
         // Arrange
@@ -431,11 +504,13 @@ public class MainWindowViewModelTests
         IConnectionStorageService? connectionStorage = null,
         IUpdateService? updateService = null,
         IAppLockService? appLockService = null,
-        IBiometricAuthService? biometricAuthService = null)
+        IBiometricAuthService? biometricAuthService = null,
+        IServiceBusOperationsFactory? operationsFactory = null,
+        IDashboardRefreshService? dashboardRefreshService = null)
     {
         auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
-        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        operationsFactory ??= Substitute.For<IServiceBusOperationsFactory>();
         connectionStorage ??= Substitute.For<IConnectionStorageService>();
         var connectionBackupService = Substitute.For<IConnectionBackupService>();
         var versionService = Substitute.For<IVersionService>();
@@ -452,7 +527,7 @@ public class MainWindowViewModelTests
         var logSink = CreateLogSink();
 
         var dashboardPersistenceService = Substitute.For<IDashboardPersistenceService>();
-        var dashboardRefreshService = Substitute.For<IDashboardRefreshService>();
+        dashboardRefreshService ??= Substitute.For<IDashboardRefreshService>();
         var inboxScoringService = Substitute.For<INamespaceInboxScoringService>();
         var inboxReviewStore = Substitute.For<INamespaceInboxReviewStore>();
 
