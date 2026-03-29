@@ -2,6 +2,7 @@ namespace BusLane.Services.Security;
 
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using BusLane.Models.Security;
 using BusLane.Services.Infrastructure;
 using Serilog;
@@ -130,9 +131,19 @@ public sealed class AppLockService : IAppLockService
 
             return state;
         }
-        catch (Exception ex)
+        catch (FileNotFoundException ex)
         {
-            Log.Warning(ex, "Failed to load app lock state from {Path}. Treating app lock as disabled.", _filePath);
+            Log.Warning(ex, "App lock state file at {Path} disappeared during load. Treating app lock as disabled.", _filePath);
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            Log.Warning(ex, "App lock state at {Path} could not be deserialized. Treating app lock as disabled.", _filePath);
+            return null;
+        }
+        catch (ArgumentException ex) when (string.Equals(ex.ParamName, "json", StringComparison.Ordinal))
+        {
+            Log.Warning(ex, "App lock state at {Path} is malformed. Treating app lock as disabled.", _filePath);
             return null;
         }
     }

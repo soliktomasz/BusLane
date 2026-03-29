@@ -134,6 +134,21 @@ public sealed class AppLockServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetSnapshotAsync_WithCanceledToken_ThrowsOperationCanceledException()
+    {
+        // Arrange
+        await _sut.EnableAsync(new AppLockConfiguration("Password#1", false));
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        // Act
+        Func<Task> act = () => _sut.GetSnapshotAsync(cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
     public async Task EnableAsync_PersistsHashedSecretsWithoutPlaintextValues()
     {
         // Arrange

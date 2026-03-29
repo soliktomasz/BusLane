@@ -14,6 +14,7 @@ public sealed class NoOpBiometricAuthService : IBiometricAuthService
 
     public Task<BiometricAuthResult> AuthenticateAsync(string reason, CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
         return Task.FromResult(BiometricAuthResult.Unavailable);
     }
 }

@@ -67,6 +67,19 @@ public sealed class BiometricAuthServiceTests
         result.Should().Be(BiometricAuthResult.Unavailable);
     }
 
+    [Fact]
+    public async Task NoOpBiometricAuthService_AuthenticateAsync_WithBlankReason_ShouldThrow()
+    {
+        // Arrange
+        var sut = new NoOpBiometricAuthService();
+
+        // Act
+        Func<Task> act = () => sut.AuthenticateAsync("");
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
     private sealed class FakeBiometricPromptAdapter : IBiometricPromptAdapter
     {
         public NativeBiometricAvailability Availability { get; set; } = NativeBiometricAvailability.Unavailable;

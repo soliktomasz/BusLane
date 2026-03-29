@@ -486,6 +486,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             await EnsureStartupInitializedAsync();
         }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to complete startup after unlock");
+            StatusMessage = $"Unable to finish startup after unlock: {ex.Message}";
+        }
         finally
         {
             IsLoading = false;

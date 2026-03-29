@@ -53,16 +53,40 @@ public partial class AppLockSettingsViewModel : ViewModelBase
 
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        var snapshot = await _appLockService.GetSnapshotAsync(ct);
-        IsEnabled = snapshot.IsEnabled;
-        BiometricUnlockEnabled = snapshot.BiometricUnlockEnabled;
-        EnableBiometricUnlock = snapshot.BiometricUnlockEnabled;
-        HasStoredRecoveryCode = false;
-        BiometricAvailability = await _biometricAuthService.GetAvailabilityAsync(ct);
         ErrorMessage = null;
         StatusMessage = null;
-        RecoveryCode = null;
-        ClearInputFields();
+        IsProcessing = true;
+
+        try
+        {
+            var snapshot = await _appLockService.GetSnapshotAsync(ct);
+            IsEnabled = snapshot.IsEnabled;
+            BiometricUnlockEnabled = snapshot.BiometricUnlockEnabled;
+            EnableBiometricUnlock = snapshot.BiometricUnlockEnabled;
+            HasStoredRecoveryCode = false;
+            BiometricAvailability = await _biometricAuthService.GetAvailabilityAsync(ct);
+            RecoveryCode = null;
+            ClearInputFields();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            IsEnabled = false;
+            BiometricUnlockEnabled = false;
+            EnableBiometricUnlock = false;
+            HasStoredRecoveryCode = false;
+            BiometricAvailability = BiometricAvailability.Unavailable;
+            RecoveryCode = null;
+            ClearInputFields();
+            ErrorMessage = $"Unable to load app lock settings: {ex.Message}";
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     [RelayCommand]
@@ -110,6 +134,14 @@ public partial class AppLockSettingsViewModel : ViewModelBase
             await _applyRuntimeSnapshot(new AppLockSnapshot(true, BiometricUnlockEnabled));
             ClearInputFields();
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unable to enable app lock: {ex.Message}";
+        }
         finally
         {
             IsProcessing = false;
@@ -139,19 +171,27 @@ public partial class AppLockSettingsViewModel : ViewModelBase
             return;
         }
 
-        if (!await ReauthenticateAsync())
-        {
-            return;
-        }
-
         IsProcessing = true;
         try
         {
+            if (!await ReauthenticateAsync())
+            {
+                return;
+            }
+
             await _appLockService.ChangePasswordAsync(ChangePassword);
             StatusMessage = "App lock password updated.";
             ChangePassword = string.Empty;
             ConfirmChangePassword = string.Empty;
             CurrentPassword = string.Empty;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unable to update the app lock password: {ex.Message}";
         }
         finally
         {
@@ -170,14 +210,14 @@ public partial class AppLockSettingsViewModel : ViewModelBase
         ErrorMessage = null;
         StatusMessage = null;
 
-        if (!await ReauthenticateAsync())
-        {
-            return;
-        }
-
         IsProcessing = true;
         try
         {
+            if (!await ReauthenticateAsync())
+            {
+                return;
+            }
+
             await _appLockService.DisableAsync();
             IsEnabled = false;
             BiometricUnlockEnabled = false;
@@ -187,6 +227,14 @@ public partial class AppLockSettingsViewModel : ViewModelBase
             StatusMessage = "App lock disabled for future launches.";
             await _applyRuntimeSnapshot(AppLockSnapshot.Disabled);
             ClearInputFields();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unable to disable app lock: {ex.Message}";
         }
         finally
         {
@@ -205,17 +253,25 @@ public partial class AppLockSettingsViewModel : ViewModelBase
         ErrorMessage = null;
         StatusMessage = null;
 
-        if (!await ReauthenticateAsync())
-        {
-            return;
-        }
-
         IsProcessing = true;
         try
         {
+            if (!await ReauthenticateAsync())
+            {
+                return;
+            }
+
             RecoveryCode = await _appLockService.RegenerateRecoveryCodeAsync();
             StatusMessage = "Recovery code regenerated. Store the new code securely.";
             CurrentPassword = string.Empty;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unable to regenerate the recovery code: {ex.Message}";
         }
         finally
         {
@@ -240,14 +296,14 @@ public partial class AppLockSettingsViewModel : ViewModelBase
             return;
         }
 
-        if (!await ReauthenticateAsync())
-        {
-            return;
-        }
-
         IsProcessing = true;
         try
         {
+            if (!await ReauthenticateAsync())
+            {
+                return;
+            }
+
             await _appLockService.UpdateBiometricPreferenceAsync(enabled);
             BiometricUnlockEnabled = enabled;
             EnableBiometricUnlock = enabled;
@@ -256,6 +312,14 @@ public partial class AppLockSettingsViewModel : ViewModelBase
                 : "Biometric unlock disabled.";
             await _applyRuntimeSnapshot(new AppLockSnapshot(IsEnabled, BiometricUnlockEnabled));
             CurrentPassword = string.Empty;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unable to update biometric unlock: {ex.Message}";
         }
         finally
         {

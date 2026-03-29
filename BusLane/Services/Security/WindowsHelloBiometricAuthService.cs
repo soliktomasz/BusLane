@@ -96,9 +96,26 @@ internal sealed class WindowsHelloPromptAdapter : IBiometricPromptAdapter
         {
             var asTaskMethod = extensionsType
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(method => method.Name == "AsTask"
-                    && method.IsGenericMethodDefinition
-                    && method.GetParameters().Length == 1);
+                .FirstOrDefault(method =>
+                {
+                    if (method.Name != "AsTask" || !method.IsGenericMethodDefinition)
+                    {
+                        return false;
+                    }
+
+                    var parameters = method.GetParameters();
+                    if (parameters.Length != 1)
+                    {
+                        return false;
+                    }
+
+                    var parameterType = parameters[0].ParameterType;
+                    return parameterType.IsGenericType
+                        && string.Equals(
+                            parameterType.GetGenericTypeDefinition().FullName,
+                            "Windows.Foundation.IAsyncOperation`1",
+                            StringComparison.Ordinal);
+                });
 
             if (asTaskMethod != null)
             {

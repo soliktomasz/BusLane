@@ -278,7 +278,6 @@ public class MainWindowViewModelTests
 
         // Act
         await sut.AppLock.UnlockCommand.ExecuteAsync(null);
-        await sut.InitializeAsync();
 
         // Assert
         sut.AppLock.IsLocked.Should().BeFalse();
@@ -319,6 +318,39 @@ public class MainWindowViewModelTests
         sut.AppLock.ErrorMessage.Should().Be("Incorrect password.");
         await auth.DidNotReceive().TrySilentLoginAsync();
         await connectionStorage.DidNotReceive().GetConnectionsAsync();
+    }
+
+    [Fact]
+    public async Task UnlockAsync_WhenStartupInitializationFails_ShouldSetStatusMessageWithoutThrowing()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        preferences.AutoCheckForUpdates = false;
+        var appLockService = Substitute.For<IAppLockService>();
+        appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>())
+            .Returns(new AppLockSnapshot(IsEnabled: true, BiometricUnlockEnabled: false));
+        appLockService.VerifyPasswordAsync("Correct#1", Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var biometricAuthService = Substitute.For<IBiometricAuthService>();
+        var auth = Substitute.For<IAzureAuthService>();
+        auth.TrySilentLoginAsync().Returns(Task.FromException<bool>(new InvalidOperationException("Silent login failed")));
+
+        using var sut = CreateSut(
+            preferences,
+            auth: auth,
+            appLockService: appLockService,
+            biometricAuthService: biometricAuthService);
+
+        await sut.InitializeAsync();
+        sut.AppLock.Password = "Correct#1";
+
+        // Act
+        await sut.AppLock.UnlockCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.AppLock.IsLocked.Should().BeFalse();
+        sut.StatusMessage.Should().Be("Unable to finish startup after unlock: Silent login failed");
     }
 
     [Fact]

@@ -1,12 +1,12 @@
 namespace BusLane.ViewModels;
 
-using Avalonia.Threading;
 using BusLane.Models.Security;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Diagnostics;
 using BusLane.Services.Security;
 using BusLane.Services.Update;
 using BusLane.ViewModels.Core;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
