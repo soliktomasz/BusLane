@@ -14,6 +14,10 @@ public class PaginationStateTests
         
         // Assert
         sut.CurrentPage.Should().Be(1);
+        sut.HasPageInfo.Should().BeFalse();
+        sut.PageLabel.Should().BeEmpty();
+        sut.PageRangeText.Should().BeEmpty();
+        sut.PageDetailText.Should().BeNull();
     }
     
     [Fact]
@@ -102,10 +106,14 @@ public class PaginationStateTests
         sut.CurrentPage.Should().Be(1);
         sut.CanGoNext.Should().BeFalse();
         sut.CanGoPrevious.Should().BeFalse();
+        sut.HasPageInfo.Should().BeFalse();
+        sut.PageLabel.Should().BeEmpty();
+        sut.PageRangeText.Should().BeEmpty();
+        sut.PageDetailText.Should().BeNull();
     }
     
     [Fact]
-    public void PageInfoText_WithPartialPage_ShouldShowCorrectRange()
+    public void UpdatePageInfo_WithoutKnownTotal_ShouldExposeStructuredRangeOnly()
     {
         // Arrange
         var sut = new PaginationState();
@@ -114,32 +122,42 @@ public class PaginationStateTests
         sut.UpdatePageInfo(1, 100, 50, false); // 50 messages on page 1
         
         // Assert
-        sut.PageInfoText.Should().Be("Page 1 (1-50)");
+        sut.HasPageInfo.Should().BeTrue();
+        sut.PageLabel.Should().Be("Page 1");
+        sut.PageRangeText.Should().Be("Showing 1-50");
+        sut.PageDetailText.Should().BeNull();
     }
     
     [Fact]
-    public void PageInfoText_WithFullPage_ShouldShowCorrectRange()
+    public void UpdatePageInfoWithTotal_WithKnownTotal_ShouldExposeStructuredLabels()
     {
         // Arrange
         var sut = new PaginationState();
         
         // Act
-        sut.UpdatePageInfo(1, 100, 100, true); // 100 messages on page 1
+        sut.UpdatePageInfoWithTotal(2, 50, 75);
         
         // Assert
-        sut.PageInfoText.Should().Be("Page 1 (1-100)");
+        sut.HasPageInfo.Should().BeTrue();
+        sut.PageLabel.Should().Be("Page 2");
+        sut.PageRangeText.Should().Be("Showing 51-75");
+        sut.PageDetailText.Should().Be("of 75 messages");
     }
     
     [Fact]
-    public void PageInfoText_OnPage2_ShouldShowCorrectRange()
+    public void UpdatePageInfoWithTotal_WhenAnotherPageExists_ShouldKeepNextEnabled()
     {
         // Arrange
         var sut = new PaginationState();
         
         // Act
-        sut.UpdatePageInfo(2, 50, 25, false); // 25 messages on page 2 with 50 per page
+        sut.UpdatePageInfoWithTotal(2, 50, 140);
         
         // Assert
-        sut.PageInfoText.Should().Be("Page 2 (51-75)");
+        sut.CanGoPrevious.Should().BeTrue();
+        sut.CanGoNext.Should().BeTrue();
+        sut.PageLabel.Should().Be("Page 2");
+        sut.PageRangeText.Should().Be("Showing 51-100");
+        sut.PageDetailText.Should().Be("of 140 messages");
     }
 }

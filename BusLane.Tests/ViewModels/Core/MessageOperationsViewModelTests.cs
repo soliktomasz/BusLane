@@ -146,9 +146,107 @@ public class MessageOperationsViewModelTests
         sut.Pagination.CurrentPage.Should().Be(1);
         sut.Pagination.CanGoNext.Should().BeFalse();
         sut.Pagination.CanGoPrevious.Should().BeFalse();
-        sut.Pagination.PageInfoText.Should().BeEmpty();
+        sut.Pagination.HasPageInfo.Should().BeFalse();
+        sut.Pagination.PageLabel.Should().BeEmpty();
+        sut.Pagination.PageRangeText.Should().BeEmpty();
+        sut.Pagination.PageDetailText.Should().BeNull();
         sut.CanLoadNextPage.Should().BeFalse();
         sut.CanLoadPreviousPage.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task LoadMessagesAsync_WhenKnownTotalExists_SetsPagerDetailText()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(CreateMessages(1, 25));
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+        preferences.MaxTotalMessages.Returns(500);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 60,
+            _ => { });
+
+        // Act
+        await sut.LoadMessagesAsync();
+
+        // Assert
+        sut.Pagination.HasPageInfo.Should().BeTrue();
+        sut.Pagination.PageLabel.Should().Be("Page 1");
+        sut.Pagination.PageRangeText.Should().Be("Showing 1-25");
+        sut.Pagination.PageDetailText.Should().Be("of 60 messages");
+    }
+
+    [Fact]
+    public async Task LoadPreviousPage_WhenTotalUnknown_DoesNotUseCachedCountAsKnownTotal()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                Arg.Any<long?>(),
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var fromSequenceNumber = callInfo.ArgAt<long?>(3);
+                return fromSequenceNumber switch
+                {
+                    null => CreateMessages(1, 25),
+                    26 => CreateMessages(26, 25),
+                    _ => Array.Empty<MessageInfo>()
+                };
+            });
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+        preferences.MaxTotalMessages.Returns(500);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        await sut.LoadMessagesAsync();
+        await sut.LoadNextPageCommand.ExecuteAsync(null);
+
+        // Act
+        sut.LoadPreviousPageCommand.Execute(null);
+
+        // Assert
+        sut.Pagination.PageLabel.Should().Be("Page 1");
+        sut.Pagination.PageRangeText.Should().Be("Showing 1-25");
+        sut.Pagination.PageDetailText.Should().BeNull();
     }
 
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber, DateTimeOffset enqueuedTime)
@@ -164,5 +262,15 @@ public class MessageOperationsViewModelTests
             0,
             "session-a",
             new Dictionary<string, object>());
+    }
+
+    private static IEnumerable<MessageInfo> CreateMessages(long startingSequenceNumber, int count)
+    {
+        return Enumerable.Range(0, count)
+            .Select(offset => CreateMessage(
+                $"msg-{startingSequenceNumber + offset}",
+                startingSequenceNumber + offset,
+                DateTimeOffset.UtcNow.AddMinutes(-(startingSequenceNumber + offset))))
+            .ToArray();
     }
 }
