@@ -14,32 +14,60 @@ public partial class PaginationState : ObservableObject
     private bool _canGoPrevious;
     
     [ObservableProperty]
-    private string _pageInfoText = string.Empty;
+    private bool _hasPageInfo;
+
+    [ObservableProperty]
+    private string _pageLabel = string.Empty;
+
+    [ObservableProperty]
+    private string _pageRangeText = string.Empty;
+
+    [ObservableProperty]
+    private string? _pageDetailText;
     
     public void UpdatePageInfo(int currentPage, int messagesPerPage, int actualMessageCount, bool hasMoreMessages)
     {
         CurrentPage = currentPage;
-        
-        var startMessage = (currentPage - 1) * messagesPerPage + 1;
-        var endMessage = startMessage + actualMessageCount - 1;
-        
+
         CanGoPrevious = currentPage > 1;
         CanGoNext = hasMoreMessages;
-        
-        PageInfoText = $"Page {currentPage} ({startMessage}-{endMessage})";
+
+        if (actualMessageCount <= 0)
+        {
+            ClearPageInfo();
+            return;
+        }
+
+        var startMessage = (currentPage - 1L) * messagesPerPage + 1;
+        var endMessage = startMessage + actualMessageCount - 1L;
+
+        SetPageInfo(
+            $"Page {currentPage}",
+            $"Showing {startMessage}-{endMessage}");
     }
     
-    public void UpdatePageInfoWithTotal(int currentPage, int messagesPerPage, int totalMessages)
+    public void UpdatePageInfoWithTotal(int currentPage, int messagesPerPage, long totalMessages)
     {
         CurrentPage = currentPage;
-        
-        var startMessage = (currentPage - 1) * messagesPerPage + 1;
-        var endMessage = Math.Min(startMessage + messagesPerPage - 1, totalMessages);
-        
+
         CanGoPrevious = currentPage > 1;
+
+        if (totalMessages <= 0)
+        {
+            CanGoNext = false;
+            ClearPageInfo();
+            return;
+        }
+
+        var startMessage = (currentPage - 1L) * messagesPerPage + 1;
+        var endMessage = Math.Min(startMessage + messagesPerPage - 1L, totalMessages);
+
         CanGoNext = endMessage < totalMessages;
-        
-        PageInfoText = $"Page {currentPage} ({startMessage}-{endMessage} of {totalMessages})";
+
+        SetPageInfo(
+            $"Page {currentPage}",
+            $"Showing {startMessage}-{endMessage}",
+            $"of {totalMessages} messages");
     }
     
     public void GoToNextPage()
@@ -63,6 +91,22 @@ public partial class PaginationState : ObservableObject
         CurrentPage = 1;
         CanGoNext = false;
         CanGoPrevious = false;
-        PageInfoText = string.Empty;
+        ClearPageInfo();
+    }
+
+    private void SetPageInfo(string pageLabel, string pageRangeText, string? pageDetailText = null)
+    {
+        HasPageInfo = true;
+        PageLabel = pageLabel;
+        PageRangeText = pageRangeText;
+        PageDetailText = pageDetailText;
+    }
+
+    private void ClearPageInfo()
+    {
+        HasPageInfo = false;
+        PageLabel = string.Empty;
+        PageRangeText = string.Empty;
+        PageDetailText = null;
     }
 }

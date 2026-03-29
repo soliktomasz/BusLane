@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
+             xmlns:controls="using:BusLane.Views.Controls"
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.MessagesPanelView"
              x:DataType="vm:MainWindowViewModel">
@@ -297,45 +298,9 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                            <!-- Pagination Controls -->
-                            <Border Grid.Row="1"
-                                    Classes="card"
-                                    Margin="8,8,8,0"
-                                    IsVisible="{Binding CurrentMessageOps.Pagination.PageInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <!-- Previous Button -->
-                                    <Button Grid.Column="0"
-                                            Classes="subtle small"
-                                            Command="{Binding CurrentMessageOps.LoadPreviousPageCommand}"
-                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoPrevious}"
-                                            ToolTip.Tip="Previous page">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <LucideIcon Kind="ChevronLeft" Size="14"/>
-                                            <TextBlock Text="Previous"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Page Info -->
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding CurrentMessageOps.Pagination.PageInfoText}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="13"
-                                               FontWeight="Medium"/>
-
-                                    <!-- Next Button -->
-                                    <Button Grid.Column="2"
-                                            Classes="subtle small"
-                                            Command="{Binding CurrentMessageOps.LoadNextPageCommand}"
-                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoNext}"
-                                            ToolTip.Tip="Next page">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Next"/>
-                                            <LucideIcon Kind="ChevronRight" Size="14"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
+                            <controls:MessagePaginationFooterView Grid.Row="1"
+                                                                  Margin="8,8,8,0"
+                                                                  DataContext="{Binding CurrentMessageOps}"/>
 
                             <!-- Beautiful centered loading overlay -->
                             <Border Grid.RowSpan="2" IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
@@ -483,45 +448,9 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                            <!-- Pagination Controls -->
-                            <Border Grid.Row="1"
-                                    Classes="card"
-                                    Margin="8,8,8,0"
-                                    IsVisible="{Binding CurrentMessageOps.Pagination.PageInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <!-- Previous Button -->
-                                    <Button Grid.Column="0"
-                                            Classes="subtle small"
-                                            Command="{Binding CurrentMessageOps.LoadPreviousPageCommand}"
-                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoPrevious}"
-                                            ToolTip.Tip="Previous page">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <LucideIcon Kind="ChevronLeft" Size="14"/>
-                                            <TextBlock Text="Previous"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Page Info -->
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding CurrentMessageOps.Pagination.PageInfoText}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="13"
-                                               FontWeight="Medium"/>
-
-                                    <!-- Next Button -->
-                                    <Button Grid.Column="2"
-                                            Classes="subtle small"
-                                            Command="{Binding CurrentMessageOps.LoadNextPageCommand}"
-                                            IsEnabled="{Binding CurrentMessageOps.Pagination.CanGoNext}"
-                                            ToolTip.Tip="Next page">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Next"/>
-                                            <LucideIcon Kind="ChevronRight" Size="14"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
+                            <controls:MessagePaginationFooterView Grid.Row="1"
+                                                                  Margin="8,8,8,0"
+                                                                  DataContext="{Binding CurrentMessageOps}"/>
 
                             <!-- Beautiful centered loading overlay -->
                             <Border Grid.RowSpan="2" IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"

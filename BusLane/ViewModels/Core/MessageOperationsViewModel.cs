@@ -347,7 +347,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 _pageCache.StorePage(1, page1Messages);
                 DisplayPage(1);
                 var hasMore = DetermineHasMoreMessages(1, page1Messages.Count);
-                Pagination.UpdatePageInfo(1, _preferencesService.MessagesPerPage, page1Messages.Count, hasMore);
+                UpdatePaginationState(1, page1Messages.Count, hasMore);
 
                 _setStatus($"Loaded {page1Messages.Count} messages");
                 _logSink.Log(new LogEntry(
@@ -429,7 +429,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 DisplayPage(nextPage);
 
                 var hasMoreFromCache = DetermineHasMoreMessages(nextPage, cachedPageMessages.Count);
-                Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, cachedPageMessages.Count, hasMoreFromCache);
+                UpdatePaginationState(nextPage, cachedPageMessages.Count, hasMoreFromCache);
                 _setStatus($"Showing page {nextPage}");
                 return;
             }
@@ -467,7 +467,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                     _pageCache.StorePage(nextPage, fallbackMessages);
                     DisplayPage(nextPage);
                     var fallbackHasMore = DetermineHasMoreMessages(nextPage, fallbackMessages.Count);
-                    Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, fallbackMessages.Count, fallbackHasMore);
+                    UpdatePaginationState(nextPage, fallbackMessages.Count, fallbackHasMore);
                     _setStatus($"Loaded page {nextPage}");
                     return;
                 }
@@ -477,7 +477,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 DisplayPage(nextPage);
                 var hasMore = DetermineHasMoreMessages(nextPage, pageMessages.Count);
 
-                Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, pageMessages.Count, hasMore);
+                UpdatePaginationState(nextPage, pageMessages.Count, hasMore);
 
                 _setStatus($"Loaded page {nextPage}");
             }
@@ -490,7 +490,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                     _pageCache.StorePage(nextPage, fallbackMessages);
                     DisplayPage(nextPage);
                     var fallbackHasMore = DetermineHasMoreMessages(nextPage, fallbackMessages.Count);
-                    Pagination.UpdatePageInfo(nextPage, _preferencesService.MessagesPerPage, fallbackMessages.Count, fallbackHasMore);
+                    UpdatePaginationState(nextPage, fallbackMessages.Count, fallbackHasMore);
                     _setStatus($"Loaded page {nextPage}");
                     return;
                 }
@@ -523,13 +523,12 @@ public partial class MessageOperationsViewModel : ViewModelBase
         if (Pagination.CanGoPrevious)
         {
             Pagination.GoToPreviousPage();
-            DisplayPage(Pagination.CurrentPage);
+            var currentPage = Pagination.CurrentPage;
+            var currentPageMessages = _pageCache.GetPage(currentPage);
+            DisplayPage(currentPage);
 
-            var totalCached = _pageCache.GetTotalCachedMessages();
-            Pagination.UpdatePageInfoWithTotal(
-                Pagination.CurrentPage,
-                _preferencesService.MessagesPerPage,
-                totalCached);
+            var hasMore = DetermineHasMoreMessages(currentPage, currentPageMessages.Count);
+            UpdatePaginationState(currentPage, currentPageMessages.Count, hasMore);
 
             _setStatus($"Showing page {Pagination.CurrentPage}");
         }
@@ -570,6 +569,24 @@ public partial class MessageOperationsViewModel : ViewModelBase
     }
 
     private sealed record PageLoadResult(IReadOnlyList<MessageInfo> Messages, long? NextFromSequenceNumber);
+
+    private void UpdatePaginationState(int currentPage, int currentPageMessageCount, bool hasMoreMessages)
+    {
+        if (_knownTotalCount > 0)
+        {
+            Pagination.UpdatePageInfoWithTotal(
+                currentPage,
+                _preferencesService.MessagesPerPage,
+                _knownTotalCount);
+            return;
+        }
+
+        Pagination.UpdatePageInfo(
+            currentPage,
+            _preferencesService.MessagesPerPage,
+            currentPageMessageCount,
+            hasMoreMessages);
+    }
 
     private bool DetermineHasMoreMessages(int currentPage, int currentPageMessageCount)
     {
