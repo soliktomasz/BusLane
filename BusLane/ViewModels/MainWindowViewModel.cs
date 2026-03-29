@@ -15,6 +15,7 @@ using Services.Monitoring;
 using Services.ServiceBus;
 using Services.Storage;
 using Services.Diagnostics;
+using Services.Security;
 using Services.Terminal;
 using Services.Update;
 
@@ -50,8 +51,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly IKeyboardShortcutService _keyboardShortcutService;
     private readonly IUpdateService _updateService;
     private readonly IDiagnosticBundleService _diagnosticBundleService;
+    private readonly IAppLockService _appLockService;
+    private readonly IBiometricAuthService _biometricAuthService;
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
+    private readonly SemaphoreSlim _startupInitializationGate = new(1, 1);
+    private bool _startupInitialized;
 
     // Current operations instance - unified interface for all Service Bus operations
     private IServiceBusOperations? _operations;
@@ -72,6 +77,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public MessageBulkOperationsViewModel BulkOps { get; }
     public ExportOperationsViewModel ExportOps { get; }
     public ConfirmationDialogViewModel Confirmation { get; }
+    public AppLockViewModel AppLock { get; }
 
     // Dashboard components
     public ViewModels.Dashboard.NamespaceDashboardViewModel NamespaceDashboard { get; }
@@ -210,6 +216,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IUpdateService updateService,
         IDiagnosticBundleService diagnosticBundleService,
         ITerminalSessionService terminalSessionService,
+        IAppLockService appLockService,
+        IBiometricAuthService biometricAuthService,
         ILogSink logSink,
         ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
@@ -226,6 +234,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _keyboardShortcutService = keyboardShortcutService;
         _updateService = updateService;
         _diagnosticBundleService = diagnosticBundleService;
+        _appLockService = appLockService;
+        _biometricAuthService = biometricAuthService;
         _logSink = logSink;
         _fileDialogService = fileDialogService;
 
@@ -306,6 +316,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
+        AppLock = new AppLockViewModel(_appLockService, biometricAuthService, CompleteStartupAfterUnlockAsync);
 
         UpdateNotification = new UpdateNotificationViewModel(updateService);
 
@@ -453,27 +464,84 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IsLoading = true;
         try
         {
-            await Connection.InitializeAsync();
-            await Tabs.RestoreTabSessionAsync();
-
-            // Check for updates on startup (non-blocking)
-            _ = Task.Run(async () =>
+            await AppLock.InitializeAsync();
+            if (AppLock.IsLocked)
             {
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                    await _updateService.CheckForUpdatesAsync();
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Startup update check failed");
-                }
-            });
+                StatusMessage = "Unlock BusLane to continue";
+                return;
+            }
+
+            await EnsureStartupInitializedAsync();
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    private async Task CompleteStartupAfterUnlockAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            await EnsureStartupInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to complete startup after unlock");
+            StatusMessage = $"Unable to finish startup after unlock: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task EnsureStartupInitializedAsync()
+    {
+        if (_startupInitialized)
+        {
+            return;
+        }
+
+        await _startupInitializationGate.WaitAsync();
+        try
+        {
+            if (_startupInitialized)
+            {
+                return;
+            }
+
+            await Connection.InitializeAsync();
+            await Tabs.RestoreTabSessionAsync();
+            ScheduleStartupUpdateCheck();
+            _startupInitialized = true;
+        }
+        finally
+        {
+            _startupInitializationGate.Release();
+        }
+    }
+
+    private void ScheduleStartupUpdateCheck()
+    {
+        if (!_preferencesService.AutoCheckForUpdates)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                await _updateService.CheckForUpdatesAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Startup update check failed");
+            }
+        });
     }
 
     private async Task LoadSubscriptionsAsync()
@@ -1098,10 +1166,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void CloseStatusPopup() => ShowStatusPopup = false;
 
     [RelayCommand]
-    private void OpenSettings()
+    private async Task OpenSettingsAsync()
     {
-        SettingsViewModel = new SettingsViewModel(CloseSettings, _preferencesService, this, _updateService, _diagnosticBundleService);
+        var settingsViewModel = new SettingsViewModel(
+            CloseSettings,
+            _preferencesService,
+            _appLockService,
+            _biometricAuthService,
+            snapshot => AppLock.ApplySettingsSnapshotAsync(snapshot),
+            this,
+            _updateService,
+            _diagnosticBundleService);
+
+        SettingsViewModel = settingsViewModel;
         ShowSettings = true;
+        await settingsViewModel.InitializeAsync();
     }
 
     [RelayCommand]

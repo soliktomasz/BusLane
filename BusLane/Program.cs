@@ -19,6 +19,7 @@ using Services.Dashboard;
 using Services.Diagnostics;
 using Services.Terminal;
 using Services.Update;
+using Services.Security;
 using ViewModels;
 
 class Program
@@ -117,6 +118,8 @@ class Program
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IPreferencesService, PreferencesService>();
         services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
+        services.AddSingleton<IAppLockService, AppLockService>();
+        RegisterBiometricAuthService(services);
         services.AddSingleton<ILogSink, LogSink>();
         
         // Auth services
@@ -176,11 +179,30 @@ class Program
             sp.GetRequiredService<IUpdateService>(),
             sp.GetRequiredService<IDiagnosticBundleService>(),
             sp.GetRequiredService<ITerminalSessionService>(),
+            sp.GetRequiredService<IAppLockService>(),
+            sp.GetRequiredService<IBiometricAuthService>(),
             sp.GetRequiredService<ILogSink>(),
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
             sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>()
         ));
 
+    }
+
+    private static void RegisterBiometricAuthService(IServiceCollection services)
+    {
+        if (OperatingSystem.IsMacOS())
+        {
+            services.AddSingleton<IBiometricAuthService, MacOsBiometricAuthService>();
+            return;
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            services.AddSingleton<IBiometricAuthService, WindowsHelloBiometricAuthService>();
+            return;
+        }
+
+        services.AddSingleton<IBiometricAuthService, NoOpBiometricAuthService>();
     }
 
     /// <summary>

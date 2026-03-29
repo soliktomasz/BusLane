@@ -112,6 +112,11 @@ internal static class AppPaths
     public static string Connections => Path.Combine(AppDataFolder, "connections.json");
 
     /// <summary>
+    /// Path to the persisted app lock file.
+    /// </summary>
+    public static string AppLock => Path.Combine(AppDataFolder, "app-lock.json");
+
+    /// <summary>
     /// Path to the dashboard configuration file.
     /// </summary>
     public static string DashboardConfig => Path.Combine(AppDataFolder, "dashboard.json");
