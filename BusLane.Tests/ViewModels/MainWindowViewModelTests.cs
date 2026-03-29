@@ -187,6 +187,32 @@ public class MainWindowViewModelTests
         sut.ShowNamespaceSelectionPrompt.Should().BeTrue();
     }
 
+    [Fact]
+    public void ActiveTabChange_UpdatesConnectionTabActiveFlags()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var firstTab = CreateTab("tab-1", preferences);
+        var secondTab = CreateTab("tab-2", preferences);
+        sut.ConnectionTabs.Add(firstTab);
+        sut.ConnectionTabs.Add(secondTab);
+
+        // Act
+        sut.ActiveTab = firstTab;
+
+        // Assert
+        GetIsActive(firstTab).Should().BeTrue();
+        GetIsActive(secondTab).Should().BeFalse();
+
+        // Act
+        sut.ActiveTab = secondTab;
+
+        // Assert
+        GetIsActive(firstTab).Should().BeFalse();
+        GetIsActive(secondTab).Should().BeTrue();
+    }
+
     private static MainWindowViewModel CreateSut(TestPreferencesService preferences)
     {
         var auth = Substitute.For<IAzureAuthService>();
@@ -270,6 +296,12 @@ public class MainWindowViewModelTests
         var logSink = Substitute.For<ILogSink>();
         logSink.GetLogs().Returns([]);
         return logSink;
+    }
+
+    private static bool GetIsActive(ConnectionTabViewModel tab)
+    {
+        var property = typeof(ConnectionTabViewModel).GetProperty("IsActive");
+        return property?.GetValue(tab) as bool? ?? false;
     }
 
     private sealed class TestPreferencesService : IPreferencesService

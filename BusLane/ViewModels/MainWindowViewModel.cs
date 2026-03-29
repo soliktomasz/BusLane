@@ -1374,6 +1374,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     partial void OnActiveTabChanged(ConnectionTabViewModel? oldValue, ConnectionTabViewModel? newValue)
     {
+        foreach (var tab in ConnectionTabs)
+        {
+            tab.IsActive = tab == newValue;
+        }
+
         // Unsubscribe from old tab's property changes
         if (_subscribedTab != null)
         {

@@ -26,23 +26,14 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="core:ConnectionTabViewModel">
                             <Border Classes="tab-border"
+                                    Classes.active="{Binding IsActive}"
                                     Padding="14,10"
                                     MinWidth="140"
                                     MaxWidth="220"
+                                    Background="{DynamicResource CardBackground}"
+                                    BorderBrush="{DynamicResource BorderDefault}"
                                     PointerPressed="TabBorder_PointerPressed"
                                     Cursor="Hand">
-                                <Border.Background>
-                                    <MultiBinding Converter="{x:Static converters:TabActiveConverter.Instance}">
-                                        <Binding Path="TabId"/>
-                                        <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
-                                    </MultiBinding>
-                                </Border.Background>
-                                <Border.BorderBrush>
-                                    <MultiBinding Converter="{x:Static converters:TabActiveBorderConverter.Instance}">
-                                        <Binding Path="TabId"/>
-                                        <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
-                                    </MultiBinding>
-                                </Border.BorderBrush>
                                 <Border.Styles>
                                     <Style Selector="Border.tab-border">
                                         <Setter Property="BorderThickness" Value="1"/>
@@ -51,13 +42,23 @@
                                     <Style Selector="Border.tab-border:pointerover">
                                         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
                                     </Style>
+                                    <Style Selector="Border.tab-border.active">
+                                        <Setter Property="Background" Value="{DynamicResource SelectedBackground}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorder}"/>
+                                        <Setter Property="BoxShadow" Value="0 2 4 0 #20000000"/>
+                                    </Style>
+                                    <Style Selector="Border.tab-border.active:pointerover">
+                                        <Setter Property="Background" Value="{DynamicResource SelectedBackground}"/>
+                                    </Style>
+                                    <Style Selector="TextBlock.tab-title">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+                                    </Style>
+                                    <Style Selector="TextBlock.tab-title.active">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+                                    </Style>
                                 </Border.Styles>
-                                <Border.BoxShadow>
-                                    <MultiBinding Converter="{x:Static converters:TabActiveElevationConverter.Instance}">
-                                        <Binding Path="TabId"/>
-                                        <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
-                                    </MultiBinding>
-                                </Border.BoxShadow>
 
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <!-- Loading Indicator (shown while connecting) -->
@@ -113,23 +114,13 @@
                                     <!-- Tab Title & Subtitle -->
                                     <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding TabTitle}"
+                                                   Classes="tab-title"
+                                                   Classes.active="{Binding IsActive}"
                                                    FontSize="13"
-                                                   TextTrimming="CharacterEllipsis">
-                                            <TextBlock.FontWeight>
-                                                <MultiBinding Converter="{x:Static converters:TabActiveFontWeightConverter.Instance}">
-                                                    <Binding Path="TabId"/>
-                                                    <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
-                                                </MultiBinding>
-                                            </TextBlock.FontWeight>
-                                            <TextBlock.Foreground>
-                                                <MultiBinding Converter="{x:Static converters:TabActiveForegroundConverter.Instance}">
-                                                    <Binding Path="TabId"/>
-                                                    <Binding Path="$parent[UserControl].((vm:MainWindowViewModel)DataContext).ActiveTab.TabId"/>
-                                                </MultiBinding>
-                                            </TextBlock.Foreground>
-                                        </TextBlock>
+                                                   TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding TabSubtitle}"
                                                    FontSize="11"
+                                                   Foreground="{DynamicResource SubtleForeground}"
                                                    Opacity="0.65"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
