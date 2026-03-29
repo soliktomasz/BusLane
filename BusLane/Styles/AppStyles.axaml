@@ -1049,9 +1049,26 @@
         <Setter Property="BorderThickness" Value="1"/>
     </Style>
 
+    <Style Selector="TextBox.code-editor:pointerover">
+        <Setter Property="Background" Value="{DynamicResource CodeBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource CodeForeground}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource CodeForeground}"/>
+    </Style>
+
+    <Style Selector="TextBox.code-editor:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource CodeBackground}"/>
+    </Style>
+
     <Style Selector="TextBox.code-editor:focus">
+        <Setter Property="Background" Value="{DynamicResource CodeBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource CodeForeground}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource CodeForeground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="BorderThickness" Value="1,1,1,2"/>
+    </Style>
+
+    <Style Selector="TextBox.code-editor:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource CodeBackground}"/>
     </Style>
 
     <!-- Toolbar button -->
