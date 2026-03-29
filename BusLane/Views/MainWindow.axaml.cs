@@ -202,6 +202,9 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel vm)
             return;
 
+        if (vm.AppLock.IsLocked)
+            return;
+
         var shortcuts = vm.KeyboardShortcuts;
 
         // Handle Escape key specially - close dialogs in priority order

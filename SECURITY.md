@@ -31,6 +31,33 @@ This means:
 - ✅ Each encryption operation produces different ciphertext (even for the same input)
 - ✅ Data is protected from unauthorized access on the local machine
 
+### App Lock And Recovery Code
+
+BusLane also supports an optional app-access lock for the application shell itself:
+
+- **Scope**: App lock is an opt-in access gate that runs when BusLane launches
+- **No Encryption Model Change**: Enabling app lock does not re-encrypt saved connections or change the existing data-at-rest encryption model
+- **Password Storage**: The app-lock password is stored only as a salted PBKDF2-SHA256 hash in `%APPDATA%/BusLane/app-lock.json` (Windows) or `~/.config/BusLane/app-lock.json` (macOS/Linux)
+- **Recovery Code Storage**: Recovery codes are generated once per enable or regeneration event, shown once to the user, and then stored only as a salted hash
+- **Secure File Permissions**: The app-lock file is written with owner-only permissions where the host platform supports them
+- **Launch-Only Lock**: This feature does not currently add inactivity relock or a manual lock command
+
+This means:
+- ✅ BusLane never stores the app-lock password or recovery code in plaintext
+- ✅ Recovery codes can reset the password or disable app lock for future launches if the password is forgotten
+- ✅ A compromised `app-lock.json` file does not reveal the original password or recovery code
+
+### Biometric Unlock
+
+After a password has been set, BusLane can optionally use platform biometrics as an unlock shortcut:
+
+- **macOS**: Touch ID via the system LocalAuthentication prompt when available
+- **Windows**: Windows Hello when the device and OS report support
+- **Linux**: No biometric integration; password and recovery code remain the supported path
+- **Fallback Behavior**: If Windows Hello is unavailable or unsupported, BusLane falls back to password plus recovery code without blocking app access permanently
+
+Biometric unlock is a convenience feature, not a replacement for the app-lock password. Sensitive security changes in Settings still require re-authentication with the current password or an available biometric prompt.
+
 ### Azure Token Caching
 
 When using Azure authentication:
@@ -51,6 +78,8 @@ When using Azure authentication:
 - **Password Masking**: Connection strings are displayed with bullet characters (●) in the UI
 - **Validation**: Connection strings are validated before being saved
 - **Secure Input**: Sensitive data entry fields use secure input controls
+- **Blocking Lock Overlay**: When app lock is enabled, BusLane blocks shell interaction until unlock succeeds
+- **Shortcut Guarding**: Global shortcuts and escape-driven modal dismissal are disabled while the app is locked
 
 ## Best Practices for Users
 
@@ -80,8 +109,9 @@ When using Azure authentication:
 3. **macOS Users** - If you see a "damaged" warning, run: `xattr -cr "/Applications/BusLane.app"`
 4. **File Permissions** - Ensure your user directory has appropriate permissions
 5. **Shared Computers** - Don't use saved connections on shared or public computers
+6. **Store Recovery Codes Separately** - Keep the recovery code outside the app and avoid storing it alongside the BusLane data folder
 
 ---
 
-**Last Updated**: December 2025  
+**Last Updated**: March 2026  
 **Version**: 1.0

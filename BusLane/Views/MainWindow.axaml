@@ -374,5 +374,126 @@
         <!-- Log Viewer Slide-out Panel -->
         <controls:LogViewerPanel Grid.Column="0" Grid.ColumnSpan="3"
                                  DataContext="{Binding LogViewer}"/>
+
+        <!-- App Lock Overlay -->
+        <Border Grid.Column="0" Grid.ColumnSpan="3"
+                Classes="modal-overlay"
+                IsVisible="{Binding AppLock.IsLocked}"
+                IsHitTestVisible="True">
+            <Border Classes="modal modal-small"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="0"
+                    MinWidth="420">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0"
+                            BorderBrush="{DynamicResource BorderDefault}"
+                            BorderThickness="0,0,0,1"
+                            Padding="24,20">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Grid.Column="0"
+                                    Width="44"
+                                    Height="44"
+                                    CornerRadius="12"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    Margin="0,0,16,0">
+                                <LucideIcon Kind="Lock" Size="20"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Unlock BusLane" Classes="title-small"/>
+                                <TextBlock Text="BusLane is protected on launch. Saved-connection encryption remains unchanged."
+                                           Classes="caption"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Padding="24">
+                        <StackPanel Spacing="16">
+                            <Border Classes="infobar-error"
+                                    IsVisible="{Binding AppLock.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <TextBlock Text="{Binding AppLock.ErrorMessage}"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+
+                            <ProgressBar IsIndeterminate="True"
+                                         Height="4"
+                                         IsVisible="{Binding AppLock.IsUnlocking}"/>
+
+                            <StackPanel Spacing="12"
+                                        IsVisible="{Binding !AppLock.IsRecoveryMode}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Password" FontWeight="Medium" FontSize="13"/>
+                                    <TextBox Text="{Binding AppLock.Password}"
+                                             PasswordChar="●"
+                                             Watermark="Enter your app lock password"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="primary small"
+                                            Content="Unlock"
+                                            Command="{Binding AppLock.UnlockCommand}"
+                                            IsEnabled="{Binding !AppLock.IsUnlocking}"/>
+                                    <Button Classes="secondary small"
+                                            Content="Use biometrics"
+                                            Command="{Binding AppLock.UnlockWithBiometricsCommand}"
+                                            IsVisible="{Binding AppLock.CanUseBiometrics}"
+                                            IsEnabled="{Binding !AppLock.IsUnlocking}"/>
+                                </StackPanel>
+
+                                <Button Classes="subtle small"
+                                        Content="Use recovery code instead"
+                                        Command="{Binding AppLock.EnterRecoveryModeCommand}"
+                                        HorizontalAlignment="Left"/>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12"
+                                        IsVisible="{Binding AppLock.IsRecoveryMode}">
+                                <TextBlock Text="Use your recovery code to set a new password or disable app lock for future launches."
+                                           Classes="caption"
+                                           TextWrapping="Wrap"/>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Recovery code" FontWeight="Medium" FontSize="13"/>
+                                    <TextBox Text="{Binding AppLock.RecoveryCode}"
+                                             Watermark="Enter your recovery code"/>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="New password" FontWeight="Medium" FontSize="13"/>
+                                    <TextBox Text="{Binding AppLock.NewPassword}"
+                                             PasswordChar="●"
+                                             Watermark="Set a new password"/>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Confirm new password" FontWeight="Medium" FontSize="13"/>
+                                    <TextBox Text="{Binding AppLock.ConfirmNewPassword}"
+                                             PasswordChar="●"
+                                             Watermark="Confirm the new password"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="primary small"
+                                            Content="Reset Password And Unlock"
+                                            Command="{Binding AppLock.RecoverWithNewPasswordCommand}"
+                                            IsEnabled="{Binding !AppLock.IsUnlocking}"/>
+                                    <Button Classes="danger-outline small"
+                                            Content="Disable App Lock"
+                                            Command="{Binding AppLock.DisableLockWithRecoveryCodeCommand}"
+                                            IsEnabled="{Binding !AppLock.IsUnlocking}"/>
+                                </StackPanel>
+
+                                <Button Classes="subtle small"
+                                        Content="Back to password"
+                                        Command="{Binding AppLock.ExitRecoveryModeCommand}"
+                                        HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
     </Grid>
 </Window>

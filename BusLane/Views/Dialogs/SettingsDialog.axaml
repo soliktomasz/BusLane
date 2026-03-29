@@ -344,6 +344,184 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Security Section -->
+                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                            <StackPanel>
+                                <Border Padding="16,16"
+                                        BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Background="{DynamicResource CardBackground}"
+                                        CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <LucideIcon Kind="Lock" Size="20"
+                                                  Foreground="{DynamicResource AccentBrand}"/>
+                                        <TextBlock Text="Security" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="App lock adds a launch-time password gate. It does not change how saved connections are encrypted."
+                                                   Classes="caption"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"/>
+
+                                        <Border Classes="infobar-error"
+                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.ErrorMessage}"
+                                                       TextWrapping="Wrap"/>
+                                        </Border>
+
+                                        <Border Classes="infobar-success"
+                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.StatusMessage}"
+                                                       TextWrapping="Wrap"/>
+                                        </Border>
+
+                                        <StackPanel Spacing="12"
+                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.ShowEnableSection}">
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="New password" FontWeight="Medium" FontSize="13"/>
+                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.NewPassword}"
+                                                         PasswordChar="●"
+                                                         Watermark="Create an app lock password"/>
+                                            </StackPanel>
+
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="Confirm password" FontWeight="Medium" FontSize="13"/>
+                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmPassword}"
+                                                         PasswordChar="●"
+                                                         Watermark="Confirm the password"/>
+                                            </StackPanel>
+
+                                            <CheckBox Content="I understand the recovery code will be shown once and must be stored securely."
+                                                      IsChecked="{Binding SettingsViewModel.AppLockSettings.HasStoredRecoveryCode}"/>
+
+                                            <CheckBox Content="Enable biometric unlock on this device"
+                                                      IsChecked="{Binding SettingsViewModel.AppLockSettings.EnableBiometricUnlock}"
+                                                      IsVisible="{Binding SettingsViewModel.AppLockSettings.CanConfigureBiometrics}"/>
+
+                                            <Button Classes="primary small"
+                                                    Content="Enable App Lock"
+                                                    Command="{Binding SettingsViewModel.AppLockSettings.EnableAppLockCommand}"
+                                                    HorizontalAlignment="Left"
+                                                    IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="12"
+                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.ShowManageSection}">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="App lock is enabled" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="BusLane will require authentication on launch. Sensitive changes below require your current password or biometrics."
+                                                               Classes="caption"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1"
+                                                        Classes="danger-outline small"
+                                                        Content="Disable App Lock"
+                                                        Command="{Binding SettingsViewModel.AppLockSettings.DisableAppLockCommand}"
+                                                        VerticalAlignment="Top"
+                                                        IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                            </Grid>
+
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="Current password" FontWeight="Medium" FontSize="13"/>
+                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.CurrentPassword}"
+                                                         PasswordChar="●"
+                                                         Watermark="Optional if you prefer password re-authentication"/>
+                                            </StackPanel>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="Change password" FontWeight="Medium" FontSize="13"/>
+                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ChangePassword}"
+                                                         PasswordChar="●"
+                                                         Watermark="Enter a new password"/>
+                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmChangePassword}"
+                                                         PasswordChar="●"
+                                                         Watermark="Confirm the new password"/>
+                                                <Button Classes="secondary small"
+                                                        Content="Update Password"
+                                                        Command="{Binding SettingsViewModel.AppLockSettings.ChangePasswordCommand}"
+                                                        HorizontalAlignment="Left"
+                                                        IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                            </StackPanel>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12"
+                                                  IsVisible="{Binding SettingsViewModel.AppLockSettings.CanConfigureBiometrics}">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Biometric unlock" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Use Touch ID or Windows Hello as an unlock shortcut after password setup."
+                                                               Classes="caption"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1"
+                                                            Orientation="Horizontal"
+                                                            Spacing="8"
+                                                            VerticalAlignment="Top">
+                                                    <Button Classes="secondary small"
+                                                            Content="Enable"
+                                                            Command="{Binding SettingsViewModel.AppLockSettings.EnableBiometricUnlockCommand}"
+                                                            IsVisible="{Binding !SettingsViewModel.AppLockSettings.BiometricUnlockEnabled}"
+                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                    <Button Classes="secondary small"
+                                                            Content="Disable"
+                                                            Command="{Binding SettingsViewModel.AppLockSettings.DisableBiometricUnlockCommand}"
+                                                            IsVisible="{Binding SettingsViewModel.AppLockSettings.BiometricUnlockEnabled}"
+                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Recovery code" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Regenerate the code if you need a fresh recovery path. The old code stops working immediately."
+                                                               Classes="caption"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1"
+                                                        Classes="secondary small"
+                                                        Content="Regenerate"
+                                                        Command="{Binding SettingsViewModel.AppLockSettings.RegenerateRecoveryCodeCommand}"
+                                                        VerticalAlignment="Top"
+                                                        IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <Border Classes="infobar"
+                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.RecoveryCode, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <StackPanel Spacing="10">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="Recovery code" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Text="This is the only time BusLane will show the full code. Store it somewhere safe before closing this message."
+                                                               Classes="caption"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.RecoveryCode}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="16"
+                                                           TextWrapping="Wrap"/>
+                                                <Button Classes="subtle small"
+                                                        Content="Hide Code"
+                                                        Command="{Binding SettingsViewModel.AppLockSettings.ClearRecoveryCodeCommand}"
+                                                        HorizontalAlignment="Left"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Updates Section -->
                         <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
                             <StackPanel>

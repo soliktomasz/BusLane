@@ -1,8 +1,10 @@
 namespace BusLane.ViewModels;
 
 using Avalonia.Threading;
+using BusLane.Models.Security;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Diagnostics;
+using BusLane.Services.Security;
 using BusLane.Services.Update;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -40,10 +42,14 @@ public partial class SettingsViewModel : ViewModelBase
     public int[] MessagesPerPageOptions { get; } = [25, 50, 100];
     public int[] MaxTotalMessagesOptions { get; } = [100, 250, 500, 1000];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
+    public AppLockSettingsViewModel AppLockSettings { get; }
 
     public SettingsViewModel(
         Action onClose,
         IPreferencesService preferencesService,
+        IAppLockService appLockService,
+        IBiometricAuthService biometricAuthService,
+        Func<AppLockSnapshot, Task> applyRuntimeSnapshot,
         MainWindowViewModel? mainViewModel = null,
         IUpdateService? updateService = null,
         IDiagnosticBundleService? diagnosticBundleService = null)
@@ -53,6 +59,7 @@ public partial class SettingsViewModel : ViewModelBase
         _mainViewModel = mainViewModel;
         _updateService = updateService;
         _diagnosticBundleService = diagnosticBundleService;
+        AppLockSettings = new AppLockSettingsViewModel(appLockService, biometricAuthService, applyRuntimeSnapshot);
 
         // Capture original theme BEFORE loading to avoid any binding interference
         _originalTheme = preferencesService.Theme;
@@ -61,6 +68,11 @@ public partial class SettingsViewModel : ViewModelBase
 
         // Schedule the end of loading state to happen after UI bindings are established
         Dispatcher.UIThread.Post(() => _isLoading = false, DispatcherPriority.Loaded);
+    }
+
+    public Task InitializeAsync(CancellationToken ct = default)
+    {
+        return AppLockSettings.InitializeAsync(ct);
     }
 
     partial void OnThemeChanged(string value)

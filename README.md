@@ -29,6 +29,7 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
 - **Message operations** - Peek, send, resend from DLQ, purge, search and filter
 - **Live monitoring** - Real-time message streaming, charts, and configurable alerts
 - **Secure storage** - AES-256 encrypted connection strings with machine-specific keys
+- **Optional app lock** - Launch-time password gate with recovery code support and optional Touch ID or Windows Hello unlock shortcuts when supported
 
 ## Installation
 
@@ -55,6 +56,8 @@ dotnet run
 **Azure mode:** Sign in with Azure > Select subscription > Browse namespaces > View messages
 
 **Connection string mode:** Open connection library > Add/select connection > Browse entities
+
+**App lock:** Open Settings > Security > Enable App Lock > Save the one-time recovery code somewhere safe
 
 ## Contributing
 

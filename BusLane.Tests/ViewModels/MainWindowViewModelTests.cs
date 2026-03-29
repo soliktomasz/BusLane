@@ -3,6 +3,7 @@ namespace BusLane.Tests.ViewModels;
 using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
+using BusLane.Models.Security;
 using BusLane.Models.Update;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Auth;
@@ -14,6 +15,7 @@ using BusLane.Services.ServiceBus;
 using BusLane.Services.Storage;
 using BusLane.Services.Terminal;
 using BusLane.Services.Update;
+using BusLane.Services.Security;
 using BusLane.ViewModels;
 using BusLane.ViewModels.Core;
 using BusLane.ViewModels.Dashboard;
@@ -213,20 +215,208 @@ public class MainWindowViewModelTests
         GetIsActive(secondTab).Should().BeTrue();
     }
 
-    private static MainWindowViewModel CreateSut(TestPreferencesService preferences)
+    [Fact]
+    public async Task InitializeAsync_WhenAppLockEnabled_ShouldDeferStartupInitialization()
     {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var appLockService = Substitute.For<IAppLockService>();
+        appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>())
+            .Returns(new AppLockSnapshot(IsEnabled: true, BiometricUnlockEnabled: false));
+
+        var biometricAuthService = Substitute.For<IBiometricAuthService>();
         var auth = Substitute.For<IAzureAuthService>();
+        var connectionStorage = Substitute.For<IConnectionStorageService>();
+        var updateService = Substitute.For<IUpdateService>();
+
+        using var sut = CreateSut(
+            preferences,
+            auth: auth,
+            connectionStorage: connectionStorage,
+            updateService: updateService,
+            appLockService: appLockService,
+            biometricAuthService: biometricAuthService);
+
+        // Act
+        await sut.InitializeAsync();
+
+        // Assert
+        sut.AppLock.IsLocked.Should().BeTrue();
+        await auth.DidNotReceive().TrySilentLoginAsync();
+        await connectionStorage.DidNotReceive().GetConnectionsAsync();
+        await updateService.DidNotReceive().CheckForUpdatesAsync(Arg.Any<bool>());
+    }
+
+    [Fact]
+    public async Task UnlockAsync_AfterLockedStartup_ShouldRunStartupOnce()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        preferences.AutoCheckForUpdates = false;
+        var appLockService = Substitute.For<IAppLockService>();
+        appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>())
+            .Returns(new AppLockSnapshot(IsEnabled: true, BiometricUnlockEnabled: false));
+        appLockService.VerifyPasswordAsync("Correct#1", Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var biometricAuthService = Substitute.For<IBiometricAuthService>();
+        var auth = Substitute.For<IAzureAuthService>();
+        auth.TrySilentLoginAsync().Returns(false);
+
+        var connectionStorage = Substitute.For<IConnectionStorageService>();
+        connectionStorage.GetConnectionsAsync().Returns(Task.FromResult<IEnumerable<SavedConnection>>([]));
+
+        using var sut = CreateSut(
+            preferences,
+            auth: auth,
+            connectionStorage: connectionStorage,
+            appLockService: appLockService,
+            biometricAuthService: biometricAuthService);
+
+        await sut.InitializeAsync();
+        sut.AppLock.Password = "Correct#1";
+
+        // Act
+        await sut.AppLock.UnlockCommand.ExecuteAsync(null);
+        await sut.InitializeAsync();
+
+        // Assert
+        sut.AppLock.IsLocked.Should().BeFalse();
+        await auth.Received(1).TrySilentLoginAsync();
+        await connectionStorage.Received(1).GetConnectionsAsync();
+    }
+
+    [Fact]
+    public async Task UnlockAsync_WithWrongPassword_ShouldStayLocked()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var appLockService = Substitute.For<IAppLockService>();
+        appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>())
+            .Returns(new AppLockSnapshot(IsEnabled: true, BiometricUnlockEnabled: false));
+        appLockService.VerifyPasswordAsync("Wrong#1", Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        var biometricAuthService = Substitute.For<IBiometricAuthService>();
+        var auth = Substitute.For<IAzureAuthService>();
+        var connectionStorage = Substitute.For<IConnectionStorageService>();
+
+        using var sut = CreateSut(
+            preferences,
+            auth: auth,
+            connectionStorage: connectionStorage,
+            appLockService: appLockService,
+            biometricAuthService: biometricAuthService);
+
+        await sut.InitializeAsync();
+        sut.AppLock.Password = "Wrong#1";
+
+        // Act
+        await sut.AppLock.UnlockCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.AppLock.IsLocked.Should().BeTrue();
+        sut.AppLock.ErrorMessage.Should().Be("Incorrect password.");
+        await auth.DidNotReceive().TrySilentLoginAsync();
+        await connectionStorage.DidNotReceive().GetConnectionsAsync();
+    }
+
+    [Fact]
+    public async Task EnableAppLockFromSettings_ShouldKeepCurrentSessionUnlocked()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var appLockService = Substitute.For<IAppLockService>();
+        appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>())
+            .Returns(new AppLockSnapshot(IsEnabled: false, BiometricUnlockEnabled: false));
+        appLockService.EnableAsync(Arg.Any<AppLockConfiguration>(), Arg.Any<CancellationToken>())
+            .Returns("ABCD-EFGH-IJKL-MNOP");
+
+        var biometricAuthService = Substitute.For<IBiometricAuthService>();
+        biometricAuthService.GetAvailabilityAsync(Arg.Any<CancellationToken>())
+            .Returns(BiometricAvailability.Available);
+
+        using var sut = CreateSut(
+            preferences,
+            appLockService: appLockService,
+            biometricAuthService: biometricAuthService);
+
+        await sut.InitializeAsync();
+        await sut.OpenSettingsCommand.ExecuteAsync(null);
+
+        var settings = sut.SettingsViewModel!.AppLockSettings;
+        settings.NewPassword = "Enable#1";
+        settings.ConfirmPassword = "Enable#1";
+        settings.EnableBiometricUnlock = true;
+        settings.HasStoredRecoveryCode = true;
+
+        // Act
+        await settings.EnableAppLockCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.AppLock.IsEnabled.Should().BeTrue();
+        sut.AppLock.IsLocked.Should().BeFalse();
+        sut.AppLock.BiometricUnlockEnabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task OpenSettings_WhenSecurityInitializationIsPending_ShouldNotBlockOpeningDialog()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var snapshotSource = new TaskCompletionSource<AppLockSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var appLockService = Substitute.For<IAppLockService>();
+        appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => snapshotSource.Task);
+
+        var biometricAuthService = Substitute.For<IBiometricAuthService>();
+
+        using var sut = CreateSut(
+            preferences,
+            appLockService: appLockService,
+            biometricAuthService: biometricAuthService);
+
+        var openTask = Task.Run(() => sut.OpenSettingsCommand.Execute(null));
+
+        try
+        {
+            await Task.Delay(100);
+
+            openTask.IsCompleted.Should().BeTrue();
+            sut.ShowSettings.Should().BeTrue();
+            sut.SettingsViewModel.Should().NotBeNull();
+        }
+        finally
+        {
+            snapshotSource.TrySetResult(AppLockSnapshot.Disabled);
+            await openTask;
+        }
+    }
+
+    private static MainWindowViewModel CreateSut(
+        TestPreferencesService preferences,
+        IAzureAuthService? auth = null,
+        IConnectionStorageService? connectionStorage = null,
+        IUpdateService? updateService = null,
+        IAppLockService? appLockService = null,
+        IBiometricAuthService? biometricAuthService = null)
+    {
+        auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
         var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
-        var connectionStorage = Substitute.For<IConnectionStorageService>();
+        connectionStorage ??= Substitute.For<IConnectionStorageService>();
         var connectionBackupService = Substitute.For<IConnectionBackupService>();
         var versionService = Substitute.For<IVersionService>();
         var liveStreamService = Substitute.For<ILiveStreamService>();
         var alertService = Substitute.For<IAlertService>();
         var notificationService = Substitute.For<INotificationService>();
-        var updateService = Substitute.For<IUpdateService>();
+        updateService ??= Substitute.For<IUpdateService>();
         var diagnosticBundleService = Substitute.For<IDiagnosticBundleService>();
         var terminalSessionService = Substitute.For<ITerminalSessionService>();
+        var ownsAppLockService = appLockService == null;
+        var ownsBiometricAuthService = biometricAuthService == null;
+        appLockService ??= Substitute.For<IAppLockService>();
+        biometricAuthService ??= Substitute.For<IBiometricAuthService>();
         var logSink = CreateLogSink();
 
         var dashboardPersistenceService = Substitute.For<IDashboardPersistenceService>();
@@ -243,6 +433,11 @@ public class MainWindowViewModelTests
         updateService.AvailableRelease.Returns((ReleaseInfo?)null);
         updateService.ErrorMessage.Returns((string?)null);
         terminalSessionService.SessionId.Returns(Guid.NewGuid());
+        if (ownsAppLockService)
+            appLockService.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(new AppLockSnapshot(IsEnabled: false, BiometricUnlockEnabled: false));
+
+        if (ownsBiometricAuthService)
+            biometricAuthService.GetAvailabilityAsync(Arg.Any<CancellationToken>()).Returns(BiometricAvailability.Unavailable);
 
         var dashboardViewModel = new DashboardViewModel(
             dashboardPersistenceService,
@@ -270,6 +465,8 @@ public class MainWindowViewModelTests
             updateService,
             diagnosticBundleService,
             terminalSessionService,
+            appLockService,
+            biometricAuthService,
             logSink,
             dashboardViewModel,
             namespaceDashboardViewModel);
