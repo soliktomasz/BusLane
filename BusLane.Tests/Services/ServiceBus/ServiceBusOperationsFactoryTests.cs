@@ -5,7 +5,6 @@ using Azure.ResourceManager;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
 using NSubstitute;
-using System.Reflection;
 
 public class ServiceBusOperationsFactoryTests
 {
@@ -22,22 +21,6 @@ public class ServiceBusOperationsFactoryTests
         // Assert
         operations.Should().NotBeNull();
         operations.Should().BeOfType<ConnectionStringOperations>();
-    }
-
-    [Fact]
-    public void CreateFromConnectionString_UsesSharedAdminProjectionConcurrencyBudget()
-    {
-        // Arrange
-        var factory = new ServiceBusOperationsFactory(() => null);
-        const string connectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test123";
-
-        // Act
-        var operations = factory.CreateFromConnectionString(connectionString);
-
-        // Assert
-        GetAdminProjectionConcurrencyLimit(operations.GetType())
-            .Should()
-            .Be(GetAdminProjectionConcurrencyLimit(typeof(AzureCredentialOperations)));
     }
 
     [Fact]
@@ -104,26 +87,6 @@ public class ServiceBusOperationsFactoryTests
     }
 
     [Fact]
-    public void CreateFromAzureCredential_UsesSharedAdminProjectionConcurrencyBudget()
-    {
-        // Arrange
-        var armClient = Substitute.For<ArmClient>();
-        var factory = new ServiceBusOperationsFactory(() => armClient);
-        var credential = Substitute.For<TokenCredential>();
-
-        // Act
-        var operations = factory.CreateFromAzureCredential(
-            "test.servicebus.windows.net",
-            "/subscriptions/sub-id/resourceGroups/rg/providers/Microsoft.ServiceBus/namespaces/test",
-            credential);
-
-        // Assert
-        GetAdminProjectionConcurrencyLimit(operations.GetType())
-            .Should()
-            .Be(GetAdminProjectionConcurrencyLimit(typeof(ConnectionStringOperations)));
-    }
-
-    [Fact]
     public void Constructor_WithGetArmClientFunc_StoresFunc()
     {
         // Arrange
@@ -142,15 +105,5 @@ public class ServiceBusOperationsFactoryTests
 
         // Assert
         operations.Should().NotBeNull();
-    }
-
-    private static int GetAdminProjectionConcurrencyLimit(Type operationsType)
-    {
-        var property = operationsType.GetProperty(
-            "AdminProjectionConcurrencyLimit",
-            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-
-        property.Should().NotBeNull($"because {operationsType.Name} should expose the shared admin projection budget");
-        return (int)property!.GetValue(null)!;
     }
 }

@@ -24,9 +24,15 @@ public class ServiceBusOperationsTests
             {
                 var inFlight = Interlocked.Increment(ref activeWorkers);
                 UpdateMaxValue(ref maxConcurrentWorkers, inFlight);
-                await Task.Delay(TimeSpan.FromMilliseconds(25), ct);
-                Interlocked.Decrement(ref activeWorkers);
-                return item * 2;
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(25), ct);
+                    return item * 2;
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref activeWorkers);
+                }
             },
             maxConcurrency: 3);
 

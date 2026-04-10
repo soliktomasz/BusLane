@@ -17,8 +17,6 @@ public class ConnectionStringOperations : IConnectionStringOperations
     private readonly Lazy<ServiceBusClient> _client;
     private bool _disposed;
 
-    internal static int AdminProjectionConcurrencyLimit => BoundedAdminProjector.DefaultMaxConcurrency;
-
     public ConnectionStringOperations(string connectionString, ServiceBusClientPool? clientPool = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
@@ -52,7 +50,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
         var runtimeResults = await BoundedAdminProjector.SelectAsync(
             queueProperties,
             (queue, token) => AdminClient.GetQueueRuntimePropertiesAsync(queue.Name, token),
-            AdminProjectionConcurrencyLimit,
+            BoundedAdminProjector.DefaultMaxConcurrency,
             ct);
 
         // Combine properties and runtime info
@@ -95,7 +93,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
         var runtimeResults = await BoundedAdminProjector.SelectAsync(
             topicProperties,
             (topic, token) => AdminClient.GetTopicRuntimePropertiesAsync(topic.Name, token),
-            AdminProjectionConcurrencyLimit,
+            BoundedAdminProjector.DefaultMaxConcurrency,
             ct);
 
         // Combine properties and runtime info
@@ -136,7 +134,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
         var runtimeResults = await BoundedAdminProjector.SelectAsync(
             subscriptionProperties,
             (subscription, token) => AdminClient.GetSubscriptionRuntimePropertiesAsync(topicName, subscription.SubscriptionName, token),
-            AdminProjectionConcurrencyLimit,
+            BoundedAdminProjector.DefaultMaxConcurrency,
             ct);
 
         // Combine properties and runtime info

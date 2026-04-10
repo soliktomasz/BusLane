@@ -21,6 +21,7 @@ using BusLane.ViewModels.Core;
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
 using NSubstitute;
+using System.Reflection;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class MainWindowViewModelTests
@@ -222,6 +223,7 @@ public class MainWindowViewModelTests
         var preferences = new TestPreferencesService();
         var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
         var operations = Substitute.For<IConnectionStringOperations>();
+        var messageLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
 
         operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
@@ -246,7 +248,11 @@ public class MainWindowViewModelTests
                 false,
                 null,
                 Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<MessageInfo>());
+            .Returns(_ =>
+            {
+                messageLoadStarted.TrySetResult();
+                return Task.FromResult<IEnumerable<MessageInfo>>(Array.Empty<MessageInfo>());
+            });
 
         var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
         sut.ConnectionTabs.Add(tab);
@@ -254,7 +260,7 @@ public class MainWindowViewModelTests
 
         // Act
         await sut.ToggleDeadLetterViewCommand.ExecuteAsync(null);
-        await Task.Delay(50);
+        await messageLoadStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
         // Assert
         await operations.Received(1).PeekMessagesAsync(
@@ -274,63 +280,60 @@ public class MainWindowViewModelTests
         // Arrange
         var preferences = new TestPreferencesService
         {
-            AutoRefreshMessages = true,
-            AutoRefreshIntervalSeconds = 1
+            AutoRefreshMessages = false
         };
-        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
-        var operations = Substitute.For<IConnectionStringOperations>();
         var alertService = Substitute.For<IAlertService>();
         var activeAlertEvaluations = 0;
         var maxConcurrentAlertEvaluations = 0;
+        var firstEvaluationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowEvaluationToComplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var sut = CreateSut(
             preferences,
-            operationsFactory: operationsFactory,
             alertService: alertService);
 
-        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
-        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
-            .Returns(new QueueInfo(
-                "orders",
-                12,
-                10,
-                2,
-                0,
-                1024,
-                DateTimeOffset.UtcNow,
-                false,
-                TimeSpan.FromDays(14),
-                TimeSpan.FromMinutes(1)));
-        operations.PeekMessagesAsync(
-                "orders",
-                null,
-                Arg.Any<int>(),
-                null,
-                false,
-                false,
-                null,
-                Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<MessageInfo>());
+        sut.Navigation.Queues.Add(new QueueInfo(
+            "orders",
+            12,
+            10,
+            2,
+            0,
+            1024,
+            DateTimeOffset.UtcNow,
+            false,
+            TimeSpan.FromDays(14),
+            TimeSpan.FromMinutes(1)));
         alertService.EvaluateAlertsAsync(Arg.Any<IEnumerable<QueueInfo>>(), Arg.Any<IEnumerable<SubscriptionInfo>>())
             .Returns(async _ =>
             {
                 var inFlight = Interlocked.Increment(ref activeAlertEvaluations);
                 UpdateMaxValue(ref maxConcurrentAlertEvaluations, inFlight);
-                await Task.Delay(TimeSpan.FromMilliseconds(1500));
-                Interlocked.Decrement(ref activeAlertEvaluations);
-                return Enumerable.Empty<AlertEvent>();
+                firstEvaluationStarted.TrySetResult();
+
+                try
+                {
+                    await allowEvaluationToComplete.Task;
+                    return Enumerable.Empty<AlertEvent>();
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref activeAlertEvaluations);
+                }
             });
 
-        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
-        sut.ConnectionTabs.Add(tab);
-        sut.ActiveTab = tab;
-        tab.Navigation.SelectedQueue = null;
-        tab.Navigation.SelectedEntity = null;
-
         // Act
-        await Task.Delay(TimeSpan.FromMilliseconds(2600));
+        var firstTick = InvokeHandleAutoRefreshTickAsync(sut);
+        await firstEvaluationStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+
+        var secondTick = InvokeHandleAutoRefreshTickAsync(sut);
+        await secondTick.WaitAsync(TimeSpan.FromSeconds(1));
+        allowEvaluationToComplete.TrySetResult();
+        await firstTick;
 
         // Assert
         maxConcurrentAlertEvaluations.Should().Be(1);
+        await alertService.Received(1).EvaluateAlertsAsync(
+            Arg.Any<IEnumerable<QueueInfo>>(),
+            Arg.Any<IEnumerable<SubscriptionInfo>>());
     }
 
     [Fact]
@@ -760,6 +763,13 @@ public class MainWindowViewModelTests
     {
         var property = typeof(ConnectionTabViewModel).GetProperty("IsActive");
         return property?.GetValue(tab) as bool? ?? false;
+    }
+
+    private static Task InvokeHandleAutoRefreshTickAsync(MainWindowViewModel sut)
+    {
+        var method = typeof(MainWindowViewModel).GetMethod("HandleAutoRefreshTickAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+        method.Should().NotBeNull();
+        return (Task)method!.Invoke(sut, [])!;
     }
 
     private sealed class TestPreferencesService : IPreferencesService
