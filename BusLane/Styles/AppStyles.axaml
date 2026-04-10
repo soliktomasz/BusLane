@@ -393,6 +393,28 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
     </Style>
 
+    <Style Selector="ToggleSwitch">
+        <Setter Property="MinWidth" Value="52"/>
+        <Setter Property="MinHeight" Value="36"/>
+    </Style>
+
+    <Style Selector="CheckBox">
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
+    <Style Selector="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style Selector="MenuItem">
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
     <!-- Toggle/Pill Button - Fluent 2 style -->
     <Style Selector="ToggleButton.pill">
         <Setter Property="Background" Value="Transparent"/>
@@ -945,6 +967,28 @@
         <Setter Property="Padding" Value="24,32"/>
     </Style>
 
+    <Style Selector="Border.page-header-surface">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20,18"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.pane-search-surface">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="StackPanel.dialog-footer-actions">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Spacing" Value="8"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+    </Style>
+
     <!-- Fluent 2 Segmented Control / Tab Navigation for dialogs -->
     <Style Selector="Border.tab-nav">
         <Setter Property="Background" Value="{DynamicResource TabNavBackground}"/>
@@ -1294,8 +1338,8 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="32"/>
-        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="MinWidth" Value="36"/>
+        <Setter Property="MinHeight" Value="36"/>
     </Style>
 
     <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter">
@@ -1319,8 +1363,8 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="30"/>
-        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="MinWidth" Value="36"/>
+        <Setter Property="MinHeight" Value="36"/>
     </Style>
 
     <Style Selector="Button.panel-toggle:pointerover /template/ ContentPresenter">
@@ -1345,8 +1389,8 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="32"/>
-        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="MinWidth" Value="36"/>
+        <Setter Property="MinHeight" Value="36"/>
     </Style>
 
     <Style Selector="ToggleButton.icon-button:pointerover /template/ ContentPresenter">
@@ -1371,7 +1415,8 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="30"/>
+        <Setter Property="MinWidth" Value="36"/>
+        <Setter Property="MinHeight" Value="36"/>
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="VerticalAlignment" Value="Stretch"/>
     </Style>
