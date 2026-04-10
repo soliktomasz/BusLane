@@ -19,6 +19,8 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     private readonly Lazy<ServiceBusClient> _client;
     private bool _disposed;
 
+    internal static int AdminProjectionConcurrencyLimit => BoundedAdminProjector.DefaultMaxConcurrency;
+
     public string NamespaceId => _namespaceId;
 
     public AzureCredentialOperations(

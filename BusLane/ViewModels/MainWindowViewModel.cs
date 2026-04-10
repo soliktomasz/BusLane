@@ -183,6 +183,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
+    private int _autoRefreshTickInProgress;
 
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
@@ -414,7 +415,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void InitializeAutoRefreshTimer()
     {
         _autoRefreshTimer = new System.Timers.Timer();
-        _autoRefreshTimer.Elapsed += async (_, _) =>
+        _autoRefreshTimer.Elapsed += (_, _) => FireAndForget(HandleAutoRefreshTickAsync(), nameof(HandleAutoRefreshTickAsync));
+        UpdateAutoRefreshTimer();
+    }
+
+    private async Task HandleAutoRefreshTickAsync()
+    {
+        if (Interlocked.CompareExchange(ref _autoRefreshTickInProgress, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
         {
             if (_preferencesService.AutoRefreshMessages &&
                 CurrentNavigation.CurrentEntityName != null &&
@@ -431,8 +443,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             {
                 await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
             }
-        };
-        UpdateAutoRefreshTimer();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
+        }
     }
 
     public void UpdateAutoRefreshTimer()
@@ -1257,10 +1272,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// Toggles the dead letter view for the current entity.
     /// </summary>
     [RelayCommand]
-    private async Task ToggleDeadLetterViewAsync()
+    private Task ToggleDeadLetterViewAsync()
     {
         CurrentNavigation.ShowDeadLetter = !CurrentNavigation.ShowDeadLetter;
-        await CurrentMessageOps.LoadMessagesAsync();
+        return Task.CompletedTask;
     }
 
     #endregion
@@ -1637,6 +1652,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer?.Stop();
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;
+        Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
 
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
@@ -1660,6 +1676,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer?.Stop();
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;
+        Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
 
         LogViewer?.Dispose();
         await Terminal.DisposeAsync();

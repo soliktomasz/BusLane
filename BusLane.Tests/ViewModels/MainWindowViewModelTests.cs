@@ -216,6 +216,124 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ToggleDeadLetterViewAsync_WithActiveQueue_LoadsMessagesOnce()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo(
+                "orders",
+                12,
+                10,
+                2,
+                0,
+                1024,
+                DateTimeOffset.UtcNow,
+                false,
+                TimeSpan.FromDays(14),
+                TimeSpan.FromMinutes(1)));
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                true,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<MessageInfo>());
+
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+
+        // Act
+        await sut.ToggleDeadLetterViewCommand.ExecuteAsync(null);
+        await Task.Delay(50);
+
+        // Assert
+        await operations.Received(1).PeekMessagesAsync(
+            "orders",
+            null,
+            preferences.MessagesPerPage,
+            null,
+            true,
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService
+        {
+            AutoRefreshMessages = true,
+            AutoRefreshIntervalSeconds = 1
+        };
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var alertService = Substitute.For<IAlertService>();
+        var activeAlertEvaluations = 0;
+        var maxConcurrentAlertEvaluations = 0;
+        using var sut = CreateSut(
+            preferences,
+            operationsFactory: operationsFactory,
+            alertService: alertService);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo(
+                "orders",
+                12,
+                10,
+                2,
+                0,
+                1024,
+                DateTimeOffset.UtcNow,
+                false,
+                TimeSpan.FromDays(14),
+                TimeSpan.FromMinutes(1)));
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<MessageInfo>());
+        alertService.EvaluateAlertsAsync(Arg.Any<IEnumerable<QueueInfo>>(), Arg.Any<IEnumerable<SubscriptionInfo>>())
+            .Returns(async _ =>
+            {
+                var inFlight = Interlocked.Increment(ref activeAlertEvaluations);
+                UpdateMaxValue(ref maxConcurrentAlertEvaluations, inFlight);
+                await Task.Delay(TimeSpan.FromMilliseconds(1500));
+                Interlocked.Decrement(ref activeAlertEvaluations);
+                return Enumerable.Empty<AlertEvent>();
+            });
+
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        tab.Navigation.SelectedQueue = null;
+        tab.Navigation.SelectedEntity = null;
+
+        // Act
+        await Task.Delay(TimeSpan.FromMilliseconds(2600));
+
+        // Assert
+        maxConcurrentAlertEvaluations.Should().Be(1);
+    }
+
+    [Fact]
     public void ShowNamespaceSelectionPrompt_IsTrueOnlyWhenAzureIsReadyWithoutActiveConnection()
     {
         // Arrange
@@ -506,7 +624,8 @@ public class MainWindowViewModelTests
         IAppLockService? appLockService = null,
         IBiometricAuthService? biometricAuthService = null,
         IServiceBusOperationsFactory? operationsFactory = null,
-        IDashboardRefreshService? dashboardRefreshService = null)
+        IDashboardRefreshService? dashboardRefreshService = null,
+        IAlertService? alertService = null)
     {
         auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
@@ -515,7 +634,7 @@ public class MainWindowViewModelTests
         var connectionBackupService = Substitute.For<IConnectionBackupService>();
         var versionService = Substitute.For<IVersionService>();
         var liveStreamService = Substitute.For<ILiveStreamService>();
-        var alertService = Substitute.For<IAlertService>();
+        alertService ??= Substitute.For<IAlertService>();
         var notificationService = Substitute.For<INotificationService>();
         updateService ??= Substitute.For<IUpdateService>();
         var diagnosticBundleService = Substitute.For<IDiagnosticBundleService>();
@@ -593,6 +712,41 @@ public class MainWindowViewModelTests
         {
             IsEntityPaneVisible = isEntityPaneVisible
         };
+    }
+
+    private static ConnectionTabViewModel CreateConnectedQueueTab(
+        string tabId,
+        TestPreferencesService preferences,
+        IServiceBusOperationsFactory operationsFactory,
+        string connectionName,
+        string entityName)
+    {
+        var tab = CreateTab(tabId, preferences);
+        var connection = SavedConnection.Create(
+            connectionName,
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            ConnectionType.Queue,
+            entityName: entityName);
+
+        tab.ConnectWithConnectionStringAsync(connection, operationsFactory).GetAwaiter().GetResult();
+        return tab;
+    }
+
+    private static void UpdateMaxValue(ref int target, int candidate)
+    {
+        while (true)
+        {
+            var current = target;
+            if (candidate <= current)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref target, candidate, current) == current)
+            {
+                return;
+            }
+        }
     }
 
     private static ILogSink CreateLogSink()
