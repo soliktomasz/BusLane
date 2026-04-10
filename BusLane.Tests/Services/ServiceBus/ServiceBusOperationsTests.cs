@@ -16,17 +16,27 @@ public class ServiceBusOperationsTests
         var activeWorkers = 0;
         var maxConcurrentWorkers = 0;
         var items = Enumerable.Range(1, 18).ToArray();
+        const int maxConcurrency = 3;
+        var workerStartedSignals = items
+            .Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))
+            .ToArray();
+        var workerReleaseSignals = items
+            .Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))
+            .ToArray();
 
         // Act
-        var results = await InvokeBoundedAdminProjectorAsync(
+        var resultsTask = InvokeBoundedAdminProjectorAsync(
             items,
             async (item, ct) =>
             {
+                var index = item - 1;
                 var inFlight = Interlocked.Increment(ref activeWorkers);
                 UpdateMaxValue(ref maxConcurrentWorkers, inFlight);
+                workerStartedSignals[index].TrySetResult();
+
                 try
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(25), ct);
+                    await workerReleaseSignals[index].Task.WaitAsync(ct);
                     return item * 2;
                 }
                 finally
@@ -34,7 +44,31 @@ public class ServiceBusOperationsTests
                     Interlocked.Decrement(ref activeWorkers);
                 }
             },
-            maxConcurrency: 3);
+            maxConcurrency: maxConcurrency);
+
+        await Task.WhenAll(workerStartedSignals.Take(maxConcurrency).Select(static signal => signal.Task))
+            .WaitAsync(TimeSpan.FromSeconds(1));
+
+        maxConcurrentWorkers.Should().Be(maxConcurrency);
+
+        for (var batchStart = 0; batchStart < items.Length; batchStart += maxConcurrency)
+        {
+            foreach (var signal in workerReleaseSignals.Skip(batchStart).Take(maxConcurrency))
+            {
+                signal.TrySetResult();
+            }
+
+            var nextBatchStart = batchStart + maxConcurrency;
+            if (nextBatchStart >= items.Length)
+            {
+                continue;
+            }
+
+            await Task.WhenAll(workerStartedSignals.Skip(nextBatchStart).Take(Math.Min(maxConcurrency, items.Length - nextBatchStart)).Select(static signal => signal.Task))
+                .WaitAsync(TimeSpan.FromSeconds(1));
+        }
+
+        var results = await resultsTask.WaitAsync(TimeSpan.FromSeconds(1));
 
         // Assert
         maxConcurrentWorkers.Should().BeLessThanOrEqualTo(3);
