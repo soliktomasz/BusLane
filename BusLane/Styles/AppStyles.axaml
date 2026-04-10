@@ -1056,6 +1056,81 @@
         <Setter Property="Background" Value="{DynamicResource TabItemHover}"/>
     </Style>
 
+    <Style Selector="RadioButton.workspace-tab">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="Padding" Value="14,10"/>
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="PART_Border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{DynamicResource BorderDefault}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="RadioButton.workspace-tab:pointerover /template/ Border#PART_Border">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+
+    <Style Selector="RadioButton.workspace-tab:checked /template/ Border#PART_Border">
+        <Setter Property="Background" Value="{DynamicResource SelectedBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorder}"/>
+        <Setter Property="BoxShadow" Value="0 2 4 0 #20000000"/>
+    </Style>
+
+    <Style Selector="RadioButton.workspace-tab:focus-visible /template/ Border#PART_Border">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+    </Style>
+
+    <Style Selector="TextBlock.workspace-tab-title">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
+    <Style Selector="TextBlock.workspace-tab-title.active">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+
+    <Style Selector="TextBlock.workspace-tab-subtitle">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Opacity" Value="0.65"/>
+    </Style>
+
+    <Style Selector="Button.workspace-tab-close">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="24"/>
+        <Setter Property="MinHeight" Value="24"/>
+    </Style>
+
+    <Style Selector="Button.workspace-tab-close:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
+    <Style Selector="Button.workspace-tab-close:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+    </Style>
+
     <!-- Field group header -->
     <Style Selector="TextBlock.field-group-header">
         <Setter Property="FontSize" Value="11"/>
@@ -1328,6 +1403,27 @@
     <Style Selector="Button.sidebar-utility-button">
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="12,10"/>
+    </Style>
+
+    <Style Selector="Button.workspace-new-tab">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinHeight" Value="36"/>
+    </Style>
+
+    <Style Selector="Button.workspace-new-tab:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+
+    <Style Selector="Button.workspace-new-tab:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- Compact icon button for toolbar area -->
