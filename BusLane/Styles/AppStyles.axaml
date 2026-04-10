@@ -692,6 +692,36 @@
         <Setter Property="MaxHeight" Value="720"/>
     </Style>
 
+    <Style Selector="Border.dialog-header">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="24,20"/>
+    </Style>
+
+    <Style Selector="Border.dialog-body">
+        <Setter Property="Padding" Value="24,20"/>
+    </Style>
+
+    <Style Selector="Border.dialog-footer">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Padding" Value="24,16"/>
+    </Style>
+
+    <Style Selector="Border.settings-section">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Grid.settings-row">
+        <Setter Property="ColumnSpacing" Value="16"/>
+        <Setter Property="Margin" Value="0,0,0,2"/>
+    </Style>
+
     <!-- Progress - Fluent 2 accent color -->
     <Style Selector="ProgressBar">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>

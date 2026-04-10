@@ -16,6 +16,7 @@
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
+                        Classes="dialog-header"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="0,0,0,1"
                         Padding="24,20">
@@ -44,11 +45,12 @@
 
                 <!-- Content -->
                 <ScrollViewer Grid.Row="1">
-                    <Border Padding="24,20">
+                    <Border Classes="dialog-body"
+                            Padding="24,20">
                         <StackPanel Spacing="16">
 
                             <!-- Appearance Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -67,7 +69,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Theme -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Theme" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Choose your preferred color scheme"
@@ -83,7 +85,7 @@
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
                                         <!-- Dead Letter Badges -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Dead letter badges" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Show message counts on dead letter queues"
@@ -100,7 +102,7 @@
                         </Border>
 
                         <!-- Messages Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -119,7 +121,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Messages Per Page -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Messages per page" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Number of messages to show per page"
@@ -135,7 +137,7 @@
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
                                         <!-- Max Total Messages -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Maximum total messages" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Maximum messages to load across all pages"
@@ -151,7 +153,7 @@
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
                                         <!-- Message Preview -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Message preview" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Show message body preview in the list"
@@ -168,7 +170,7 @@
                         </Border>
 
                         <!-- Auto Refresh Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -187,7 +189,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Auto Refresh Toggle -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Enable auto-refresh" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Automatically refresh the message list"
@@ -222,7 +224,7 @@
                         </Border>
 
                         <!-- Confirmations Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -241,7 +243,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Confirm Delete -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Confirm before delete" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Ask for confirmation when deleting messages"
@@ -256,7 +258,7 @@
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
                                         <!-- Confirm Purge -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Confirm before purge" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Ask for confirmation when purging queues"
@@ -273,7 +275,7 @@
                         </Border>
 
                         <!-- Session Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -292,7 +294,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Restore Tabs -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Restore tabs on startup" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Remember open connections between sessions"
@@ -309,7 +311,7 @@
                         </Border>
 
                         <!-- Privacy Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -328,7 +330,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Telemetry Toggle -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Send error reports" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Help improve BusLane by sending anonymous crash reports (requires restart)"
@@ -345,7 +347,7 @@
                         </Border>
 
                         <!-- Security Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
@@ -523,7 +525,7 @@
                         </Border>
 
                         <!-- Updates Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -542,7 +544,7 @@
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
                                         <!-- Auto Check for Updates -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Automatically check for updates" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Check for new versions on startup"
@@ -554,7 +556,7 @@
                                                           VerticalAlignment="Center"/>
                                         </Grid>
 
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Manual check" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Check now for the latest version"
@@ -571,7 +573,7 @@
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
                                         <!-- Current Version -->
-                                        <Grid ColumnDefinitions="*,Auto">
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Current version" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Installed application version"
@@ -588,7 +590,7 @@
                         </Border>
 
                         <!-- Keyboard Shortcuts Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <!-- Section Header -->
                                 <Border Padding="16,16"
@@ -605,7 +607,7 @@
 
                                 <!-- Settings Items -->
                                 <Border Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="View all shortcuts" FontWeight="Medium" FontSize="13"/>
                                             <TextBlock Text="See available keyboard shortcuts for quick navigation"
@@ -622,7 +624,7 @@
                         </Border>
 
                         <!-- Support Section -->
-                        <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                        <Border Classes="settings-section" Padding="0">
                             <StackPanel>
                                 <Border Padding="16,16"
                                         BorderBrush="{DynamicResource BorderDefault}"
@@ -666,6 +668,7 @@
 
                 <!-- Footer -->
                 <Border Grid.Row="2"
+                        Classes="dialog-footer"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="0,1,0,0"
                         Padding="24,16"
@@ -676,6 +679,7 @@
                                 Content="Reset to Defaults"
                                 Command="{Binding SettingsViewModel.ResetToDefaultsCommand}"/>
                         <StackPanel Grid.Column="2"
+                                    Classes="dialog-footer-actions"
                                     Orientation="Horizontal"
                                     Spacing="8">
                             <Button Classes="secondary small"
