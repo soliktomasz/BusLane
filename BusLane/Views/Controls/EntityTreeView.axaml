@@ -15,36 +15,35 @@
     <Border Classes="card" Padding="0">
         <DockPanel>
             <Border DockPanel.Dock="Top"
-                    Padding="8,8,8,6"
-                    Background="{DynamicResource SurfaceSubtle}"
-                    BorderBrush="{DynamicResource BorderMuted}"
-                    BorderThickness="0,0,0,1">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <TextBox Grid.Column="0"
-                             Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
-                             Watermark="Filter entities..."
-                             FontSize="12"
-                             Padding="4,4,4,4"
-                             CornerRadius="6"
-                             BorderBrush="{DynamicResource BorderMuted}">
-                        <TextBox.InnerLeftContent>
-                            <LucideIcon Kind="Search"
-                                        Size="13"
-                                        Foreground="{DynamicResource SubtleForeground}"
-                                        Margin="5,0,0,0"/>
-                        </TextBox.InnerLeftContent>
-                    </TextBox>
+                    Classes="pane-search-surface">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Browse entities"
+                               Classes="caption"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
+                                 Watermark="Search queues, topics, or subscriptions"
+                                 FontSize="12"
+                                 Padding="4,4,4,4"
+                                 CornerRadius="6"
+                                 BorderBrush="{DynamicResource BorderMuted}">
+                            <TextBox.InnerLeftContent>
+                                <LucideIcon Kind="Search"
+                                            Size="13"
+                                            Foreground="{DynamicResource SubtleForeground}"
+                                            Margin="5,0,0,0"/>
+                            </TextBox.InnerLeftContent>
+                        </TextBox>
 
-                    <Button Grid.Column="1"
-                            Classes="icon-button"
-                            Command="{Binding HideEntityPaneCommand}"
-                            ToolTip.Tip="Hide entity pane"
-                            MinWidth="30"
-                            MinHeight="30"
-                            VerticalAlignment="Center">
-                        <LucideIcon Kind="ChevronLeft" Size="14"/>
-                    </Button>
-                </Grid>
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Command="{Binding HideEntityPaneCommand}"
+                                ToolTip.Tip="Hide entity pane"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="ChevronLeft" Size="14"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
             </Border>
 
             <ScrollViewer>
@@ -54,31 +53,33 @@
                               IsExpanded="{Binding CurrentNavigation.IsQueuesSectionExpanded}"
                               Margin="4,2,4,0">
                         <Expander.Header>
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                                    <Border Classes="entity-tree-section-icon"
-                                            Background="{DynamicResource SurfaceBrand}">
-                                        <LucideIcon Kind="ListOrdered"
-                                                    Size="10"
-                                                    Foreground="{DynamicResource AccentBrand}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"/>
+                            <Border Classes="entity-group-header">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                        <Border Classes="entity-tree-section-icon"
+                                                Background="{DynamicResource SurfaceBrand}">
+                                            <LucideIcon Kind="ListOrdered"
+                                                        Size="10"
+                                                        Foreground="{DynamicResource AccentBrand}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Queues"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppForeground}"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2"
+                                            Classes="entity-tree-section-count"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding CurrentNavigation.Queues.Count}"
+                                                   FontSize="10"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource SubtleForeground}"/>
                                     </Border>
-                                    <TextBlock Text="Queues"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource AppForeground}"/>
-                                </StackPanel>
-                                <Border Grid.Column="2"
-                                        Classes="entity-tree-section-count"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentNavigation.Queues.Count}"
-                                               FontSize="10"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource SubtleForeground}"/>
-                                </Border>
-                            </Grid>
+                                </Grid>
+                            </Border>
                         </Expander.Header>
 
                         <StackPanel Spacing="0">
@@ -196,31 +197,33 @@
                               IsExpanded="{Binding CurrentNavigation.IsTopicsSectionExpanded}"
                               Margin="4,0,4,0">
                         <Expander.Header>
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                                    <Border Classes="entity-tree-section-icon"
-                                            Background="{DynamicResource SurfaceSuccess}">
-                                        <LucideIcon Kind="Megaphone"
-                                                    Size="10"
-                                                    Foreground="{DynamicResource TextSuccess}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"/>
+                            <Border Classes="entity-group-header">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                        <Border Classes="entity-tree-section-icon"
+                                                Background="{DynamicResource SurfaceSuccess}">
+                                            <LucideIcon Kind="Megaphone"
+                                                        Size="10"
+                                                        Foreground="{DynamicResource TextSuccess}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Topics"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppForeground}"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2"
+                                            Classes="entity-tree-section-count"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding CurrentNavigation.Topics.Count}"
+                                                   FontSize="10"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource SubtleForeground}"/>
                                     </Border>
-                                    <TextBlock Text="Topics"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource AppForeground}"/>
-                                </StackPanel>
-                                <Border Grid.Column="2"
-                                        Classes="entity-tree-section-count"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentNavigation.Topics.Count}"
-                                               FontSize="10"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource SubtleForeground}"/>
-                                </Border>
-                            </Grid>
+                                </Grid>
+                            </Border>
                         </Expander.Header>
 
                         <StackPanel Spacing="0">
