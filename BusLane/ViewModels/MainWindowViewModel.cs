@@ -183,6 +183,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
+    private int _autoRefreshTickInProgress;
+    private int _suppressDeadLetterReload;
 
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
@@ -323,18 +325,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Wire up property change handlers for cross-component dependencies
         Navigation.PropertyChanged += (_, e) =>
         {
-        if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
-            FireAndForget(LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id), nameof(LoadNamespacesAsync));
-        else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
-            FireAndForget(MessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
-        else if (e.PropertyName == nameof(Navigation.SelectedMessageTabIndex) && Navigation.IsSessionInspectorTabSelected)
-            FireAndForget(SessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
+            if (e.PropertyName == nameof(Navigation.SelectedAzureSubscription))
+                FireAndForget(LoadNamespacesAsync(Navigation.SelectedAzureSubscription?.Id), nameof(LoadNamespacesAsync));
+            else if (e.PropertyName == nameof(Navigation.ShowDeadLetter))
+                TriggerDeadLetterReloadIfNeeded(MessageOps);
+            else if (e.PropertyName == nameof(Navigation.SelectedMessageTabIndex) && Navigation.IsSessionInspectorTabSelected)
+                FireAndForget(SessionInspector.LoadSessionsAsync(), nameof(SessionInspectorViewModel.LoadSessionsAsync));
 
-        if (e.PropertyName == nameof(Navigation.SelectedNamespace))
-        {
-            OnPropertyChanged(nameof(ShowNamespaceSelectionPrompt));
-        }
-    };
+            if (e.PropertyName == nameof(Navigation.SelectedNamespace))
+            {
+                OnPropertyChanged(nameof(ShowNamespaceSelectionPrompt));
+            }
+        };
 
         // Wire up device code authentication event
         _auth.DeviceCodeRequired += (_, info) =>
@@ -414,8 +416,29 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void InitializeAutoRefreshTimer()
     {
         _autoRefreshTimer = new System.Timers.Timer();
-        _autoRefreshTimer.Elapsed += async (_, _) =>
+        _autoRefreshTimer.Elapsed += (_, _) => FireAndForget(HandleAutoRefreshTickAsync(), nameof(HandleAutoRefreshTickAsync));
+        UpdateAutoRefreshTimer();
+    }
+
+    private async Task HandleAutoRefreshTickAsync()
+    {
+        if (_disposed)
         {
+            return;
+        }
+
+        if (Interlocked.CompareExchange(ref _autoRefreshTickInProgress, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
             if (_preferencesService.AutoRefreshMessages &&
                 CurrentNavigation.CurrentEntityName != null &&
                 CurrentMessageOps.Pagination.CurrentPage == 1 &&
@@ -431,8 +454,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             {
                 await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
             }
-        };
-        UpdateAutoRefreshTimer();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
+        }
     }
 
     public void UpdateAutoRefreshTimer()
@@ -1259,8 +1285,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task ToggleDeadLetterViewAsync()
     {
-        CurrentNavigation.ShowDeadLetter = !CurrentNavigation.ShowDeadLetter;
-        await CurrentMessageOps.LoadMessagesAsync();
+        Interlocked.Increment(ref _suppressDeadLetterReload);
+        try
+        {
+            CurrentNavigation.ShowDeadLetter = !CurrentNavigation.ShowDeadLetter;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _suppressDeadLetterReload);
+        }
+
+        await ReloadMessagesForDeadLetterAsync(CurrentMessageOps);
     }
 
     #endregion
@@ -1509,7 +1544,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     {
         if (e.PropertyName == nameof(NavigationState.ShowDeadLetter))
         {
-            FireAndForget(CurrentMessageOps.LoadMessagesAsync(), "LoadMessagesAsync");
+            TriggerDeadLetterReloadIfNeeded(CurrentMessageOps);
         }
         else if (e.PropertyName == nameof(NavigationState.SelectedMessageTabIndex) && CurrentNavigation.IsSessionInspectorTabSelected)
         {
@@ -1623,6 +1658,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             Log.Error(ex, "Unhandled exception in fire-and-forget operation: {OperationName}", operationName);
         }
+    }
+
+    private void TriggerDeadLetterReloadIfNeeded(MessageOperationsViewModel messageOperations)
+    {
+        if (Volatile.Read(ref _suppressDeadLetterReload) != 0)
+        {
+            return;
+        }
+
+        FireAndForget(ReloadMessagesForDeadLetterAsync(messageOperations), nameof(ReloadMessagesForDeadLetterAsync));
+    }
+
+    private static Task ReloadMessagesForDeadLetterAsync(MessageOperationsViewModel messageOperations)
+    {
+        return messageOperations.LoadMessagesAsync();
     }
 
     #endregion

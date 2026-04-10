@@ -47,10 +47,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
         ct.ThrowIfCancellationRequested();
 
-        // Fetch runtime properties in parallel for better performance
-        var runtimeTasks = queueProperties.Select(q =>
-            AdminClient.GetQueueRuntimePropertiesAsync(q.Name, ct));
-        var runtimeResults = await Task.WhenAll(runtimeTasks);
+        var runtimeResults = await BoundedAdminProjector.SelectAsync(
+            queueProperties,
+            (queue, token) => AdminClient.GetQueueRuntimePropertiesAsync(queue.Name, token),
+            BoundedAdminProjector.DefaultMaxConcurrency,
+            ct);
 
         // Combine properties and runtime info
         return queueProperties.Zip(runtimeResults, (queue, runtime) =>
@@ -89,10 +90,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
         ct.ThrowIfCancellationRequested();
 
-        // Fetch runtime properties in parallel for better performance
-        var runtimeTasks = topicProperties.Select(t =>
-            AdminClient.GetTopicRuntimePropertiesAsync(t.Name, ct));
-        var runtimeResults = await Task.WhenAll(runtimeTasks);
+        var runtimeResults = await BoundedAdminProjector.SelectAsync(
+            topicProperties,
+            (topic, token) => AdminClient.GetTopicRuntimePropertiesAsync(topic.Name, token),
+            BoundedAdminProjector.DefaultMaxConcurrency,
+            ct);
 
         // Combine properties and runtime info
         return topicProperties.Zip(runtimeResults, (topic, runtime) =>
@@ -129,10 +131,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
         if (subscriptionProperties.Count == 0)
             return [];
 
-        // Fetch runtime properties in parallel for better performance
-        var runtimeTasks = subscriptionProperties.Select(s =>
-            AdminClient.GetSubscriptionRuntimePropertiesAsync(topicName, s.SubscriptionName, ct));
-        var runtimeResults = await Task.WhenAll(runtimeTasks);
+        var runtimeResults = await BoundedAdminProjector.SelectAsync(
+            subscriptionProperties,
+            (subscription, token) => AdminClient.GetSubscriptionRuntimePropertiesAsync(topicName, subscription.SubscriptionName, token),
+            BoundedAdminProjector.DefaultMaxConcurrency,
+            ct);
 
         // Combine properties and runtime info
         return subscriptionProperties.Zip(runtimeResults, (sub, runtime) => new SubscriptionInfo(

@@ -21,6 +21,7 @@ using BusLane.ViewModels.Core;
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
 using NSubstitute;
+using System.Reflection;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class MainWindowViewModelTests
@@ -213,6 +214,126 @@ public class MainWindowViewModelTests
         // Assert
         dashboardRefreshService.Received(1).StopAutoRefresh();
         sut.FeaturePanels.ShowCharts.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleDeadLetterViewAsync_WithActiveQueue_LoadsMessagesOnce()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var messageLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo(
+                "orders",
+                12,
+                10,
+                2,
+                0,
+                1024,
+                DateTimeOffset.UtcNow,
+                false,
+                TimeSpan.FromDays(14),
+                TimeSpan.FromMinutes(1)));
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                true,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                messageLoadStarted.TrySetResult();
+                return Task.FromResult<IEnumerable<MessageInfo>>(Array.Empty<MessageInfo>());
+            });
+
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+
+        // Act
+        await sut.ToggleDeadLetterViewCommand.ExecuteAsync(null);
+        await messageLoadStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+
+        // Assert
+        await operations.Received(1).PeekMessagesAsync(
+            "orders",
+            null,
+            preferences.MessagesPerPage,
+            null,
+            true,
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService
+        {
+            AutoRefreshMessages = false
+        };
+        var alertService = Substitute.For<IAlertService>();
+        var activeAlertEvaluations = 0;
+        var maxConcurrentAlertEvaluations = 0;
+        var firstEvaluationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowEvaluationToComplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var sut = CreateSut(
+            preferences,
+            alertService: alertService);
+
+        sut.Navigation.Queues.Add(new QueueInfo(
+            "orders",
+            12,
+            10,
+            2,
+            0,
+            1024,
+            DateTimeOffset.UtcNow,
+            false,
+            TimeSpan.FromDays(14),
+            TimeSpan.FromMinutes(1)));
+        alertService.EvaluateAlertsAsync(Arg.Any<IEnumerable<QueueInfo>>(), Arg.Any<IEnumerable<SubscriptionInfo>>())
+            .Returns(async _ =>
+            {
+                var inFlight = Interlocked.Increment(ref activeAlertEvaluations);
+                UpdateMaxValue(ref maxConcurrentAlertEvaluations, inFlight);
+                firstEvaluationStarted.TrySetResult();
+
+                try
+                {
+                    await allowEvaluationToComplete.Task;
+                    return Enumerable.Empty<AlertEvent>();
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref activeAlertEvaluations);
+                }
+            });
+
+        // Act
+        var firstTick = InvokeHandleAutoRefreshTickAsync(sut);
+        await firstEvaluationStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+
+        var secondTick = InvokeHandleAutoRefreshTickAsync(sut);
+        await secondTick.WaitAsync(TimeSpan.FromSeconds(1));
+        allowEvaluationToComplete.TrySetResult();
+        await firstTick;
+
+        // Assert
+        maxConcurrentAlertEvaluations.Should().Be(1);
+        await alertService.Received(1).EvaluateAlertsAsync(
+            Arg.Any<IEnumerable<QueueInfo>>(),
+            Arg.Any<IEnumerable<SubscriptionInfo>>());
     }
 
     [Fact]
@@ -506,7 +627,8 @@ public class MainWindowViewModelTests
         IAppLockService? appLockService = null,
         IBiometricAuthService? biometricAuthService = null,
         IServiceBusOperationsFactory? operationsFactory = null,
-        IDashboardRefreshService? dashboardRefreshService = null)
+        IDashboardRefreshService? dashboardRefreshService = null,
+        IAlertService? alertService = null)
     {
         auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
@@ -515,7 +637,7 @@ public class MainWindowViewModelTests
         var connectionBackupService = Substitute.For<IConnectionBackupService>();
         var versionService = Substitute.For<IVersionService>();
         var liveStreamService = Substitute.For<ILiveStreamService>();
-        var alertService = Substitute.For<IAlertService>();
+        alertService ??= Substitute.For<IAlertService>();
         var notificationService = Substitute.For<INotificationService>();
         updateService ??= Substitute.For<IUpdateService>();
         var diagnosticBundleService = Substitute.For<IDiagnosticBundleService>();
@@ -595,6 +717,41 @@ public class MainWindowViewModelTests
         };
     }
 
+    private static ConnectionTabViewModel CreateConnectedQueueTab(
+        string tabId,
+        TestPreferencesService preferences,
+        IServiceBusOperationsFactory operationsFactory,
+        string connectionName,
+        string entityName)
+    {
+        var tab = CreateTab(tabId, preferences);
+        var connection = SavedConnection.Create(
+            connectionName,
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            ConnectionType.Queue,
+            entityName: entityName);
+
+        tab.ConnectWithConnectionStringAsync(connection, operationsFactory).GetAwaiter().GetResult();
+        return tab;
+    }
+
+    private static void UpdateMaxValue(ref int target, int candidate)
+    {
+        while (true)
+        {
+            var current = target;
+            if (candidate <= current)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref target, candidate, current) == current)
+            {
+                return;
+            }
+        }
+    }
+
     private static ILogSink CreateLogSink()
     {
         var logSink = Substitute.For<ILogSink>();
@@ -606,6 +763,13 @@ public class MainWindowViewModelTests
     {
         var property = typeof(ConnectionTabViewModel).GetProperty("IsActive");
         return property?.GetValue(tab) as bool? ?? false;
+    }
+
+    private static Task InvokeHandleAutoRefreshTickAsync(MainWindowViewModel sut)
+    {
+        var method = typeof(MainWindowViewModel).GetMethod("HandleAutoRefreshTickAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+        method.Should().NotBeNull();
+        return (Task)method!.Invoke(sut, [])!;
     }
 
     private sealed class TestPreferencesService : IPreferencesService
