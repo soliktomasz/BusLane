@@ -5,39 +5,68 @@
              x:Class="BusLane.Views.Controls.WelcomeView"
              x:DataType="vm:MainWindowViewModel">
     
-    <StackPanel VerticalAlignment="Center" 
+    <StackPanel VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                MaxWidth="480"
+                MaxWidth="560"
+                Spacing="20"
                 IsVisible="{Binding ShowWelcome}">
-        <TextBlock Text="Welcome to BusLane" Classes="title-large" HorizontalAlignment="Center"/>
-        <TextBlock Text="Connect using a connection string or sign in with your Azure account to manage your Service Bus resources." 
-                   Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,24" TextWrapping="Wrap" TextAlignment="Center"/>
-        
-        <!-- Saved Connections Preview -->
-        <StackPanel Margin="0,32,0,0" IsVisible="{Binding Connection.SavedConnections.Count}">
-            <TextBlock Text="Recent Connections" Classes="body-strong" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-            <ItemsControl ItemsSource="{Binding Connection.SavedConnections}" MaxHeight="200">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="models:SavedConnection">
-                        <Button Classes="secondary" 
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
-                                Margin="0,0,0,8"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
-                                CommandParameter="{Binding}">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <Border Classes="surface-brand" Padding="8" CornerRadius="4">
-                                    <LucideIcon Kind="Cable" Size="16" Foreground="{DynamicResource AccentBrand}" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
-                                    <TextBlock Text="{Binding EntityName}" Classes="caption" FontSize="11"/>
+        <Border Classes="welcome-primary-surface">
+            <StackPanel Spacing="20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Welcome to BusLane" Classes="title-large"/>
+                    <TextBlock Text="Start with a saved connection or sign in to Azure when you need a namespace workspace."
+                               Classes="subtitle"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Classes="primary"
+                            Command="{Binding OpenConnectionLibraryCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <LucideIcon Kind="Library" Size="16"/>
+                            <TextBlock Text="Open My Connections" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="secondary"
+                            Command="{Binding LoginCommand}"
+                            IsVisible="{Binding !Connection.IsAuthenticated}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <LucideIcon Kind="Cloud" Size="16"/>
+                            <TextBlock Text="Sign in with Azure"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="welcome-recent-surface"
+                IsVisible="{Binding Connection.SavedConnections.Count}">
+            <StackPanel Spacing="14">
+                <TextBlock Text="Recent Connections" Classes="body-strong"/>
+                <ItemsControl ItemsSource="{Binding Connection.SavedConnections}" MaxHeight="220">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:SavedConnection">
+                            <Button Classes="secondary"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
+                                    CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Border Classes="surface-brand" Padding="8" CornerRadius="4">
+                                        <LucideIcon Kind="Cable" Size="16" Foreground="{DynamicResource AccentBrand}" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="{Binding EntityName}" Classes="caption" FontSize="11"/>
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
     </StackPanel>
 </UserControl>

@@ -5,16 +5,24 @@ using FluentAssertions;
 public class WelcomeViewTests
 {
     [Fact]
-    public void WelcomeView_DoesNotRenderMyConnectionsButton()
+    public void WelcomeView_UsesPrimaryStartSurface()
     {
         // Arrange
         var xaml = File.ReadAllText(GetWelcomeViewPath());
 
-        // Act
-        var hasConnectionLibraryButton = xaml.Contains("Command=\"{Binding OpenConnectionLibraryCommand}\"", StringComparison.Ordinal);
+        // Assert
+        xaml.Should().Contain("Classes=\"welcome-primary-surface\"");
+        xaml.Should().Contain("Command=\"{Binding OpenConnectionLibraryCommand}\"");
+    }
+
+    [Fact]
+    public void WelcomeView_RendersRecentConnectionsInSecondarySurface()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetWelcomeViewPath());
 
         // Assert
-        hasConnectionLibraryButton.Should().BeFalse();
+        xaml.Should().Contain("Classes=\"welcome-recent-surface\"");
     }
 
     private static string GetWelcomeViewPath()

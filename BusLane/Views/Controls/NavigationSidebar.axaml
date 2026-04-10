@@ -16,7 +16,7 @@
             <Border Grid.Row="0" Classes="sidebar-header">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                        <Viewbox Width="32" Height="32">
+                        <Viewbox Width="28" Height="28">
                             <Canvas Width="512" Height="512">
                                 <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#18181b"/>
                                 <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
@@ -27,8 +27,8 @@
                             </Canvas>
                         </Viewbox>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="BusLane" Classes="heading-large"/>
-                            <TextBlock Text="Workspace control rail" Classes="caption" FontSize="11"/>
+                            <TextBlock Text="BusLane" Classes="heading"/>
+                            <TextBlock Text="Control rail" Classes="caption" FontSize="11"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -52,13 +52,13 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Workspace" Classes="sidebar-section-label"/>
 
-                        <Border Classes="sidebar-workspace-card"
+                        <Border Classes="sidebar-workspace-summary"
                                 IsVisible="{Binding HasActiveConnectionTab}">
-                            <StackPanel Spacing="14">
+                            <StackPanel Spacing="10">
                                 <Grid Classes="sidebar-workspace-header"
                                       ColumnDefinitions="*,Auto"
                                       ColumnSpacing="12">
-                                    <StackPanel Grid.Column="0" Spacing="10">
+                                    <StackPanel Grid.Column="0" Spacing="8">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Border Classes="badge-success">
                                                 <TextBlock Text="Connected"/>
@@ -80,13 +80,13 @@
                                     </StackPanel>
 
                                     <Border Grid.Column="1"
-                                            Width="44"
-                                            Height="44"
-                                            CornerRadius="12"
+                                            Width="36"
+                                            Height="36"
+                                            CornerRadius="10"
                                             Background="{DynamicResource SurfaceBrand}"
                                             HorizontalAlignment="Right">
                                         <LucideIcon Kind="Waypoints"
-                                                    Size="20"
+                                                    Size="18"
                                                     Foreground="{DynamicResource AccentBrand}"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"/>
@@ -114,10 +114,10 @@
                                     </Border>
                                 </WrapPanel>
 
-                                <StackPanel Classes="sidebar-workspace-actions"
-                                            Spacing="8">
-                                    <Button
-                                            Classes="secondary small"
+                                <WrapPanel Classes="sidebar-workspace-actions"
+                                           Orientation="Horizontal"
+                                           ItemWidth="120">
+                                    <Button Classes="secondary small"
                                             Command="{Binding RefreshConnectionCommand}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center">
@@ -127,8 +127,7 @@
                                         </StackPanel>
                                     </Button>
 
-                                    <Button
-                                            Classes="secondary small"
+                                    <Button Classes="secondary small"
                                             Command="{Binding OpenNamespacePanelCommand}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
@@ -138,17 +137,17 @@
                                             <TextBlock Text="Namespace"/>
                                         </StackPanel>
                                     </Button>
-                                </StackPanel>
 
-                                <Button Classes="danger-outline"
-                                        Command="{Binding DisconnectConnectionCommand}"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <LucideIcon Kind="PlugZap" Size="14"/>
-                                        <TextBlock Text="Disconnect"/>
-                                    </StackPanel>
-                                </Button>
+                                    <Button Classes="danger-subtle small"
+                                            Command="{Binding DisconnectConnectionCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="PlugZap" Size="14"/>
+                                            <TextBlock Text="Disconnect"/>
+                                        </StackPanel>
+                                    </Button>
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
 

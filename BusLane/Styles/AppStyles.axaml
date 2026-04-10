@@ -1346,13 +1346,12 @@
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
     </Style>
 
-    <Style Selector="Border.sidebar-workspace-card">
-        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+    <Style Selector="Border.sidebar-workspace-summary">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="CornerRadius" Value="12"/>
-        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Padding" Value="14"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 8 24 0 #18000000"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
 
     <Style Selector="Grid.sidebar-workspace-header">
@@ -1363,8 +1362,9 @@
         <Setter Property="Margin" Value="0,-2,0,0"/>
     </Style>
 
-    <Style Selector="Grid.sidebar-workspace-actions">
-        <Setter Property="Margin" Value="0,2,0,0"/>
+    <Style Selector="WrapPanel.sidebar-workspace-actions">
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="ItemHeight" Value="32"/>
     </Style>
 
     <Style Selector="Border.sidebar-context-pill">
@@ -1379,6 +1379,22 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="Border.welcome-primary-surface">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="28"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.welcome-recent-surface">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="Padding" Value="20"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>

@@ -44,33 +44,24 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_UsesStructuredWorkspaceCardRegions()
+    public void NavigationSidebar_UsesCompactWorkspaceSummary()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
-        // Act
-        var hasWorkspaceHeader = xaml.Contains("Classes=\"sidebar-workspace-header\"", StringComparison.Ordinal);
-        var hasWorkspaceMeta = xaml.Contains("Classes=\"sidebar-workspace-meta\"", StringComparison.Ordinal);
-        var hasWorkspaceActions = xaml.Contains("Classes=\"sidebar-workspace-actions\"", StringComparison.Ordinal);
-
         // Assert
-        hasWorkspaceHeader.Should().BeTrue();
-        hasWorkspaceMeta.Should().BeTrue();
-        hasWorkspaceActions.Should().BeTrue();
+        xaml.Should().Contain("Classes=\"sidebar-workspace-summary\"");
+        xaml.Should().NotContain("Classes=\"sidebar-workspace-card\"");
     }
 
     [Fact]
-    public void NavigationSidebar_UsesStackedWorkspaceActions()
+    public void NavigationSidebar_DoesNotRenderDisconnectAsStandalonePrimaryBlock()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
-        // Act
-        var usesStackedActions = xaml.Contains("<StackPanel Classes=\"sidebar-workspace-actions\"", StringComparison.Ordinal);
-
         // Assert
-        usesStackedActions.Should().BeTrue();
+        xaml.Should().NotContain("Classes=\"danger-outline\"");
     }
 
     [Fact]
