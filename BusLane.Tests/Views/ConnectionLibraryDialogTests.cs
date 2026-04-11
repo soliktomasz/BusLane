@@ -64,6 +64,17 @@ public class ConnectionLibraryDialogTests
         xaml.Should().Contain("MaxWidth=\"520\"");
     }
 
+    [Fact]
+    public void ConnectionLibraryDialog_UsesFixedDialogSize()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetDialogPath());
+
+        // Assert
+        xaml.Should().Contain("Width=\"900\"");
+        xaml.Should().Contain("Height=\"720\"");
+    }
+
     private static string GetDialogPath()
     {
         return Path.GetFullPath(Path.Combine(

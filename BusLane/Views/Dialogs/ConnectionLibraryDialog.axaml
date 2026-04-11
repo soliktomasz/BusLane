@@ -13,6 +13,8 @@
     <Border Classes="modal-overlay"
             IsVisible="{Binding Connection.ShowConnectionLibrary}">
         <Border Classes="modal modal-large"
+                Width="900"
+                Height="720"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Padding="0">
