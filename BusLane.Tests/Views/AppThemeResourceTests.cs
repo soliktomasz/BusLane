@@ -12,6 +12,7 @@ public class AppThemeResourceTests
 
         // Assert
         xaml.Should().Contain("x:Key=\"LayerBackground\"");
+        xaml.Should().Contain("x:Key=\"DashboardTileBackground\"");
         xaml.Should().Contain("x:Key=\"AccentBrandSubtle\"");
     }
 

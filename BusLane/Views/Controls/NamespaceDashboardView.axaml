@@ -65,8 +65,8 @@
                                          Margin="0,0,0,20"/>
 
             <!-- Metric Cards Row -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" Margin="0,0,0,20">
-                <Border Grid.Column="0" Classes="dashboard-summary-surface" Margin="0,0,10,0">
+            <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="10" Margin="0,0,0,20">
+                <Border Grid.Column="0" Classes="dashboard-summary-surface">
                     <StackPanel Spacing="10">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Border Classes="metric-icon-surface">
@@ -80,7 +80,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1" Classes="dashboard-summary-surface" Margin="5,0,5,0">
+                <Border Grid.Column="1" Classes="dashboard-summary-surface">
                     <StackPanel Spacing="10">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Border Classes="metric-icon-surface">
@@ -94,7 +94,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="2" Classes="dashboard-summary-surface" Margin="5,0,5,0">
+                <Border Grid.Column="2" Classes="dashboard-summary-surface">
                     <StackPanel Spacing="10">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Border Classes="metric-icon-surface">
@@ -108,7 +108,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="3" Classes="dashboard-summary-surface" Margin="10,0,0,0">
+                <Border Grid.Column="3" Classes="dashboard-summary-surface">
                     <StackPanel Spacing="10">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Border Classes="metric-icon-surface">

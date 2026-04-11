@@ -1,5 +1,7 @@
 namespace BusLane.Tests.Views;
 
+using System.Linq;
+using System.Xml.Linq;
 using FluentAssertions;
 
 public class CodeEditorStyleTests
@@ -60,10 +62,18 @@ public class CodeEditorStyleTests
     {
         // Arrange
         var xaml = File.ReadAllText(GetSendMessageDialogPath());
+        var document = XDocument.Parse(xaml);
+        var codeEditor = document
+            .Descendants()
+            .FirstOrDefault(element => HasClass(element, "code-editor"));
 
         // Assert
-        xaml.Should().Contain("Classes=\"code-editor\"");
-        xaml.Should().Contain("Classes=\"dialog-body\"");
+        codeEditor.Should().NotBeNull("SendMessageDialog should include a code editor");
+        codeEditor!
+            .Ancestors()
+            .Any(element => HasClass(element, "dialog-body"))
+            .Should()
+            .BeTrue("the code editor should be nested inside the shared dialog body");
     }
 
     private static string GetAppStylesPath()
@@ -103,5 +113,13 @@ public class CodeEditorStyleTests
         endIndex.Should().BeGreaterThan(startIndex);
 
         return xaml[startIndex..(endIndex + "</Style>".Length)];
+    }
+
+    private static bool HasClass(XElement element, string className)
+    {
+        var classes = element.Attribute("Classes")?.Value;
+        return classes?
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Contains(className, StringComparer.Ordinal) == true;
     }
 }

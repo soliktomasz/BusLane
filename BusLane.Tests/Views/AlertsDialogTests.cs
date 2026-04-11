@@ -13,6 +13,7 @@ public class AlertsDialogTests
         // Assert
         xaml.Should().Contain("Classes=\"dialog-header\"");
         xaml.Should().Contain("Classes=\"dialog-body\"");
+        xaml.Should().Contain("Classes=\"dialog-footer\"");
     }
 
     private static string GetDialogPath()

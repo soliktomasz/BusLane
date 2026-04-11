@@ -73,7 +73,7 @@
                         <StackPanel Spacing="6">
                             <TextBlock Text="{Binding ActiveTab.Namespace.Name}" Classes="title"/>
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBlock Text="Azure namespace" Classes="caption"/>
+                                <TextBlock Text="Resource group" Classes="caption"/>
                                 <TextBlock Text="{Binding ActiveTab.Namespace.ResourceGroup}" Classes="caption"/>
                             </StackPanel>
                         </StackPanel>

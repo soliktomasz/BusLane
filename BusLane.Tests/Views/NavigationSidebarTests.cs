@@ -62,6 +62,7 @@ public class NavigationSidebarTests
 
         // Assert
         xaml.Should().NotContain("Classes=\"danger-outline\"");
+        xaml.Should().Contain("Command=\"{Binding DisconnectConnectionCommand}\"");
     }
 
     [Fact]

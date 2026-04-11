@@ -6,9 +6,7 @@
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.NamespaceInboxView"
              x:DataType="vm:NamespaceInboxViewModel">
-
-    <Border Classes="dashboard-inbox-surface"
-            Padding="20">
+    <Border Classes="dashboard-inbox-surface">
         <StackPanel Spacing="16">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                 <StackPanel Grid.Column="0" Spacing="4">
@@ -48,7 +46,6 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
                             <Border Classes="inbox-item-surface"
-                                    Background="{DynamicResource LayerBackground}"
                                     Margin="0,0,0,12">
                                 <StackPanel Spacing="12">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">

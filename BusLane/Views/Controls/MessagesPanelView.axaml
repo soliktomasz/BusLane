@@ -212,6 +212,7 @@
                             <ListBox Grid.Row="1"
                                      ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
                                      SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     IsEnabled="{Binding !CurrentMessageOps.IsLoadingMessages}"
                                      Background="Transparent"
                                      Padding="8"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -334,10 +335,11 @@
 
                             <ListBox Grid.Row="1"
                                      ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
-                             SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
-                             Background="Transparent"
-                             Padding="8"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     IsEnabled="{Binding !CurrentMessageOps.IsLoadingMessages}"
+                                     Background="Transparent"
+                                     Padding="8"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

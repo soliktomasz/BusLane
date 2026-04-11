@@ -1297,8 +1297,8 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="MinWidth" Value="24"/>
-        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="MinWidth" Value="36"/>
+        <Setter Property="MinHeight" Value="36"/>
     </Style>
 
     <Style Selector="Button.workspace-tab-close:pointerover /template/ ContentPresenter">
@@ -1607,6 +1607,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="36"/>
         <Setter Property="MinHeight" Value="36"/>
     </Style>
 

@@ -28,6 +28,24 @@ public class DialogScaffoldTests
         xaml.Should().Contain("Classes=\"dialog-footer\"");
     }
 
+    [Fact]
+    public void SettingsDialog_UsesSharedSettingsRowForRefreshInterval()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSettingsDialogPath());
+        var refreshIntervalIndex = xaml.IndexOf("Text=\"Refresh interval\"", StringComparison.Ordinal);
+
+        // Assert
+        refreshIntervalIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        // Act
+        var rowStart = xaml.LastIndexOf("<Grid", refreshIntervalIndex, StringComparison.Ordinal);
+        rowStart.Should().BeGreaterThanOrEqualTo(0);
+
+        var refreshIntervalRow = xaml[rowStart..refreshIntervalIndex];
+        refreshIntervalRow.Should().Contain("Classes=\"settings-row\"");
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(

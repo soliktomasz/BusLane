@@ -9,11 +9,13 @@ public class NamespaceDashboardViewTests
     {
         // Arrange
         var appXaml = File.ReadAllText(GetAppPath());
-        var inboxXaml = File.ReadAllText(GetInboxPath());
+        var stylesXaml = File.ReadAllText(GetStylesPath());
 
         // Assert
-        inboxXaml.Should().Contain("LayerBackground");
         appXaml.Should().Contain("x:Key=\"LayerBackground\"");
+        appXaml.Should().Contain("x:Key=\"DashboardTileBackground\"");
+        stylesXaml.Should().Contain("<Style Selector=\"Border.inbox-item-surface\">");
+        stylesXaml.Should().Contain("DashboardTileBackground");
     }
 
     [Fact]
@@ -41,7 +43,22 @@ public class NamespaceDashboardViewTests
         // Assert
         dashboardXaml.Should().Contain("Classes=\"page-header-surface\"");
         dashboardXaml.Should().NotContain("Classes=\"card\"");
+        inboxXaml.Should().Contain("Classes=\"dashboard-inbox-surface\"");
+        inboxXaml.Should().Contain("Classes=\"inbox-item-surface\"");
         inboxXaml.Should().NotContain("Classes=\"card\"");
+        inboxXaml.Should().NotContain("Padding=\"20\"");
+        inboxXaml.Should().NotContain("Background=\"{DynamicResource LayerBackground}\"");
+    }
+
+    [Fact]
+    public void Dashboard_UsesSharedMetricGridSpacing()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetDashboardPath());
+
+        // Assert
+        xaml.Should().Contain("<Grid Grid.Row=\"2\" ColumnDefinitions=\"*,*,*,*\" ColumnSpacing=\"10\" Margin=\"0,0,0,20\">");
+        xaml.Should().NotContain("Classes=\"dashboard-summary-surface\" Margin=");
     }
 
     private static string GetAppPath()
@@ -68,6 +85,19 @@ public class NamespaceDashboardViewTests
             "Views",
             "Controls",
             "NamespaceDashboardView.axaml"));
+    }
+
+    private static string GetStylesPath()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Styles",
+            "AppStyles.axaml"));
     }
 
     private static string GetInboxPath()

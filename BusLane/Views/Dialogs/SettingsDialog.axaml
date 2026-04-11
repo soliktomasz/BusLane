@@ -205,7 +205,8 @@
                                                 IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}"/>
 
                                         <!-- Refresh Interval -->
-                                        <Grid ColumnDefinitions="*,Auto"
+                                        <Grid Classes="settings-row"
+                                              ColumnDefinitions="*,Auto"
                                               IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <TextBlock Text="Refresh interval" FontWeight="Medium" FontSize="13"/>

@@ -31,9 +31,17 @@ public class ConnectionLibraryDialogTests
     {
         // Arrange
         var xaml = File.ReadAllText(GetDialogPath());
+        var passphraseIndex = xaml.IndexOf("Text=\"Backup passphrase\"", StringComparison.Ordinal);
 
         // Assert
-        xaml.Should().Contain("HorizontalAlignment=\"Left\"");
+        passphraseIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        // Act
+        var blockStart = xaml.LastIndexOf("<StackPanel", passphraseIndex, StringComparison.Ordinal);
+        blockStart.Should().BeGreaterThanOrEqualTo(0);
+
+        var passphraseSection = xaml[blockStart..passphraseIndex];
+        passphraseSection.Should().Contain("HorizontalAlignment=\"Left\"");
     }
 
     [Fact]

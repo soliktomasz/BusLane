@@ -100,6 +100,7 @@
                                             CommandParameter="{Binding TabId}"
                                             Margin="8,0,0,0"
                                             VerticalAlignment="Center"
+                                            AutomationProperties.Name="Close tab"
                                             ToolTip.Tip="Close tab">
                                         <LucideIcon Kind="X" Size="12"/>
                                     </Button>

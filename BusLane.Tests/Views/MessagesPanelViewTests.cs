@@ -26,6 +26,19 @@ public class MessagesPanelViewTests
         xaml.Should().Contain("Classes=\"inline-loading-surface\"");
     }
 
+    [Fact]
+    public void MessagesPanel_DisablesMessageListsWhileLoading()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMessagesPanelPath());
+
+        // Act
+        var disabledListCount = CountOccurrences(xaml, "IsEnabled=\"{Binding !CurrentMessageOps.IsLoadingMessages}\"");
+
+        // Assert
+        disabledListCount.Should().Be(2);
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -38,5 +51,19 @@ public class MessagesPanelViewTests
             "Views",
             "Controls",
             "MessagesPanelView.axaml"));
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 }

@@ -22,8 +22,10 @@ public class TabBarViewTests
         var xaml = File.ReadAllText(GetTabBarPath());
 
         // Assert
-        xaml.Should().Contain("RadioButton");
+        xaml.Should().Contain("<RadioButton");
         xaml.Should().Contain("GroupName=\"ConnectionTabs\"");
+        xaml.Should().Contain("Checked=\"TabRadioButton_Checked\"");
+        xaml.Should().Contain("AutomationProperties.Name=\"Close tab\"");
     }
 
     private static string GetTabBarPath()
