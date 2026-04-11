@@ -90,6 +90,29 @@ public class NavigationSidebarTests
         hasConnectionTypeBadge.Should().BeFalse();
     }
 
+    [Fact]
+    public void NavigationSidebar_UsesFullWidthWorkspaceActions()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("<StackPanel Classes=\"sidebar-workspace-actions\"");
+        xaml.Should().NotContain("<WrapPanel Classes=\"sidebar-workspace-actions\"");
+        xaml.Should().NotContain("ItemWidth=\"120\"");
+    }
+
+    [Fact]
+    public void NavigationSidebar_DoesNotRenderRefreshWorkspaceAction()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().NotContain("Command=\"{Binding RefreshConnectionCommand}\"");
+        xaml.Should().NotContain("Text=\"Refresh\"");
+    }
+
     private static string GetSidebarPath()
     {
         return Path.GetFullPath(Path.Combine(

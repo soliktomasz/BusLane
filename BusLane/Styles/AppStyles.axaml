@@ -1530,9 +1530,8 @@
         <Setter Property="Margin" Value="0,-2,0,0"/>
     </Style>
 
-    <Style Selector="WrapPanel.sidebar-workspace-actions">
+    <Style Selector="StackPanel.sidebar-workspace-actions">
         <Setter Property="Margin" Value="0,4,0,0"/>
-        <Setter Property="ItemHeight" Value="32"/>
     </Style>
 
     <Style Selector="Border.sidebar-context-pill">

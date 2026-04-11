@@ -114,19 +114,8 @@
                                     </Border>
                                 </WrapPanel>
 
-                                <WrapPanel Classes="sidebar-workspace-actions"
-                                           Orientation="Horizontal"
-                                           ItemWidth="120">
-                                    <Button Classes="secondary small"
-                                            Command="{Binding RefreshConnectionCommand}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="RefreshCw" Size="14"/>
-                                            <TextBlock Text="Refresh"/>
-                                        </StackPanel>
-                                    </Button>
-
+                                <StackPanel Classes="sidebar-workspace-actions"
+                                            Spacing="8">
                                     <Button Classes="secondary small"
                                             Command="{Binding OpenNamespacePanelCommand}"
                                             HorizontalAlignment="Stretch"
@@ -147,7 +136,7 @@
                                             <TextBlock Text="Disconnect"/>
                                         </StackPanel>
                                     </Button>
-                                </WrapPanel>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
