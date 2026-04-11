@@ -55,6 +55,17 @@ public class CodeEditorStyleTests
         xaml.Should().NotContain("<Style Selector=\"TextBox.code-editor:pointerover /template/ Border\">");
     }
 
+    [Fact]
+    public void SendMessageDialog_CodeEditorRemainsInsideSharedDialogBody()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSendMessageDialogPath());
+
+        // Assert
+        xaml.Should().Contain("Classes=\"code-editor\"");
+        xaml.Should().Contain("Classes=\"dialog-body\"");
+    }
+
     private static string GetAppStylesPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -66,6 +77,20 @@ public class CodeEditorStyleTests
             "BusLane",
             "Styles",
             "AppStyles.axaml"));
+    }
+
+    private static string GetSendMessageDialogPath()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Views",
+            "Dialogs",
+            "SendMessageDialog.axaml"));
     }
 
     private static string GetStyleBlock(string xaml, string selector)

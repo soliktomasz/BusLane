@@ -718,6 +718,22 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
 
+    <Style Selector="Border.dialog-command-bar">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.dialog-section-surface">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
     <Style Selector="Border.form-section">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="CornerRadius" Value="12"/>
@@ -730,6 +746,18 @@
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
+    <Style Selector="Border.severity-pill">
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.severity-pill TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
     </Style>
 
     <Style Selector="Border.settings-section">

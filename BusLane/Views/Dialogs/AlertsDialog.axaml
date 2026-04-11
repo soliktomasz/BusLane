@@ -15,9 +15,7 @@
             <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
-                        BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="0,0,0,1"
-                        Padding="24,20">
+                        Classes="dialog-header">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="44" Height="44"
@@ -48,7 +46,9 @@
                 </Border>
 
                 <!-- Tab Navigation -->
-                <Border Grid.Row="1" Padding="24,16,24,0">
+                <Border Grid.Row="1"
+                        Classes="dialog-command-bar"
+                        Margin="24,16,24,0">
                     <Border Classes="tab-nav">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <RadioButton Classes="tab-item"
@@ -69,36 +69,34 @@
 
                 <!-- Content -->
                 <ScrollViewer Grid.Row="2">
-                    <Border Padding="24,16">
+                    <Border Classes="dialog-body">
                         <Grid>
                             <!-- Active Alerts Tab Content -->
                             <StackPanel Spacing="16" IsVisible="{Binding IsActiveAlertsTabSelected}">
 
                                 <!-- Quick Actions -->
-                                <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
+                                <Border Classes="dialog-command-bar"
                                         IsVisible="{Binding HasAlerts}">
-                                    <Border Padding="16">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Button Classes="primary small"
-                                                    Command="{Binding AcknowledgeAllAlertsCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Check" Size="16"/>
-                                                    <TextBlock Text="Acknowledge All"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Classes="subtle small"
-                                                    Command="{Binding ClearAcknowledgedAlertsCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Trash2" Size="16"/>
-                                                    <TextBlock Text="Clear Acknowledged"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Classes="primary small"
+                                                Command="{Binding AcknowledgeAllAlertsCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="Check" Size="16"/>
+                                                <TextBlock Text="Acknowledge All"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="subtle small"
+                                                Command="{Binding ClearAcknowledgedAlertsCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="Trash2" Size="16"/>
+                                                <TextBlock Text="Clear Acknowledged"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
                                 </Border>
 
                                 <!-- Alerts List -->
-                                <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                                <Border Classes="dialog-section-surface" Padding="0">
                                     <StackPanel>
                                         <!-- Section Header -->
                                         <Border Padding="16,16"
@@ -175,11 +173,9 @@
                                                                 <TextBlock Text="{Binding Rule.Name}"
                                                                            FontWeight="SemiBold"
                                                                            FontSize="16"/>
-                                                                <Border CornerRadius="4" Padding="8,3"
+                                                                <Border Classes="severity-pill"
                                                                         Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
                                                                     <TextBlock Text="{Binding Rule.Severity}"
-                                                                               FontSize="11"
-                                                                               FontWeight="Medium"
                                                                                Foreground="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
                                                                 </Border>
                                                             </StackPanel>
@@ -245,7 +241,7 @@
                             <StackPanel Spacing="16" IsVisible="{Binding IsRulesTabSelected}">
 
                                 <!-- Add/Edit Rule Form -->
-                                <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
+                                <Border Classes="dialog-section-surface" Padding="0"
                                         IsVisible="{Binding IsAddingRule}">
                                     <StackPanel>
                                         <!-- Form Header -->
@@ -393,7 +389,7 @@
                                 </Border>
 
                                 <!-- Rules List -->
-                                <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
+                                <Border Classes="dialog-section-surface" Padding="0"
                                         IsVisible="{Binding !IsAddingRule}">
                                     <StackPanel>
                                         <!-- Section Header with Add Button -->
@@ -476,11 +472,9 @@
                                                                     <TextBlock Text="{Binding Name}"
                                                                                FontWeight="SemiBold"
                                                                                FontSize="16"/>
-                                                                    <Border CornerRadius="4" Padding="8,3"
+                                                                    <Border Classes="severity-pill"
                                                                             Background="{Binding Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
                                                                         <TextBlock Text="{Binding Severity}"
-                                                                                   FontSize="11"
-                                                                                   FontWeight="Medium"
                                                                                    Foreground="{Binding Severity, Converter={StaticResource SeverityToColorConverter}}"/>
                                                                     </Border>
                                                                 </StackPanel>
@@ -537,7 +531,7 @@
 
                             <!-- Alert History Tab Content -->
                             <StackPanel Spacing="16" IsVisible="{Binding IsHistoryTabSelected}">
-                                <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}">
+                                <Border Classes="dialog-section-surface" Padding="0">
                                     <StackPanel>
                                         <Border Padding="16,16"
                                                 BorderBrush="{DynamicResource BorderDefault}"
@@ -622,10 +616,7 @@
 
                 <!-- Footer -->
                 <Border Grid.Row="3"
-                        BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="0,1,0,0"
-                        Padding="24,16"
-                        Background="{DynamicResource CardBackground}">
+                        Classes="dialog-footer">
                     <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                         <ToggleSwitch IsChecked="{Binding SystemNotificationsEnabled}"
                                       OnContent="" OffContent=""/>
