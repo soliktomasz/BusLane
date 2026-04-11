@@ -96,21 +96,6 @@
                                                 <TextBlock Text="Add Connection"/>
                                             </StackPanel>
                                         </Button>
-                                        <Button Classes="secondary"
-                                                Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
-                                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Download" Size="16"/>
-                                                <TextBlock Text="Export Backup"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Classes="secondary"
-                                                Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Upload" Size="16"/>
-                                                <TextBlock Text="Import Backup"/>
-                                            </StackPanel>
-                                        </Button>
                                         <Button Classes="danger-subtle"
                                                 Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
                                                 IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
@@ -122,12 +107,34 @@
                                     </StackPanel>
 
                                     <StackPanel Spacing="6"
-                                                MaxWidth="420">
+                                                HorizontalAlignment="Left"
+                                                MaxWidth="520">
                                         <TextBlock Text="Backup passphrase"
                                                    Classes="form-section-title"/>
-                                        <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
-                                                 PasswordChar="●"
-                                                 Watermark="Required for encrypted export/import"/>
+                                        <Grid ColumnDefinitions="*,Auto,Auto"
+                                              ColumnSpacing="8">
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
+                                                     PasswordChar="●"
+                                                     Watermark="Required for encrypted export/import"/>
+                                            <Button Grid.Column="1"
+                                                    Classes="secondary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
+                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Download" Size="16"/>
+                                                    <TextBlock Text="Export Backup"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Grid.Column="2"
+                                                    Classes="secondary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Upload" Size="16"/>
+                                                    <TextBlock Text="Import Backup"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
                                         <TextBlock Text="Use the same passphrase when importing this backup later."
                                                    Classes="caption"/>
                                         <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage}"
