@@ -48,6 +48,8 @@
                     <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="SidebarBackground" Color="#FAFAFA"/>
                     <SolidColorBrush x:Key="SurfaceSubtle" Color="#F9F9F9"/>
+                    <SolidColorBrush x:Key="LayerBackground" Color="#EFEFEF"/>
+                    <SolidColorBrush x:Key="DashboardTileBackground" Color="#F7F7F7"/>
 
                     <!-- Border colors - Fluent 2 stroke tokens -->
                     <SolidColorBrush x:Key="BorderDefault" Color="#E0E0E0"/>
@@ -58,6 +60,7 @@
                     <SolidColorBrush x:Key="AccentBrand" Color="#0F6CBD"/>
                     <SolidColorBrush x:Key="AccentBrandHover" Color="#115EA3"/>
                     <SolidColorBrush x:Key="AccentBrandPressed" Color="#0C4A7E"/>
+                    <SolidColorBrush x:Key="AccentBrandSubtle" Color="#D9EDFC"/>
                     <SolidColorBrush x:Key="TextOnBrand" Color="#FFFFFF"/>
 
                     <!-- Surface backgrounds with brand tint -->
@@ -126,6 +129,8 @@
                     <SolidColorBrush x:Key="CardBackground" Color="#292929"/>
                     <SolidColorBrush x:Key="SidebarBackground" Color="#1C1C1C"/>
                     <SolidColorBrush x:Key="SurfaceSubtle" Color="#242424"/>
+                    <SolidColorBrush x:Key="LayerBackground" Color="#202020"/>
+                    <SolidColorBrush x:Key="DashboardTileBackground" Color="#171717"/>
 
                     <!-- Border colors - Fluent 2 stroke tokens for dark -->
                     <SolidColorBrush x:Key="BorderDefault" Color="#424242"/>
@@ -136,6 +141,7 @@
                     <SolidColorBrush x:Key="AccentBrand" Color="#60CDFF"/>
                     <SolidColorBrush x:Key="AccentBrandHover" Color="#8CD9FF"/>
                     <SolidColorBrush x:Key="AccentBrandPressed" Color="#3AA0F3"/>
+                    <SolidColorBrush x:Key="AccentBrandSubtle" Color="#0F2D40"/>
                     <SolidColorBrush x:Key="TextOnBrand" Color="#000000"/>
 
                     <!-- Surface backgrounds with brand tint -->

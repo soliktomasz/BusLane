@@ -44,33 +44,25 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_UsesStructuredWorkspaceCardRegions()
+    public void NavigationSidebar_UsesCompactWorkspaceSummary()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
-        // Act
-        var hasWorkspaceHeader = xaml.Contains("Classes=\"sidebar-workspace-header\"", StringComparison.Ordinal);
-        var hasWorkspaceMeta = xaml.Contains("Classes=\"sidebar-workspace-meta\"", StringComparison.Ordinal);
-        var hasWorkspaceActions = xaml.Contains("Classes=\"sidebar-workspace-actions\"", StringComparison.Ordinal);
-
         // Assert
-        hasWorkspaceHeader.Should().BeTrue();
-        hasWorkspaceMeta.Should().BeTrue();
-        hasWorkspaceActions.Should().BeTrue();
+        xaml.Should().Contain("Classes=\"sidebar-workspace-summary\"");
+        xaml.Should().NotContain("Classes=\"sidebar-workspace-card\"");
     }
 
     [Fact]
-    public void NavigationSidebar_UsesStackedWorkspaceActions()
+    public void NavigationSidebar_DoesNotRenderDisconnectAsStandalonePrimaryBlock()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
-        // Act
-        var usesStackedActions = xaml.Contains("<StackPanel Classes=\"sidebar-workspace-actions\"", StringComparison.Ordinal);
-
         // Assert
-        usesStackedActions.Should().BeTrue();
+        xaml.Should().NotContain("Classes=\"danger-outline\"");
+        xaml.Should().Contain("Command=\"{Binding DisconnectConnectionCommand}\"");
     }
 
     [Fact]
@@ -97,6 +89,29 @@ public class NavigationSidebarTests
 
         // Assert
         hasConnectionTypeBadge.Should().BeFalse();
+    }
+
+    [Fact]
+    public void NavigationSidebar_UsesFullWidthWorkspaceActions()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("<StackPanel Classes=\"sidebar-workspace-actions\"");
+        xaml.Should().NotContain("<WrapPanel Classes=\"sidebar-workspace-actions\"");
+        xaml.Should().NotContain("ItemWidth=\"120\"");
+    }
+
+    [Fact]
+    public void NavigationSidebar_DoesNotRenderRefreshWorkspaceAction()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().NotContain("Command=\"{Binding RefreshConnectionCommand}\"");
+        xaml.Should().NotContain("Text=\"Refresh\"");
     }
 
     private static string GetSidebarPath()

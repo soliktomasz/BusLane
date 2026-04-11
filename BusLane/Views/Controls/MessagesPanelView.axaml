@@ -14,7 +14,7 @@
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
-            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16,16,16,12">
+            <Border Grid.Row="0" Classes="message-command-bar">
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
                     <!-- Title and Actions Row -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -94,11 +94,7 @@
 
                     <!-- Bulk Actions Bar (visible when multi-select mode is active) -->
                     <Border Grid.Row="1"
-                            Background="{DynamicResource SurfaceSubtle}"
-                            CornerRadius="6"
-                            Padding="12,8"
-                            BorderThickness="1"
-                            BorderBrush="{DynamicResource BorderMuted}">
+                            Classes="message-search-surface">
                         <Border.IsVisible>
                             <MultiBinding Converter="{x:Static BoolConverters.And}">
                                 <Binding Path="CurrentMessageOps.IsMultiSelectMode"/>
@@ -159,9 +155,7 @@
 
                     <!-- Search Row -->
                     <Border Grid.Row="2"
-                            Background="{DynamicResource SurfaceSubtle}"
-                            CornerRadius="6"
-                            Padding="8,8"
+                            Classes="message-search-surface"
                             IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0"
@@ -199,10 +193,26 @@
 
                 <TabItem Header="Active Messages">
                     <TabItem.Content>
-                        <Grid RowDefinitions="*,Auto">
-                            <ListBox Grid.Row="0"
+                        <Grid RowDefinitions="Auto,*,Auto">
+                            <Border Grid.Row="0"
+                                    Classes="inline-loading-surface"
+                                    Margin="8,8,8,0"
+                                    IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <ProgressBar IsIndeterminate="True"
+                                                 Width="120"
+                                                 Height="3"
+                                                 VerticalAlignment="Center"/>
+                                    <TextBlock Text="Loading messages"
+                                               Classes="caption"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <ListBox Grid.Row="1"
                                      ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
                                      SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     IsEnabled="{Binding !CurrentMessageOps.IsLoadingMessages}"
                                      Background="Transparent"
                                      Padding="8"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -235,12 +245,11 @@
                                             </CheckBox.IsChecked>
                                         </CheckBox>
                                     <Button Grid.Column="1"
-                                            Classes="subtle"
+                                            Classes="message-row"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
-                                            Padding="12,12"
                                             Margin="0,2">
                                         <Button.ContextMenu>
                                             <ContextMenu>
@@ -298,42 +307,9 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                            <controls:MessagePaginationFooterView Grid.Row="1"
+                            <controls:MessagePaginationFooterView Grid.Row="2"
                                                                   Margin="8,8,8,0"
                                                                   DataContext="{Binding CurrentMessageOps}"/>
-
-                            <!-- Beautiful centered loading overlay -->
-                            <Border Grid.RowSpan="2" IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
-                                    Background="{DynamicResource LoadingOverlay}"
-                                    IsHitTestVisible="True">
-                                <Border Background="{DynamicResource CardBackground}"
-                                        Padding="32,24"
-                                        CornerRadius="12"
-                                        BorderThickness="1"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BoxShadow="0 8 24 0 #32000000"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        MinWidth="280">
-                                    <StackPanel Spacing="16" HorizontalAlignment="Center">
-                                        <ProgressBar IsIndeterminate="True" Width="200" Height="4"
-                                                     Foreground="{DynamicResource AccentBrand}"
-                                                     Background="{DynamicResource BorderDefault}"/>
-                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
-                                            <TextBlock Text="Loading Messages"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppForeground}"
-                                                       HorizontalAlignment="Center"/>
-                                            <TextBlock Text="Please wait while we fetch the messages..."
-                                                       FontSize="13"
-                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                       HorizontalAlignment="Center"
-                                                       TextAlignment="Center"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
-                            </Border>
                         </Grid>
                     </TabItem.Content>
                 </TabItem>
@@ -341,13 +317,29 @@
                 <TabItem Header="Dead Letter">
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
-                        <Grid RowDefinitions="*,Auto">
-                            <ListBox Grid.Row="0"
+                        <Grid RowDefinitions="Auto,*,Auto">
+                            <Border Grid.Row="0"
+                                    Classes="inline-loading-surface"
+                                    Margin="8,8,8,0"
+                                    IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <ProgressBar IsIndeterminate="True"
+                                                 Width="120"
+                                                 Height="3"
+                                                 VerticalAlignment="Center"/>
+                                    <TextBlock Text="Loading dead letter messages"
+                                               Classes="caption"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <ListBox Grid.Row="1"
                                      ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
-                             SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
-                             Background="Transparent"
-                             Padding="8"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     IsEnabled="{Binding !CurrentMessageOps.IsLoadingMessages}"
+                                     Background="Transparent"
+                                     Padding="8"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -377,12 +369,11 @@
                                             </CheckBox.IsChecked>
                                         </CheckBox>
                                     <Button Grid.Column="1"
-                                            Classes="subtle"
+                                            Classes="message-row"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
-                                            Padding="12,12"
                                             Margin="0,2">
                                         <Button.ContextMenu>
                                             <ContextMenu>
@@ -448,42 +439,9 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                            <controls:MessagePaginationFooterView Grid.Row="1"
+                            <controls:MessagePaginationFooterView Grid.Row="2"
                                                                   Margin="8,8,8,0"
                                                                   DataContext="{Binding CurrentMessageOps}"/>
-
-                            <!-- Beautiful centered loading overlay -->
-                            <Border Grid.RowSpan="2" IsVisible="{Binding CurrentMessageOps.IsLoadingMessages}"
-                                    Background="{DynamicResource LoadingOverlay}"
-                                    IsHitTestVisible="True">
-                                <Border Background="{DynamicResource CardBackground}"
-                                        Padding="32,24"
-                                        CornerRadius="12"
-                                        BorderThickness="1"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BoxShadow="0 8 24 0 #32000000"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        MinWidth="280">
-                                    <StackPanel Spacing="16" HorizontalAlignment="Center">
-                                        <ProgressBar IsIndeterminate="True" Width="200" Height="4"
-                                                     Foreground="{DynamicResource AccentBrand}"
-                                                     Background="{DynamicResource BorderDefault}"/>
-                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
-                                            <TextBlock Text="Loading Dead Letter Messages"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppForeground}"
-                                                       HorizontalAlignment="Center"/>
-                                            <TextBlock Text="Please wait while we fetch the dead letter messages..."
-                                                       FontSize="13"
-                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                       HorizontalAlignment="Center"
-                                                       TextAlignment="Center"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
-                            </Border>
                         </Grid>
                     </TabItem.Content>
                 </TabItem>

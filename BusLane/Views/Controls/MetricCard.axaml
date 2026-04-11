@@ -8,12 +8,12 @@
              x:Class="BusLane.Views.Controls.MetricCard"
              x:DataType="vm:MetricCardViewModel">
 
-    <StackPanel Spacing="8">
+    <StackPanel Spacing="6">
         <!-- Value and Trend -->
         <StackPanel Orientation="Horizontal" Spacing="12">
             <TextBlock Text="{Binding Value, StringFormat='{}{0:N0}'}"
-                       FontSize="32"
-                       FontWeight="Bold"
+                       FontSize="28"
+                       FontWeight="SemiBold"
                        Foreground="{DynamicResource TextPrimary}"/>
             
             <StackPanel Orientation="Horizontal"
@@ -40,7 +40,7 @@
 
         <!-- Sparkline -->
         <lvc:CartesianChart 
-            Height="40"
+            Height="32"
             Series="{Binding SparklineSeries}"
             XAxes="{Binding XAxes}"
             YAxes="{Binding YAxes}"

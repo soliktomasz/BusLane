@@ -12,130 +12,131 @@
                 HorizontalAlignment="Center"
                 Width="900"
                 MaxHeight="760">
-            <Grid RowDefinitions="Auto,Auto,520,Auto">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
-                        Background="{DynamicResource SurfaceSubtle}"
-                        Padding="24,20"
-                        CornerRadius="12,12,0,0"
-                        BorderBrush="{DynamicResource BorderMuted}"
-                        BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <Border Background="{DynamicResource SurfaceBrand}"
-                                    CornerRadius="8"
-                                    Width="40"
-                                    Height="40"
-                                    VerticalAlignment="Center">
-                                <LucideIcon Kind="Mail"
-                                            Size="20"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Foreground="{DynamicResource AccentBrand}"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Send Message" Classes="heading"/>
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="to" Classes="caption"/>
-                                    <TextBlock Text="{Binding SendMessageViewModel.EntityName}"
-                                               Classes="caption"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource AccentBrand}"/>
+                        Classes="dialog-header">
+                    <Grid RowDefinitions="Auto,Auto"
+                          RowSpacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <Border Background="{DynamicResource SurfaceBrand}"
+                                        CornerRadius="8"
+                                        Width="40"
+                                        Height="40"
+                                        VerticalAlignment="Center">
+                                    <LucideIcon Kind="Mail"
+                                                Size="20"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Foreground="{DynamicResource AccentBrand}"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="Send Message" Classes="heading"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="to" Classes="caption"/>
+                                        <TextBlock Text="{Binding SendMessageViewModel.EntityName}"
+                                                   Classes="caption"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AccentBrand}"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                        </StackPanel>
 
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Spacing="4">
-                            <Button Classes="toolbar"
-                                    ToolTip.Tip="Import message from JSON file"
-                                    Command="{Binding SendMessageViewModel.ImportMessagesCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Download" Size="16"/>
-                                    <TextBlock Text="Import" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button Classes="toolbar" ToolTip.Tip="Load saved template">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="FolderOpen" Size="16"/>
-                                    <TextBlock Text="Load" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button.Flyout>
-                                    <Flyout Placement="BottomEdgeAlignedRight">
-                                        <Border MinWidth="300" MaxHeight="360" Padding="12">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Text="Saved Templates" Classes="body-strong"/>
-                                                <ScrollViewer MaxHeight="280">
-                                                    <StackPanel Spacing="4">
-                                                        <ItemsControl ItemsSource="{Binding SendMessageViewModel.SavedMessages}">
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate x:DataType="models:SavedMessage">
-                                                                    <Border Classes="property-row" Padding="12,8">
-                                                                        <Grid ColumnDefinitions="*,Auto">
-                                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
-                                                                                <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}"
-                                                                                           Classes="caption"
-                                                                                           FontSize="11"/>
-                                                                            </StackPanel>
-                                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                                                                <Button Classes="primary small"
-                                                                                        Content="Use"
-                                                                                        Padding="12,4"
-                                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
-                                                                                        CommandParameter="{Binding}"/>
-                                                                                <Button Classes="icon"
-                                                                                        ToolTip.Tip="Delete template"
-                                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
-                                                                                        CommandParameter="{Binding}">
-                                                                                    <LucideIcon Kind="Trash2" Size="12"/>
-                                                                                </Button>
-                                                                            </StackPanel>
-                                                                        </Grid>
-                                                                    </Border>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                        <TextBlock Text="No saved templates yet"
-                                                                   Classes="caption"
-                                                                   HorizontalAlignment="Center"
-                                                                   Margin="0,12"
-                                                                   IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}"/>
-                                                    </StackPanel>
-                                                </ScrollViewer>
-                                            </StackPanel>
-                                        </Border>
-                                    </Flyout>
-                                </Button.Flyout>
-                            </Button>
-
-                            <Button Classes="toolbar"
-                                    ToolTip.Tip="Save as template"
-                                    Command="{Binding SendMessageViewModel.ShowSaveCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Save" Size="16"/>
-                                    <TextBlock Text="Save" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="8,0"/>
-
-                            <Button Classes="toolbar"
-                                    ToolTip.Tip="Clear all fields"
-                                    Command="{Binding SendMessageViewModel.ClearFormCommand}">
-                                <LucideIcon Kind="RefreshCw" Size="16"/>
-                            </Button>
-
-                            <Button Classes="icon"
+                            <Button Grid.Column="1"
+                                    Classes="icon"
                                     ToolTip.Tip="Close"
                                     Command="{Binding CancelSendMessageCommand}">
                                 <LucideIcon Kind="X" Size="16"/>
                             </Button>
-                        </StackPanel>
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Classes="dialog-command-bar">
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Spacing="4">
+                                <Button Classes="toolbar"
+                                        ToolTip.Tip="Import message from JSON file"
+                                        Command="{Binding SendMessageViewModel.ImportMessagesCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Download" Size="16"/>
+                                        <TextBlock Text="Import" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Classes="toolbar" ToolTip.Tip="Load saved template">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="FolderOpen" Size="16"/>
+                                        <TextBlock Text="Load" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Button.Flyout>
+                                        <Flyout Placement="BottomEdgeAlignedRight">
+                                            <Border MinWidth="300" MaxHeight="360" Padding="12">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Text="Saved Templates" Classes="body-strong"/>
+                                                    <ScrollViewer MaxHeight="280">
+                                                        <StackPanel Spacing="4">
+                                                            <ItemsControl ItemsSource="{Binding SendMessageViewModel.SavedMessages}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate x:DataType="models:SavedMessage">
+                                                                        <Border Classes="property-row" Padding="12,8">
+                                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}"
+                                                                                               Classes="caption"
+                                                                                               FontSize="11"/>
+                                                                                </StackPanel>
+                                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                                                    <Button Classes="primary small"
+                                                                                            Content="Use"
+                                                                                            Padding="12,4"
+                                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
+                                                                                            CommandParameter="{Binding}"/>
+                                                                                    <Button Classes="icon"
+                                                                                            ToolTip.Tip="Delete template"
+                                                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
+                                                                                            CommandParameter="{Binding}">
+                                                                                        <LucideIcon Kind="Trash2" Size="12"/>
+                                                                                    </Button>
+                                                                                </StackPanel>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <TextBlock Text="No saved templates yet"
+                                                                       Classes="caption"
+                                                                       HorizontalAlignment="Center"
+                                                                       Margin="0,12"
+                                                                       IsVisible="{Binding !SendMessageViewModel.SavedMessages.Count}"/>
+                                                        </StackPanel>
+                                                    </ScrollViewer>
+                                                </StackPanel>
+                                            </Border>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+
+                                <Button Classes="toolbar"
+                                        ToolTip.Tip="Save as template"
+                                        Command="{Binding SendMessageViewModel.ShowSaveCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Save" Size="16"/>
+                                        <TextBlock Text="Save" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="8,0"/>
+
+                                <Button Classes="toolbar"
+                                        ToolTip.Tip="Clear all fields"
+                                        Command="{Binding SendMessageViewModel.ClearFormCommand}">
+                                    <LucideIcon Kind="RefreshCw" Size="16"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Border>
 
@@ -158,27 +159,29 @@
                 </Border>
 
                 <!-- Content -->
-                <Grid Grid.Row="2" Margin="24,16,24,16" RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Classes="tab-nav">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <RadioButton Classes="tab-item"
-                                         Content="Compose"
-                                         GroupName="SendMessageTabs"
-                                         IsChecked="{Binding SendMessageViewModel.IsComposeTabSelected}"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="Properties"
-                                         GroupName="SendMessageTabs"
-                                         IsChecked="{Binding SendMessageViewModel.IsPropertiesTabSelected}"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="Custom"
-                                         GroupName="SendMessageTabs"
-                                         IsChecked="{Binding SendMessageViewModel.IsCustomTabSelected}"/>
-                        </StackPanel>
-                    </Border>
+                <Border Grid.Row="2"
+                        Classes="dialog-body">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border Grid.Row="0" Classes="tab-nav">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <RadioButton Classes="tab-item"
+                                             Content="Compose"
+                                             GroupName="SendMessageTabs"
+                                             IsChecked="{Binding SendMessageViewModel.IsComposeTabSelected}"/>
+                                <RadioButton Classes="tab-item"
+                                             Content="Properties"
+                                             GroupName="SendMessageTabs"
+                                             IsChecked="{Binding SendMessageViewModel.IsPropertiesTabSelected}"/>
+                                <RadioButton Classes="tab-item"
+                                             Content="Custom"
+                                             GroupName="SendMessageTabs"
+                                             IsChecked="{Binding SendMessageViewModel.IsCustomTabSelected}"/>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- Compose Tab -->
-                    <ScrollViewer Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding SendMessageViewModel.IsComposeTabSelected}">
-                        <Border Classes="surface-subtle" Padding="16" CornerRadius="8">
+                        <!-- Compose Tab -->
+                        <ScrollViewer Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding SendMessageViewModel.IsComposeTabSelected}">
+                            <Border Classes="dialog-section-surface">
                             <StackPanel Spacing="12">
                                 <Border Background="{DynamicResource CardBackground}"
                                         CornerRadius="8"
@@ -217,12 +220,12 @@
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
-                        </Border>
-                    </ScrollViewer>
+                            </Border>
+                        </ScrollViewer>
 
-                    <!-- Properties Tab -->
-                    <ScrollViewer Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding SendMessageViewModel.IsPropertiesTabSelected}">
-                        <Border Classes="surface-subtle" Padding="16" CornerRadius="8">
+                        <!-- Properties Tab -->
+                        <ScrollViewer Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding SendMessageViewModel.IsPropertiesTabSelected}">
+                            <Border Classes="dialog-section-surface">
                             <StackPanel Spacing="12">
                                 <Border Classes="property-row" Padding="16">
                                     <StackPanel Spacing="12">
@@ -339,12 +342,12 @@
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
-                        </Border>
-                    </ScrollViewer>
+                            </Border>
+                        </ScrollViewer>
 
-                    <!-- Custom Tab -->
-                    <ScrollViewer Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding SendMessageViewModel.IsCustomTabSelected}">
-                        <Border Classes="surface-subtle" Padding="16" CornerRadius="8">
+                        <!-- Custom Tab -->
+                        <ScrollViewer Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding SendMessageViewModel.IsCustomTabSelected}">
+                            <Border Classes="dialog-section-surface">
                             <StackPanel Spacing="12">
                                 <Border Classes="property-row" Padding="16">
                                     <StackPanel Spacing="12">
@@ -409,17 +412,14 @@
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
-                        </Border>
-                    </ScrollViewer>
-                </Grid>
+                            </Border>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
 
                 <!-- Footer -->
                 <Border Grid.Row="3"
-                        Padding="24,16"
-                        Background="{DynamicResource SurfaceSubtle}"
-                        CornerRadius="0,0,12,12"
-                        BorderBrush="{DynamicResource BorderMuted}"
-                        BorderThickness="0,1,0,0">
+                        Classes="dialog-footer">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <LucideIcon Kind="Lightbulb"

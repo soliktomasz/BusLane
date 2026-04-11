@@ -34,7 +34,7 @@
                 <Border Grid.Column="0"
                         Background="{DynamicResource TabNavBackground}"
                         BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="0,0,1,1"
+                        BorderThickness="0,0,0,1"
                         Padding="12,8"
                         IsVisible="{Binding !IsNavigationPanelVisible}">
                     <Button Classes="subtle icon-button"
@@ -63,26 +63,31 @@
                                   HorizontalAlignment="Center"/>
 
             <!-- Content when namespace selected (Azure mode) -->
-            <Grid Grid.Row="0" Grid.RowSpan="2"
+                <Grid Grid.Row="0" Grid.RowSpan="2"
                   IsVisible="{Binding IsActiveTabAzureMode}"
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
-                <Grid Grid.Row="0" Margin="0,0,0,16">
-                    <StackPanel>
-                        <TextBlock Text="{Binding ActiveTab.Namespace.Name}" Classes="title"/>
-                        <TextBlock Text="{Binding ActiveTab.Namespace.ResourceGroup}" Classes="caption" Margin="0,4,0,0"/>
-                    </StackPanel>
-                    <Button Classes="secondary small"
-                            Command="{Binding RefreshCommand}"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <LucideIcon Kind="RefreshCw" Size="12"/>
-                            <TextBlock Text="Refresh"/>
+                <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding ActiveTab.Namespace.Name}" Classes="title"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="Resource group" Classes="caption"/>
+                                <TextBlock Text="{Binding ActiveTab.Namespace.ResourceGroup}" Classes="caption"/>
+                            </StackPanel>
                         </StackPanel>
-                    </Button>
-                </Grid>
+                        <Button Classes="secondary small"
+                                Command="{Binding RefreshCommand}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <LucideIcon Kind="RefreshCw" Size="12"/>
+                                <TextBlock Text="Refresh"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
 
                 <!-- Main content grid -->
                 <Grid x:Name="AzureWorkspaceGrid"
@@ -112,29 +117,33 @@
                   RowDefinitions="Auto,*">
 
                 <!-- Header -->
-                <Grid Grid.Row="0" Margin="0,0,0,16">
-                    <StackPanel>
-                        <TextBlock Text="{Binding ActiveTab.SavedConnection.Name}" Classes="title"/>
-                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
-                            <Border Classes="badge-info" Padding="8,4">
-                                <TextBlock Text="{Binding ActiveTab.SavedConnection.TypeDisplayName}" FontSize="12" Foreground="{DynamicResource AccentBrand}"/>
-                            </Border>
-                            <TextBlock Text="{Binding ActiveTab.SavedConnection.EntityName}" Classes="caption" VerticalAlignment="Center"
-                                       IsVisible="{Binding ActiveTab.SavedConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Text="{Binding ActiveTab.SavedConnection.Endpoint}" Classes="caption" VerticalAlignment="Center"
-                                       IsVisible="{Binding ActiveTab.SavedConnection.IsNamespaceLevel}"/>
+                <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding ActiveTab.SavedConnection.Name}" Classes="title"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="{Binding ActiveTab.SavedConnection.TypeDisplayName}" Classes="caption"/>
+                                <TextBlock Text="{Binding ActiveTab.SavedConnection.EntityName}"
+                                           Classes="caption"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding ActiveTab.SavedConnection.EntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                <TextBlock Text="{Binding ActiveTab.SavedConnection.Endpoint}"
+                                           Classes="caption"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding ActiveTab.SavedConnection.IsNamespaceLevel}"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                    <Button Classes="secondary small"
-                            Command="{Binding RefreshConnectionCommand}"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <LucideIcon Kind="RefreshCw" Size="12"/>
-                            <TextBlock Text="Refresh"/>
-                        </StackPanel>
-                    </Button>
-                </Grid>
+                        <Button Classes="secondary small"
+                                Command="{Binding RefreshConnectionCommand}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <LucideIcon Kind="RefreshCw" Size="12"/>
+                                <TextBlock Text="Refresh"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
 
                 <!-- Main content for connection string mode -->
                 <Grid x:Name="ConnectionWorkspaceGrid"

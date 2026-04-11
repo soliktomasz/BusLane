@@ -6,9 +6,7 @@
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.NamespaceInboxView"
              x:DataType="vm:NamespaceInboxViewModel">
-
-    <Border Classes="card"
-            Padding="20">
+    <Border Classes="dashboard-inbox-surface">
         <StackPanel Spacing="16">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                 <StackPanel Grid.Column="0" Spacing="4">
@@ -33,8 +31,7 @@
 
             <StackPanel Spacing="16"
                         IsVisible="{Binding IsExpanded}">
-                <Border Classes="card"
-                        Padding="16"
+                <Border Classes="dialog-section-surface"
                         IsVisible="{Binding IsEmpty}">
                     <StackPanel Spacing="6">
                         <TextBlock Text="Nothing needs attention right now."
@@ -48,12 +45,8 @@
                 <ItemsControl ItemsSource="{Binding Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
-                            <Border Margin="0,0,0,12"
-                                    Padding="16"
-                                    CornerRadius="12"
-                                    BorderThickness="1"
-                                    BorderBrush="{DynamicResource BorderDefault}"
-                                    Background="{DynamicResource LayerBackground}">
+                            <Border Classes="inbox-item-surface"
+                                    Margin="0,0,0,12">
                                 <StackPanel Spacing="12">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                         <StackPanel Grid.Column="0" Spacing="4">
@@ -88,9 +81,7 @@
                                     <Grid ColumnDefinitions="*,*,*,*"
                                           ColumnSpacing="12">
                                         <Border Grid.Column="0"
-                                                Padding="10"
-                                                CornerRadius="10"
-                                                Background="{DynamicResource AppBackground}">
+                                                Classes="inbox-stat-block">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Active"
                                                            Classes="caption"/>
@@ -101,9 +92,7 @@
                                         </Border>
 
                                         <Border Grid.Column="1"
-                                                Padding="10"
-                                                CornerRadius="10"
-                                                Background="{DynamicResource AppBackground}">
+                                                Classes="inbox-stat-block">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="DLQ"
                                                            Classes="caption"/>
@@ -114,9 +103,7 @@
                                         </Border>
 
                                         <Border Grid.Column="2"
-                                                Padding="10"
-                                                CornerRadius="10"
-                                                Background="{DynamicResource AppBackground}">
+                                                Classes="inbox-stat-block">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Scheduled"
                                                            Classes="caption"/>
@@ -127,9 +114,7 @@
                                         </Border>
 
                                         <Border Grid.Column="3"
-                                                Padding="10"
-                                                CornerRadius="10"
-                                                Background="{DynamicResource AppBackground}">
+                                                Classes="inbox-stat-block">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Alert Delta"
                                                            Classes="caption"/>
@@ -142,15 +127,15 @@
 
                                     <StackPanel Orientation="Horizontal"
                                                 Spacing="8">
-                                        <Button Classes="small"
+                                        <Button Classes="secondary small"
                                                 Command="{Binding OpenMessagesCommand}">
                                             <TextBlock Text="Open Messages"/>
                                         </Button>
-                                        <Button Classes="small"
+                                        <Button Classes="secondary small"
                                                 Command="{Binding OpenDeadLetterCommand}">
                                             <TextBlock Text="Open DLQ"/>
                                         </Button>
-                                        <Button Classes="small"
+                                        <Button Classes="secondary small"
                                                 Command="{Binding OpenSessionInspectorCommand}"
                                                 IsVisible="{Binding CanOpenSessionInspector}">
                                             <TextBlock Text="Open Sessions"/>
