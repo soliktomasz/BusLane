@@ -16,24 +16,27 @@
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Padding="0">
-            <Grid RowDefinitions="Auto,Auto,*">
-                <!-- Header -->
+            <Grid RowDefinitions="Auto,*">
                 <Border Grid.Row="0"
-                        BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="0,0,0,1"
-                        Padding="24,20">
+                        Classes="dialog-header">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
-                                Width="44" Height="44"
-                                CornerRadius="12"
+                                Width="40"
+                                Height="40"
+                                CornerRadius="10"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,16,0">
-                            <LucideIcon Kind="Cable" Size="20"
-                                      Foreground="{DynamicResource AccentBrand}"/>
+                            <LucideIcon Kind="Cable"
+                                        Size="20"
+                                        Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="My Connections" Classes="title-small"/>
-                            <TextBlock Text="Manage your saved Service Bus connections" Classes="caption"/>
+                        <StackPanel Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Spacing="2">
+                            <TextBlock Text="My Connections"
+                                       Classes="title-small"/>
+                            <TextBlock Text="Manage your saved Service Bus connections"
+                                       Classes="caption"/>
                         </StackPanel>
                         <Button Grid.Column="2"
                                 Classes="subtle"
@@ -45,322 +48,325 @@
                     </Grid>
                 </Border>
 
-                <!-- Tab Navigation -->
-                <Border Grid.Row="1" Padding="24,16,24,0"
-                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
-                    <Border Classes="tab-nav">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <RadioButton Classes="tab-item"
-                                         Content="All"
-                                         GroupName="EnvironmentTabs"
-                                         IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
-                                             Converter={StaticResource EnvironmentTabConverter},
-                                             ConverterParameter={x:Static models:ConnectionEnvironment.None}}"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="Development"
-                                         GroupName="EnvironmentTabs"
-                                         IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
-                                             Converter={StaticResource EnvironmentTabConverter},
-                                             ConverterParameter={x:Static models:ConnectionEnvironment.Development}}"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="Test"
-                                         GroupName="EnvironmentTabs"
-                                         IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
-                                             Converter={StaticResource EnvironmentTabConverter},
-                                             ConverterParameter={x:Static models:ConnectionEnvironment.Test}}"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="Production"
-                                         GroupName="EnvironmentTabs"
-                                         IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
-                                             Converter={StaticResource EnvironmentTabConverter},
-                                             ConverterParameter={x:Static models:ConnectionEnvironment.Production}}"/>
-                        </StackPanel>
-                    </Border>
-                </Border>
-
-                <!-- Content -->
-                <ScrollViewer Grid.Row="2">
-                    <Border Padding="24,16">
+                <ScrollViewer Grid.Row="1">
+                    <Border Classes="dialog-body">
                         <StackPanel Spacing="16">
-
-                            <!-- Quick Actions (when not adding) -->
-                            <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
-                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Button Classes="primary"
-                                                    Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <LucideIcon Kind="Plus" Size="16"/>
-                                                    <TextBlock Text="Add Connection"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Classes="secondary"
-                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
-                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Download" Size="16"/>
-                                                    <TextBlock Text="Export Backup"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Classes="secondary"
-                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Upload" Size="16"/>
-                                                    <TextBlock Text="Import Backup"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Classes="subtle"
-                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
-                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Trash2" Size="16"/>
-                                                    <TextBlock Text="Clear All"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-
-                                        <StackPanel Spacing="6">
-                                            <TextBlock Text="Backup passphrase" FontWeight="Medium" FontSize="13"/>
-                                            <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
-                                                     PasswordChar="●"
-                                                     Watermark="Required for encrypted export/import"
-                                                     MaxWidth="400"/>
-                                            <TextBlock Text="Use the same passphrase when importing this backup later."
-                                                       Classes="caption"
-                                                       FontSize="11"/>
-                                            <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage}"
-                                                       Foreground="{DynamicResource TextDanger}"
-                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                                       TextWrapping="Wrap"/>
-                                        </StackPanel>
+                            <StackPanel Spacing="8"
+                                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
+                                <TextBlock Text="Environment filter"
+                                           Classes="caption"/>
+                                <Border Classes="tab-nav">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <RadioButton Classes="tab-item"
+                                                     Content="All"
+                                                     GroupName="EnvironmentTabs"
+                                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
+                                                         Converter={StaticResource EnvironmentTabConverter},
+                                                         ConverterParameter={x:Static models:ConnectionEnvironment.None}}"/>
+                                        <RadioButton Classes="tab-item"
+                                                     Content="Development"
+                                                     GroupName="EnvironmentTabs"
+                                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
+                                                         Converter={StaticResource EnvironmentTabConverter},
+                                                         ConverterParameter={x:Static models:ConnectionEnvironment.Development}}"/>
+                                        <RadioButton Classes="tab-item"
+                                                     Content="Test"
+                                                     GroupName="EnvironmentTabs"
+                                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
+                                                         Converter={StaticResource EnvironmentTabConverter},
+                                                         ConverterParameter={x:Static models:ConnectionEnvironment.Test}}"/>
+                                        <RadioButton Classes="tab-item"
+                                                     Content="Production"
+                                                     GroupName="EnvironmentTabs"
+                                                     IsChecked="{Binding Connection.ConnectionLibraryViewModel.SelectedEnvironmentTab,
+                                                         Converter={StaticResource EnvironmentTabConverter},
+                                                         ConverterParameter={x:Static models:ConnectionEnvironment.Production}}"/>
                                     </StackPanel>
                                 </Border>
-                            </Border>
+                            </StackPanel>
 
-                            <!-- Add/Edit Connection Form -->
-                            <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
-                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}">
-                                <StackPanel>
-                                    <!-- Form Header -->
-                                    <Border Padding="16,16"
-                                            BorderBrush="{DynamicResource BorderDefault}"
-                                            BorderThickness="0,0,0,1"
-                                            Background="{DynamicResource CardBackground}"
-                                            CornerRadius="8,8,0,0">
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <Border Width="28" Height="28"
-                                                    CornerRadius="6"
-                                                    Background="{DynamicResource SurfaceBrand}">
-                                                <Panel>
-                                                    <LucideIcon Kind="Pencil" Size="16"
-                                                              Foreground="{DynamicResource AccentBrand}"
-                                                              IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection}"/>
-                                                    <LucideIcon Kind="Plus" Size="16"
-                                                              Foreground="{DynamicResource AccentBrand}"
-                                                              IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
-                                                </Panel>
-                                            </Border>
-                                            <Panel>
-                                                <TextBlock Text="Add New Connection"
-                                                           FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"
-                                                           IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
-                                                <TextBlock Text="Edit Connection"
-                                                           FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"
-                                                           IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
-                                            </Panel>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Form Content -->
-                                    <Border Padding="16">
-                                        <StackPanel Spacing="16">
-                                            <!-- Name and Environment Row -->
-                                            <Grid ColumnDefinitions="*,160" ColumnSpacing="16">
-                                                <StackPanel Grid.Column="0" Spacing="6">
-                                                    <TextBlock Text="Connection name" FontWeight="Medium" FontSize="13"/>
-                                                    <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionName}"
-                                                             Watermark="e.g., Production Service Bus"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" Spacing="6">
-                                                    <TextBlock Text="Environment" FontWeight="Medium" FontSize="13"/>
-                                                    <ComboBox SelectedItem="{Binding Connection.ConnectionLibraryViewModel.NewConnectionEnvironment}"
-                                                              ItemsSource="{Binding Connection.ConnectionLibraryViewModel.AvailableEnvironments}"
-                                                              HorizontalAlignment="Stretch">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <TextBlock Text="{Binding}"/>
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                            <!-- Connection String -->
-                                            <StackPanel Spacing="6">
-                                                <TextBlock Text="Connection string" FontWeight="Medium" FontSize="13"/>
-                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                                    <TextBox Grid.Column="0"
-                                                             Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionString}"
-                                                             Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
-                                                             PasswordChar="●"
-                                                             TextWrapping="Wrap"
-                                                             AcceptsReturn="False"
-                                                             MaxHeight="80"/>
-                                                    <Button Grid.Column="1"
-                                                            Classes="secondary"
-                                                            ToolTip.Tip="Test connection"
-                                                            Command="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionCommand}"
-                                                            IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"
-                                                            VerticalAlignment="Top">
-                                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <LucideIcon Kind="PlugZap" Size="16"/>
-                                                            <TextBlock Text="Test" IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"/>
-                                                            <TextBlock Text="Testing..." IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection}"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </Grid>
-                                                <TextBlock Text="Your connection string is encrypted and stored securely"
-                                                           Classes="caption" FontSize="11"/>
+                            <Border Classes="connection-library-command-bar"
+                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Classes="primary"
+                                                Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <LucideIcon Kind="Plus" Size="16"/>
+                                                <TextBlock Text="Add Connection"/>
                                             </StackPanel>
-
-                                            <!-- Success Result -->
-                                            <Border Classes="infobar-success"
-                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionSuccess, FallbackValue=False}">
-                                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                                    <Border Width="28" Height="28"
-                                                            CornerRadius="14"
-                                                            Background="{DynamicResource TextSuccess}">
-                                                        <LucideIcon Kind="Check" Size="16"
-                                                                  Foreground="{DynamicResource TextOnBrand}"/>
-                                                    </Border>
-                                                    <StackPanel VerticalAlignment="Center" Spacing="2">
-                                                        <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}"
-                                                                   FontWeight="Medium"/>
-                                                        <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.DetectedInfo}"
-                                                                   Classes="caption"
-                                                                   IsVisible="{Binding Connection.ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <!-- Error Result -->
-                                            <Border Classes="infobar-error">
-                                                <Border.IsVisible>
-                                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                        <Binding Path="Connection.ConnectionLibraryViewModel.CheckConnectionResult" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
-                                                        <Binding Path="Connection.ConnectionLibraryViewModel.CheckConnectionSuccess" Converter="{x:Static BoolConverters.Not}"/>
-                                                    </MultiBinding>
-                                                </Border.IsVisible>
-                                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                                    <Border Width="28" Height="28"
-                                                            CornerRadius="14"
-                                                            Background="{DynamicResource TextDanger}">
-                                                        <LucideIcon Kind="TriangleAlert" Size="16"
-                                                                  Foreground="{DynamicResource TextOnBrand}"/>
-                                                    </Border>
-                                                    <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}"
-                                                               TextWrapping="Wrap"
-                                                               VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <!-- Validation Error -->
-                                            <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.ValidationMessage}"
-                                                       Foreground="{DynamicResource TextDanger}"
-                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.ValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                                       TextWrapping="Wrap"/>
-
-                                            <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                            <!-- Form Actions -->
-                                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                <Button Classes="secondary"
-                                                        Command="{Binding Connection.ConnectionLibraryViewModel.CancelAddConnectionCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <LucideIcon Kind="X" Size="16"/>
-                                                        <TextBlock Text="Cancel"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button Classes="primary"
-                                                        Command="{Binding Connection.ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
-                                                        IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <LucideIcon Kind="Save" Size="16"/>
-                                                        <Panel>
-                                                            <TextBlock Text="Save Connection"
-                                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
-                                                            <TextBlock Text="Update Connection"
-                                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
-                                                        </Panel>
-                                                    </StackPanel>
-                                                </Button>
+                                        </Button>
+                                        <Button Classes="secondary"
+                                                Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
+                                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="Download" Size="16"/>
+                                                <TextBlock Text="Export Backup"/>
                                             </StackPanel>
-                                        </StackPanel>
-                                    </Border>
+                                        </Button>
+                                        <Button Classes="secondary"
+                                                Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="Upload" Size="16"/>
+                                                <TextBlock Text="Import Backup"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="danger-subtle"
+                                                Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
+                                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="Trash2" Size="16"/>
+                                                <TextBlock Text="Clear All"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="6"
+                                                MaxWidth="420">
+                                        <TextBlock Text="Backup passphrase"
+                                                   Classes="form-section-title"/>
+                                        <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
+                                                 PasswordChar="●"
+                                                 Watermark="Required for encrypted export/import"/>
+                                        <TextBlock Text="Use the same passphrase when importing this backup later."
+                                                   Classes="caption"/>
+                                        <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage}"
+                                                   Foreground="{DynamicResource TextDanger}"
+                                                   IsVisible="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 
-                            <!-- Saved Connections List -->
-                            <Border Classes="card" Padding="0" Background="{DynamicResource SurfaceSubtle}"
-                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
-                                <StackPanel>
-                                    <!-- Section Header -->
-                                    <Border Padding="16,16"
-                                            BorderBrush="{DynamicResource BorderDefault}"
-                                            BorderThickness="0,0,0,1"
-                                            Background="{DynamicResource CardBackground}"
-                                            CornerRadius="8,8,0,0">
+                            <Border Classes="form-section"
+                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}">
+                                <StackPanel Spacing="16">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="12">
+                                        <Border Width="28"
+                                                Height="28"
+                                                CornerRadius="6"
+                                                Background="{DynamicResource SurfaceBrand}">
+                                            <Panel>
+                                                <LucideIcon Kind="Pencil"
+                                                            Size="16"
+                                                            Foreground="{DynamicResource AccentBrand}"
+                                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection}"/>
+                                                <LucideIcon Kind="Plus"
+                                                            Size="16"
+                                                            Foreground="{DynamicResource AccentBrand}"
+                                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                            </Panel>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center"
+                                                    Spacing="2">
+                                            <TextBlock Text="Add New Connection"
+                                                       Classes="form-section-title"
+                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                            <TextBlock Text="Edit Connection"
+                                                       Classes="form-section-title"
+                                                       IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                                            <TextBlock Text="Connection details and secure credentials"
+                                                       Classes="caption"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <Grid ColumnDefinitions="*,160"
+                                          ColumnSpacing="16">
+                                        <StackPanel Grid.Column="0" Spacing="6">
+                                            <TextBlock Text="Connection name"
+                                                       Classes="form-section-title"/>
+                                            <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionName}"
+                                                     Watermark="e.g., Production Service Bus"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="Environment"
+                                                       Classes="form-section-title"/>
+                                            <ComboBox SelectedItem="{Binding Connection.ConnectionLibraryViewModel.NewConnectionEnvironment}"
+                                                      ItemsSource="{Binding Connection.ConnectionLibraryViewModel.AvailableEnvironments}"
+                                                      HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderDefault}"/>
+
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Connection string"
+                                                   Classes="form-section-title"/>
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="8">
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionString}"
+                                                     Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
+                                                     PasswordChar="●"
+                                                     TextWrapping="Wrap"
+                                                     AcceptsReturn="False"
+                                                     MaxHeight="80"/>
+                                            <Button Grid.Column="1"
+                                                    Classes="secondary"
+                                                    ToolTip.Tip="Test connection"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionCommand}"
+                                                    IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"
+                                                    VerticalAlignment="Top">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="PlugZap" Size="16"/>
+                                                    <TextBlock Text="Test"
+                                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection, Converter={x:Static BoolConverters.Not}}"/>
+                                                    <TextBlock Text="Testing..."
+                                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsCheckingConnection}"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                        <TextBlock Text="Your connection string is encrypted and stored securely"
+                                                   Classes="caption"/>
+                                    </StackPanel>
+
+                                    <Border Classes="infobar-success"
+                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionSuccess, FallbackValue=False}">
                                         <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <Border Width="28" Height="28"
-                                                    CornerRadius="6"
-                                                    Background="{DynamicResource SurfaceBrand}">
-                                                <LucideIcon Kind="Cable" Size="16"
-                                                          Foreground="{DynamicResource AccentBrand}"/>
+                                            <Border Width="28"
+                                                    Height="28"
+                                                    CornerRadius="14"
+                                                    Background="{DynamicResource TextSuccess}">
+                                                <LucideIcon Kind="Check"
+                                                            Size="16"
+                                                            Foreground="{DynamicResource TextOnBrand}"/>
                                             </Border>
-                                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                <TextBlock Text="Saved Connections" FontWeight="SemiBold" FontSize="16"/>
-                                                <Border Classes="badge-info" CornerRadius="10" Padding="8,3"
-                                                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
-                                                    <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}" FontSize="12"/>
-                                                </Border>
+                                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}"
+                                                           FontWeight="Medium"/>
+                                                <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.DetectedInfo}"
+                                                           Classes="caption"
+                                                           IsVisible="{Binding Connection.ConnectionLibraryViewModel.DetectedInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
 
-                                    <!-- Empty State -->
-                                    <Border Padding="16">
-                                        <StackPanel IsVisible="{Binding !Connection.ConnectionLibraryViewModel.FilteredConnections.Count, FallbackValue=True}"
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Center"
-                                                    Spacing="12"
-                                                    Margin="0,24">
-                                            <Border Width="64" Height="64"
-                                                    CornerRadius="32"
-                                                    Background="{DynamicResource SurfaceSubtle}"
-                                                    HorizontalAlignment="Center"
-                                                    BorderThickness="2"
-                                                    BorderBrush="{DynamicResource BorderDefault}">
-                                                <LucideIcon Kind="Cable" Size="32"
-                                                          Foreground="{DynamicResource SubtleForeground}"/>
+                                    <Border Classes="infobar-error">
+                                        <Border.IsVisible>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="Connection.ConnectionLibraryViewModel.CheckConnectionResult"
+                                                         Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                                <Binding Path="Connection.ConnectionLibraryViewModel.CheckConnectionSuccess"
+                                                         Converter="{x:Static BoolConverters.Not}"/>
+                                            </MultiBinding>
+                                        </Border.IsVisible>
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <Border Width="28"
+                                                    Height="28"
+                                                    CornerRadius="14"
+                                                    Background="{DynamicResource TextDanger}">
+                                                <LucideIcon Kind="TriangleAlert"
+                                                            Size="16"
+                                                            Foreground="{DynamicResource TextOnBrand}"/>
                                             </Border>
-                                            <TextBlock Text="No connections saved"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"
-                                                       HorizontalAlignment="Center"/>
-                                            <TextBlock Text="Add a connection to get started"
-                                                       FontSize="13"
-                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.CheckConnectionResult}"
+                                                       TextWrapping="Wrap"
+                                                       VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
 
-                                    <!-- Connections List -->
+                                    <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.ValidationMessage}"
+                                               Foreground="{DynamicResource TextDanger}"
+                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.ValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                               TextWrapping="Wrap"/>
+
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderDefault}"/>
+
+                                    <StackPanel Classes="dialog-footer-actions">
+                                        <Button Classes="secondary"
+                                                Command="{Binding Connection.ConnectionLibraryViewModel.CancelAddConnectionCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="X" Size="16"/>
+                                                <TextBlock Text="Cancel"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="primary"
+                                                Command="{Binding Connection.ConnectionLibraryViewModel.ValidateAndAddConnectionCommand}"
+                                                IsEnabled="{Binding Connection.ConnectionLibraryViewModel.IsValidating, Converter={x:Static BoolConverters.Not}}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <LucideIcon Kind="Save" Size="16"/>
+                                                <Panel>
+                                                    <TextBlock Text="Save Connection"
+                                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}"/>
+                                                    <TextBlock Text="Update Connection"
+                                                               IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsEditingConnection, FallbackValue=False}"/>
+                                                </Panel>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="form-section"
+                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
+                                <StackPanel Spacing="12">
+                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                          ColumnSpacing="12">
+                                        <Border Grid.Column="0"
+                                                Width="28"
+                                                Height="28"
+                                                CornerRadius="6"
+                                                Background="{DynamicResource SurfaceBrand}">
+                                            <LucideIcon Kind="Cable"
+                                                        Size="16"
+                                                        Foreground="{DynamicResource AccentBrand}"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1"
+                                                    Orientation="Horizontal"
+                                                    Spacing="10"
+                                                    VerticalAlignment="Center">
+                                            <TextBlock Text="Saved Connections"
+                                                       Classes="form-section-title"/>
+                                            <Border Classes="badge-info"
+                                                    CornerRadius="10"
+                                                    Padding="8,3"
+                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
+                                                <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}"
+                                                           FontSize="12"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderDefault}"/>
+
+                                    <StackPanel IsVisible="{Binding !Connection.ConnectionLibraryViewModel.FilteredConnections.Count, FallbackValue=True}"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"
+                                                Spacing="12"
+                                                Margin="0,12">
+                                        <Border Width="64"
+                                                Height="64"
+                                                CornerRadius="32"
+                                                Background="{DynamicResource LayerBackground}"
+                                                HorizontalAlignment="Center"
+                                                BorderThickness="2"
+                                                BorderBrush="{DynamicResource BorderDefault}">
+                                            <LucideIcon Kind="Cable"
+                                                        Size="32"
+                                                        Foreground="{DynamicResource SubtleForeground}"/>
+                                        </Border>
+                                        <TextBlock Text="No connections saved"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Add a connection to get started"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource SubtleForeground}"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+
                                     <ItemsControl ItemsSource="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections}"
-                                                  Margin="8,0,8,8">
+                                                  Margin="0,4,0,0">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="models:SavedConnection">
                                                 <Border Padding="16"
@@ -370,34 +376,43 @@
                                                         BorderThickness="1"
                                                         BorderBrush="{DynamicResource BorderDefault}">
                                                     <Grid ColumnDefinitions="Auto,*,Auto">
-                                                        <!-- Connection Icon -->
                                                         <Border Grid.Column="0"
-                                                                Width="40" Height="40"
+                                                                Width="40"
+                                                                Height="40"
                                                                 CornerRadius="10"
                                                                 Background="{DynamicResource SurfaceBrand}"
                                                                 Margin="0,0,16,0"
                                                                 VerticalAlignment="Center">
-                                                            <LucideIcon Kind="Cable" Size="20"
-                                                                      Foreground="{DynamicResource AccentBrand}"/>
+                                                            <LucideIcon Kind="Cable"
+                                                                        Size="20"
+                                                                        Foreground="{DynamicResource AccentBrand}"/>
                                                         </Border>
 
-                                                        <!-- Connection Info -->
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                                                        <StackPanel Grid.Column="1"
+                                                                    VerticalAlignment="Center"
+                                                                    Spacing="6">
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <TextBlock Text="{Binding Name}"
                                                                            FontWeight="SemiBold"
                                                                            FontSize="16"/>
-                                                                <LucideIcon Kind="Star" Size="16"
-                                                                          Foreground="{DynamicResource TextWarning}"
-                                                                          IsVisible="{Binding IsFavorite}"
-                                                                          VerticalAlignment="Center"/>
+                                                                <LucideIcon Kind="Star"
+                                                                            Size="16"
+                                                                            Foreground="{DynamicResource TextWarning}"
+                                                                            IsVisible="{Binding IsFavorite}"
+                                                                            VerticalAlignment="Center"/>
                                                             </StackPanel>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                <Border Classes="badge-info" Padding="8,3">
-                                                                    <TextBlock Text="{Binding TypeDisplayName}" FontSize="11"/>
+                                                                <Border Classes="badge-info"
+                                                                        Padding="8,3">
+                                                                    <TextBlock Text="{Binding TypeDisplayName}"
+                                                                               FontSize="11"/>
                                                                 </Border>
-                                                                <Border Classes="badge-env" Padding="8,3" IsVisible="{Binding HasEnvironment}">
-                                                                    <TextBlock Text="{Binding EnvironmentDisplayName}" FontSize="11" FontWeight="SemiBold"/>
+                                                                <Border Classes="badge-env"
+                                                                        Padding="8,3"
+                                                                        IsVisible="{Binding HasEnvironment}">
+                                                                    <TextBlock Text="{Binding EnvironmentDisplayName}"
+                                                                               FontSize="11"
+                                                                               FontWeight="SemiBold"/>
                                                                 </Border>
                                                                 <TextBlock Text="{Binding EntityName}"
                                                                            Classes="caption"
@@ -415,7 +430,6 @@
                                                                        Foreground="{DynamicResource MutedForeground}"/>
                                                         </StackPanel>
 
-                                                        <!-- Actions -->
                                                         <StackPanel Grid.Column="2"
                                                                     Orientation="Horizontal"
                                                                     Spacing="4"
@@ -426,8 +440,13 @@
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
                                                                 <Panel>
-                                                                    <LucideIcon Kind="Star" Size="16" IsVisible="{Binding !IsFavorite}"/>
-                                                                    <LucideIcon Kind="Star" Size="16" Foreground="{DynamicResource TextWarning}" IsVisible="{Binding IsFavorite}"/>
+                                                                    <LucideIcon Kind="Star"
+                                                                                Size="16"
+                                                                                IsVisible="{Binding !IsFavorite}"/>
+                                                                    <LucideIcon Kind="Star"
+                                                                                Size="16"
+                                                                                Foreground="{DynamicResource TextWarning}"
+                                                                                IsVisible="{Binding IsFavorite}"/>
                                                                 </Panel>
                                                             </Button>
                                                             <Button Classes="subtle small"
@@ -460,7 +479,6 @@
                                     </ItemsControl>
                                 </StackPanel>
                             </Border>
-
                         </StackPanel>
                     </Border>
                 </ScrollViewer>

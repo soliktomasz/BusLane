@@ -710,6 +710,28 @@
         <Setter Property="Padding" Value="24,16"/>
     </Style>
 
+    <Style Selector="Border.connection-library-command-bar">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.form-section">
+        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="TextBlock.form-section-title">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
     <Style Selector="Border.settings-section">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="CornerRadius" Value="12"/>
