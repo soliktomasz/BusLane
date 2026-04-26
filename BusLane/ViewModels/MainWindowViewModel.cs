@@ -1398,7 +1398,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private async Task DisconnectConnectionAsync() => await Connection.DisconnectConnectionAsync();
+    private async Task DisconnectConnectionAsync()
+    {
+        await Tabs.CloseActiveTabAsync();
+        await Connection.DisconnectConnectionAsync();
+    }
 
     [RelayCommand]
     private async Task RefreshConnectionAsync()

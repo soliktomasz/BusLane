@@ -21,27 +21,24 @@ public class ConnectionLibraryDialogTests
         // Arrange
         var xaml = File.ReadAllText(GetDialogPath());
 
-        // Assert
-        xaml.Should().Contain("Classes=\"connection-library-command-bar\"");
+        // Assert — toolbar row combines environment tabs + Add Connection
+        xaml.Should().Contain("StartAddConnectionCommand");
         xaml.Should().NotContain("Background=\"{DynamicResource SurfaceSubtle}\"");
     }
 
     [Fact]
-    public void ConnectionLibraryDialog_LeftAlignsBackupPassphraseSection()
+    public void ConnectionLibraryDialog_PlacesBackupSectionInFooter()
     {
         // Arrange
         var xaml = File.ReadAllText(GetDialogPath());
-        var passphraseIndex = xaml.IndexOf("Text=\"Backup passphrase\"", StringComparison.Ordinal);
+
+        // Act — Backup section appears after the Saved Connections section
+        var savedConnectionsIndex = xaml.IndexOf("Saved Connections", StringComparison.Ordinal);
+        var backupIndex = xaml.IndexOf("Backup passphrase", StringComparison.Ordinal);
 
         // Assert
-        passphraseIndex.Should().BeGreaterThanOrEqualTo(0);
-
-        // Act
-        var blockStart = xaml.LastIndexOf("<StackPanel", passphraseIndex, StringComparison.Ordinal);
-        blockStart.Should().BeGreaterThanOrEqualTo(0);
-
-        var passphraseSection = xaml[blockStart..passphraseIndex];
-        passphraseSection.Should().Contain("HorizontalAlignment=\"Left\"");
+        savedConnectionsIndex.Should().BeGreaterThanOrEqualTo(0);
+        backupIndex.Should().BeGreaterThan(savedConnectionsIndex);
     }
 
     [Fact]
@@ -52,8 +49,8 @@ public class ConnectionLibraryDialogTests
 
         // Act
         var passphraseIndex = xaml.IndexOf("Text=\"Backup passphrase\"", StringComparison.Ordinal);
-        var exportIndex = xaml.IndexOf("Text=\"Export Backup\"", StringComparison.Ordinal);
-        var importIndex = xaml.IndexOf("Text=\"Import Backup\"", StringComparison.Ordinal);
+        var exportIndex = xaml.IndexOf("Text=\"Export\"", StringComparison.Ordinal);
+        var importIndex = xaml.IndexOf("Text=\"Import\"", StringComparison.Ordinal);
 
         // Assert
         passphraseIndex.Should().BeGreaterThanOrEqualTo(0);
@@ -63,13 +60,14 @@ public class ConnectionLibraryDialogTests
     }
 
     [Fact]
-    public void ConnectionLibraryDialog_UsesWiderBackupPassphraseLayout()
+    public void ConnectionLibraryDialog_HasBackupManagementSection()
     {
         // Arrange
         var xaml = File.ReadAllText(GetDialogPath());
 
-        // Assert
-        xaml.Should().Contain("MaxWidth=\"520\"");
+        // Assert — backup section exists with management heading
+        xaml.Should().Contain("Backup &amp; Management");
+        xaml.Should().Contain("Clear All Connections");
     }
 
     [Fact]
