@@ -54,11 +54,10 @@
                 <ScrollViewer Grid.Row="1">
                     <Border Classes="dialog-body">
                         <StackPanel Spacing="16">
-                            <StackPanel Spacing="8"
-                                        IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
-                                <TextBlock Text="Environment filter"
-                                           Classes="caption"/>
-                                <Border Classes="tab-nav">
+                            <!-- Toolbar: Environment tabs (left) + Add Connection (right) -->
+                            <Grid ColumnDefinitions="*,Auto"
+                                  IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
+                                <Border Grid.Column="0" Classes="tab-nav">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <RadioButton Classes="tab-item"
                                                      Content="All"
@@ -86,67 +85,17 @@
                                                          ConverterParameter={x:Static models:ConnectionEnvironment.Production}}"/>
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
-
-                            <Border Classes="connection-library-command-bar"
-                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
-                                <StackPanel Spacing="12">
+                                <Button Grid.Column="1"
+                                        Classes="primary"
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Classes="primary"
-                                                Command="{Binding Connection.ConnectionLibraryViewModel.StartAddConnectionCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="Plus" Size="16"/>
-                                                <TextBlock Text="Add Connection"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Classes="danger-subtle"
-                                                Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
-                                                IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Trash2" Size="16"/>
-                                                <TextBlock Text="Clear All"/>
-                                            </StackPanel>
-                                        </Button>
+                                        <LucideIcon Kind="Plus" Size="16"/>
+                                        <TextBlock Text="Add Connection"/>
                                     </StackPanel>
-
-                                    <StackPanel Spacing="6"
-                                                HorizontalAlignment="Left"
-                                                MaxWidth="520">
-                                        <TextBlock Text="Backup passphrase"
-                                                   Classes="form-section-title"/>
-                                        <Grid ColumnDefinitions="*,Auto,Auto"
-                                              ColumnSpacing="8">
-                                            <TextBox Grid.Column="0"
-                                                     Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
-                                                     PasswordChar="●"
-                                                     PlaceholderText="Required for encrypted export/import"/>
-                                            <Button Grid.Column="1"
-                                                    Classes="secondary"
-                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
-                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Download" Size="16"/>
-                                                    <TextBlock Text="Export Backup"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Grid.Column="2"
-                                                    Classes="secondary"
-                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <LucideIcon Kind="Upload" Size="16"/>
-                                                    <TextBlock Text="Import Backup"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                        <TextBlock Text="Use the same passphrase when importing this backup later."
-                                                   Classes="caption"/>
-                                        <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage}"
-                                                   Foreground="{DynamicResource TextDanger}"
-                                                   IsVisible="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                                   TextWrapping="Wrap"/>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
+                                </Button>
+                            </Grid>
 
                             <Border Classes="form-section"
                                     IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, FallbackValue=False}">
@@ -487,6 +436,79 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Backup & Management footer -->
+                            <Border Classes="form-section"
+                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.IsAddingConnection, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="12">
+                                        <Border Width="28"
+                                                Height="28"
+                                                CornerRadius="6"
+                                                Background="{DynamicResource SurfaceBrand}">
+                                            <LucideIcon Kind="ShieldCheck"
+                                                        Size="16"
+                                                        Foreground="{DynamicResource AccentBrand}"/>
+                                        </Border>
+                                        <TextBlock Text="Backup &amp; Management"
+                                                   Classes="form-section-title"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderDefault}"/>
+
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Backup passphrase"
+                                                   Classes="form-section-title"/>
+                                        <Grid ColumnDefinitions="*,Auto,Auto"
+                                              ColumnSpacing="8">
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
+                                                     PasswordChar="●"
+                                                     PlaceholderText="Required for encrypted export/import"/>
+                                            <Button Grid.Column="1"
+                                                    Classes="secondary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
+                                                    IsVisible="{Binding Connection.ConnectionLibraryViewModel.SavedConnections.Count}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Download" Size="16"/>
+                                                    <TextBlock Text="Export"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Grid.Column="2"
+                                                    Classes="secondary"
+                                                    Command="{Binding Connection.ConnectionLibraryViewModel.ImportConnectionsBackupCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <LucideIcon Kind="Upload" Size="16"/>
+                                                    <TextBlock Text="Import"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                        <TextBlock Text="Use the same passphrase when importing this backup later."
+                                                   Classes="caption"/>
+                                        <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage}"
+                                                   Foreground="{DynamicResource TextDanger}"
+                                                   IsVisible="{Binding Connection.ConnectionLibraryViewModel.BackupErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderDefault}"
+                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}"/>
+
+                                    <Button Classes="danger-subtle"
+                                            Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}"
+                                            IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}"
+                                            HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="Trash2" Size="16"/>
+                                            <TextBlock Text="Clear All Connections"/>
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
