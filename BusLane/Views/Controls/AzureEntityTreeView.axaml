@@ -293,8 +293,6 @@
                                                             <Border Grid.Column="2"
                                                                     Classes="entity-tree-badge"
                                                                     Background="{DynamicResource SurfaceSubtle}"
-                                                                    BorderThickness="1"
-                                                                    BorderBrush="{DynamicResource BorderMuted}"
                                                                     VerticalAlignment="Center">
                                                                 <TextBlock Foreground="{DynamicResource SubtleForeground}">
                                                                     <Run Text="{Binding SubscriptionCount}"/><Run Text=" subs"/>

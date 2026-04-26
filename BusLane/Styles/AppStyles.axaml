@@ -906,32 +906,28 @@
         <Setter Property="Width" Value="18"/>
         <Setter Property="Height" Value="18"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-tree-section-count">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="CornerRadius" Value="9"/>
         <Setter Property="Padding" Value="6,1"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-group-header">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-tree-row-surface">
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-tree-loading">
@@ -949,8 +945,7 @@
     <Style Selector="Border.entity-tree-badge">
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="6,2"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-tree-badge TextBlock">
@@ -961,7 +956,7 @@
     <Style Selector="Border.message-command-bar">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
-        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="16,16,16,12"/>
     </Style>
 
@@ -969,8 +964,7 @@
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="10,8"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Button.message-row">
@@ -1118,8 +1112,7 @@
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
         <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="Padding" Value="20,18"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.dashboard-summary-surface">
@@ -1134,8 +1127,7 @@
         <Setter Property="Background" Value="{DynamicResource DashboardTileBackground}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="8"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.dashboard-inbox-surface">
@@ -1166,8 +1158,7 @@
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="StackPanel.dialog-footer-actions">
