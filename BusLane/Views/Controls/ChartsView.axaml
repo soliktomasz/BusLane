@@ -8,27 +8,55 @@
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header -->
-            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0" Text="Metrics &amp; Charts" Classes="heading" VerticalAlignment="Center"/>
-
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
-                        <!-- Time range selector -->
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Time Range:" VerticalAlignment="Center" FontSize="13"/>
-                            <ComboBox ItemsSource="{Binding AvailableTimeRanges}"
-                                      SelectedItem="{Binding SelectedTimeRange}"
-                                      MinWidth="120"/>
+            <Border Grid.Row="0"
+                    Background="{DynamicResource LayerBackground}"
+                    BorderBrush="{DynamicResource BorderMuted}"
+                    BorderThickness="0,0,0,1"
+                    Padding="20,16">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Title with icon -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <Border Classes="metric-icon-surface">
+                            <LucideIcon Kind="ChartBar" Size="16"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Metrics &amp; Charts" Classes="heading"/>
+                            <TextBlock Text="Monitor message trends and entity distribution"
+                                       Classes="caption"/>
                         </StackPanel>
+                    </StackPanel>
 
-                        <CheckBox Content="Aggregated" IsChecked="{Binding ShowAggregated}" VerticalAlignment="Center"/>
+                    <!-- Controls -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <!-- Time range selector -->
+                        <Border Classes="form-section" Padding="6,4" CornerRadius="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <LucideIcon Kind="Clock3" Size="14"
+                                            Foreground="{DynamicResource SubtleForeground}"
+                                            VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding AvailableTimeRanges}"
+                                          SelectedItem="{Binding SelectedTimeRange}"
+                                          MinWidth="120"
+                                          Padding="8,6"
+                                          BorderThickness="0"
+                                          Background="Transparent"/>
+                            </StackPanel>
+                        </Border>
 
-                        <Button Classes="subtle small"
+                        <CheckBox Content="Aggregated"
+                                  IsChecked="{Binding ShowAggregated}"
+                                  VerticalAlignment="Center"
+                                  FontSize="13"/>
+
+                        <Button Classes="secondary small"
                                 Command="{Binding RefreshChartsCommand}"
-                                Padding="8,8">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <LucideIcon Kind="RefreshCw" Size="12"/>
-                                <TextBlock Text="Refresh"/>
+                                Padding="10,6">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="RefreshCw" Size="13"/>
+                                <TextBlock Text="Refresh" FontSize="12"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -37,79 +65,155 @@
 
             <!-- Charts Grid -->
             <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                <Grid RowDefinitions="Auto,Auto,Auto" Margin="16">
+                <StackPanel Margin="20" Spacing="16">
 
                     <!-- Message Count Over Time -->
-                    <Border Grid.Row="0" Classes="card" Padding="16" Margin="0,0,0,16">
-                        <Grid RowDefinitions="Auto,300">
-                            <TextBlock Grid.Row="0" Text="Active Messages Over Time" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                            <Border Grid.Row="1"
-                                    Background="{DynamicResource SurfaceSubtle}"
-                                    BorderBrush="{DynamicResource BorderMuted}"
-                                    BorderThickness="1"
-                                    CornerRadius="8">
-                                <TextBlock Text="Chart unavailable in this build"
-                                           Classes="caption"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
+                    <Border Classes="card-elevated" Padding="20">
+                        <Grid RowDefinitions="Auto,Auto,280">
+                            <!-- Section Header -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,4">
+                                <Border Width="4" Height="18" CornerRadius="2"
+                                        Background="{DynamicResource AccentBrand}"/>
+                                <TextBlock Text="Active Messages Over Time"
+                                           Classes="body-strong"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                       Text="Track active message count trends across your entities"
+                                       Classes="caption"
+                                       Margin="14,0,0,14"/>
+                            <!-- Chart Area -->
+                            <Border Grid.Row="2"
+                                    Classes="message-empty-state">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="10">
+                                    <LucideIcon Kind="TrendingUp" Size="32"
+                                                Foreground="{DynamicResource SubtleForeground}"
+                                                HorizontalAlignment="Center"
+                                                Opacity="0.5"/>
+                                    <TextBlock Text="Chart unavailable in this build"
+                                               Classes="caption"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Metrics data will appear here when collected"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource MutedForeground}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
                             </Border>
                         </Grid>
                     </Border>
 
                     <!-- Dead Letter Count Over Time -->
-                    <Border Grid.Row="1" Classes="card" Padding="16" Margin="0,0,0,16">
-                        <Grid RowDefinitions="Auto,300">
-                            <TextBlock Grid.Row="0" Text="Dead Letters Over Time" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                            <Border Grid.Row="1"
-                                    Background="{DynamicResource SurfaceSubtle}"
-                                    BorderBrush="{DynamicResource BorderMuted}"
-                                    BorderThickness="1"
-                                    CornerRadius="8">
-                                <TextBlock Text="Chart unavailable in this build"
-                                           Classes="caption"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
+                    <Border Classes="card-elevated" Padding="20">
+                        <Grid RowDefinitions="Auto,Auto,280">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,4">
+                                <Border Width="4" Height="18" CornerRadius="2"
+                                        Background="{DynamicResource TextDanger}"/>
+                                <TextBlock Text="Dead Letters Over Time"
+                                           Classes="body-strong"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                       Text="Monitor dead letter queue accumulation patterns"
+                                       Classes="caption"
+                                       Margin="14,0,0,14"/>
+                            <Border Grid.Row="2"
+                                    Classes="message-empty-state">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="10">
+                                    <LucideIcon Kind="TriangleAlert" Size="32"
+                                                Foreground="{DynamicResource TextDanger}"
+                                                HorizontalAlignment="Center"
+                                                Opacity="0.5"/>
+                                    <TextBlock Text="Chart unavailable in this build"
+                                               Classes="caption"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Dead letter trends will appear here when collected"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource MutedForeground}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
                             </Border>
                         </Grid>
                     </Border>
 
                     <!-- Distribution and Comparison Charts -->
-                    <Grid Grid.Row="2" ColumnDefinitions="*,*">
+                    <Grid ColumnDefinitions="*,16,*">
                         <!-- Entity Distribution Pie Chart -->
-                        <Border Grid.Column="0" Classes="card" Padding="16" Margin="0,0,8,0">
-                            <Grid RowDefinitions="Auto,300">
-                                <TextBlock Grid.Row="0" Text="Message Distribution (Top 10)" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                                <Border Grid.Row="1"
-                                        Background="{DynamicResource SurfaceSubtle}"
-                                        BorderBrush="{DynamicResource BorderMuted}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
-                                    <TextBlock Text="Chart unavailable in this build"
-                                               Classes="caption"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
+                        <Border Grid.Column="0" Classes="card-elevated" Padding="20">
+                            <Grid RowDefinitions="Auto,Auto,280">
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,4">
+                                    <Border Width="4" Height="18" CornerRadius="2"
+                                            Background="{DynamicResource TextSuccess}"/>
+                                    <TextBlock Text="Message Distribution"
+                                               Classes="body-strong"/>
+                                    <Border Classes="badge-muted" Margin="4,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Top 10"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1"
+                                           Text="Active messages spread across entities"
+                                           Classes="caption"
+                                           Margin="14,0,0,14"/>
+                                <Border Grid.Row="2"
+                                        Classes="message-empty-state">
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Spacing="10">
+                                        <LucideIcon Kind="FileChartPie" Size="32"
+                                                    Foreground="{DynamicResource TextSuccess}"
+                                                    HorizontalAlignment="Center"
+                                                    Opacity="0.5"/>
+                                        <TextBlock Text="Chart unavailable in this build"
+                                                   Classes="caption"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Distribution data will appear here"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource MutedForeground}"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
                                 </Border>
                             </Grid>
                         </Border>
 
                         <!-- Comparison Bar Chart -->
-                        <Border Grid.Column="1" Classes="card" Padding="16" Margin="8,0,0,0">
-                            <Grid RowDefinitions="Auto,300">
-                                <TextBlock Grid.Row="0" Text="Entity Comparison (Top 10)" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                                <Border Grid.Row="1"
-                                        Background="{DynamicResource SurfaceSubtle}"
-                                        BorderBrush="{DynamicResource BorderMuted}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
-                                    <TextBlock Text="Chart unavailable in this build"
-                                               Classes="caption"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
+                        <Border Grid.Column="2" Classes="card-elevated" Padding="20">
+                            <Grid RowDefinitions="Auto,Auto,280">
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,4">
+                                    <Border Width="4" Height="18" CornerRadius="2"
+                                            Background="{DynamicResource TextWarning}"/>
+                                    <TextBlock Text="Entity Comparison"
+                                               Classes="body-strong"/>
+                                    <Border Classes="badge-muted" Margin="4,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Top 10"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1"
+                                           Text="Compare active vs dead letter counts"
+                                           Classes="caption"
+                                           Margin="14,0,0,14"/>
+                                <Border Grid.Row="2"
+                                        Classes="message-empty-state">
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Spacing="10">
+                                        <LucideIcon Kind="ChartColumnBig" Size="32"
+                                                    Foreground="{DynamicResource TextWarning}"
+                                                    HorizontalAlignment="Center"
+                                                    Opacity="0.5"/>
+                                        <TextBlock Text="Chart unavailable in this build"
+                                                   Classes="caption"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Comparison data will appear here"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource MutedForeground}"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
                                 </Border>
                             </Grid>
                         </Border>
                     </Grid>
-                </Grid>
+                </StackPanel>
             </ScrollViewer>
         </Grid>
     </Border>

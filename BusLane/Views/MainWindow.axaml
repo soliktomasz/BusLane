@@ -165,13 +165,23 @@
                     IsVisible="{Binding FeaturePanels.ShowLiveStream}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Margin="0,0,0,16">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Live Message Stream" Classes="title"/>
-                            <Button Grid.Column="1" Classes="subtle"
+                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
+                                <LucideIcon Kind="Radio" Size="18"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Live Message Stream" Classes="heading"/>
+                                <TextBlock Text="Real-time message monitoring for queues and subscriptions"
+                                           Classes="caption"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Classes="secondary small"
                                     Command="{Binding CloseLiveStreamCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="16"/>
+                                    <LucideIcon Kind="X" Size="14"/>
                                     <TextBlock Text="Close"/>
                                 </StackPanel>
                             </Button>
@@ -186,13 +196,23 @@
                     IsVisible="{Binding FeaturePanels.ShowCharts}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Margin="0,0,0,16">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Dashboard" Classes="title"/>
-                            <Button Grid.Column="1" Classes="subtle"
+                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
+                                <LucideIcon Kind="LayoutDashboard" Size="18"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Dashboard" Classes="heading"/>
+                                <TextBlock Text="Namespace metrics, inbox, and entity summaries"
+                                           Classes="caption"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Classes="secondary small"
                                     Command="{Binding CloseChartsCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="16"/>
+                                    <LucideIcon Kind="X" Size="14"/>
                                     <TextBlock Text="Close"/>
                                 </StackPanel>
                             </Button>

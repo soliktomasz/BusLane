@@ -24,8 +24,18 @@
                         Background="{DynamicResource SurfaceSubtle}"
                         CornerRadius="8,8,0,0"
                         Padding="20,16">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Spacing="4">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrand}"
+                                Margin="0,0,12,0">
+                            <LucideIcon Kind="Mail" Size="18"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
                             <TextBlock Text="Message Details" Classes="heading"/>
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Sequence" Classes="caption"/>
@@ -35,7 +45,7 @@
                                            Foreground="{DynamicResource AccentBrand}"/>
                             </StackPanel>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
                             <Button Classes="toolbar"
                                     Command="{Binding ExportMessageCommand}"
                                     CommandParameter="{Binding CurrentMessageOps.SelectedMessage}"

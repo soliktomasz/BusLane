@@ -9,34 +9,52 @@
             IsVisible="{Binding Confirmation.ShowConfirmDialog}">
         <Border Classes="modal modal-small"
                 VerticalAlignment="Center"
-                HorizontalAlignment="Center">
-            <DockPanel>
+                HorizontalAlignment="Center"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <TextBlock Text="{Binding Confirmation.ConfirmDialogTitle}" Classes="heading"/>
-                    <Button Classes="icon" 
-                            HorizontalAlignment="Right"
-                            Command="{Binding Confirmation.CancelConfirmDialogCommand}">
-                        <LucideIcon Kind="X" Size="16"/>
-                    </Button>
-                </Grid>
-                
+                <Border Grid.Row="0" Classes="dialog-header">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceDanger}"
+                                Margin="0,0,12,0">
+                            <LucideIcon Kind="TriangleAlert" Size="18"
+                                        Foreground="{DynamicResource TextDanger}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Confirmation.ConfirmDialogTitle}"
+                                   Classes="heading"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Classes="icon"
+                                Command="{Binding Confirmation.CancelConfirmDialogCommand}">
+                            <LucideIcon Kind="X" Size="16"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
                 <!-- Message -->
-                <TextBlock DockPanel.Dock="Top" 
-                           Text="{Binding Confirmation.ConfirmDialogMessage}" 
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,24"/>
-                
+                <Border Grid.Row="1" Classes="dialog-body">
+                    <TextBlock Text="{Binding Confirmation.ConfirmDialogMessage}"
+                               TextWrapping="Wrap"
+                               Classes="body"/>
+                </Border>
+
                 <!-- Action Buttons -->
-                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                    <Button Classes="secondary small" 
-                            Content="Cancel" 
-                            Command="{Binding Confirmation.CancelConfirmDialogCommand}"/>
-                    <Button Classes="danger small" 
-                            Content="{Binding Confirmation.ConfirmDialogConfirmText}" 
-                            Command="{Binding Confirmation.ExecuteConfirmDialogCommand}"/>
-                </StackPanel>
-            </DockPanel>
+                <Border Grid.Row="2" Classes="dialog-footer">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                        <Button Classes="secondary small"
+                                Content="Cancel"
+                                Command="{Binding Confirmation.CancelConfirmDialogCommand}"/>
+                        <Button Classes="danger small"
+                                Content="{Binding Confirmation.ConfirmDialogConfirmText}"
+                                Command="{Binding Confirmation.ExecuteConfirmDialogCommand}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
     </Border>
 </UserControl>

@@ -9,23 +9,40 @@
             IsVisible="{Binding ShowStatusPopup}">
         <Border Classes="modal modal-small"
                 VerticalAlignment="Center"
-                HorizontalAlignment="Center">
-            <DockPanel>
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <TextBlock Text="Status Message" Classes="heading"/>
-                    <Button Classes="icon" 
-                            HorizontalAlignment="Right"
-                            Command="{Binding CloseStatusPopupCommand}">
-                        <LucideIcon Kind="X" Size="16"/>
-                    </Button>
-                </Grid>
-                <Border Classes="surface-subtle" Padding="12">
-                    <SelectableTextBlock Text="{Binding StatusMessage}" 
-                                         TextWrapping="Wrap" 
-                                         FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                         FontSize="12"/>
+                HorizontalAlignment="Center"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <Border Grid.Row="0" Classes="dialog-header">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrand}"
+                                Margin="0,0,12,0">
+                            <LucideIcon Kind="Info" Size="18"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Grid.Column="1"
+                                   Text="Status Message"
+                                   Classes="heading"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Classes="icon"
+                                Command="{Binding CloseStatusPopupCommand}">
+                            <LucideIcon Kind="X" Size="16"/>
+                        </Button>
+                    </Grid>
                 </Border>
-            </DockPanel>
+                <Border Grid.Row="1" Classes="dialog-body">
+                    <Border Classes="surface-subtle" Padding="12">
+                        <SelectableTextBlock Text="{Binding StatusMessage}"
+                                             TextWrapping="Wrap"
+                                             FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                             FontSize="12"/>
+                    </Border>
+                </Border>
+            </Grid>
         </Border>
     </Border>
 </UserControl>

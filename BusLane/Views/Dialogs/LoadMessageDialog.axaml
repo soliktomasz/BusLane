@@ -129,17 +129,17 @@
                                                 <Button Classes="primary small" 
                                                         Content="Use Template"
                                                         Padding="14,6"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
+                                                        Command="{Binding $parent[Window].DataContext.SendMessageViewModel.LoadMessageCommand}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Classes="icon"
                                                         ToolTip.Tip="Export message"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.ExportSingleMessageCommand}"
+                                                        Command="{Binding $parent[Window].DataContext.SendMessageViewModel.ExportSingleMessageCommand}"
                                                         CommandParameter="{Binding}">
                                                     <LucideIcon Kind="Upload" Size="12"/>
                                                 </Button>
                                                 <Button Classes="icon" 
                                                         ToolTip.Tip="Delete template"
-                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
+                                                        Command="{Binding $parent[Window].DataContext.SendMessageViewModel.DeleteSavedMessageCommand}"
                                                         CommandParameter="{Binding}">
                                                     <LucideIcon Kind="Trash2" Size="12"/>
                                                 </Button>

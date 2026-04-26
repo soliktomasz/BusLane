@@ -274,7 +274,7 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:SavedConnection">
                                     <Button Classes="subtle sidebar-quick-switch-button"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
+                                            Command="{Binding $parent[Window].DataContext.ConnectToSavedConnectionCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
@@ -288,7 +288,7 @@
                                                 <Border.IsVisible>
                                                     <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                         <Binding Path="."/>
-                                                        <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).ActiveTab.SavedConnection"/>
+                                                        <Binding Path="$parent[Window].DataContext.ActiveTab.SavedConnection"/>
                                                     </MultiBinding>
                                                 </Border.IsVisible>
                                             </Border>

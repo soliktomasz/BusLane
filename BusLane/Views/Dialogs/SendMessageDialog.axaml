@@ -93,11 +93,11 @@
                                                                                     <Button Classes="primary small"
                                                                                             Content="Use"
                                                                                             Padding="12,4"
-                                                                                            Command="{ReflectionBinding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.LoadMessageCommand}"
+                                                                                            Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.LoadMessageCommand}"
                                                                                             CommandParameter="{Binding}"/>
                                                                                     <Button Classes="icon"
                                                                                             ToolTip.Tip="Delete template"
-                                                                                            Command="{ReflectionBinding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.DeleteSavedMessageCommand}"
+                                                                                            Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.DeleteSavedMessageCommand}"
                                                                                             CommandParameter="{Binding}">
                                                                                         <LucideIcon Kind="Trash2" Size="12"/>
                                                                                     </Button>
@@ -391,7 +391,7 @@
                                                             <Button Grid.Column="3"
                                                                     Classes="icon"
                                                                     ToolTip.Tip="Remove property"
-                                                                    Command="{ReflectionBinding $parent[Window].((vm:MainWindowViewModel)DataContext).SendMessageViewModel.RemoveCustomPropertyCommand}"
+                                                                    Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.RemoveCustomPropertyCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <LucideIcon Kind="X" Size="12" Foreground="{DynamicResource MutedForeground}"/>
                                                             </Button>

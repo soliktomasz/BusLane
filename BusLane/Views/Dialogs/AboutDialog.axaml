@@ -9,21 +9,50 @@
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         x:CompileBindings="False">
-    <Border Padding="24">
-        <StackPanel Spacing="12">
-            <TextBlock Text="About BusLane" Classes="heading"/>
-            <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
-            <TextBlock Text="{Binding VersionLabel}" FontWeight="SemiBold"/>
-
-            <StackPanel Spacing="4">
-                <TextBlock Text="GitHub" FontWeight="SemiBold"/>
-                <SelectableTextBlock Text="{Binding RepositoryUrl}" TextWrapping="Wrap"/>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header -->
+        <Border Grid.Row="0"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BorderThickness="0,0,0,1"
+                Padding="24,20">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Border Width="40" Height="40"
+                        CornerRadius="10"
+                        Background="{DynamicResource SurfaceBrand}">
+                    <LucideIcon Kind="Rocket" Size="20"
+                                Foreground="{DynamicResource AccentBrand}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="About BusLane" Classes="heading"/>
+                    <TextBlock Text="{Binding VersionLabel}" Classes="caption" FontWeight="SemiBold"/>
+                </StackPanel>
             </StackPanel>
+        </Border>
 
+        <!-- Content -->
+        <Border Grid.Row="1" Padding="24,20">
+            <StackPanel Spacing="16">
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Classes="body"/>
+
+                <Border Classes="form-section" Padding="12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="GitHub" Classes="field-label"/>
+                        <SelectableTextBlock Text="{Binding RepositoryUrl}" TextWrapping="Wrap" FontSize="13"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- Footer -->
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BorderThickness="0,1,0,0"
+                Padding="24,16">
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
-                        Spacing="8"
-                        Margin="0,8,0,0">
+                        Spacing="8">
                 <Button Classes="secondary"
                         Content="Open GitHub"
                         Click="OnOpenGitHubClick"/>
@@ -31,6 +60,6 @@
                         Content="Close"
                         Click="OnCloseClick"/>
             </StackPanel>
-        </StackPanel>
-    </Border>
+        </Border>
+    </Grid>
 </Window>

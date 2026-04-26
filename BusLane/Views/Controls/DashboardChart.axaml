@@ -14,19 +14,21 @@
             <Border Grid.Row="0" 
                     BorderBrush="{DynamicResource BorderDefault}" 
                     BorderThickness="0,0,0,1" 
-                    Padding="16,12">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0"
+                    Padding="20,14">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Border Grid.Column="0" Width="4" Height="18" CornerRadius="2"
+                            Background="{DynamicResource AccentBrand}"
+                            Margin="0,0,10,0"
+                            VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1"
                                Text="{Binding Title}"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimary}"
+                               Classes="body-strong"
                                VerticalAlignment="Center"/>
 
-                    <Border Grid.Column="1"
-                            Background="{DynamicResource InputBackground}"
-                            CornerRadius="4"
-                            Padding="6,2">
+                    <Border Grid.Column="2"
+                            Classes="form-section"
+                            Padding="4,2"
+                            CornerRadius="6">
                         <ComboBox ItemsSource="{Binding TimeRangeOptions}"
                                   SelectedItem="{Binding SelectedTimeRange}"
                                   Width="95"
@@ -40,18 +42,19 @@
             <Border Grid.Row="1"
                     Margin="12"
                     MinHeight="240"
-                    Background="{DynamicResource SurfaceSubtle}"
-                    BorderBrush="{DynamicResource BorderMuted}"
-                    BorderThickness="1"
-                    CornerRadius="8"
+                    Classes="message-empty-state"
                     Padding="16">
-                <StackPanel Spacing="6"
+                <StackPanel Spacing="8"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
+                    <LucideIcon Kind="ChartSpline" Size="28"
+                                Foreground="{DynamicResource SubtleForeground}"
+                                HorizontalAlignment="Center"
+                                Opacity="0.5"/>
                     <TextBlock Text="Chart preview unavailable"
                                Classes="body-strong"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Metrics continue to refresh, but the chart control is disabled for this build."
+                    <TextBlock Text="Metrics continue to refresh in the background"
                                Classes="caption"
                                TextAlignment="Center"
                                TextWrapping="Wrap"

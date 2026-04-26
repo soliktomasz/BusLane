@@ -20,6 +20,12 @@
                     <!-- Title and Actions Row -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                            <Border Classes="metric-icon-surface">
+                                <LucideIcon Kind="Inbox" Size="16"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock Text="Messages" Classes="heading" VerticalAlignment="Center"/>
                             <Border Classes="badge-info"
                                     Padding="8,4"
@@ -232,22 +238,22 @@
                                     <Grid ColumnDefinitions="Auto,*">
                                         <!-- Checkbox for multi-select mode -->
                                         <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.IsMultiSelectMode}"
-                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleMessageSelectionCommand}"
+                                                  IsVisible="{Binding $parent[Window].DataContext.CurrentMessageOps.IsMultiSelectMode}"
+                                                  Command="{Binding $parent[Window].DataContext.ToggleMessageSelectionCommand}"
                                                   CommandParameter="{Binding}"
                                                   Margin="0,0,8,0"
                                                   VerticalAlignment="Center">
                                             <CheckBox.IsChecked>
                                                 <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
                                                     <Binding Path="."/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectedMessages"/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectionVersion"/>
+                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectedMessages"/>
+                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectionVersion"/>
                                                 </MultiBinding>
                                             </CheckBox.IsChecked>
                                         </CheckBox>
                                     <Button Grid.Column="1"
                                             Classes="message-row"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
+                                            Command="{Binding $parent[Window].DataContext.SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
@@ -255,14 +261,14 @@
                                         <Button.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Resend"
-                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
+                                                          Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <LucideIcon Kind="Send" Size="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Clone"
-                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
+                                                          Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <LucideIcon Kind="Pencil" Size="16"/>
@@ -290,7 +296,7 @@
                                                        MaxLines="2"
                                                        Margin="0,6,0,0"
                                                        Foreground="{DynamicResource SubtleForeground}"
-                                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnableMessagePreview}"/>
+                                                       IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
                                                     <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}"
@@ -356,22 +362,22 @@
                                     <Grid ColumnDefinitions="Auto,*">
                                         <!-- Checkbox for multi-select mode -->
                                         <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.IsMultiSelectMode}"
-                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleMessageSelectionCommand}"
+                                                  IsVisible="{Binding $parent[Window].DataContext.CurrentMessageOps.IsMultiSelectMode}"
+                                                  Command="{Binding $parent[Window].DataContext.ToggleMessageSelectionCommand}"
                                                   CommandParameter="{Binding}"
                                                   Margin="0,0,8,0"
                                                   VerticalAlignment="Center">
                                             <CheckBox.IsChecked>
                                                 <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
                                                     <Binding Path="."/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectedMessages"/>
-                                                    <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).CurrentMessageOps.SelectionVersion"/>
+                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectedMessages"/>
+                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectionVersion"/>
                                                 </MultiBinding>
                                             </CheckBox.IsChecked>
                                         </CheckBox>
                                     <Button Grid.Column="1"
                                             Classes="message-row"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectMessageCommand}"
+                                            Command="{Binding $parent[Window].DataContext.SelectMessageCommand}"
                                             CommandParameter="{Binding}"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Stretch"
@@ -379,14 +385,14 @@
                                         <Button.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Resend"
-                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ResendMessageCommand}"
+                                                          Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <LucideIcon Kind="Send" Size="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Clone"
-                                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloneMessageCommand}"
+                                                          Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
                                                           CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <LucideIcon Kind="Pencil" Size="16"/>
@@ -422,7 +428,7 @@
                                                        MaxLines="2"
                                                        Margin="0,6,0,0"
                                                        Foreground="{DynamicResource SubtleForeground}"
-                                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnableMessagePreview}"/>
+                                                       IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
                                                 <Border Classes="badge-muted" Padding="6,3">
                                                     <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}"
@@ -452,9 +458,7 @@
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
                             <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="6"
-                                    Padding="12,10"
+                                    Classes="form-section"
                                     Margin="8,8,8,0">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                     <StackPanel Grid.Column="0" Spacing="4">
@@ -510,7 +514,7 @@
                                                     </StackPanel>
                                                     <Button Grid.Column="1"
                                                             Classes="primary small"
-                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentSessionInspector.OpenSessionMessagesCommand}"
+                                                            Command="{Binding $parent[Window].DataContext.CurrentSessionInspector.OpenSessionMessagesCommand}"
                                                             CommandParameter="{Binding}"
                                                             Padding="10,8">
                                                         <StackPanel Orientation="Horizontal" Spacing="4">

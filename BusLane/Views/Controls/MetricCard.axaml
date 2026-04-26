@@ -44,9 +44,14 @@
                 CornerRadius="6"
                 Height="32"
                 Padding="8,0">
-            <TextBlock Text="History tracked"
-                       Classes="caption"
-                       VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <LucideIcon Kind="TrendingUp" Size="12"
+                            Foreground="{DynamicResource SubtleForeground}"
+                            Opacity="0.5"/>
+                <TextBlock Text="Sparkline tracked"
+                           Classes="caption"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
         </Border>
     </StackPanel>
 </UserControl>

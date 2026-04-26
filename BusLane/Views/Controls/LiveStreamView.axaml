@@ -8,10 +8,20 @@
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,Auto,*">
             <!-- Header -->
-            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="16">
+            <Border Grid.Row="0"
+                    Background="{DynamicResource LayerBackground}"
+                    BorderBrush="{DynamicResource BorderMuted}"
+                    BorderThickness="0,0,0,1"
+                    Padding="20,16">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Grid.Column="0" Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Border Classes="metric-icon-surface">
+                                <LucideIcon Kind="Radio" Size="16"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock Text="Live Stream" Classes="heading" VerticalAlignment="Center"/>
 
                             <!-- Status indicator - Fluent 2 compliant -->

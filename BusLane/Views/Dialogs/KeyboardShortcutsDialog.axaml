@@ -13,12 +13,22 @@
                 HorizontalAlignment="Center">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="Keyboard Shortcuts" Classes="title"/>
-                        <TextBlock Text="Press Escape to close" Classes="caption" Margin="0,4,0,0"/>
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16">
+                    <Border Grid.Column="0"
+                            Width="36" Height="36"
+                            CornerRadius="8"
+                            Background="{DynamicResource SurfaceBrand}"
+                            Margin="0,0,12,0">
+                        <LucideIcon Kind="Keyboard" Size="18"
+                                    Foreground="{DynamicResource AccentBrand}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Keyboard Shortcuts" Classes="heading"/>
+                        <TextBlock Text="Press Escape to close" Classes="caption" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="2"
                             Classes="icon"
                             Command="{Binding CloseKeyboardShortcutsCommand}"
                             VerticalAlignment="Top">

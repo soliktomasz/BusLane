@@ -9,24 +9,44 @@
             IsVisible="{Binding ShowDeviceCodeDialog}">
         <Border Classes="modal modal-small"
                 VerticalAlignment="Center"
-                HorizontalAlignment="Center">
-            <DockPanel>
+                HorizontalAlignment="Center"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*">
                 <!-- Header -->
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <TextBlock Text="Sign in with Azure" Classes="heading"/>
-                    <Button Classes="icon"
-                            HorizontalAlignment="Right"
-                            Command="{Binding CloseDeviceCodeDialogCommand}">
-                        <LucideIcon Kind="X" Size="16"/>
-                    </Button>
-                </Grid>
+                <Border Grid.Row="0" Classes="dialog-header">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrand}"
+                                Margin="0,0,12,0">
+                            <LucideIcon Kind="Cloud" Size="18"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="Sign in with Azure" Classes="heading"/>
+                            <TextBlock Text="Use device code flow to authenticate"
+                                       Classes="caption"/>
+                        </StackPanel>
+                        <Button Grid.Column="2" Classes="icon"
+                                Command="{Binding CloseDeviceCodeDialogCommand}">
+                            <LucideIcon Kind="X" Size="16"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <Border Grid.Row="1" Padding="24,20">
+                    <DockPanel>
 
                 <!-- Instructions -->
                 <TextBlock DockPanel.Dock="Top"
                            Text="Browser authentication failed. Please use the device code flow instead:"
                            TextWrapping="Wrap"
                            Margin="0,0,0,16"
-                           Opacity="0.8"/>
+                           Classes="body"/>
 
                 <!-- Steps -->
                 <StackPanel DockPanel.Dock="Top" Spacing="12" Margin="0,0,0,20">
@@ -128,7 +148,9 @@
                         Content="Cancel"
                         HorizontalAlignment="Right"
                         Command="{Binding CloseDeviceCodeDialogCommand}"/>
-            </DockPanel>
+                    </DockPanel>
+                </Border>
+            </Grid>
         </Border>
     </Border>
 </UserControl>

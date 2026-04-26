@@ -14,10 +14,20 @@
         <Border Classes="welcome-primary-surface">
             <StackPanel Spacing="20">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="Welcome to BusLane" Classes="title-large"/>
-                    <TextBlock Text="Start with a saved connection or sign in to Azure when you need a namespace workspace."
-                               Classes="subtitle"
-                               TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Classes="metric-icon-surface" Padding="10">
+                            <LucideIcon Kind="Rocket" Size="24"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Welcome to BusLane" Classes="title-large"/>
+                            <TextBlock Text="Start with a saved connection or sign in to Azure when you need a namespace workspace."
+                                       Classes="subtitle"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -52,7 +62,7 @@
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Left"
                                     Margin="0,0,0,8"
-                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectToSavedConnectionCommand}"
+                                    Command="{Binding $parent[Window].DataContext.ConnectToSavedConnectionCommand}"
                                     CommandParameter="{Binding}">
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <Border Classes="surface-brand" Padding="8" CornerRadius="4">

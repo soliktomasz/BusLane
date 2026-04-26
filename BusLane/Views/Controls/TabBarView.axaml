@@ -96,7 +96,7 @@
                                     <!-- Close Button -->
                                     <Button Grid.Column="2"
                                             Classes="workspace-tab-close"
-                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
+                                            Command="{Binding $parent[UserControl].DataContext.CloseTabCommand}"
                                             CommandParameter="{Binding TabId}"
                                             Margin="8,0,0,0"
                                             VerticalAlignment="Center"

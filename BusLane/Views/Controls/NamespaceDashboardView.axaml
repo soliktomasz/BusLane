@@ -17,8 +17,14 @@
             <Border Grid.Row="0"
                     Classes="page-header-surface"
                     Margin="0,0,0,20">
-                <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0"
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
+                        <LucideIcon Kind="LayoutDashboard" Size="16"
+                                    Foreground="{DynamicResource AccentBrand}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="1"
                                 Spacing="4"
                                 VerticalAlignment="Center">
                         <TextBlock Text="Namespace Overview"
@@ -27,7 +33,7 @@
                                    Classes="caption"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1"
+                    <StackPanel Grid.Column="2"
                                 Orientation="Horizontal"
                                 Spacing="12"
                                 VerticalAlignment="Center">

@@ -9,14 +9,20 @@
              x:CompileBindings="False">
     <Border Classes="dashboard-inbox-surface">
         <StackPanel Spacing="16">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                <StackPanel Grid.Column="0" Spacing="4">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <Border Grid.Column="0" Classes="metric-icon-surface">
+                    <LucideIcon Kind="Inbox" Size="16"
+                                Foreground="{DynamicResource AccentBrand}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="4">
                     <TextBlock Text="Priority Inbox"
                                Classes="heading"/>
                     <TextBlock Text="Queues and subscriptions ranked for daily triage."
                                Classes="caption"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1"
+                <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             Spacing="10"
                             VerticalAlignment="Center">

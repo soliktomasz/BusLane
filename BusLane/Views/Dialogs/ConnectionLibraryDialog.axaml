@@ -446,7 +446,7 @@
                                                                     VerticalAlignment="Center">
                                                             <Button Classes="subtle small"
                                                                     ToolTip.Tip="{Binding IsFavorite, Converter={x:Static BoolConverters.Not}, ConverterParameter='Add to favorites', FallbackValue='Add to favorites'}"
-                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.ToggleFavoriteCommand}"
+                                                                    Command="{Binding $parent[Window].DataContext.Connection.ConnectionLibraryViewModel.ToggleFavoriteCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
                                                                 <Panel>
@@ -461,20 +461,20 @@
                                                             </Button>
                                                             <Button Classes="subtle small"
                                                                     ToolTip.Tip="Edit"
-                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.StartEditConnectionCommand}"
+                                                                    Command="{Binding $parent[Window].DataContext.Connection.ConnectionLibraryViewModel.StartEditConnectionCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
                                                                 <LucideIcon Kind="Pencil" Size="16"/>
                                                             </Button>
                                                             <Button Classes="danger-subtle small"
                                                                     ToolTip.Tip="Delete"
-                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.DeleteConnectionCommand}"
+                                                                    Command="{Binding $parent[Window].DataContext.Connection.ConnectionLibraryViewModel.DeleteConnectionCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     Padding="8">
                                                                 <LucideIcon Kind="Trash2" Size="16"/>
                                                             </Button>
                                                             <Button Classes="primary small"
-                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).Connection.ConnectionLibraryViewModel.SelectConnectionCommand}"
+                                                                    Command="{Binding $parent[Window].DataContext.Connection.ConnectionLibraryViewModel.SelectConnectionCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                                     <LucideIcon Kind="Radio" Size="16"/>
