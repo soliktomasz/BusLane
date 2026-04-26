@@ -104,14 +104,14 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_DoesNotRenderRefreshWorkspaceAction()
+    public void NavigationSidebar_RendersRefreshWorkspaceAction()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
         // Assert
-        xaml.Should().NotContain("Command=\"{Binding RefreshConnectionCommand}\"");
-        xaml.Should().NotContain("Text=\"Refresh\"");
+        xaml.Should().Contain("Command=\"{Binding RefreshCommand}\"");
+        xaml.Should().Contain("Text=\"Refresh\"");
     }
 
     private static string GetSidebarPath()

@@ -128,6 +128,16 @@
                                         </StackPanel>
                                     </Button>
 
+                                    <Button Classes="secondary small"
+                                            Command="{Binding RefreshCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="RefreshCw" Size="14"/>
+                                            <TextBlock Text="Refresh"/>
+                                        </StackPanel>
+                                    </Button>
+
                                     <Button Classes="danger-subtle small"
                                             Command="{Binding DisconnectConnectionCommand}"
                                             HorizontalAlignment="Stretch"
