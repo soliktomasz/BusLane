@@ -3,7 +3,7 @@
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Dialogs.AlertsDialog"
-             x:DataType="vm:AlertsViewModel">
+             x:CompileBindings="False">
 
     <Border Classes="modal-overlay">
         <Border Classes="modal modal-large"
@@ -276,7 +276,7 @@
                                                     <StackPanel Grid.Column="0" Spacing="6">
                                                         <TextBlock Text="Rule name" FontWeight="Medium" FontSize="13"/>
                                                         <TextBox Text="{Binding RuleName}"
-                                                                 Watermark="e.g., High dead letters"/>
+                                                                 PlaceholderText="e.g., High dead letters"/>
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="1" Spacing="6">
                                                         <TextBlock Text="Alert type" FontWeight="Medium" FontSize="13"/>
@@ -310,7 +310,7 @@
                                                 <StackPanel Spacing="6">
                                                     <TextBlock Text="Entity pattern (optional)" FontWeight="Medium" FontSize="13"/>
                                                     <TextBox Text="{Binding EntityPattern}"
-                                                             Watermark="e.g., orders-.* (regex supported, leave empty for all)"/>
+                                                             PlaceholderText="e.g., orders-.* (regex supported, leave empty for all)"/>
                                                     <TextBlock Text="Use regex patterns to match specific queues or topics"
                                                                Classes="caption"/>
                                                 </StackPanel>
@@ -350,7 +350,7 @@
                                                 <StackPanel Spacing="6">
                                                     <TextBlock Text="Webhook URL (optional)" FontWeight="Medium" FontSize="13"/>
                                                     <TextBox Text="{Binding WebhookUrl}"
-                                                             Watermark="https://example.invalid/webhook"/>
+                                                             PlaceholderText="https://example.invalid/webhook"/>
                                                     <TextBlock Text="When set, triggered alerts will also be sent to this webhook."
                                                                Classes="caption"/>
                                                 </StackPanel>

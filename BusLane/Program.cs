@@ -2,7 +2,6 @@ namespace BusLane;
 
 using System.Text.Json;
 using Avalonia;
-using Avalonia.ReactiveUI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Logging;
@@ -239,6 +238,5 @@ class Program
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace()
-            .UseReactiveUI();
+            .LogToTrace();
 }

@@ -3,7 +3,7 @@
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Controls.LiveStreamView"
-             x:DataType="vm:LiveStreamViewModel">
+             x:CompileBindings="False">
 
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,Auto,*">
@@ -78,7 +78,7 @@
                                       Margin="4,0,8,0"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding FilterText, Mode=TwoWay}"
-                                     Watermark="Filter messages..."
+                                     PlaceholderText="Filter messages..."
                                      Background="Transparent"
                                      BorderThickness="0"
                                      Padding="0,4"

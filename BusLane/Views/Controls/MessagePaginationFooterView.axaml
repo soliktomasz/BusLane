@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="using:BusLane.ViewModels.Core"
              x:Class="BusLane.Views.Controls.MessagePaginationFooterView"
-             x:DataType="core:MessageOperationsViewModel">
+             x:DataType="core:MessageOperationsViewModel"
+             x:CompileBindings="False">
 
     <UserControl.Styles>
         <Style Selector="Border.pager-surface">

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using BusLane.Models.Logging;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -110,7 +111,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     private void OnLogAdded(LogEntry entry)
     {
         // Marshal all operations to UI thread for thread safety
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        RunOnUiThread(() =>
         {
             _allLogs.Insert(0, entry);
             TrimLogCollection(_allLogs);
@@ -168,7 +169,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 
         var filtered = query.ToList();
 
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        RunOnUiThread(() =>
         {
             _filteredLogs.Clear();
             foreach (var entry in filtered)
@@ -177,6 +178,17 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
             }
             OnPropertyChanged(nameof(ShowingLogCount));
         });
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        if (Application.Current is null || Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(action);
     }
 
     partial void OnSelectedLevelFilterChanged(LogLevel? value)

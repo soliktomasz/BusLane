@@ -1,6 +1,7 @@
 namespace BusLane.ViewModels;
 
 using System.Collections.ObjectModel;
+using Avalonia;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -150,7 +151,7 @@ public partial class ChartsViewModel : ViewModelBase
     {
         _ = sender;
         _ = metrics;
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is null || Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
         {
             RefreshCharts();
             return;

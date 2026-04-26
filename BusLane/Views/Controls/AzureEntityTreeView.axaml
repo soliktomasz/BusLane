@@ -4,7 +4,8 @@
              xmlns:models="using:BusLane.Models"
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.AzureEntityTreeView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <UserControl.Resources>
         <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
@@ -22,7 +23,7 @@
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                         <TextBox Grid.Column="0"
                                  Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
-                                 Watermark="Search queues, topics, or subscriptions"
+                                 PlaceholderText="Search queues, topics, or subscriptions"
                                  FontSize="12"
                                  Padding="4,4,4,4"
                                  CornerRadius="6"
@@ -37,7 +38,7 @@
 
                         <Button Grid.Column="1"
                                 Classes="icon-button"
-                                Command="{Binding HideEntityPaneCommand}"
+                                Command="{ReflectionBinding HideEntityPaneCommand}"
                                 ToolTip.Tip="Hide entity pane"
                                 VerticalAlignment="Center">
                             <LucideIcon Kind="ChevronLeft" Size="14"/>
@@ -94,7 +95,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <ListBox ItemsSource="{Binding CurrentNavigation.FilteredQueues}"
+                            <ListBox ItemsSource="{ReflectionBinding CurrentNavigation.FilteredQueues}"
                                      Classes="entity-list"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -107,7 +108,7 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:QueueInfo">
                                         <Button Classes="entity-tree-row"
-                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectQueueCommand}"
+                                                Command="{ReflectionBinding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectQueueCommand}"
                                                 CommandParameter="{Binding}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
@@ -236,7 +237,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <ListBox ItemsSource="{Binding CurrentNavigation.FilteredTopics}"
+                            <ListBox ItemsSource="{ReflectionBinding CurrentNavigation.FilteredTopics}"
                                      Classes="entity-list"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -322,7 +323,7 @@
                                                         </StackPanel>
                                                     </Border>
 
-                                                    <ListBox ItemsSource="{Binding Subscriptions}"
+                                                    <ListBox ItemsSource="{ReflectionBinding Subscriptions}"
                                                              Classes="entity-list"
                                                              Background="Transparent"
                                                              BorderThickness="0"
@@ -335,7 +336,7 @@
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate x:DataType="models:SubscriptionInfo">
                                                                 <Button Classes="entity-tree-row"
-                                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionCommand}"
+                                                                        Command="{ReflectionBinding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectSubscriptionCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         HorizontalAlignment="Stretch"
                                                                         HorizontalContentAlignment="Stretch"

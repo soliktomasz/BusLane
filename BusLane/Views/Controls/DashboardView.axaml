@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels.Dashboard"
              xmlns:local="using:BusLane.Views.Controls"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:dialogs="using:BusLane.Views.Dialogs"
              x:Class="BusLane.Views.Controls.DashboardView"
-             x:DataType="vm:DashboardViewModel">
+             x:DataType="vm:DashboardViewModel"
+             x:CompileBindings="False">
 
     <Grid>
         <Border Classes="card" Padding="0">
@@ -52,7 +52,7 @@
                                         <Border Grid.Row="0" Padding="12,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
-                                                <Button Grid.Column="1" Classes="subtle tiny"
+                                                <Button Grid.Column="1" Classes="subtle small"
                                                         Command="{Binding $parent[ItemsControl].((vm:DashboardViewModel)DataContext).RemoveWidgetCommand}"
                                                         CommandParameter="{Binding}"
                                                         Padding="4">
@@ -67,29 +67,44 @@
                                                 <local:DashboardWidgetTemplateSelector>
                                                     <local:DashboardWidgetTemplateSelector.LineChartTemplate>
                                                         <DataTemplate DataType="vm:LineChartWidgetViewModel">
-                                                            <lvc:CartesianChart Series="{Binding Series}"
-                                                                                XAxes="{Binding XAxes}"
-                                                                                YAxes="{Binding YAxes}"
-                                                                                ZoomMode="None"
-                                                                                TooltipPosition="Top"
-                                                                                Margin="8" />
+                                                            <Border Margin="8"
+                                                                    Background="{DynamicResource SurfaceSubtle}"
+                                                                    BorderBrush="{DynamicResource BorderMuted}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="8">
+                                                                <TextBlock Text="Chart unavailable in this build"
+                                                                           Classes="caption"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"/>
+                                                            </Border>
                                                         </DataTemplate>
                                                     </local:DashboardWidgetTemplateSelector.LineChartTemplate>
                                                     <local:DashboardWidgetTemplateSelector.PieChartTemplate>
                                                         <DataTemplate DataType="vm:PieChartWidgetViewModel">
-                                                            <lvc:PieChart Series="{Binding Series}"
-                                                                          LegendPosition="Right"
-                                                                          TooltipPosition="Center"
-                                                                          Margin="8" />
+                                                            <Border Margin="8"
+                                                                    Background="{DynamicResource SurfaceSubtle}"
+                                                                    BorderBrush="{DynamicResource BorderMuted}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="8">
+                                                                <TextBlock Text="Chart unavailable in this build"
+                                                                           Classes="caption"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"/>
+                                                            </Border>
                                                         </DataTemplate>
                                                     </local:DashboardWidgetTemplateSelector.PieChartTemplate>
                                                     <local:DashboardWidgetTemplateSelector.BarChartTemplate>
                                                         <DataTemplate DataType="vm:BarChartWidgetViewModel">
-                                                            <lvc:CartesianChart Series="{Binding Series}"
-                                                                                XAxes="{Binding XAxes}"
-                                                                                YAxes="{Binding YAxes}"
-                                                                                TooltipPosition="Top"
-                                                                                Margin="8" />
+                                                            <Border Margin="8"
+                                                                    Background="{DynamicResource SurfaceSubtle}"
+                                                                    BorderBrush="{DynamicResource BorderMuted}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="8">
+                                                                <TextBlock Text="Chart unavailable in this build"
+                                                                           Classes="caption"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"/>
+                                                            </Border>
                                                         </DataTemplate>
                                                     </local:DashboardWidgetTemplateSelector.BarChartTemplate>
                                                     <local:DashboardWidgetTemplateSelector.MetricCardTemplate>

@@ -5,6 +5,7 @@
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.NamespaceSelectionPanel"
              x:DataType="vm:NamespaceSelectionViewModel"
+             x:CompileBindings="False"
              IsVisible="{Binding IsOpen}">
 
     <UserControl.Resources>
@@ -114,7 +115,7 @@
 
                             <!-- Search Box -->
                             <TextBox Text="{Binding NamespaceFilter, Mode=TwoWay}"
-                                     Watermark="Search by name, location, or resource group..."
+                                     PlaceholderText="Search by name, location, or resource group..."
                                      Padding="16,12"
                                      FontSize="13">
                                 <TextBox.InnerLeftContent>

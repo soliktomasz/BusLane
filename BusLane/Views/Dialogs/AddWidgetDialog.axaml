@@ -3,7 +3,8 @@
              xmlns:vm="using:BusLane.ViewModels.Dashboard"
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Dialogs.AddWidgetDialog"
-             x:DataType="vm:DashboardViewModel">
+             x:DataType="vm:DashboardViewModel"
+             x:CompileBindings="False">
 
     <Grid RowDefinitions="Auto,*,Auto" MinWidth="480">
         <!-- Header -->

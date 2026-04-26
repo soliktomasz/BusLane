@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              x:Class="BusLane.Views.Dialogs.SettingsDialog"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowSettings}">
@@ -387,14 +388,14 @@
                                                 <TextBlock Text="New password" FontWeight="Medium" FontSize="13"/>
                                                 <TextBox Text="{Binding SettingsViewModel.AppLockSettings.NewPassword}"
                                                          PasswordChar="●"
-                                                         Watermark="Create an app lock password"/>
+                                                         PlaceholderText="Create an app lock password"/>
                                             </StackPanel>
 
                                             <StackPanel Spacing="6">
                                                 <TextBlock Text="Confirm password" FontWeight="Medium" FontSize="13"/>
                                                 <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmPassword}"
                                                          PasswordChar="●"
-                                                         Watermark="Confirm the password"/>
+                                                         PlaceholderText="Confirm the password"/>
                                             </StackPanel>
 
                                             <CheckBox Content="I understand the recovery code will be shown once and must be stored securely."
@@ -433,7 +434,7 @@
                                                 <TextBlock Text="Current password" FontWeight="Medium" FontSize="13"/>
                                                 <TextBox Text="{Binding SettingsViewModel.AppLockSettings.CurrentPassword}"
                                                          PasswordChar="●"
-                                                         Watermark="Optional if you prefer password re-authentication"/>
+                                                         PlaceholderText="Optional if you prefer password re-authentication"/>
                                             </StackPanel>
 
                                             <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
@@ -442,10 +443,10 @@
                                                 <TextBlock Text="Change password" FontWeight="Medium" FontSize="13"/>
                                                 <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ChangePassword}"
                                                          PasswordChar="●"
-                                                         Watermark="Enter a new password"/>
+                                                         PlaceholderText="Enter a new password"/>
                                                 <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmChangePassword}"
                                                          PasswordChar="●"
-                                                         Watermark="Confirm the new password"/>
+                                                         PlaceholderText="Confirm the new password"/>
                                                 <Button Classes="secondary small"
                                                         Content="Update Password"
                                                         Command="{Binding SettingsViewModel.AppLockSettings.ChangePasswordCommand}"

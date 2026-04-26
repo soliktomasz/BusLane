@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              x:Class="BusLane.Views.Controls.ChartsView"
-             x:DataType="vm:ChartsViewModel">
+             x:DataType="vm:ChartsViewModel"
+             x:CompileBindings="False">
 
     <Border Classes="card" Padding="0">
         <Grid RowDefinitions="Auto,*">
@@ -43,12 +43,16 @@
                     <Border Grid.Row="0" Classes="card" Padding="16" Margin="0,0,0,16">
                         <Grid RowDefinitions="Auto,300">
                             <TextBlock Grid.Row="0" Text="Active Messages Over Time" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                            <lvc:CartesianChart Grid.Row="1"
-                                                Series="{Binding MessageCountSeries}"
-                                                XAxes="{Binding MessageCountXAxes}"
-                                                YAxes="{Binding MessageCountYAxes}"
-                                                ZoomMode="X"
-                                                TooltipPosition="Top"/>
+                            <Border Grid.Row="1"
+                                    Background="{DynamicResource SurfaceSubtle}"
+                                    BorderBrush="{DynamicResource BorderMuted}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                <TextBlock Text="Chart unavailable in this build"
+                                           Classes="caption"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
                         </Grid>
                     </Border>
 
@@ -56,12 +60,16 @@
                     <Border Grid.Row="1" Classes="card" Padding="16" Margin="0,0,0,16">
                         <Grid RowDefinitions="Auto,300">
                             <TextBlock Grid.Row="0" Text="Dead Letters Over Time" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                            <lvc:CartesianChart Grid.Row="1"
-                                                Series="{Binding DeadLetterSeries}"
-                                                XAxes="{Binding DeadLetterXAxes}"
-                                                YAxes="{Binding DeadLetterYAxes}"
-                                                ZoomMode="X"
-                                                TooltipPosition="Top"/>
+                            <Border Grid.Row="1"
+                                    Background="{DynamicResource SurfaceSubtle}"
+                                    BorderBrush="{DynamicResource BorderMuted}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                <TextBlock Text="Chart unavailable in this build"
+                                           Classes="caption"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
                         </Grid>
                     </Border>
 
@@ -71,10 +79,16 @@
                         <Border Grid.Column="0" Classes="card" Padding="16" Margin="0,0,8,0">
                             <Grid RowDefinitions="Auto,300">
                                 <TextBlock Grid.Row="0" Text="Message Distribution (Top 10)" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                                <lvc:PieChart Grid.Row="1"
-                                              Series="{Binding EntityDistributionSeries}"
-                                              LegendPosition="Right"
-                                              TooltipPosition="Center"/>
+                                <Border Grid.Row="1"
+                                        Background="{DynamicResource SurfaceSubtle}"
+                                        BorderBrush="{DynamicResource BorderMuted}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <TextBlock Text="Chart unavailable in this build"
+                                               Classes="caption"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
                             </Grid>
                         </Border>
 
@@ -82,11 +96,16 @@
                         <Border Grid.Column="1" Classes="card" Padding="16" Margin="8,0,0,0">
                             <Grid RowDefinitions="Auto,300">
                                 <TextBlock Grid.Row="0" Text="Entity Comparison (Top 10)" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
-                                <lvc:CartesianChart Grid.Row="1"
-                                                    Series="{Binding ComparisonSeries}"
-                                                    XAxes="{Binding ComparisonXAxes}"
-                                                    YAxes="{Binding ComparisonYAxes}"
-                                                    TooltipPosition="Top"/>
+                                <Border Grid.Row="1"
+                                        Background="{DynamicResource SurfaceSubtle}"
+                                        BorderBrush="{DynamicResource BorderMuted}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <TextBlock Text="Chart unavailable in this build"
+                                               Classes="caption"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
                             </Grid>
                         </Border>
                     </Grid>

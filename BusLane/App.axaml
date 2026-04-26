@@ -5,13 +5,6 @@
              x:Class="BusLane.App"
              Name="BusLane"
              RequestedThemeVariant="Default">
-    <Application.Styles>
-        <FluentTheme />
-        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>
-        <StyleInclude Source="/Styles/AppStyles.axaml"/>
-    </Application.Styles>
-    
-    <!-- Fluent Design 2 Theme Resources -->
     <Application.Resources>
         <ResourceDictionary>
             
@@ -202,4 +195,10 @@
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>
+        <StyleInclude Source="/Styles/AppStyles.axaml"/>
+    </Application.Styles>
 </Application>

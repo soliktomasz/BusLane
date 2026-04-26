@@ -5,7 +5,8 @@
              xmlns:controls="using:BusLane.Views.Controls"
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.MessagesPanelView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <UserControl.Resources>
         <converters:MessageSelectionConverter x:Key="MessageSelectionConverter"/>
@@ -167,7 +168,7 @@
                             <TextBox Grid.Column="1"
                                      x:Name="MessageSearchTextBox"
                                      Text="{Binding CurrentMessageOps.MessageSearchText, Mode=TwoWay}"
-                                     Watermark="Search by message ID, body, correlation ID, subject..."
+                                     PlaceholderText="Search by message ID, body, correlation ID, subject..."
                                      Background="Transparent"
                                      BorderThickness="0"
                                      Padding="0,4"
@@ -552,7 +553,8 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
 
-                            <Border Grid.RowSpan="3"
+                            <Border Grid.Row="0"
+                                    Grid.RowSpan="3"
                                     IsVisible="{Binding CurrentSessionInspector.IsLoadingSessions}"
                                     Background="{DynamicResource LoadingOverlay}"
                                     IsHitTestVisible="True">

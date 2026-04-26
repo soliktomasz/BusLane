@@ -6,7 +6,8 @@
              xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.NamespaceDashboardView"
-             x:DataType="vm:NamespaceDashboardViewModel">
+             x:DataType="vm:NamespaceDashboardViewModel"
+             x:CompileBindings="False">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"

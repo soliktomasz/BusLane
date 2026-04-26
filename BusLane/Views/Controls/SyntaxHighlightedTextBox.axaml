@@ -1,7 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
-             x:Class="BusLane.Views.Controls.SyntaxHighlightedTextBox">
+             x:Class="BusLane.Views.Controls.SyntaxHighlightedTextBox"
+             x:CompileBindings="False">
     <AvalonEdit:TextEditor x:Name="Editor"
                            IsReadOnly="True"
                            ShowLineNumbers="False"

@@ -4,7 +4,8 @@
              xmlns:models="using:BusLane.Models"
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.NavigationSidebar"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <UserControl.Resources>
         <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>

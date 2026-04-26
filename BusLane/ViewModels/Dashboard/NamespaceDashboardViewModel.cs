@@ -1,3 +1,4 @@
+using Avalonia;
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
 using BusLane.Services.Monitoring;
@@ -224,7 +225,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     private void OnSummaryUpdated(object? sender, NamespaceDashboardSummary summary)
     {
-        if (!Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
         {
             Dispatcher.UIThread.Post(() => OnSummaryUpdated(sender, summary));
             return;
@@ -243,7 +244,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     private void OnTopEntitiesUpdated(object? sender, IReadOnlyList<TopEntityInfo> entities)
     {
-        if (!Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
         {
             Dispatcher.UIThread.Post(() => OnTopEntitiesUpdated(sender, entities));
             return;
@@ -258,7 +259,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     private void OnEntitiesUpdated(object? sender, NamespaceEntitySnapshot snapshot)
     {
-        if (!Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
         {
             Dispatcher.UIThread.Post(() => OnEntitiesUpdated(sender, snapshot));
             return;

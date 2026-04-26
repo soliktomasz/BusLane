@@ -1,6 +1,8 @@
 namespace BusLane.ViewModels.Core;
 
 using System.Collections.ObjectModel;
+using Avalonia;
+using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using BusLane.Models;
 using BusLane.Models.Logging;
@@ -643,7 +645,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     {
         // Use Invoke to ensure UI updates happen synchronously
         // This prevents race conditions where pagination shows but messages don't
-        if (Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
         {
             DisplayPageCore(pageNumber);
         }

@@ -2,6 +2,7 @@ namespace BusLane.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
+using Avalonia;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -58,7 +59,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
     private void OnStreamingStatusChanged(object? sender, bool isStreaming)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        RunOnUiThread(() =>
         {
             IsStreaming = isStreaming;
             IsConnecting = false;
@@ -67,7 +68,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
     private void OnStreamError(object? sender, Exception ex)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        RunOnUiThread(() =>
         {
             ErrorMessage = ex.Message;
             IsConnecting = false;
@@ -279,13 +280,24 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private async Task FlushPendingMessagesAsync()
     {
         await Task.Delay(FlushDelayMilliseconds);
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is null || Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
         {
             FlushPendingMessages();
             return;
         }
 
         await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(FlushPendingMessages);
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        if (Application.Current is null || Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(action);
     }
 
     private void FlushPendingMessages()

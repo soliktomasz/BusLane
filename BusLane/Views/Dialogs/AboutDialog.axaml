@@ -7,7 +7,8 @@
         Width="460"
         SizeToContent="Height"
         CanResize="False"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        x:CompileBindings="False">
     <Border Padding="24">
         <StackPanel Spacing="12">
             <TextBlock Text="About BusLane" Classes="heading"/>

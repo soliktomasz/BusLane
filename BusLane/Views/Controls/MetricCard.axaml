@@ -3,10 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
-             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.MetricCard"
-             x:DataType="vm:MetricCardViewModel">
+             x:DataType="vm:MetricCardViewModel"
+             x:CompileBindings="False">
 
     <StackPanel Spacing="6">
         <!-- Value and Trend -->
@@ -38,14 +38,15 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Sparkline -->
-        <lvc:CartesianChart 
-            Height="32"
-            Series="{Binding SparklineSeries}"
-            XAxes="{Binding XAxes}"
-            YAxes="{Binding YAxes}"
-            DrawMargin="0"
-            Background="Transparent"
-            TooltipPosition="Hidden"/>
+        <Border Background="{DynamicResource SurfaceSubtle}"
+                BorderBrush="{DynamicResource BorderMuted}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Height="32"
+                Padding="8,0">
+            <TextBlock Text="History tracked"
+                       Classes="caption"
+                       VerticalAlignment="Center"/>
+        </Border>
     </StackPanel>
 </UserControl>

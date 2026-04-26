@@ -3,7 +3,8 @@
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:controls="using:BusLane.Views.Controls"
              x:Class="BusLane.Views.Dialogs.MessageDetailDialog"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <Border x:Name="ModalOverlay"
             Classes="modal-overlay"

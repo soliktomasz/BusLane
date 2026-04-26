@@ -4,6 +4,7 @@
         xmlns:vm="using:BusLane.ViewModels.Core"
         x:Class="BusLane.Views.TerminalWindow"
         x:DataType="vm:TerminalHostViewModel"
+        x:CompileBindings="False"
         Title="BusLane Terminal"
         Width="900"
         Height="420"

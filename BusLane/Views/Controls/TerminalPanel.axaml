@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels.Core"
              x:Class="BusLane.Views.Controls.TerminalPanel"
-             x:DataType="vm:TerminalHostViewModel">
+             x:DataType="vm:TerminalHostViewModel"
+             x:CompileBindings="False">
 
     <Border Classes="card terminal-panel" Padding="0">
         <Grid RowDefinitions="Auto,*,Auto">
@@ -96,7 +97,7 @@
                     <TextBlock Grid.Column="0" Text="$" VerticalAlignment="Center" FontWeight="SemiBold"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding InputText, Mode=TwoWay}"
-                             Watermark="Type a command and press Enter"
+                             PlaceholderText="Type a command and press Enter"
                              FontFamily="Consolas, Menlo, Monaco"
                              FontSize="12">
                         <TextBox.KeyBindings>

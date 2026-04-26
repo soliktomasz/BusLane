@@ -1,6 +1,5 @@
 namespace BusLane.Tests.ViewModels;
 
-using Avalonia.Threading;
 using BusLane.Models.Logging;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
@@ -17,7 +16,6 @@ public class LogViewerViewModelTests
 
         // Act
         logSink.Log(CreateEntry(LogLevel.Error));
-        Dispatcher.UIThread.RunJobs();
 
         // Assert
         sut.HasUnreadErrors.Should().BeTrue();
@@ -32,7 +30,6 @@ public class LogViewerViewModelTests
 
         // Act
         logSink.Log(CreateEntry(LogLevel.Info));
-        Dispatcher.UIThread.RunJobs();
 
         // Assert
         sut.HasUnreadErrors.Should().BeFalse();
@@ -45,7 +42,6 @@ public class LogViewerViewModelTests
         var logSink = new LogSink();
         using var sut = new LogViewerViewModel(logSink);
         logSink.Log(CreateEntry(LogLevel.Error));
-        Dispatcher.UIThread.RunJobs();
 
         // Act
         sut.Open();
@@ -61,7 +57,6 @@ public class LogViewerViewModelTests
         var logSink = new LogSink();
         using var sut = new LogViewerViewModel(logSink);
         logSink.Log(CreateEntry(LogLevel.Error));
-        Dispatcher.UIThread.RunJobs();
 
         // Act
         sut.ClearLogsCommand.Execute(null);

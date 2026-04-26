@@ -3,6 +3,7 @@
              xmlns:vm="using:BusLane.ViewModels"
              x:Class="BusLane.Views.Controls.UpdateNotificationView"
              x:DataType="vm:UpdateNotificationViewModel"
+             x:CompileBindings="False"
              IsVisible="{Binding IsVisible}">
 
     <Border Background="{DynamicResource SurfaceBrand}"

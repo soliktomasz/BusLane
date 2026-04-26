@@ -3,7 +3,8 @@
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Dialogs.LoadMessageDialog"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
     
     <Border Classes="modal-overlay"
             IsVisible="{Binding SendMessageViewModel.ShowLoadDialog, FallbackValue=False, TargetNullValue=False}">

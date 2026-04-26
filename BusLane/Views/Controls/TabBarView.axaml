@@ -3,9 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:core="using:BusLane.ViewModels.Core"
-             xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.TabBarView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <Border Background="{DynamicResource TabNavBackground}"
             BorderBrush="{DynamicResource BorderDefault}"
@@ -28,7 +28,7 @@
                             <RadioButton Classes="workspace-tab"
                                          GroupName="ConnectionTabs"
                                          IsChecked="{Binding IsActive, Mode=OneWay}"
-                                         Checked="TabRadioButton_Checked"
+                                         IsCheckedChanged="TabRadioButton_Checked"
                                          MinWidth="140"
                                          MaxWidth="220">
                                 <Grid ColumnDefinitions="Auto,*,Auto">

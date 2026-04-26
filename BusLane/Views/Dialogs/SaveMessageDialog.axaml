@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              x:Class="BusLane.Views.Dialogs.SaveMessageDialog"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
     
     <Border Classes="modal-overlay"
             IsVisible="{Binding SendMessageViewModel.ShowSaveDialog, FallbackValue=False, TargetNullValue=False}">
@@ -33,7 +34,7 @@
                 <StackPanel Spacing="4">
                     <TextBlock Text="Template Name" Classes="field-label"/>
                     <TextBox Text="{Binding SendMessageViewModel.SaveMessageName}" 
-                             Watermark="Enter a descriptive name..."
+                             PlaceholderText="Enter a descriptive name..."
                              Padding="12,12"/>
                     <TextBlock Text="Choose a name that helps you identify this template" Classes="field-hint"/>
                 </StackPanel>
@@ -43,10 +44,10 @@
                     <Button Classes="secondary" 
                             Content="Cancel" 
                             Padding="16,10"
-                            Command="{Binding SendMessageViewModel.HideSaveCommand}"/>
+                            Command="{ReflectionBinding SendMessageViewModel.HideSaveCommand}"/>
                     <Button Classes="primary" 
                             Padding="20,10"
-                            Command="{Binding SendMessageViewModel.SaveMessageCommand}">
+                            Command="{ReflectionBinding SendMessageViewModel.SaveMessageCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="Save Template"/>
                             <LucideIcon Kind="Check" Size="12"/>
@@ -57,4 +58,3 @@
         </Border>
     </Border>
 </UserControl>
-

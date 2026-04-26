@@ -2,6 +2,7 @@ namespace BusLane.ViewModels.Core;
 
 using System.Text;
 using System.Text.Json;
+using Avalonia;
 using Avalonia.Threading;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Terminal;
@@ -309,7 +310,7 @@ public partial class TerminalHostViewModel : ViewModelBase, IDisposable, IAsyncD
     {
         try
         {
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
             {
                 action();
                 return;

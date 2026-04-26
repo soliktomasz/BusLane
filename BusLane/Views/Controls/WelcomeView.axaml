@@ -3,7 +3,8 @@
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Controls.WelcomeView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
     
     <StackPanel VerticalAlignment="Center"
                 HorizontalAlignment="Center"

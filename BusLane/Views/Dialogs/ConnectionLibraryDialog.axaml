@@ -4,7 +4,8 @@
              xmlns:models="using:BusLane.Models"
              xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Dialogs.ConnectionLibraryDialog"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
 
     <UserControl.Resources>
         <converters:EnvironmentTabConverter x:Key="EnvironmentTabConverter"/>
@@ -118,7 +119,7 @@
                                             <TextBox Grid.Column="0"
                                                      Text="{Binding Connection.ConnectionLibraryViewModel.BackupPassphrase}"
                                                      PasswordChar="●"
-                                                     Watermark="Required for encrypted export/import"/>
+                                                     PlaceholderText="Required for encrypted export/import"/>
                                             <Button Grid.Column="1"
                                                     Classes="secondary"
                                                     Command="{Binding Connection.ConnectionLibraryViewModel.ExportConnectionsBackupCommand}"
@@ -186,7 +187,7 @@
                                             <TextBlock Text="Connection name"
                                                        Classes="form-section-title"/>
                                             <TextBox Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionName}"
-                                                     Watermark="e.g., Production Service Bus"/>
+                                                     PlaceholderText="e.g., Production Service Bus"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Spacing="6">
                                             <TextBlock Text="Environment"
@@ -213,7 +214,7 @@
                                               ColumnSpacing="8">
                                             <TextBox Grid.Column="0"
                                                      Text="{Binding Connection.ConnectionLibraryViewModel.NewConnectionString}"
-                                                     Watermark="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
+                                                     PlaceholderText="Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=..."
                                                      PasswordChar="●"
                                                      TextWrapping="Wrap"
                                                      AcceptsReturn="False"

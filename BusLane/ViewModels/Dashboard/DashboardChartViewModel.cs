@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Avalonia;
 using Avalonia.Threading;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
@@ -87,7 +88,7 @@ public partial class DashboardChartViewModel : ObservableObject
 
     public void UpdateData(IEnumerable<DateTimePoint> dataPoints)
     {
-        if (!Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
         {
             var snapshot = dataPoints.ToList();
             Dispatcher.UIThread.Post(() => UpdateData(snapshot));

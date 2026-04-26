@@ -1,6 +1,14 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <Styles.Resources>
+        <ResourceDictionary>
+            <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #0F6CBD</BoxShadows>
+            <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #C50F1F</BoxShadows>
+            <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
+        </ResourceDictionary>
+    </Styles.Resources>
+
     <!-- Microsoft Fluent Design 2 System -->
     <!-- Colors based on Fluent 2 semantic tokens with theme support -->
 
@@ -100,7 +108,7 @@
     </Style>
 
     <Style Selector="Button.primary:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingContrast}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingContrast}"/>
     </Style>
 
     <Style Selector="Button.secondary">
@@ -126,7 +134,7 @@
     </Style>
 
     <Style Selector="Button.secondary:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Button.subtle">
@@ -147,7 +155,7 @@
     </Style>
 
     <Style Selector="Button.subtle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Button.danger">
@@ -172,7 +180,7 @@
     </Style>
 
     <Style Selector="Button.danger:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingContrast}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingContrast}"/>
     </Style>
 
     <Style Selector="Button.danger-outline">
@@ -191,7 +199,7 @@
     </Style>
 
     <Style Selector="Button.danger-outline:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingDanger}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingDanger}"/>
     </Style>
 
     <Style Selector="Button.danger-subtle">
@@ -212,7 +220,7 @@
     </Style>
 
     <Style Selector="Button.danger-subtle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingDanger}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingDanger}"/>
     </Style>
 
     <!-- Warning Button Styles -->
@@ -238,7 +246,7 @@
     </Style>
 
     <Style Selector="Button.warning:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingContrast}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingContrast}"/>
     </Style>
 
     <Style Selector="Button.small">
@@ -266,7 +274,7 @@
     </Style>
 
     <Style Selector="Button.icon:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- ListBox - Fluent 2 with Virtualization Support -->
@@ -317,7 +325,7 @@
     </Style>
 
     <Style Selector="ListBoxItem:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- TabControl - Fluent 2 -->
@@ -438,7 +446,7 @@
     </Style>
 
     <Style Selector="ToggleButton.pill:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- Card - Fluent 2 with elevation system -->
@@ -583,10 +591,10 @@
         <Setter Property="FontWeight" Value="Regular"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate TargetType="RadioButton">
                 <Border Background="{TemplateBinding Background}"
-                        CornerRadius="{TemplateBinding CornerRadius}"
-                        Padding="{TemplateBinding Padding}"
+                        CornerRadius="4"
+                        Padding="12,6"
                         BorderThickness="0,0,0,2"
                         BorderBrush="Transparent"
                         x:Name="PART_Border">
@@ -873,7 +881,7 @@
     </Style>
 
     <Style Selector="Button.entity-tree-row:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader">
@@ -979,7 +987,7 @@
     </Style>
 
     <Style Selector="Button.message-row:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Border.inline-loading-surface">
@@ -1185,13 +1193,13 @@
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate TargetType="RadioButton">
                 <Border x:Name="PART_Border"
                         Background="{TemplateBinding Background}"
                         BorderBrush="Transparent"
                         BorderThickness="1"
                         CornerRadius="6"
-                        Padding="{TemplateBinding Padding}">
+                        Padding="16,8">
                     <Border.Transitions>
                         <Transitions>
                             <BrushTransition Property="Background" Duration="0:0:0.15"/>
@@ -1242,13 +1250,13 @@
         <Setter Property="MinHeight" Value="44"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate TargetType="RadioButton">
                 <Border x:Name="PART_Border"
                         Background="{TemplateBinding Background}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="1"
                         CornerRadius="10"
-                        Padding="{TemplateBinding Padding}">
+                        Padding="14,10">
                     <ContentPresenter x:Name="PART_ContentPresenter"
                                       Content="{TemplateBinding Content}"
                                       ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -1271,7 +1279,7 @@
     </Style>
 
     <Style Selector="RadioButton.workspace-tab:focus-visible /template/ Border#PART_Border">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="TextBlock.workspace-tab-title">
@@ -1307,7 +1315,7 @@
     </Style>
 
     <Style Selector="Button.workspace-tab-close:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- Field group header -->
@@ -1391,7 +1399,7 @@
     </Style>
 
     <Style Selector="Button.toolbar:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- Property row for custom properties -->
@@ -1432,7 +1440,7 @@
     </Style>
 
     <Style Selector="Button.chip:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- InfoBar styles -->
@@ -1618,7 +1626,7 @@
     </Style>
 
     <Style Selector="Button.workspace-new-tab:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- Compact icon button for toolbar area -->
@@ -1642,7 +1650,7 @@
     </Style>
 
     <Style Selector="Button.icon-button:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <!-- Sidebar panel toggle button -->
@@ -1670,7 +1678,7 @@
     </Style>
 
     <Style Selector="Button.panel-toggle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="ToggleButton.icon-button">
@@ -1694,7 +1702,7 @@
     </Style>
 
     <Style Selector="ToggleButton.icon-button:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Button.entity-pane-restore-handle">
@@ -1724,7 +1732,7 @@
     </Style>
 
     <Style Selector="Button.entity-pane-restore-handle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Border.terminal-panel">
