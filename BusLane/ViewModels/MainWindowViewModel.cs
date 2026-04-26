@@ -1398,10 +1398,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private async Task DisconnectConnectionAsync()
+    private void DisconnectConnection()
     {
-        await Tabs.CloseActiveTabAsync();
-        await Connection.DisconnectConnectionAsync();
+        Confirmation.ShowConfirmation(
+            "Confirm Disconnect",
+            "Are you sure you want to disconnect from this workspace?",
+            "Disconnect",
+            async () =>
+            {
+                await Tabs.CloseActiveTabAsync();
+                await Connection.DisconnectConnectionAsync();
+            });
     }
 
     [RelayCommand]
