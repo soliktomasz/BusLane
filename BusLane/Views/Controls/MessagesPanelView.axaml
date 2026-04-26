@@ -414,7 +414,7 @@
                                                            Foreground="{DynamicResource MutedForeground}"/>
                                             </Grid>
                                             <!-- Dead Letter Reason -->
-                                            <Border Background="{DynamicResource SurfaceDanger}" Padding="8,4" Margin="0,6,0,0" CornerRadius="4"
+                                            <Border Background="{DynamicResource SurfaceDanger}" Padding="8,4" Margin="0,6,0,0" CornerRadius="8"
                                                     IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                                 <TextBlock Text="{Binding DeadLetterReason}"
                                                            Foreground="{DynamicResource TextDanger}"
@@ -564,10 +564,10 @@
                                     IsHitTestVisible="True">
                                 <Border Background="{DynamicResource CardBackground}"
                                         Padding="32,24"
-                                        CornerRadius="12"
+                                        CornerRadius="14"
                                         BorderThickness="1"
                                         BorderBrush="{DynamicResource BorderDefault}"
-                                        BoxShadow="0 8 24 0 #32000000"
+                                        BoxShadow="0 12 32 0 #38000000"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         MinWidth="280">

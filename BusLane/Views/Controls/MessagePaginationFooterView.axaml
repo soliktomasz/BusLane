@@ -30,7 +30,7 @@
 
         <Style Selector="Border.pager-actions">
             <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
         </Style>
@@ -38,7 +38,7 @@
         <Style Selector="Button.pager-nav">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="MinWidth" Value="88"/>
             <Setter Property="FontWeight" Value="Medium"/>

@@ -115,43 +115,43 @@
                 <!-- Dark Theme - Microsoft Fluent 2 Design -->
                 <ResourceDictionary x:Key="Dark">
                     <!-- Background layers - Fluent 2 elevation system -->
-                    <SolidColorBrush x:Key="AppBackground" Color="#1C1C1C"/>
-                    <SolidColorBrush x:Key="AppForeground" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="SubtleForeground" Color="#C8C8C8"/>
-                    <SolidColorBrush x:Key="MutedForeground" Color="#A0A0A0"/>
-                    <SolidColorBrush x:Key="CardBackground" Color="#292929"/>
-                    <SolidColorBrush x:Key="SidebarBackground" Color="#1C1C1C"/>
-                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#242424"/>
-                    <SolidColorBrush x:Key="LayerBackground" Color="#202020"/>
-                    <SolidColorBrush x:Key="DashboardTileBackground" Color="#171717"/>
+                    <SolidColorBrush x:Key="AppBackground" Color="#181818"/>
+                    <SolidColorBrush x:Key="AppForeground" Color="#F0F0F0"/>
+                    <SolidColorBrush x:Key="SubtleForeground" Color="#B3B3B3"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#8A8A8A"/>
+                    <SolidColorBrush x:Key="CardBackground" Color="#252525"/>
+                    <SolidColorBrush x:Key="SidebarBackground" Color="#1A1A1A"/>
+                    <SolidColorBrush x:Key="SurfaceSubtle" Color="#202020"/>
+                    <SolidColorBrush x:Key="LayerBackground" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="DashboardTileBackground" Color="#161616"/>
 
                     <!-- Border colors - Fluent 2 stroke tokens for dark -->
-                    <SolidColorBrush x:Key="BorderDefault" Color="#424242"/>
-                    <SolidColorBrush x:Key="BorderStrong" Color="#5C5C5C"/>
-                    <SolidColorBrush x:Key="BorderMuted" Color="#333333"/>
+                    <SolidColorBrush x:Key="BorderDefault" Color="#363636"/>
+                    <SolidColorBrush x:Key="BorderStrong" Color="#505050"/>
+                    <SolidColorBrush x:Key="BorderMuted" Color="#2C2C2C"/>
 
                     <!-- Brand accent colors - Fluent 2 brand ramp for dark mode -->
-                    <SolidColorBrush x:Key="AccentBrand" Color="#60CDFF"/>
-                    <SolidColorBrush x:Key="AccentBrandHover" Color="#8CD9FF"/>
-                    <SolidColorBrush x:Key="AccentBrandPressed" Color="#3AA0F3"/>
-                    <SolidColorBrush x:Key="AccentBrandSubtle" Color="#0F2D40"/>
+                    <SolidColorBrush x:Key="AccentBrand" Color="#4CC2FF"/>
+                    <SolidColorBrush x:Key="AccentBrandHover" Color="#77D1FF"/>
+                    <SolidColorBrush x:Key="AccentBrandPressed" Color="#2EAAEE"/>
+                    <SolidColorBrush x:Key="AccentBrandSubtle" Color="#0D2940"/>
                     <SolidColorBrush x:Key="TextOnBrand" Color="#000000"/>
 
                     <!-- Surface backgrounds with brand tint -->
-                    <SolidColorBrush x:Key="SurfaceBrand" Color="#0F2D40"/>
-                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#153D54"/>
-                    <SolidColorBrush x:Key="SurfaceAccent" Color="#0F2D40"/>
+                    <SolidColorBrush x:Key="SurfaceBrand" Color="#0D2940"/>
+                    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#133A55"/>
+                    <SolidColorBrush x:Key="SurfaceAccent" Color="#0D2940"/>
 
                     <!-- Semantic surface colors - improved contrast -->
-                    <SolidColorBrush x:Key="SurfaceDanger" Color="#442726"/>
-                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#283F2A"/>
-                    <SolidColorBrush x:Key="SurfaceWarning" Color="#433519"/>
+                    <SolidColorBrush x:Key="SurfaceDanger" Color="#3A2224"/>
+                    <SolidColorBrush x:Key="SurfaceSuccess" Color="#1E3520"/>
+                    <SolidColorBrush x:Key="SurfaceWarning" Color="#362D16"/>
 
                     <!-- Subtle semantic backgrounds for badges and indicators -->
-                    <SolidColorBrush x:Key="AccentSubtle" Color="#0F2D40"/>
-                    <SolidColorBrush x:Key="SuccessSubtle" Color="#1E3A21"/>
-                    <SolidColorBrush x:Key="WarningSubtle" Color="#3D3017"/>
-                    <SolidColorBrush x:Key="DangerSubtle" Color="#3B2323"/>
+                    <SolidColorBrush x:Key="AccentSubtle" Color="#0D2940"/>
+                    <SolidColorBrush x:Key="SuccessSubtle" Color="#1A2F1C"/>
+                    <SolidColorBrush x:Key="WarningSubtle" Color="#332A14"/>
+                    <SolidColorBrush x:Key="DangerSubtle" Color="#331F20"/>
 
                     <!-- Semantic text colors - Fluent 2 with better contrast -->
                     <SolidColorBrush x:Key="TextDanger" Color="#FF99A4"/>
@@ -162,33 +162,33 @@
                     <SolidColorBrush x:Key="TextWarningHover" Color="#FFEB3B"/>
 
                     <!-- Interactive states - Fluent 2 subtle overlays -->
-                    <SolidColorBrush x:Key="HoverBackground" Color="#10FFFFFF"/>
-                    <SolidColorBrush x:Key="PressedBackground" Color="#18FFFFFF"/>
-                    <SolidColorBrush x:Key="SelectedBackground" Color="#0F2D40"/>
-                    <SolidColorBrush x:Key="SelectedBorder" Color="#60CDFF"/>
+                    <SolidColorBrush x:Key="HoverBackground" Color="#0DFFFFFF"/>
+                    <SolidColorBrush x:Key="PressedBackground" Color="#15FFFFFF"/>
+                    <SolidColorBrush x:Key="SelectedBackground" Color="#0D2940"/>
+                    <SolidColorBrush x:Key="SelectedBorder" Color="#4CC2FF"/>
 
                     <!-- Overlay and inputs - 60%/70% for consistent stepped opacity -->
                     <SolidColorBrush x:Key="ModalOverlay" Color="#99000000"/>
                     <SolidColorBrush x:Key="LoadingOverlay" Color="#B3000000"/>
-                    <SolidColorBrush x:Key="InputBackground" Color="#333333"/>
+                    <SolidColorBrush x:Key="InputBackground" Color="#2A2A2A"/>
 
                     <!-- Tab, toolbar, and utility surfaces -->
-                    <SolidColorBrush x:Key="TabNavBackground" Color="#242424"/>
-                    <SolidColorBrush x:Key="TabItemHover" Color="#333333"/>
-                    <SolidColorBrush x:Key="ToolbarHover" Color="#333333"/>
-                    <SolidColorBrush x:Key="ToolbarPressed" Color="#3D3D3D"/>
-                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#242424"/>
-                    <SolidColorBrush x:Key="PropertyRowHover" Color="#2E2E2E"/>
-                    <SolidColorBrush x:Key="ChipBackground" Color="#333333"/>
-                    <SolidColorBrush x:Key="ChipHover" Color="#3D3D3D"/>
+                    <SolidColorBrush x:Key="TabNavBackground" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="TabItemHover" Color="#2C2C2C"/>
+                    <SolidColorBrush x:Key="ToolbarHover" Color="#2C2C2C"/>
+                    <SolidColorBrush x:Key="ToolbarPressed" Color="#363636"/>
+                    <SolidColorBrush x:Key="PropertyRowBackground" Color="#202020"/>
+                    <SolidColorBrush x:Key="PropertyRowHover" Color="#282828"/>
+                    <SolidColorBrush x:Key="ChipBackground" Color="#2C2C2C"/>
+                    <SolidColorBrush x:Key="ChipHover" Color="#363636"/>
 
                     <!-- Code editor - improved dark theme -->
-                    <SolidColorBrush x:Key="CodeBackground" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CodeBackground" Color="#161616"/>
                     <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4"/>
-                    <SolidColorBrush x:Key="CodeBorder" Color="#3C3C3C"/>
+                    <SolidColorBrush x:Key="CodeBorder" Color="#2C2C2C"/>
 
                     <!-- Focus ring shadows -->
-                    <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #60CDFF</BoxShadows>
+                    <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4CC2FF</BoxShadows>
                     <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #FF99A4</BoxShadows>
                     <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
                 </ResourceDictionary>

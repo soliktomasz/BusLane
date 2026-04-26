@@ -185,7 +185,7 @@
                             <Border Classes="dialog-section-surface">
                             <StackPanel Spacing="12">
                                 <Border Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8"
+                                        CornerRadius="12"
                                         Padding="16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="1">

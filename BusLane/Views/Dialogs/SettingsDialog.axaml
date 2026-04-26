@@ -24,7 +24,7 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="40" Height="40"
-                                CornerRadius="8"
+                                CornerRadius="10"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,16,0">
                             <LucideIcon Kind="Settings" Size="20"
@@ -58,7 +58,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="ChartBar" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -110,7 +110,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="MessageSquare" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -178,7 +178,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="RefreshCw" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -233,7 +233,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="TriangleAlert" Size="20"
                                                   Foreground="{DynamicResource TextWarning}"/>
@@ -284,7 +284,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="ListOrdered" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -320,7 +320,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="Shield" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -355,7 +355,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="Lock" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -534,7 +534,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="Download" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -599,7 +599,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="Keyboard" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>
@@ -632,7 +632,7 @@
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="0,0,0,1"
                                         Background="{DynamicResource CardBackground}"
-                                        CornerRadius="8,8,0,0">
+                                        CornerRadius="12,12,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <LucideIcon Kind="LifeBuoy" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"/>

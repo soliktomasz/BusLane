@@ -103,7 +103,7 @@
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"
-                                                CornerRadius="8,8,0,0">
+                                                CornerRadius="12,12,0,0">
                                             <StackPanel Orientation="Horizontal" Spacing="12">
                                                 <Border Width="28" Height="28"
                                                         CornerRadius="6"
@@ -249,7 +249,7 @@
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"
-                                                CornerRadius="8,8,0,0">
+                                                CornerRadius="12,12,0,0">
                                             <StackPanel Orientation="Horizontal" Spacing="12">
                                                 <Border Width="28" Height="28"
                                                         CornerRadius="6"
@@ -397,7 +397,7 @@
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"
-                                                CornerRadius="8,8,0,0">
+                                                CornerRadius="12,12,0,0">
                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                                     <Border Width="28" Height="28"
@@ -537,7 +537,7 @@
                                                 BorderBrush="{DynamicResource BorderDefault}"
                                                 BorderThickness="0,0,0,1"
                                                 Background="{DynamicResource CardBackground}"
-                                                CornerRadius="8,8,0,0">
+                                                CornerRadius="12,12,0,0">
                                             <StackPanel Orientation="Horizontal" Spacing="12">
                                                 <Border Width="28" Height="28"
                                                         CornerRadius="6"

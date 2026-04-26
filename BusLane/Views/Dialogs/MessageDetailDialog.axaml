@@ -10,10 +10,10 @@
             Classes="modal-overlay"
             IsVisible="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="8"
+                CornerRadius="14"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
-                BoxShadow="0 8 24 0 #32000000"
+                BoxShadow="0 12 32 0 #38000000"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch"
                 Margin="48"
@@ -22,7 +22,7 @@
                 <!-- Header -->
                 <Border DockPanel.Dock="Top"
                         Background="{DynamicResource SurfaceSubtle}"
-                        CornerRadius="8,8,0,0"
+                        CornerRadius="14,14,0,0"
                         Padding="20,16">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
