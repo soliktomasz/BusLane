@@ -209,7 +209,7 @@
                                                             <!-- Acknowledge Button -->
                                                             <Button Grid.Column="2" Grid.RowSpan="3"
                                                                     Classes="primary small"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).AcknowledgeAlertCommand}"
+                                                                    Command="{Binding $parent[ItemsControl].DataContext.AcknowledgeAlertCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     IsVisible="{Binding !IsAcknowledged}"
                                                                     VerticalAlignment="Center">
@@ -500,21 +500,21 @@
                                                                         VerticalAlignment="Center">
                                                                 <Button Classes="subtle small"
                                                                         ToolTip.Tip="Test this rule"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).TestRuleCommand}"
+                                                                        Command="{Binding $parent[ItemsControl].DataContext.TestRuleCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Padding="8">
                                                                     <LucideIcon Kind="Radio" Size="16"/>
                                                                 </Button>
                                                                 <Button Classes="subtle small"
                                                                         ToolTip.Tip="Edit rule"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).ShowEditRuleCommand}"
+                                                                        Command="{Binding $parent[ItemsControl].DataContext.ShowEditRuleCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Padding="8">
                                                                     <LucideIcon Kind="Pencil" Size="16"/>
                                                                 </Button>
                                                                 <Button Classes="danger-subtle small"
                                                                         ToolTip.Tip="Delete rule"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:AlertsViewModel)DataContext).DeleteRuleCommand}"
+                                                                        Command="{Binding $parent[ItemsControl].DataContext.DeleteRuleCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Padding="8">
                                                                     <LucideIcon Kind="Trash2" Size="16"/>
