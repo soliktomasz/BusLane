@@ -314,6 +314,85 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
+                            <Border Grid.Row="1"
+                                    Classes="message-empty-state"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="360">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.CurrentEntityName" Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.IsLoadingMessages"/>
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="Inbox" Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"
+                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Choose an entity"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Select a queue or subscription to load messages."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1"
+                                    Classes="message-empty-state"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="360">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.CurrentEntityName" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.FilteredMessages.Count"/>
+                                        <Binding Path="CurrentMessageOps.MessageSearchText" Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.IsLoadingMessages"/>
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="Inbox" Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"
+                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No active messages"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="This entity has no active messages on the current page."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1"
+                                    Classes="message-empty-state"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="360">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.CurrentEntityName" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.FilteredMessages.Count"/>
+                                        <Binding Path="CurrentMessageOps.MessageSearchText" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.IsLoadingMessages"/>
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="Search" Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"
+                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No messages match your search"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Try a different message ID, body term, correlation ID, or subject."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
                             <controls:MessagePaginationFooterView Grid.Row="2"
                                                                   Margin="8,8,8,0"
                                                                   DataContext="{Binding CurrentMessageOps}"/>
@@ -445,6 +524,85 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                            <Border Grid.Row="1"
+                                    Classes="message-empty-state"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="360">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.CurrentEntityName" Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.IsLoadingMessages"/>
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="Inbox" Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"
+                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Choose an entity"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Select a queue or subscription to inspect dead letters."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1"
+                                    Classes="message-empty-state"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="360">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.CurrentEntityName" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.FilteredMessages.Count"/>
+                                        <Binding Path="CurrentMessageOps.MessageSearchText" Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.IsLoadingMessages"/>
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="ShieldCheck" Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"
+                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No dead-letter messages"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="The current entity has no dead-letter messages on this page."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1"
+                                    Classes="message-empty-state"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="360">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="CurrentNavigation.CurrentEntityName" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.FilteredMessages.Count"/>
+                                        <Binding Path="CurrentMessageOps.MessageSearchText" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        <Binding Path="!CurrentMessageOps.IsLoadingMessages"/>
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="Search" Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"
+                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No messages match your search"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Try a different message ID, body term, correlation ID, reason, or subject."
+                                               Classes="caption"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
 
                             <controls:MessagePaginationFooterView Grid.Row="2"
                                                                   Margin="8,8,8,0"

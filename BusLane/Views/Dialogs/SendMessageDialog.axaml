@@ -11,7 +11,8 @@
         <Border Classes="send-message-panel"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                Width="900"
+                MinWidth="720"
+                MaxWidth="960"
                 MaxHeight="760">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header -->

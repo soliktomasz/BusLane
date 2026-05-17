@@ -116,36 +116,26 @@
                                 </WrapPanel>
 
                                 <StackPanel Classes="sidebar-workspace-actions"
-                                            Spacing="8">
-                                    <Button Classes="secondary small"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                    <Button Classes="icon-button"
                                             Command="{Binding OpenNamespacePanelCommand}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center"
+                                            ToolTip.Tip="Change namespace"
                                             IsVisible="{Binding IsActiveTabAzureMode}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="ArrowLeftRight" Size="14"/>
-                                            <TextBlock Text="Namespace"/>
-                                        </StackPanel>
+                                        <LucideIcon Kind="ArrowLeftRight" Size="14"/>
                                     </Button>
 
-                                    <Button Classes="secondary small"
+                                    <Button Classes="icon-button"
                                             Command="{Binding RefreshCommand}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="RefreshCw" Size="14"/>
-                                            <TextBlock Text="Refresh"/>
-                                        </StackPanel>
+                                            ToolTip.Tip="Refresh workspace">
+                                        <LucideIcon Kind="RefreshCw" Size="14"/>
                                     </Button>
 
                                     <Button Classes="danger-subtle small"
                                             Command="{Binding DisconnectConnectionCommand}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="PlugZap" Size="14"/>
-                                            <TextBlock Text="Disconnect"/>
-                                        </StackPanel>
+                                            ToolTip.Tip="Disconnect workspace"
+                                            Padding="8">
+                                        <LucideIcon Kind="PlugZap" Size="14"/>
                                     </Button>
                                 </StackPanel>
                             </StackPanel>

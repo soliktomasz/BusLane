@@ -16,6 +16,18 @@ public class SendMessageDialogTests
         xaml.Should().Contain("Classes=\"dialog-footer\"");
     }
 
+    [Fact]
+    public void SendMessageDialog_UsesResponsiveDialogSizing()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetDialogPath());
+
+        // Assert
+        xaml.Should().NotContain("Width=\"900\"");
+        xaml.Should().Contain("MinWidth=\"720\"");
+        xaml.Should().Contain("MaxWidth=\"960\"");
+    }
+
     private static string GetDialogPath()
     {
         return Path.GetFullPath(Path.Combine(

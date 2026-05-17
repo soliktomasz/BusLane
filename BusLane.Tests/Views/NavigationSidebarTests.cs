@@ -92,26 +92,27 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_UsesFullWidthWorkspaceActions()
+    public void NavigationSidebar_UsesCompactWorkspaceActions()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
         // Assert
         xaml.Should().Contain("<StackPanel Classes=\"sidebar-workspace-actions\"");
-        xaml.Should().NotContain("<WrapPanel Classes=\"sidebar-workspace-actions\"");
-        xaml.Should().NotContain("ItemWidth=\"120\"");
+        xaml.Should().Contain("Orientation=\"Horizontal\"");
+        xaml.Should().NotContain("Text=\"Refresh\"");
+        xaml.Should().NotContain("Text=\"Disconnect\"");
     }
 
     [Fact]
-    public void NavigationSidebar_RendersRefreshWorkspaceAction()
+    public void NavigationSidebar_RendersRefreshWorkspaceActionAsIconOnly()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
         // Assert
         xaml.Should().Contain("Command=\"{Binding RefreshCommand}\"");
-        xaml.Should().Contain("Text=\"Refresh\"");
+        xaml.Should().Contain("ToolTip.Tip=\"Refresh workspace\"");
     }
 
     private static string GetSidebarPath()

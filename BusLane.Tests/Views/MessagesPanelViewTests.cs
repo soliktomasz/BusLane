@@ -39,6 +39,20 @@ public class MessagesPanelViewTests
         disabledListCount.Should().Be(2);
     }
 
+    [Fact]
+    public void MessagesPanel_DefinesOperatorEmptyStates()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMessagesPanelPath());
+
+        // Assert
+        xaml.Should().Contain("Choose an entity");
+        xaml.Should().Contain("No active messages");
+        xaml.Should().Contain("No dead-letter messages");
+        xaml.Should().Contain("No messages match your search");
+        CountOccurrences(xaml, "Classes=\"message-empty-state\"").Should().BeGreaterThanOrEqualTo(4);
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(
