@@ -1535,8 +1535,21 @@
         <Setter Property="Margin" Value="0,-2,0,0"/>
     </Style>
 
-    <Style Selector="StackPanel.sidebar-workspace-actions">
+    <Style Selector="Grid.sidebar-workspace-actions">
         <Setter Property="Margin" Value="0,4,0,0"/>
+    </Style>
+
+    <Style Selector="Button.sidebar-refresh-action">
+        <Setter Property="MinHeight" Value="36"/>
+    </Style>
+
+    <Style Selector="Button.sidebar-secondary-action">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+
+    <Style Selector="Button.sidebar-disconnect-action">
+        <Setter Property="MinWidth" Value="36"/>
+        <Setter Property="MinHeight" Value="36"/>
     </Style>
 
     <Style Selector="Border.sidebar-context-pill">

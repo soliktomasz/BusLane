@@ -115,39 +115,37 @@
                                     </Border>
                                 </WrapPanel>
 
-                                <StackPanel Classes="sidebar-workspace-actions"
-                                            Spacing="8">
-                                    <Button Classes="secondary small"
-                                            Command="{Binding OpenNamespacePanelCommand}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center"
-                                            IsVisible="{Binding IsActiveTabAzureMode}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="ArrowLeftRight" Size="14"/>
-                                            <TextBlock Text="Namespace"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <Button Classes="secondary small"
+                                <Grid Classes="sidebar-workspace-actions"
+                                      ColumnDefinitions="*,Auto,Auto"
+                                      ColumnSpacing="6">
+                                    <Button Grid.Column="0"
+                                            Classes="secondary small sidebar-refresh-action"
                                             Command="{Binding RefreshCommand}"
+                                            ToolTip.Tip="Refresh workspace"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                             <LucideIcon Kind="RefreshCw" Size="14"/>
-                                            <TextBlock Text="Refresh"/>
+                                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
 
-                                    <Button Classes="danger-subtle small"
-                                            Command="{Binding DisconnectConnectionCommand}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="PlugZap" Size="14"/>
-                                            <TextBlock Text="Disconnect"/>
-                                        </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Classes="icon-button sidebar-secondary-action"
+                                            Command="{Binding OpenNamespacePanelCommand}"
+                                            ToolTip.Tip="Change namespace"
+                                            IsVisible="{Binding IsActiveTabAzureMode}">
+                                        <LucideIcon Kind="ArrowLeftRight" Size="14"/>
                                     </Button>
-                                </StackPanel>
+
+                                    <Button Grid.Column="2"
+                                            Classes="danger-subtle small sidebar-disconnect-action"
+                                            Command="{Binding DisconnectConnectionCommand}"
+                                            ToolTip.Tip="Disconnect workspace"
+                                            Padding="8">
+                                        <LucideIcon Kind="PlugZap" Size="14"/>
+                                    </Button>
+                                </Grid>
                             </StackPanel>
                         </Border>
 
