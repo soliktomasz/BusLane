@@ -92,20 +92,23 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_UsesCompactWorkspaceActions()
+    public void NavigationSidebar_UsesWorkspaceCommandStrip()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
 
         // Assert
-        xaml.Should().Contain("<StackPanel Classes=\"sidebar-workspace-actions\"");
-        xaml.Should().Contain("Orientation=\"Horizontal\"");
-        xaml.Should().NotContain("Text=\"Refresh\"");
+        xaml.Should().Contain("<Grid Classes=\"sidebar-workspace-actions\"");
+        xaml.Should().Contain("ColumnDefinitions=\"*,Auto,Auto\"");
+        xaml.Should().Contain("Classes=\"secondary small sidebar-refresh-action\"");
+        xaml.Should().Contain("Classes=\"icon-button sidebar-secondary-action\"");
+        xaml.Should().Contain("Classes=\"danger-subtle small sidebar-disconnect-action\"");
+        xaml.Should().Contain("Text=\"Refresh\"");
         xaml.Should().NotContain("Text=\"Disconnect\"");
     }
 
     [Fact]
-    public void NavigationSidebar_RendersRefreshWorkspaceActionAsIconOnly()
+    public void NavigationSidebar_RendersRefreshWorkspaceActionAsLabeledPrimaryAction()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
@@ -113,6 +116,18 @@ public class NavigationSidebarTests
         // Assert
         xaml.Should().Contain("Command=\"{Binding RefreshCommand}\"");
         xaml.Should().Contain("ToolTip.Tip=\"Refresh workspace\"");
+        xaml.Should().Contain("HorizontalContentAlignment=\"Center\"");
+    }
+
+    [Fact]
+    public void NavigationSidebar_CentersRefreshActionContentVertically()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("<StackPanel Orientation=\"Horizontal\" Spacing=\"6\" VerticalAlignment=\"Center\">");
+        xaml.Should().Contain("<TextBlock Text=\"Refresh\" VerticalAlignment=\"Center\"/>");
     }
 
     private static string GetSidebarPath()
