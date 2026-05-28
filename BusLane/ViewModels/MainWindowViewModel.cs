@@ -161,7 +161,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // UI State
     [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _statusMessage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
+    private string? _statusMessage;
     [ObservableProperty] private bool _showStatusPopup;
 
     // Send message popup
@@ -884,7 +886,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void ClearMessageSearch() => CurrentMessageOps.ClearMessageSearch();
 
     [RelayCommand]
-    private async Task CopyMessageBodyAsync() => await CurrentMessageOps.CopyMessageBodyAsync();
+    private async Task CopyMessageBodyAsync(MessageInfo? message = null) => await CurrentMessageOps.CopyMessageBodyAsync(message);
 
     #endregion
 

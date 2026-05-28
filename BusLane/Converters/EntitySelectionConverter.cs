@@ -159,4 +159,43 @@ public class MessageSelectionConverter : IMultiValueConverter
     }
 }
 
+/// <summary>
+/// Compares an integer value to an integer converter parameter.
+/// </summary>
+public class IntEqualsConverter : IValueConverter
+{
+    public static readonly IntEqualsConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (!TryParseInt(value, out var intValue) || !TryParseInt(parameter, out var parameterValue))
+            return false;
+
+        return intValue == parameterValue;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is true && TryParseInt(parameter, out var parameterValue))
+            return parameterValue;
+
+        return BindingOperations.DoNothing;
+    }
+
+    private static bool TryParseInt(object? value, out int result)
+    {
+        switch (value)
+        {
+            case int intValue:
+                result = intValue;
+                return true;
+            case string text when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed):
+                result = parsed;
+                return true;
+            default:
+                result = 0;
+                return false;
+        }
+    }
+}
 

@@ -13,14 +13,32 @@
         <converters:DeadLetterBadgeVisibilityConverter x:Key="DeadLetterBadgeVisibilityConverter"/>
     </UserControl.Resources>
 
-    <Border Classes="card" Padding="0">
+    <Border Classes="pane-card entity-pane" Padding="0">
         <DockPanel>
             <Border DockPanel.Dock="Top"
                     Classes="pane-search-surface">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Browse entities"
-                               Classes="caption"/>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <Border Grid.Column="0" Classes="metric-icon-surface">
+                            <LucideIcon Kind="PanelsTopLeft"
+                                        Size="16"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Grid.Column="1"
+                                   Text="Browse entities"
+                                   Classes="heading"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Command="{Binding HideEntityPaneCommand}"
+                                ToolTip.Tip="Hide entity pane"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="PanelLeftClose" Size="15"/>
+                        </Button>
+                    </Grid>
+                    <Grid ColumnDefinitions="*" ColumnSpacing="8">
                         <TextBox Grid.Column="0"
                                  Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
                                  PlaceholderText="Search queues, topics, or subscriptions"
@@ -35,14 +53,6 @@
                                             Margin="5,0,0,0"/>
                             </TextBox.InnerLeftContent>
                         </TextBox>
-
-                        <Button Grid.Column="1"
-                                Classes="icon-button"
-                                Command="{Binding HideEntityPaneCommand}"
-                                ToolTip.Tip="Hide entity pane"
-                                VerticalAlignment="Center">
-                            <LucideIcon Kind="ChevronLeft" Size="14"/>
-                        </Button>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -147,6 +157,7 @@
                                                                    Text="{Binding Name}"
                                                                    FontSize="12"
                                                                    FontWeight="Medium"
+                                                                   FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                                    Foreground="{DynamicResource AppForeground}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"/>
@@ -189,9 +200,6 @@
                             </ListBox>
                         </StackPanel>
                     </Expander>
-
-                    <Border Classes="entity-tree-divider"
-                            IsVisible="{Binding CurrentNavigation.HasQueues}"/>
 
                     <Expander Classes="entity-tree-group"
                               IsVisible="{Binding CurrentNavigation.HasTopics}"
@@ -290,6 +298,7 @@
                                                                        Text="{Binding Name}"
                                                                        FontSize="12"
                                                                        FontWeight="Medium"
+                                                                       FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                                        Foreground="{DynamicResource AppForeground}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"/>
@@ -375,6 +384,7 @@
                                                                                            Text="{Binding Name}"
                                                                                            FontSize="12"
                                                                                            FontWeight="Medium"
+                                                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                                                            Foreground="{DynamicResource AppForeground}"
                                                                                            VerticalAlignment="Center"
                                                                                            TextTrimming="CharacterEllipsis"/>

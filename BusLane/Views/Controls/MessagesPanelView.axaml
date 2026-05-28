@@ -10,9 +10,10 @@
 
     <UserControl.Resources>
         <converters:MessageSelectionConverter x:Key="MessageSelectionConverter"/>
+        <converters:IntEqualsConverter x:Key="IntEqualsConverter"/>
     </UserControl.Resources>
 
-    <Border Classes="card" Padding="0">
+    <Border Classes="pane-card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
             <Border Grid.Row="0" Classes="message-command-bar">
@@ -41,13 +42,17 @@
                                     <TextBlock Text="Clear Session"/>
                                 </StackPanel>
                             </Button>
-                            <!-- Send Message Button (compact, inline) -->
-                            <Button Classes="primary small"
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="6"
+                                    IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
+                            <Button Classes="primary"
                                     Command="{Binding OpenSendMessagePopupCommand}"
-                                    Padding="12,6"
+                                    Padding="14,8"
                                     VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <LucideIcon Kind="Plus" Size="12"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="Send" Size="14"/>
                                     <TextBlock Text="Send"/>
                                 </StackPanel>
                                 <Button.IsVisible>
@@ -60,11 +65,6 @@
                                     </MultiBinding>
                                 </Button.IsVisible>
                             </Button>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    Spacing="6"
-                                    IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
                             <!-- Multi-select toggle button -->
                             <ToggleButton Classes="pill"
                                           IsChecked="{Binding CurrentMessageOps.IsMultiSelectMode, Mode=TwoWay}"
@@ -196,9 +196,23 @@
 
             <!-- Tab Content Area -->
             <TabControl Grid.Row="1"
+                        Classes="message-tabs"
                         SelectedIndex="{Binding CurrentNavigation.SelectedMessageTabIndex}">
 
-                <TabItem Header="Active Messages">
+                <TabItem Classes="message-tab">
+                    <TabItem.Header>
+                        <Grid RowDefinitions="Auto,2">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Active"/>
+                                <Border Classes="counter-active" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentNavigation.CurrentActiveMessageCount}"/>
+                                </Border>
+                            </StackPanel>
+                            <Border Grid.Row="1"
+                                    Classes="message-tab-underline"
+                                    IsVisible="{Binding CurrentNavigation.SelectedMessageTabIndex, Converter={StaticResource IntEqualsConverter}, ConverterParameter=0}"/>
+                        </Grid>
+                    </TabItem.Header>
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
                             <Border Grid.Row="0"
@@ -251,14 +265,10 @@
                                                 </MultiBinding>
                                             </CheckBox.IsChecked>
                                         </CheckBox>
-                                    <Button Grid.Column="1"
+                                    <Border Grid.Column="1"
                                             Classes="message-row"
-                                            Command="{Binding $parent[Window].DataContext.SelectMessageCommand}"
-                                            CommandParameter="{Binding}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Stretch"
-                                            Margin="0,2">
-                                        <Button.ContextMenu>
+                                            Margin="0,4">
+                                        <Border.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Resend"
                                                           Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
@@ -275,40 +285,89 @@
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>
-                                        </Button.ContextMenu>
-                                        <StackPanel>
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0"
+                                        </Border.ContextMenu>
+                                        <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                                <Border Grid.Column="0" Classes="message-seq-pill">
+                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq{0}'}"/>
+                                                </Border>
+                                                <TextBlock Grid.Column="1"
                                                            Text="{Binding MessageId}"
+                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                            FontWeight="SemiBold"
                                                            FontSize="12"
+                                                           VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="1"
+                                                <TextBlock Grid.Column="2"
                                                            Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
                                                            Classes="caption"
-                                                           FontSize="10"
+                                                           FontSize="11"
+                                                           HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center"
                                                            Foreground="{DynamicResource MutedForeground}"/>
+                                                <StackPanel Grid.Column="3"
+                                                            Classes="message-row-actions"
+                                                            Orientation="Horizontal"
+                                                            Spacing="2">
+                                                    <Button Classes="toolbar"
+                                                            Command="{Binding $parent[Window].DataContext.CopyMessageBodyCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="Copy body">
+                                                        <LucideIcon Kind="Copy" Size="13"/>
+                                                    </Button>
+                                                    <Button Classes="toolbar"
+                                                            ToolTip.Tip="More actions">
+                                                        <Button.Flyout>
+                                                            <Flyout Placement="BottomEdgeAlignedRight">
+                                                                <StackPanel Spacing="4" MinWidth="140">
+                                                                    <Button Classes="subtle small"
+                                                                            Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                            <LucideIcon Kind="Send" Size="13"/>
+                                                                            <TextBlock Text="Resend"/>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                    <Button Classes="subtle small"
+                                                                            Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                            <LucideIcon Kind="Copy" Size="13"/>
+                                                                            <TextBlock Text="Clone"/>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                    <Button Classes="subtle small"
+                                                                            Command="{Binding $parent[Window].DataContext.ExportMessageCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                            <LucideIcon Kind="Upload" Size="13"/>
+                                                                            <TextBlock Text="Export"/>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Flyout>
+                                                        </Button.Flyout>
+                                                        <LucideIcon Kind="Ellipsis" Size="13"/>
+                                                    </Button>
+                                                </StackPanel>
                                             </Grid>
-                                            <TextBlock Text="{Binding BodyPreview}"
-                                                       Classes="caption"
-                                                       FontSize="11"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       MaxLines="2"
-                                                       Margin="0,6,0,0"
-                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                       IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}"/>
-                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
-                                                <Border Classes="badge-muted" Padding="6,3">
-                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}"
-                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
-                                                </Border>
-                                                <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
-                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}"
-                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
+                                            <Border Grid.Row="1"
+                                                    Classes="message-preview"
+                                                    IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}">
+                                                <TextBlock Text="{Binding BodyPreview}"
+                                                           Classes="message-preview-text"
+                                                           Classes.xml="{Binding IsBodyXml}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxLines="2"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -321,7 +380,20 @@
                     </TabItem.Content>
                 </TabItem>
 
-                <TabItem Header="Dead Letter">
+                <TabItem Classes="message-tab">
+                    <TabItem.Header>
+                        <Grid RowDefinitions="Auto,2">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Dead Letter"/>
+                                <Border Classes="counter-dead" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentNavigation.CurrentDeadLetterCount}"/>
+                                </Border>
+                            </StackPanel>
+                            <Border Grid.Row="1"
+                                    Classes="message-tab-underline"
+                                    IsVisible="{Binding CurrentNavigation.SelectedMessageTabIndex, Converter={StaticResource IntEqualsConverter}, ConverterParameter=1}"/>
+                        </Grid>
+                    </TabItem.Header>
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
@@ -375,14 +447,10 @@
                                                 </MultiBinding>
                                             </CheckBox.IsChecked>
                                         </CheckBox>
-                                    <Button Grid.Column="1"
+                                    <Border Grid.Column="1"
                                             Classes="message-row"
-                                            Command="{Binding $parent[Window].DataContext.SelectMessageCommand}"
-                                            CommandParameter="{Binding}"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Stretch"
-                                            Margin="0,2">
-                                        <Button.ContextMenu>
+                                            Margin="0,4">
+                                        <Border.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="Resend"
                                                           Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
@@ -399,48 +467,95 @@
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>
-                                        </Button.ContextMenu>
-                                        <StackPanel>
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0"
+                                        </Border.ContextMenu>
+                                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                                <Border Grid.Column="0" Classes="message-seq-pill">
+                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq{0}'}"/>
+                                                </Border>
+                                                <TextBlock Grid.Column="1"
                                                            Text="{Binding MessageId}"
+                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                            FontWeight="SemiBold"
                                                            FontSize="12"
+                                                           VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="1"
+                                                <TextBlock Grid.Column="2"
                                                            Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
                                                            Classes="caption"
-                                                           FontSize="10"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center"
                                                            Foreground="{DynamicResource MutedForeground}"/>
+                                                <StackPanel Grid.Column="3"
+                                                            Classes="message-row-actions"
+                                                            Orientation="Horizontal"
+                                                            Spacing="2">
+                                                    <Button Classes="toolbar"
+                                                            Command="{Binding $parent[Window].DataContext.CopyMessageBodyCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="Copy body">
+                                                        <LucideIcon Kind="Copy" Size="13"/>
+                                                    </Button>
+                                                    <Button Classes="toolbar"
+                                                            ToolTip.Tip="More actions">
+                                                        <Button.Flyout>
+                                                            <Flyout Placement="BottomEdgeAlignedRight">
+                                                                <StackPanel Spacing="4" MinWidth="140">
+                                                                    <Button Classes="subtle small"
+                                                                            Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                            <LucideIcon Kind="Send" Size="13"/>
+                                                                            <TextBlock Text="Resend"/>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                    <Button Classes="subtle small"
+                                                                            Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                            <LucideIcon Kind="Copy" Size="13"/>
+                                                                            <TextBlock Text="Clone"/>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                    <Button Classes="subtle small"
+                                                                            Command="{Binding $parent[Window].DataContext.ExportMessageCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Left">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                            <LucideIcon Kind="Upload" Size="13"/>
+                                                                            <TextBlock Text="Export"/>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Flyout>
+                                                        </Button.Flyout>
+                                                        <LucideIcon Kind="Ellipsis" Size="13"/>
+                                                    </Button>
+                                                </StackPanel>
                                             </Grid>
                                             <!-- Dead Letter Reason -->
-                                            <Border Background="{DynamicResource SurfaceDanger}" Padding="8,4" Margin="0,6,0,0" CornerRadius="8"
+                                            <Border Grid.Row="1"
+                                                    Classes="deadletter-reason-pill"
                                                     IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                                 <TextBlock Text="{Binding DeadLetterReason}"
-                                                           Foreground="{DynamicResource TextDanger}"
-                                                           FontSize="11"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </Border>
-                                            <TextBlock Text="{Binding BodyPreview}"
-                                                       Classes="caption"
-                                                       FontSize="11"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       MaxLines="2"
-                                                       Margin="0,6,0,0"
-                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                       IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}"/>
-                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6">
-                                                <Border Classes="badge-muted" Padding="6,3">
-                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='Seq: {0}'}"
-                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
-                                                </Border>
-                                                <Border Classes="badge-muted" Padding="6,3" IsVisible="{Binding DeliveryCount}">
-                                                    <TextBlock Text="{Binding DeliveryCount, StringFormat='Delivery: {0}'}"
-                                                               Foreground="{DynamicResource SubtleForeground}" FontSize="10"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Button>
+                                            <Border Grid.Row="2"
+                                                    Classes="message-preview"
+                                                    IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}">
+                                                <TextBlock Text="{Binding BodyPreview}"
+                                                           Classes="message-preview-text"
+                                                           Classes.xml="{Binding IsBodyXml}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxLines="2"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -453,8 +568,16 @@
                     </TabItem.Content>
                 </TabItem>
 
-                <TabItem Header="Sessions"
+                <TabItem Classes="message-tab"
                          IsVisible="{Binding CurrentNavigation.CanShowSessionInspector}">
+                    <TabItem.Header>
+                        <Grid RowDefinitions="Auto,2">
+                            <TextBlock Text="Sessions"/>
+                            <Border Grid.Row="1"
+                                    Classes="message-tab-underline"
+                                    IsVisible="{Binding CurrentNavigation.SelectedMessageTabIndex, Converter={StaticResource IntEqualsConverter}, ConverterParameter=2}"/>
+                        </Grid>
+                    </TabItem.Header>
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
                             <Border Grid.Row="0"

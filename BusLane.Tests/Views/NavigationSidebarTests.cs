@@ -31,7 +31,7 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_HasSingleMyConnectionsButton()
+    public void NavigationSidebar_HasExpandedAndCollapsedMyConnectionsButtons()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());
@@ -40,7 +40,7 @@ public class NavigationSidebarTests
         var myConnectionsButtonCount = CountOccurrences(xaml, "Command=\"{Binding OpenConnectionLibraryCommand}\"");
 
         // Assert
-        myConnectionsButtonCount.Should().Be(1);
+        myConnectionsButtonCount.Should().Be(2);
     }
 
     [Fact]
@@ -52,6 +52,17 @@ public class NavigationSidebarTests
         // Assert
         xaml.Should().Contain("Classes=\"sidebar-workspace-summary\"");
         xaml.Should().NotContain("Classes=\"sidebar-workspace-card\"");
+    }
+
+    [Fact]
+    public void NavigationSidebar_RendersCollapsedRail()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("Classes.collapsed=\"{Binding !IsNavigationPanelVisible}\"");
+        xaml.Should().Contain("Classes=\"sidebar-rail\"");
     }
 
     [Fact]
