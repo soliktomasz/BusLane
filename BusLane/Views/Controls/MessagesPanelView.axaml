@@ -21,6 +21,15 @@
                     <!-- Title and Actions Row -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                            <Button Classes="entity-pane-restore-command"
+                                    Command="{Binding ShowEntityPaneCommand}"
+                                    IsVisible="{Binding !IsCurrentEntityPaneVisible}"
+                                    ToolTip.Tip="Show entity pane">
+                                <LucideIcon Kind="PanelLeftOpen" Size="16"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Button>
                             <Border Classes="metric-icon-surface">
                                 <LucideIcon Kind="Inbox" Size="16"
                                             Foreground="{DynamicResource AccentBrand}"

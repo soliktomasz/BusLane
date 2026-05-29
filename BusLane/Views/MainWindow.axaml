@@ -42,14 +42,6 @@
                 <!-- Main content grid -->
                 <Grid x:Name="AzureWorkspaceGrid"
                       ColumnDefinitions="0,1.2*,1.8*">
-                    <Button Grid.Column="0"
-                            Classes="entity-pane-restore-handle"
-                            Command="{Binding ShowEntityPaneCommand}"
-                            IsVisible="{Binding !IsCurrentEntityPaneVisible}"
-                            ToolTip.Tip="Show entity pane">
-                        <LucideIcon Kind="PanelLeftOpen" Size="14"/>
-                    </Button>
-
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="1"
                                                   IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
@@ -66,14 +58,6 @@
                 <!-- Main content for connection string mode -->
                 <Grid x:Name="ConnectionWorkspaceGrid"
                       ColumnDefinitions="0,1.2*,1.8*">
-                    <Button Grid.Column="0"
-                            Classes="entity-pane-restore-handle"
-                            Command="{Binding ShowEntityPaneCommand}"
-                            IsVisible="{Binding !IsCurrentEntityPaneVisible}"
-                            ToolTip.Tip="Show entity pane">
-                        <LucideIcon Kind="PanelLeftOpen" Size="14"/>
-                    </Button>
-
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="1"
                                              IsVisible="{Binding IsCurrentEntityPaneVisible}"/>

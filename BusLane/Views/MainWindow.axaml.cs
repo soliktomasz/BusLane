@@ -12,7 +12,6 @@ using CommunityToolkit.Mvvm.Input;
 public partial class MainWindow : Window
 {
     private const int TerminalBoundsSaveDebounceMilliseconds = 250;
-    private const double EntityPaneRestoreHandleWidth = 34;
     private const double VisibleEntityPaneWidthWeight = 1.2;
     private const double VisibleMessagesWidthWeight = 1.8;
 
@@ -540,7 +539,7 @@ public partial class MainWindow : Window
 
         grid.ColumnDefinitions[0].Width = isEntityPaneVisible
             ? new GridLength(0)
-            : new GridLength(EntityPaneRestoreHandleWidth);
+            : new GridLength(0);
         grid.ColumnDefinitions[1].Width = isEntityPaneVisible
             ? new GridLength(VisibleEntityPaneWidthWeight, GridUnitType.Star)
             : new GridLength(0);
