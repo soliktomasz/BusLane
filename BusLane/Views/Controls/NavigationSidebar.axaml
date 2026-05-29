@@ -446,10 +446,10 @@
                         <Rectangle Canvas.Left="104" Canvas.Top="320" Width="304" Height="44" RadiusX="22" RadiusY="22" Fill="#FFFFFF"/>
                     </Canvas>
                 </Viewbox>
-                <Button Classes="panel-toggle"
+                <Button Classes="entity-pane-restore-command"
                         Command="{Binding ToggleNavigationPanelCommand}"
                         ToolTip.Tip="Expand navigation">
-                    <LucideIcon Kind="PanelRightOpen" Size="18"/>
+                    <LucideIcon Kind="PanelLeftOpen" Size="18"/>
                 </Button>
             </StackPanel>
 

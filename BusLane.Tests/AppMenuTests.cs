@@ -6,6 +6,17 @@ using FluentAssertions;
 public class AppMenuTests
 {
     [Fact]
+    public void AppXaml_DefinesMacApplicationAboutMenu()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetAppPath());
+
+        // Assert
+        xaml.Should().Contain("<NativeMenu.Menu>");
+        xaml.Should().Contain("<NativeMenuItem Header=\"About BusLane\" Click=\"AboutMenuItem_OnClick\"/>");
+    }
+
+    [Fact]
     public void CreateMacMenu_Always_CreatesViewAndHelpMenusWithExpectedItems()
     {
         // Arrange
@@ -45,5 +56,17 @@ public class AppMenuTests
         var aboutItem = helpItem.Menu.Items[0].Should().BeOfType<NativeMenuItem>().Subject;
         aboutItem.Header.Should().Be("About BusLane");
         aboutItem.HasClickHandlers.Should().BeTrue();
+    }
+
+    private static string GetAppPath()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "App.axaml"));
     }
 }

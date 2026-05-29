@@ -99,9 +99,6 @@ public partial class App : Application
             {
                 objc_msgSend(sharedApp, setApplicationIconImage, image);
             }
-
-            // Remove default "About Avalonia" item from the application menu.
-            RemoveDefaultMacOSAboutMenuItem(sharedApp);
         }
         catch
         {
@@ -179,41 +176,14 @@ public partial class App : Application
         await dialog.ShowDialog(owner);
     }
 
-    private static void RemoveDefaultMacOSAboutMenuItem(IntPtr nsApp)
+    private async void AboutMenuItem_OnClick(object? sender, EventArgs args)
     {
-        try
-        {
-            // Get the main menu
-            var mainMenuSelector = sel_registerName("mainMenu");
-            var mainMenu = objc_msgSend(nsApp, mainMenuSelector);
+        if (MainWindow is null)
+            return;
 
-            if (mainMenu != IntPtr.Zero)
-            {
-                // Get the first item (application menu)
-                var itemAtIndexSelector = sel_registerName("itemAtIndex:");
-                var appMenuItem = objc_msgSend(mainMenu, itemAtIndexSelector, (IntPtr)0);
-
-                if (appMenuItem != IntPtr.Zero)
-                {
-                    // Get the submenu
-                    var submenuSelector = sel_registerName("submenu");
-                    var appMenu = objc_msgSend(appMenuItem, submenuSelector);
-
-                    if (appMenu != IntPtr.Zero)
-                    {
-                        // First entry is the default About item; remove it.
-                        var removeItemAtIndexSelector = sel_registerName("removeItemAtIndex:");
-                        objc_msgSend(appMenu, removeItemAtIndexSelector, (IntPtr)0);
-                    }
-                }
-            }
-        }
-        catch
-        {
-            // Silently fail if we can't modify the menu
-        }
+        await ShowAboutDialogAsync(MainWindow);
     }
-    
+
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string className);
     

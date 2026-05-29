@@ -5,6 +5,12 @@
              x:Class="BusLane.App"
              Name="BusLane"
              RequestedThemeVariant="Default">
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="About BusLane" Click="AboutMenuItem_OnClick"/>
+        </NativeMenu>
+    </NativeMenu.Menu>
+
     <Application.Resources>
         <ResourceDictionary>
             

@@ -66,6 +66,18 @@ public class NavigationSidebarTests
     }
 
     [Fact]
+    public void NavigationSidebar_CollapsedRailExpandButton_UsesRestoreTreatmentAndOpenLeftPanelIcon()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("Classes=\"entity-pane-restore-command\"");
+        xaml.Should().Contain("<LucideIcon Kind=\"PanelLeftOpen\" Size=\"18\"");
+        xaml.Should().NotContain("<LucideIcon Kind=\"PanelRightOpen\" Size=\"18\"");
+    }
+
+    [Fact]
     public void NavigationSidebar_DoesNotRenderDisconnectAsStandalonePrimaryBlock()
     {
         // Arrange
