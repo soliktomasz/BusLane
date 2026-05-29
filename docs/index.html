@@ -3,49 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BusLane | The Service Bus Workspace You've Been Waiting For</title>
-    <meta name="description" content="BusLane is a clean, cross-platform desktop workspace for Azure Service Bus. Inspect messages, monitor queues, and recover dead-letter workflows from one fast UI.">
-    <meta name="theme-color" content="#f6f2e9">
+    <title>BusLane | Azure Service Bus Desktop Workspace</title>
+    <meta name="description" content="BusLane is a cross-platform desktop workspace for Azure Service Bus. Inspect messages, monitor queues, recover dead-letter flows, and manage connections from one focused UI.">
+    <meta name="theme-color" content="#f5f5f5">
     <link rel="canonical" href="https://soliktomasz.github.io/BusLane/">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://soliktomasz.github.io/BusLane/">
-    <meta property="og:title" content="BusLane | The Service Bus Workspace You've Been Waiting For">
-    <meta property="og:description" content="A clean desktop app for Azure Service Bus operations.">
+    <meta property="og:title" content="BusLane | Azure Service Bus Desktop Workspace">
+    <meta property="og:description" content="A focused desktop workspace for Azure Service Bus operations.">
     <meta property="og:image" content="https://soliktomasz.github.io/BusLane/pics/MainWindow.png">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="BusLane | The Service Bus Workspace You've Been Waiting For">
-    <meta name="twitter:description" content="A clean desktop app for Azure Service Bus operations.">
+    <meta name="twitter:title" content="BusLane | Azure Service Bus Desktop Workspace">
+    <meta name="twitter:description" content="A focused desktop workspace for Azure Service Bus operations.">
     <meta name="twitter:image" content="https://soliktomasz.github.io/BusLane/pics/MainWindow.png">
 
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/soliktomasz/BusLane/main/BusLane/Assets/icon.png">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg: #f6f2e9;
-            --bg-2: #fbf8f1;
-            --card: #fffdf8;
-            --line: #ddd2bf;
-            --text: #1f2a35;
-            --text-soft: #5a6978;
-            --accent: #ef6b37;
-            --accent-soft: #ffe2d5;
-            --mint: #4cae95;
-            --mint-soft: #def3ec;
-            --radius-xl: 24px;
-            --radius-lg: 16px;
-            --shadow: 0 14px 34px rgba(31, 42, 53, 0.08);
+            --app-bg: #f5f5f5;
+            --surface: #ffffff;
+            --surface-subtle: #f9f9f9;
+            --layer: #efefef;
+            --text: #242424;
+            --text-subtle: #616161;
+            --text-muted: #8a8a8a;
+            --border: #e0e0e0;
+            --border-strong: #c7c7c7;
+            --border-muted: #ebebeb;
+            --brand: #0f6cbd;
+            --brand-hover: #115ea3;
+            --brand-pressed: #0c4a7e;
+            --brand-surface: #ebf3fc;
+            --success: #0e700e;
+            --danger: #c50f1f;
+            --warning: #ca5010;
+            --dark: #181818;
+            --dark-surface: #252525;
+            --dark-border: #363636;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+            --max: 1160px;
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
 
         html {
@@ -53,13 +61,11 @@
         }
 
         body {
-            font-family: 'Manrope', sans-serif;
-            background:
-                radial-gradient(circle at 8% 6%, rgba(239, 107, 55, 0.13), transparent 34%),
-                radial-gradient(circle at 91% 12%, rgba(76, 174, 149, 0.12), transparent 34%),
-                var(--bg);
+            margin: 0;
+            background: var(--app-bg);
             color: var(--text);
-            line-height: 1.6;
+            font-family: Inter, "Segoe UI Variable", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+            line-height: 1.5;
             overflow-x: hidden;
         }
 
@@ -68,630 +74,978 @@
             text-decoration: none;
         }
 
-        a:focus-visible,
-        button:focus-visible {
-            outline: 3px solid var(--mint);
-            outline-offset: 2px;
+        img {
+            max-width: 100%;
         }
 
-        .container {
-            width: min(1080px, calc(100% - 2rem));
+        a:focus-visible,
+        button:focus-visible,
+        summary:focus-visible {
+            outline: 2px solid var(--brand);
+            outline-offset: 3px;
+        }
+
+        .wrap {
+            width: min(var(--max), calc(100% - 40px));
             margin: 0 auto;
         }
 
-        .top-note {
-            text-align: center;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.74rem;
-            color: #5f6d7a;
-            padding: 0.75rem 0 0.45rem;
-        }
-
-        .nav {
+        .site-nav {
             position: sticky;
             top: 0;
             z-index: 20;
-            border-bottom: 1px solid rgba(221, 210, 191, 0.7);
-            backdrop-filter: blur(7px);
-            background: rgba(246, 242, 233, 0.86);
+            background: rgba(245, 245, 245, 0.88);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(16px);
         }
 
         .nav-inner {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
-            padding: 0.82rem 0;
+            gap: 20px;
+            min-height: 64px;
         }
 
         .brand {
             display: inline-flex;
             align-items: center;
-            gap: 0.55rem;
-            font-weight: 700;
-            font-size: 1rem;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 750;
         }
 
         .brand img {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            border: 1px solid rgba(221, 210, 191, 0.9);
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius);
         }
 
         .nav-links {
-            display: inline-flex;
-            gap: 0.35rem;
-            flex-wrap: wrap;
+            display: flex;
             align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            flex-wrap: wrap;
         }
 
         .nav-links a {
-            font-size: 0.84rem;
-            color: var(--text-soft);
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
             border: 1px solid transparent;
-            border-radius: 999px;
-            padding: 0.42rem 0.75rem;
-            transition: 0.2s ease;
+            border-radius: var(--radius);
+            color: var(--text-subtle);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 7px 10px;
         }
 
         .nav-links a:hover {
-            border-color: var(--line);
             color: var(--text);
-            background: rgba(255, 255, 255, 0.7);
+            background: var(--surface);
+            border-color: var(--border);
         }
 
-        .nav-links .cta {
-            color: #4e2412;
-            border-color: #f0b89f;
-            background: var(--accent-soft);
-            font-weight: 700;
+        .nav-links .download-link {
+            color: #ffffff;
+            background: var(--brand);
+            border-color: var(--brand);
+        }
+
+        .nav-links .download-link:hover {
+            color: #ffffff;
+            background: var(--brand-hover);
+            border-color: var(--brand-hover);
         }
 
         main {
-            padding: 2rem 0 2.4rem;
-        }
-
-        .hero {
-            text-align: center;
-            padding: 0 0.3rem;
-        }
-
-        .eyebrow {
-            display: inline-block;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.74rem;
-            letter-spacing: 0.03em;
-            color: #5d6d7c;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.62);
-            border-radius: 999px;
-            padding: 0.28rem 0.62rem;
-        }
-
-        h1 {
-            margin-top: 0.85rem;
-            font-size: clamp(2.05rem, 5.8vw, 4.3rem);
-            line-height: 1.04;
-            letter-spacing: -0.02em;
-            max-width: 13ch;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        h1 .accent {
-            color: #d45724;
-        }
-
-        .hero-subtitle {
-            margin-top: 0.85rem;
-            max-width: 70ch;
-            margin-left: auto;
-            margin-right: auto;
-            color: var(--text-soft);
-            font-size: 1rem;
-        }
-
-        .hero-subtitle strong {
-            color: #2d3f4f;
-            font-weight: 700;
-        }
-
-        .actions {
-            margin-top: 1.15rem;
-            display: flex;
-            justify-content: center;
-            gap: 0.65rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            border: 1px solid var(--line);
-            padding: 0.68rem 1.05rem;
-            font-weight: 700;
-            font-size: 0.88rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(31, 42, 53, 0.14);
-        }
-
-        .btn-primary {
-            color: #4d2312;
-            border-color: #f0b89f;
-            background: var(--accent-soft);
-        }
-
-        .btn-secondary {
-            color: #20473e;
-            border-color: #b8ded2;
-            background: var(--mint-soft);
-        }
-
-        .hero-shot {
-            margin-top: 1.35rem;
-            border: 1px solid var(--line);
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            background: #121822;
-            box-shadow: var(--shadow);
-        }
-
-        .hero-shot img {
-            width: 100%;
             display: block;
         }
 
-        .quick-links {
-            margin-top: 0.9rem;
-            display: flex;
-            justify-content: center;
-            gap: 0.65rem;
-            flex-wrap: wrap;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.74rem;
-            color: #607181;
+        .hero {
+            min-height: calc(100vh - 124px);
+            display: grid;
+            align-items: end;
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+            background: var(--layer);
         }
 
-        .quick-links a {
-            border-bottom: 1px solid transparent;
-            padding-bottom: 0.08rem;
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            background: #dfe8f2;
         }
 
-        .quick-links a:hover {
-            border-color: #6d7f90;
+        .hero-image {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.42;
         }
 
-        section {
-            margin-top: 2.2rem;
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 64% 52%;
+            filter: saturate(0.95);
         }
 
-        .section-head {
-            text-align: center;
-            max-width: 72ch;
-            margin: 0 auto 1rem;
+        .hero-image::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(245, 245, 245, 0.97) 0%, rgba(245, 245, 245, 0.88) 38%, rgba(245, 245, 245, 0.56) 68%, rgba(245, 245, 245, 0.72) 100%),
+                linear-gradient(0deg, rgba(245, 245, 245, 1) 0%, rgba(245, 245, 245, 0.32) 44%, rgba(245, 245, 245, 0.1) 100%);
         }
 
-        .section-head span {
-            display: inline-block;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.72rem;
-            letter-spacing: 0.04em;
+        .hero-content {
+            padding: 82px 0 34px;
+        }
+
+        .hero-panel {
+            max-width: 680px;
+        }
+
+        .eyebrow {
+            color: var(--brand);
+            font-size: 13px;
+            font-weight: 750;
+            margin: 0 0 14px;
             text-transform: uppercase;
-            color: #647585;
         }
 
-        .section-head h2 {
-            margin-top: 0.45rem;
-            font-size: clamp(1.45rem, 4.3vw, 2.6rem);
+        h1,
+        h2,
+        h3,
+        p {
+            margin-top: 0;
+        }
+
+        h1 {
+            max-width: 11ch;
+            margin-bottom: 18px;
+            font-size: clamp(48px, 8.4vw, 96px);
+            font-weight: 800;
+            line-height: 0.95;
+        }
+
+        .hero-copy {
+            max-width: 650px;
+            margin-bottom: 26px;
+            color: var(--text-subtle);
+            font-size: clamp(18px, 2vw, 22px);
+        }
+
+        .hero-actions,
+        .section-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius);
+            padding: 9px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button.primary {
+            color: #ffffff;
+            background: var(--brand);
+            border-color: var(--brand);
+        }
+
+        .button.primary:hover {
+            background: var(--brand-hover);
+            border-color: var(--brand-hover);
+        }
+
+        .button.secondary {
+            background: var(--surface);
+        }
+
+        .button.secondary:hover {
+            background: var(--surface-subtle);
+            border-color: var(--brand);
+        }
+
+        .hero-proof {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1px;
+            width: min(780px, 100%);
+            margin-top: 50px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--border);
+        }
+
+        .proof-item {
+            min-height: 82px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.86);
+        }
+
+        .proof-value {
+            display: block;
+            color: var(--text);
+            font-size: 20px;
+            font-weight: 800;
             line-height: 1.1;
         }
 
-        .section-head p {
-            margin-top: 0.55rem;
-            color: var(--text-soft);
+        .proof-label {
+            display: block;
+            margin-top: 5px;
+            color: var(--text-subtle);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        section:not(.hero) {
+            padding: 76px 0;
+        }
+
+        .section-head {
+            max-width: 760px;
+            margin-bottom: 26px;
+        }
+
+        .section-kicker {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--brand);
+            font-size: 12px;
+            font-weight: 750;
+            text-transform: uppercase;
+        }
+
+        .section-head h2,
+        .support-band h2 {
+            margin-bottom: 10px;
+            font-size: clamp(30px, 4.8vw, 52px);
+            font-weight: 800;
+            line-height: 1.02;
+        }
+
+        .section-head p,
+        .support-band p {
+            color: var(--text-subtle);
+            font-size: 17px;
+        }
+
+        section.workflow {
+            padding-top: 30px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--border);
+        }
+
+        .workflow-item,
+        .feature-card,
+        .install-card,
+        .faq details {
+            border-radius: var(--radius);
+        }
+
+        .workflow-item {
+            min-height: 180px;
+            padding: 22px;
+            background: var(--surface-subtle);
+        }
+
+        .item-index {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            margin-bottom: 38px;
+            color: var(--brand);
+            background: var(--brand-surface);
+            border: 1px solid #cfe4f6;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .workflow-item h3,
+        .feature-card h3,
+        .install-card h3 {
+            margin-bottom: 8px;
+            font-size: 18px;
+            line-height: 1.2;
+        }
+
+        .workflow-item p,
+        .feature-card p,
+        .install-card p,
+        .faq p {
+            margin-bottom: 0;
+            color: var(--text-subtle);
+            font-size: 14px;
+        }
+
+        .features {
+            background: var(--app-bg);
         }
 
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.65rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
         }
 
-        .feature {
-            border: 1px solid var(--line);
-            border-radius: var(--radius-lg);
-            background: var(--card);
-            padding: 1rem;
+        .feature-card {
+            min-height: 176px;
+            padding: 22px;
+            background: var(--surface);
+            border: 1px solid var(--border);
         }
 
-        .feature h3 {
-            font-size: 1rem;
-            margin-bottom: 0.38rem;
-        }
-
-        .feature p {
-            font-size: 0.91rem;
-            color: var(--text-soft);
-        }
-
-        .section-card {
-            border: 1px solid var(--line);
-            border-radius: var(--radius-xl);
-            background: linear-gradient(145deg, var(--card), var(--bg-2));
-            padding: 1rem;
-            box-shadow: var(--shadow);
-        }
-
-        .screenshot-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
-            margin-top: 0.9rem;
+            margin-bottom: 20px;
+            color: var(--brand);
+            background: var(--brand-surface);
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .showcase {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gallery-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
         }
 
         .gallery-tab {
-            font-family: 'Manrope', sans-serif;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text-soft);
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            padding: 0.38rem 0.75rem;
+            min-height: 34px;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-subtle);
             cursor: pointer;
-            transition: 0.2s ease;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 7px 10px;
         }
 
         .gallery-tab:hover {
-            border-color: #b8ded2;
             color: var(--text);
+            border-color: var(--brand);
         }
 
-        .gallery-tab.active {
-            color: #4d2312;
-            border-color: #f0b89f;
-            background: var(--accent-soft);
+        .gallery-tab.is-active {
+            color: var(--brand);
+            background: var(--brand-surface);
+            border-color: var(--brand);
         }
 
-        .action-shot {
-            margin-top: 0.9rem;
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            overflow: hidden;
-            background: #121822;
+        .screenshot-frame {
+            padding: 10px;
+            background: var(--dark);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
         }
 
-        .action-shot img {
+        .window-bar {
+            height: 28px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0 2px 8px;
+        }
+
+        .window-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #505050;
+        }
+
+        .window-dot.active {
+            background: #4cc2ff;
+        }
+
+        .screenshot-frame img {
             width: 100%;
             display: block;
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius);
+            background: var(--dark-surface);
+        }
+
+        .install {
+            background: var(--app-bg);
         }
 
         .install-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.7rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
         }
 
         .install-card {
-            border: 1px solid var(--line);
-            border-radius: var(--radius-lg);
-            background: var(--card);
-            padding: 1rem;
-        }
-
-        .install-card h3 {
-            font-size: 1rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .install-card p {
-            color: var(--text-soft);
-            font-size: 0.9rem;
+            min-width: 0;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
         }
 
         pre {
-            margin-top: 0.62rem;
-            border-radius: 12px;
-            background: #202933;
-            color: #f4f8fc;
-            padding: 0.78rem;
+            max-width: 100%;
+            min-width: 0;
+            margin: 18px 0 0;
             overflow-x: auto;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.74rem;
-            line-height: 1.52;
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius);
+            background: #161616;
+            color: #f0f0f0;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 13px;
+            line-height: 1.55;
+            padding: 14px;
         }
 
-        details {
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: var(--card);
-            padding: 0.72rem 0.85rem;
+        .faq {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
         }
 
-        details + details {
-            margin-top: 0.55rem;
+        .faq-list {
+            display: grid;
+            gap: 10px;
+            max-width: 860px;
         }
 
-        summary {
+        .faq details {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            padding: 16px 18px;
+        }
+
+        .faq summary {
             cursor: pointer;
-            font-weight: 700;
-            font-size: 0.94rem;
+            font-weight: 750;
         }
 
-        details p {
-            margin-top: 0.46rem;
-            color: var(--text-soft);
-            font-size: 0.9rem;
+        .faq p {
+            margin-top: 10px;
         }
 
-        .support {
-            text-align: center;
-            border: 1px solid var(--line);
-            border-radius: var(--radius-xl);
-            background: linear-gradient(145deg, #ffe5d9, #f7f5ee, #e0f3ed);
-            padding: 1.25rem;
+        .support-band {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 24px;
+            align-items: center;
+            margin-top: 56px;
+            padding: 28px;
+            background: var(--brand-surface);
+            border: 1px solid #cfe4f6;
+            border-radius: var(--radius-lg);
         }
 
-        .support h2 {
-            font-size: clamp(1.4rem, 4.2vw, 2.4rem);
-            line-height: 1.1;
-            max-width: 20ch;
-            margin: 0 auto;
+        .support-band h2 {
+            font-size: clamp(26px, 3.6vw, 42px);
         }
 
-        .support p {
-            margin-top: 0.55rem;
-            color: #4f6070;
-            max-width: 60ch;
-            margin-left: auto;
-            margin-right: auto;
+        .site-footer {
+            background: var(--dark);
+            color: #f0f0f0;
         }
 
-        footer {
-            margin-top: 1.8rem;
-            border-top: 1px solid rgba(221, 210, 191, 0.8);
-            padding-top: 1rem;
+        .footer-inner {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 0.8rem;
+            gap: 20px;
             flex-wrap: wrap;
-            font-size: 0.84rem;
-            color: #5c6c7c;
+            padding: 28px 0;
+        }
+
+        .footer-meta {
+            color: #b3b3b3;
+            font-size: 13px;
         }
 
         .footer-links {
             display: flex;
-            gap: 0.65rem;
+            gap: 12px;
             flex-wrap: wrap;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .footer-links a {
+            color: #f0f0f0;
         }
 
         .footer-links a:hover {
-            color: #304252;
+            color: #4cc2ff;
         }
 
-        .reveal {
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.52s ease, transform 0.52s ease;
+        @media (max-width: 980px) {
+            .workflow-grid,
+            .feature-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
-        .reveal.in {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        @media (max-width: 860px) {
+            .wrap {
+                width: min(100% - 28px, var(--max));
+            }
 
-        @media (max-width: 840px) {
-            .feature-grid,
+            .nav-inner {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 12px 0;
+            }
+
+            .nav-links {
+                justify-content: flex-start;
+            }
+
+            .hero {
+                min-height: auto;
+            }
+
+            .hero-content {
+                padding-top: 58px;
+            }
+
+            .hero-image {
+                opacity: 0.28;
+            }
+
+            .hero-image::after {
+                background: rgba(245, 245, 245, 0.88);
+            }
+
+            .hero-proof,
             .install-grid {
+                grid-template-columns: 1fr;
+            }
+
+            section:not(.hero) {
+                padding: 54px 0;
+            }
+
+            section.workflow {
+                padding-top: 28px;
+            }
+
+            .support-band {
                 grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 680px) {
-            .container {
-                width: calc(100% - 1.1rem);
-            }
-
+        @media (max-width: 620px) {
             .nav-inner {
-                flex-direction: column;
-                align-items: flex-start;
+                align-items: center;
+                flex-direction: row;
+                min-height: 64px;
+                padding: 10px 0;
             }
 
-            .actions {
-                flex-direction: column;
+            .nav-links {
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                max-width: calc(100vw - 130px);
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .nav-links::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-links a {
+                flex: 0 0 auto;
+            }
+
+            .hero-content {
+                padding-top: 34px;
+                padding-bottom: 20px;
+            }
+
+            h1 {
+                max-width: 10ch;
+                font-size: clamp(44px, 17vw, 64px);
+            }
+
+            .hero-proof {
+                margin-top: 30px;
+            }
+
+            .proof-item {
+                padding: 14px 16px;
+            }
+
+            .hero-actions,
+            .section-actions {
                 align-items: stretch;
+                flex-direction: column;
             }
 
-            .btn {
+            .button {
                 width: 100%;
+            }
+
+            .workflow-grid,
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .proof-item,
+            .workflow-item,
+            .feature-card,
+            .install-card {
+                min-height: auto;
+            }
+
+            .item-index {
+                margin-bottom: 24px;
+            }
+
+            .gallery-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .gallery-tab {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
             }
         }
     </style>
 </head>
 <body>
-    <div class="top-note">Made for focused Service Bus workflows by Tomasz Solik</div>
-
-    <nav class="nav">
-        <div class="container nav-inner">
-            <a class="brand" href="#top">
-                <img src="https://raw.githubusercontent.com/soliktomasz/BusLane/main/BusLane/Assets/icon.png" alt="BusLane icon">
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="wrap nav-inner">
+            <a class="brand" href="#top" aria-label="BusLane home">
+                <img src="https://raw.githubusercontent.com/soliktomasz/BusLane/main/BusLane/Assets/icon.png" alt="">
                 <span>BusLane</span>
             </a>
             <div class="nav-links">
+                <a href="#workflow">Workflow</a>
                 <a href="#features">Features</a>
-                <a href="#demo">Demo</a>
+                <a href="#showcase">Screenshots</a>
                 <a href="#install">Install</a>
                 <a href="#faq">FAQ</a>
-                <a href="https://github.com/soliktomasz/BusLane/releases" class="cta" target="_blank" rel="noopener noreferrer">Download</a>
+                <a class="download-link" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Download</a>
             </div>
         </div>
     </nav>
 
-    <main id="top" class="container">
-        <section class="hero reveal">
-            <span class="eyebrow">Cross-platform desktop app for Azure Service Bus</span>
-            <h1>The Service Bus Workspace You've Been <span class="accent">Waiting For</span>.</h1>
-            <p class="hero-subtitle">A beautiful, practical, and fast queue operations experience. <strong>Inspect messages, monitor throughput, and recover dead-letter flows</strong> from one interface on macOS, Windows, and Linux.</p>
-            <div class="actions">
-                <a class="btn btn-primary" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Download Latest Version</a>
-                <a class="btn btn-secondary" href="https://github.com/soliktomasz/BusLane" target="_blank" rel="noopener noreferrer">GitHub</a>
+    <main>
+        <section class="hero" id="top">
+            <div class="hero-image" aria-hidden="true">
+                <img src="pics/MainWindow.png" alt="">
             </div>
-
-            <div class="hero-shot">
-                <img src="pics/MainWindow.png" alt="BusLane editor interface screenshot">
-            </div>
-
-            <div class="quick-links">
-                <a href="#features">Features</a>
-                <a href="#demo">In Action</a>
-                <a href="#install">Install</a>
-                <a href="#faq">FAQ</a>
-                <a href="https://www.buymeacoffee.com/tomaszsolik" target="_blank" rel="noopener noreferrer">Sponsor</a>
-            </div>
-        </section>
-
-        <section id="features" class="reveal">
-            <div class="section-head">
-                <span>Features</span>
-                <h2>A Faster, Simpler Workflow</h2>
-                <p>Everything needed for daily Service Bus operations, without UI noise.</p>
-            </div>
-            <div class="feature-grid">
-                <article class="feature">
-                    <h3>Dual Authentication</h3>
-                    <p>Sign in with Azure Identity or connect directly with connection strings.</p>
-                </article>
-                <article class="feature">
-                    <h3>Entity Explorer</h3>
-                    <p>Navigate queues, topics, and subscriptions with persistent tabs and quick context.</p>
-                </article>
-                <article class="feature">
-                    <h3>Dead Letter Recovery</h3>
-                    <p>Inspect failed messages and resend with confidence to restore delivery flows.</p>
-                </article>
-                <article class="feature">
-                    <h3>Live Monitoring</h3>
-                    <p>Watch queue depth and message activity in real-time with built-in charts.</p>
-                </article>
-                <article class="feature">
-                    <h3>Payload Tooling</h3>
-                    <p>Format and validate JSON/XML payloads for faster debugging and safer edits.</p>
-                </article>
-                <article class="feature">
-                    <h3>Secure Storage</h3>
-                    <p>Keep credentials local with AES-256 encryption and system credential protections.</p>
-                </article>
-            </div>
-        </section>
-
-        <section id="demo" class="reveal">
-            <div class="section-card">
-                <div class="section-head">
-                    <span>Demo</span>
-                    <h2>BusLane in Action</h2>
-                    <p>The main workspace is designed for high-frequency operational work: quick navigation, readable data, and low friction actions.</p>
-                </div>
-                <div class="screenshot-gallery">
-                    <button class="gallery-tab active" data-img="pics/MainWindow.png">Main</button>
-                    <button class="gallery-tab" data-img="pics/DashboardWindow.png">Dashboard</button>
-                    <button class="gallery-tab" data-img="pics/MessageDetailsWindow.png">Messages</button>
-                    <button class="gallery-tab" data-img="pics/SendMessageWindow.png">Send</button>
-                    <button class="gallery-tab" data-img="pics/ConnectionWindow.png">Connection</button>
-                    <button class="gallery-tab" data-img="pics/AlertsWindow.png">Alerts</button>
-                    <button class="gallery-tab" data-img="pics/ActivityLogWindow.png">Activity Log</button>
-                    <button class="gallery-tab" data-img="pics/SettingsWindow.png">Settings</button>
-                </div>
-                <div class="action-shot">
-                    <img id="gallery-img" src="pics/MainWindow.png" alt="BusLane screenshot">
-                </div>
-            </div>
-        </section>
-
-        <section id="install" class="reveal">
-            <div class="section-head">
-                <span>Get Started</span>
-                <h2>Install or Build in Minutes</h2>
-            </div>
-            <div class="install-grid">
-                <article class="install-card">
-                    <h3>Download release builds</h3>
-                    <p>Grab platform binaries directly from GitHub Releases.</p>
-                    <div class="actions" style="justify-content:flex-start; margin-top:0.7rem;">
-                        <a class="btn btn-primary" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Open Releases</a>
+            <div class="wrap hero-content">
+                <div class="hero-panel">
+                    <p class="eyebrow">Azure Service Bus desktop workspace</p>
+                    <h1>BusLane</h1>
+                    <p class="hero-copy">Inspect messages, monitor throughput, recover dead-letter flows, and manage connections from one cross-platform desktop UI.</p>
+                    <div class="hero-actions">
+                        <a class="button primary" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Download BusLane</a>
+                        <a class="button secondary" href="https://github.com/soliktomasz/BusLane" target="_blank" rel="noopener noreferrer">View on GitHub</a>
                     </div>
-                    <pre>xattr -cr "/Applications/BusLane.app"</pre>
-                </article>
-                <article class="install-card">
-                    <h3>Build from source</h3>
-                    <p>Use .NET 10 and run locally.</p>
-                    <pre>git clone https://github.com/soliktomasz/BusLane.git
+                    <div class="hero-proof" aria-label="BusLane highlights">
+                        <div class="proof-item">
+                            <span class="proof-value">3 platforms</span>
+                            <span class="proof-label">macOS, Windows, and Linux</span>
+                        </div>
+                        <div class="proof-item">
+                            <span class="proof-value">2 auth modes</span>
+                            <span class="proof-label">Azure Identity or connection strings</span>
+                        </div>
+                        <div class="proof-item">
+                            <span class="proof-value">1 workspace</span>
+                            <span class="proof-label">Queues, topics, sessions, and DLQ flows</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="workflow" id="workflow" aria-label="Core workflow">
+            <div class="wrap">
+                <div class="section-head">
+                    <span class="section-kicker">Daily operations</span>
+                    <h2>Move through Service Bus work without changing tools.</h2>
+                    <p>BusLane keeps the common operational loop close: connect, inspect, recover, and monitor.</p>
+                </div>
+                <div class="workflow-grid">
+                    <article class="workflow-item">
+                        <span class="item-index">01</span>
+                        <h3>Connect</h3>
+                        <p>Browse namespaces with Azure Identity or saved connection strings.</p>
+                    </article>
+                    <article class="workflow-item">
+                        <span class="item-index">02</span>
+                        <h3>Inspect</h3>
+                        <p>Peek messages, review properties, and format JSON or XML payloads.</p>
+                    </article>
+                    <article class="workflow-item">
+                        <span class="item-index">03</span>
+                        <h3>Recover</h3>
+                        <p>Search, purge, resend, and restore dead-letter flows with confidence.</p>
+                    </article>
+                    <article class="workflow-item">
+                        <span class="item-index">04</span>
+                        <h3>Monitor</h3>
+                        <p>Track depth, charts, alerts, live streams, and activity history.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="wrap">
+                <div class="section-head">
+                    <span class="section-kicker">Capabilities</span>
+                    <h2>Built for engineers who live near queues.</h2>
+                    <p>Everything here serves a real Service Bus workflow, from secure connection storage to dead-letter recovery.</p>
+                </div>
+                <div class="feature-grid">
+                    <article class="feature-card">
+                        <span class="feature-icon">A</span>
+                        <h3>Dual connection modes</h3>
+                        <p>Use Azure Identity for RBAC-based access or direct connection strings when a namespace needs a quicker path.</p>
+                    </article>
+                    <article class="feature-card">
+                        <span class="feature-icon">E</span>
+                        <h3>Full entity coverage</h3>
+                        <p>Work across queues, topics, subscriptions, and session-enabled entities from one persistent tabbed workspace.</p>
+                    </article>
+                    <article class="feature-card">
+                        <span class="feature-icon">M</span>
+                        <h3>Message operations</h3>
+                        <p>Peek, send, search, purge, resend from DLQ, and inspect message metadata without stitching scripts together.</p>
+                    </article>
+                    <article class="feature-card">
+                        <span class="feature-icon">L</span>
+                        <h3>Live monitoring</h3>
+                        <p>Use dashboards, charts, live streaming, alert rules, and activity logs to understand what changed.</p>
+                    </article>
+                    <article class="feature-card">
+                        <span class="feature-icon">{ }</span>
+                        <h3>Payload tooling</h3>
+                        <p>Read and edit JSON or XML payloads with formatting support that keeps message debugging tidy.</p>
+                    </article>
+                    <article class="feature-card">
+                        <span class="feature-icon">S</span>
+                        <h3>Secure local storage</h3>
+                        <p>Keep sensitive data local with encrypted connection storage and optional app lock protection.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="showcase" id="showcase">
+            <div class="wrap">
+                <div class="section-head">
+                    <span class="section-kicker">Screenshots</span>
+                    <h2>A desktop interface for repeated operational work.</h2>
+                    <p>The design stays dense enough for daily use, with clear panels for entities, message lists, details, dashboards, and alerts.</p>
+                </div>
+                <div class="gallery-tabs" role="tablist" aria-label="BusLane screenshots">
+                    <button class="gallery-tab is-active" type="button" role="tab" aria-selected="true" data-src="pics/MainWindow.png" data-alt="BusLane main message workspace screenshot">Main</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/DashboardWindow.png" data-alt="BusLane dashboard screenshot">Dashboard</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/MessageDetailsWindow.png" data-alt="BusLane message details screenshot">Messages</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/SendMessageWindow.png" data-alt="BusLane send message dialog screenshot">Send</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/ConnectionWindow.png" data-alt="BusLane connection library screenshot">Connections</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/AlertsWindow.png" data-alt="BusLane alerts configuration screenshot">Alerts</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/ActivityLogWindow.png" data-alt="BusLane activity log screenshot">Activity</button>
+                    <button class="gallery-tab" type="button" role="tab" aria-selected="false" data-src="pics/SettingsWindow.png" data-alt="BusLane settings screenshot">Settings</button>
+                </div>
+                <div class="screenshot-frame">
+                    <div class="window-bar" aria-hidden="true">
+                        <span class="window-dot"></span>
+                        <span class="window-dot"></span>
+                        <span class="window-dot active"></span>
+                    </div>
+                    <img data-gallery-image src="pics/MainWindow.png" alt="BusLane main message workspace screenshot">
+                </div>
+            </div>
+        </section>
+
+        <section class="install" id="install">
+            <div class="wrap">
+                <div class="section-head">
+                    <span class="section-kicker">Install</span>
+                    <h2>Download a release or build from source.</h2>
+                    <p>Use GitHub Releases for packaged builds, or run locally with the .NET 10 SDK.</p>
+                </div>
+                <div class="install-grid">
+                    <article class="install-card">
+                        <h3>Release builds</h3>
+                        <p>Grab the latest desktop package from GitHub Releases. On macOS, remove the quarantine flag if Gatekeeper blocks the app.</p>
+                        <div class="section-actions" style="margin-top:18px">
+                            <a class="button primary" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Open Releases</a>
+                        </div>
+                        <pre><code>xattr -cr "/Applications/BusLane.app"</code></pre>
+                    </article>
+                    <article class="install-card">
+                        <h3>Build from source</h3>
+                        <p>Clone the repository, restore the .NET project, and run the Avalonia desktop app locally.</p>
+                        <pre><code>git clone https://github.com/soliktomasz/BusLane.git
 cd BusLane
 dotnet build
-dotnet run --project BusLane/BusLane.csproj</pre>
-                </article>
+dotnet run --project BusLane/BusLane.csproj</code></pre>
+                    </article>
+                </div>
             </div>
         </section>
 
-        <section id="faq" class="reveal">
-            <div class="section-head">
-                <span>FAQ</span>
-                <h2>Common Questions</h2>
-            </div>
-            <details>
-                <summary>Who is BusLane for?</summary>
-                <p>BusLane is for engineers and operators who want a clean, fast desktop workflow for Azure Service Bus debugging and daily message operations.</p>
-            </details>
-            <details>
-                <summary>Is it production-ready?</summary>
-                <p>BusLane is actively developed and already useful for real workflows. You can expect ongoing improvements and regular fixes.</p>
-            </details>
-            <details>
-                <summary>What platforms are supported?</summary>
-                <p>BusLane supports macOS, Windows, and Linux.</p>
-            </details>
-        </section>
+        <section class="faq" id="faq">
+            <div class="wrap">
+                <div class="section-head">
+                    <span class="section-kicker">FAQ</span>
+                    <h2>Common questions.</h2>
+                </div>
+                <div class="faq-list">
+                    <details>
+                        <summary>Who is BusLane for?</summary>
+                        <p>BusLane is for engineers and operators who need a focused desktop workflow for Azure Service Bus debugging, message inspection, and daily queue operations.</p>
+                    </details>
+                    <details>
+                        <summary>Which platforms are supported?</summary>
+                        <p>BusLane is built with Avalonia and targets macOS, Windows, and Linux.</p>
+                    </details>
+                    <details>
+                        <summary>How does BusLane handle sensitive connection data?</summary>
+                        <p>Connection strings are stored locally with encryption, and the app also supports an optional launch-time app lock.</p>
+                    </details>
+                </div>
 
-        <section class="support reveal">
-            <h2>Ready to make Service Bus operations feel effortless?</h2>
-            <p>Download BusLane and switch from scattered scripts to one focused desktop workspace.</p>
-            <div class="actions">
-                <a class="btn btn-primary" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Download BusLane</a>
-                <a class="btn btn-secondary" href="https://www.buymeacoffee.com/tomaszsolik" target="_blank" rel="noopener noreferrer">Support the Project</a>
+                <div class="support-band">
+                    <div>
+                        <h2>Make Service Bus work feel like one workspace.</h2>
+                        <p>Download BusLane, inspect what matters, and get back to the system you were actually building.</p>
+                    </div>
+                    <div class="section-actions">
+                        <a class="button primary" href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Download BusLane</a>
+                        <a class="button secondary" href="https://www.buymeacoffee.com/tomaszsolik" target="_blank" rel="noopener noreferrer">Support the Project</a>
+                    </div>
+                </div>
             </div>
         </section>
+    </main>
 
-        <footer>
-            <span>BusLane is open-source under MIT.</span>
+    <footer class="site-footer">
+        <div class="wrap footer-inner">
+            <div>
+                <strong>BusLane</strong>
+                <div class="footer-meta">Open-source Azure Service Bus desktop workspace under MIT.</div>
+            </div>
             <div class="footer-links">
                 <a href="https://github.com/soliktomasz/BusLane" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://github.com/soliktomasz/BusLane/releases" target="_blank" rel="noopener noreferrer">Releases</a>
                 <a href="https://github.com/soliktomasz/BusLane/blob/main/ROADMAP.md" target="_blank" rel="noopener noreferrer">Roadmap</a>
                 <a href="https://github.com/soliktomasz/BusLane/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
                 <a href="https://github.com/soliktomasz/BusLane/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
+                <a href="https://www.buymeacoffee.com/tomaszsolik" target="_blank" rel="noopener noreferrer">Support</a>
             </div>
-        </footer>
-    </main>
+        </div>
+    </footer>
 
     <script>
-        const items = document.querySelectorAll('.reveal');
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('in');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.12 });
+        const galleryImage = document.querySelector('[data-gallery-image]');
+        const galleryTabs = Array.from(document.querySelectorAll('.gallery-tab'));
 
-        items.forEach(item => observer.observe(item));
+        function activateGalleryTab(tab) {
+            galleryTabs.forEach(item => {
+                item.classList.remove('is-active');
+                item.setAttribute('aria-selected', 'false');
+                item.setAttribute('tabindex', '-1');
+            });
+
+            tab.classList.add('is-active');
+            tab.setAttribute('aria-selected', 'true');
+            tab.removeAttribute('tabindex');
+
+            if (galleryImage) {
+                galleryImage.src = tab.dataset.src;
+                galleryImage.alt = tab.dataset.alt;
+            }
+        }
+
+        galleryTabs.forEach((tab, index) => {
+            if (!tab.classList.contains('is-active')) {
+                tab.setAttribute('tabindex', '-1');
+            }
+
+            tab.addEventListener('click', () => activateGalleryTab(tab));
+
+            tab.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') {
+                    return;
+                }
+
+                event.preventDefault();
+                const direction = event.key === 'ArrowRight' ? 1 : -1;
+                const nextIndex = (index + direction + galleryTabs.length) % galleryTabs.length;
+                galleryTabs[nextIndex].focus();
+                activateGalleryTab(galleryTabs[nextIndex]);
+            });
+        });
 
         document.querySelectorAll('a[href^="#"]').forEach(link => {
             link.addEventListener('click', event => {
@@ -707,17 +1061,6 @@ dotnet run --project BusLane/BusLane.csproj</pre>
 
                 event.preventDefault();
                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
-
-        const galleryTabs = document.querySelectorAll('.gallery-tab');
-        const galleryImg = document.getElementById('gallery-img');
-        galleryTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                galleryTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                galleryImg.src = tab.dataset.img;
-                galleryImg.alt = 'BusLane ' + tab.textContent + ' screenshot';
             });
         });
     </script>

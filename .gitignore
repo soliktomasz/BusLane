@@ -169,5 +169,8 @@ BusLane.sln.DotSettings.user
 # Git Worktrees
 .worktrees/
 
+# Local brainstorming companion output
+.superpowers/
+
 # Implementation plans (working notes)
 docs/plans/
