@@ -36,4 +36,16 @@ public record MessageInfo(
         : Body.Length <= MaxPreviewLength
             ? Body.ReplaceLineEndings(" ")
             : Body[..MaxPreviewLength].ReplaceLineEndings(" ") + "…";
+
+    public bool IsBodyXml
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Body)) return false;
+
+            var trimmed = Body.Trim();
+            return trimmed.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) ||
+                   (trimmed.StartsWith("<") && trimmed.Contains("</", StringComparison.Ordinal) && trimmed.EndsWith(">"));
+        }
+    }
 }

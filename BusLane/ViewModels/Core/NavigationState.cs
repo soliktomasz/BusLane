@@ -63,6 +63,8 @@ public partial class NavigationState : ViewModelBase
     public bool HasTopics => Topics.Count > 0;
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
+    public long CurrentActiveMessageCount => SelectedQueue?.ActiveMessageCount ?? SelectedSubscription?.ActiveMessageCount ?? 0;
+    public long CurrentDeadLetterCount => SelectedQueue?.DeadLetterCount ?? SelectedSubscription?.DeadLetterCount ?? 0;
     public bool CanShowSessionInspector => CurrentEntityRequiresSession && !string.IsNullOrWhiteSpace(CurrentEntityName);
     public bool IsSessionInspectorTabSelected => SelectedMessageTabIndex == 2;
 
@@ -181,6 +183,8 @@ public partial class NavigationState : ViewModelBase
         OnPropertyChanged(nameof(CurrentEntityName));
         OnPropertyChanged(nameof(CurrentSubscriptionName));
         OnPropertyChanged(nameof(CurrentEntityRequiresSession));
+        OnPropertyChanged(nameof(CurrentActiveMessageCount));
+        OnPropertyChanged(nameof(CurrentDeadLetterCount));
         OnPropertyChanged(nameof(CanShowSessionInspector));
 
         if (!CurrentEntityRequiresSession && SelectedMessageTabIndex == 2)

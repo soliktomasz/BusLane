@@ -452,7 +452,7 @@
     <!-- Card - Fluent 2 with elevation system -->
     <Style Selector="Border.card">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -467,6 +467,19 @@
 
     <Style Selector="Border.card:pointerover">
         <Setter Property="BoxShadow" Value="0 4 6 0 #18000000, 0 2 4 0 #0F000000"/>
+    </Style>
+
+    <Style Selector="Border.pane-card">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+
+    <Style Selector="Border.pane-card.entity-pane">
+        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
     <Style Selector="Border.card-elevated">
@@ -493,6 +506,10 @@
         <Setter Property="Width" Value="320"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="0,0,1,0"/>
+    </Style>
+
+    <Style Selector="Border.sidebar.collapsed">
+        <Setter Property="Width" Value="64"/>
     </Style>
 
     <!-- Badges - Fluent 2 with semantic colors -->
@@ -540,6 +557,32 @@
 
     <Style Selector="Border.badge-success TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="Border.badge-success-soft">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSuccess}"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Border.badge-success-soft TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextSuccess}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="Border.badge-danger-soft">
+        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Border.badge-danger-soft TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
@@ -888,22 +931,72 @@
         <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
     </Style>
 
+    <Style Selector="Expander.entity-tree-group">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
     <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader">
         <Setter Property="Padding" Value="6,3"/>
         <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader:checked">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader:pointerover">
-        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-group /template/ Border#ExpanderContent">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader">
         <Setter Property="Padding" Value="0"/>
         <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover">
         <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ Border#ExpanderContent">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-tree-section-icon">
@@ -921,8 +1014,8 @@
     </Style>
 
     <Style Selector="Border.entity-group-header">
-        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
@@ -942,7 +1035,7 @@
 
     <Style Selector="Border.entity-tree-connector">
         <Setter Property="Width" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="Background" Value="Transparent"/>
         <Setter Property="VerticalAlignment" Value="Stretch"/>
     </Style>
 
@@ -958,35 +1051,85 @@
     </Style>
 
     <Style Selector="Border.message-command-bar">
-        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="12,12,0,0"/>
-        <Setter Property="Padding" Value="16,16,16,12"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="22,18,22,14"/>
     </Style>
 
     <Style Selector="Border.message-search-surface">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Padding" Value="10,8"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
-    <Style Selector="Button.message-row">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    <Style Selector="Border.message-row">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="Padding" Value="14,12"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BoxShadow" Value="0 1 2 0 #0A000000"/>
     </Style>
 
-    <Style Selector="Button.message-row:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
+    <Style Selector="Border.message-row:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
     </Style>
 
-    <Style Selector="Button.message-row:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    <Style Selector="StackPanel.message-row-actions">
+        <Setter Property="Opacity" Value="0"/>
+    </Style>
+
+    <Style Selector="Border.message-row:pointerover StackPanel.message-row-actions">
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="Border.message-seq-pill">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+
+    <Style Selector="Border.message-seq-pill TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+    </Style>
+
+    <Style Selector="Border.message-preview">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="10,8"/>
+    </Style>
+
+    <Style Selector="TextBlock.message-preview-text">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+    </Style>
+
+    <Style Selector="TextBlock.message-preview-text.xml">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+
+    <Style Selector="Border.deadletter-reason-pill">
+        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+
+    <Style Selector="Border.deadletter-reason-pill TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
     <Style Selector="Border.inline-loading-surface">
@@ -1005,10 +1148,33 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
 
+    <Style Selector="TabControl.message-tabs">
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <Style Selector="TabItem.message-tab">
+        <Setter Property="Padding" Value="18,10,18,8"/>
+        <Setter Property="MinHeight" Value="42"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <Style Selector="TabItem.message-tab:selected">
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="Border.message-tab-underline">
+        <Setter Property="Height" Value="2"/>
+        <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="CornerRadius" Value="1"/>
+        <Setter Property="Margin" Value="0,8,0,0"/>
+    </Style>
+
     <Style Selector="Border.entity-tree-divider">
-        <Setter Property="Height" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="Margin" Value="8,4"/>
+        <Setter Property="Height" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Margin" Value="0"/>
     </Style>
 
     <!-- Entity Icon Container -->
@@ -1071,7 +1237,7 @@
     <!-- Message Counter Styles - Compact Fluent 2 -->
     <Style Selector="Border.counter-active">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
-        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="CornerRadius" Value="999"/>
         <Setter Property="Padding" Value="5,2"/>
     </Style>
 
@@ -1083,7 +1249,7 @@
 
     <Style Selector="Border.counter-dead">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
-        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="CornerRadius" Value="999"/>
         <Setter Property="Padding" Value="5,2"/>
     </Style>
 
@@ -1161,9 +1327,10 @@
 
     <Style Selector="Border.pane-search-surface">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="12,12,0,0"/>
-        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="22,18,18,14"/>
         <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
     <Style Selector="StackPanel.dialog-footer-actions">
@@ -1242,8 +1409,8 @@
     <Style Selector="RadioButton.workspace-tab">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
-        <Setter Property="Padding" Value="14,10"/>
-        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="MinHeight" Value="50"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <ControlTemplate TargetType="RadioButton">
@@ -1251,13 +1418,20 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="14,10">
-                    <ContentPresenter x:Name="PART_ContentPresenter"
-                                      Content="{TemplateBinding Content}"
-                                      ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      HorizontalAlignment="Stretch"
-                                      VerticalAlignment="Center"/>
+                        CornerRadius="8"
+                        ClipToBounds="True">
+                    <Grid RowDefinitions="3,*">
+                        <Border x:Name="PART_Accent"
+                                Grid.Row="0"
+                                Background="Transparent"/>
+                        <ContentPresenter x:Name="PART_ContentPresenter"
+                                          Grid.Row="1"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Center"
+                                          Margin="14,9"/>
+                    </Grid>
                 </Border>
             </ControlTemplate>
         </Setter>
@@ -1269,9 +1443,13 @@
     </Style>
 
     <Style Selector="RadioButton.workspace-tab:checked /template/ Border#PART_Border">
-        <Setter Property="Background" Value="{DynamicResource SelectedBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorder}"/>
-        <Setter Property="BoxShadow" Value="0 2 4 0 #20000000"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BoxShadow" Value="0 1 3 0 #14000000"/>
+    </Style>
+
+    <Style Selector="RadioButton.workspace-tab:checked /template/ Border#PART_Accent">
+        <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
     </Style>
 
     <Style Selector="RadioButton.workspace-tab:focus-visible /template/ Border#PART_Border">
@@ -1292,6 +1470,7 @@
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
         <Setter Property="Opacity" Value="0.65"/>
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
     </Style>
 
     <Style Selector="Button.workspace-tab-close">
@@ -1612,6 +1791,10 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
+    <Style Selector="Grid.sidebar-rail">
+        <Setter Property="Background" Value="{DynamicResource SidebarBackground}"/>
+    </Style>
+
     <Style Selector="Button.sidebar-utility-button">
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="12,10"/>
@@ -1743,6 +1926,13 @@
 
     <Style Selector="Button.entity-pane-restore-handle:focus-visible /template/ ContentPresenter">
         <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+
+    <Style Selector="Border.status-bar">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Padding" Value="14,6"/>
     </Style>
 
     <Style Selector="Border.terminal-panel">
