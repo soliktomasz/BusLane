@@ -8,26 +8,27 @@
     
     <StackPanel VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                MaxWidth="560"
+                Width="620"
+                MaxWidth="620"
                 Spacing="20"
                 IsVisible="{Binding ShowWelcome}">
         <Border Classes="welcome-primary-surface">
             <StackPanel Spacing="20">
                 <StackPanel Spacing="10">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Border Classes="metric-icon-surface" Padding="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border Grid.Column="0" Classes="metric-icon-surface" Padding="10">
                             <LucideIcon Kind="Rocket" Size="24"
                                         Foreground="{DynamicResource AccentBrand}"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
                             <TextBlock Text="Welcome to BusLane" Classes="title-large"/>
                             <TextBlock Text="Start with a saved connection or sign in to Azure when you need a namespace workspace."
                                        Classes="subtitle"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -55,28 +56,45 @@
                 IsVisible="{Binding Connection.SavedConnections.Count}">
             <StackPanel Spacing="14">
                 <TextBlock Text="Recent Connections" Classes="body-strong"/>
-                <ItemsControl ItemsSource="{Binding Connection.SavedConnections}" MaxHeight="220">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="models:SavedConnection">
-                            <Button Classes="secondary"
-                                    HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Left"
-                                    Margin="0,0,0,8"
-                                    Command="{Binding $parent[Window].DataContext.ConnectToSavedConnectionCommand}"
-                                    CommandParameter="{Binding}">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <Border Classes="surface-brand" Padding="8" CornerRadius="4">
-                                        <LucideIcon Kind="Cable" Size="16" Foreground="{DynamicResource AccentBrand}" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
-                                        <TextBlock Text="{Binding EntityName}" Classes="caption" FontSize="11"/>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer MaxHeight="260"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Connection.SavedConnections}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:SavedConnection">
+                                <Button Classes="secondary"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        Margin="0,0,0,8"
+                                        Command="{Binding $parent[Window].DataContext.ConnectToSavedConnectionCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Border Grid.Column="0" Classes="surface-brand" Padding="8" CornerRadius="4">
+                                            <LucideIcon Kind="Cable" Size="16" Foreground="{DynamicResource AccentBrand}" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="13"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding EntityName}"
+                                                       Classes="caption"
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="2"
+                                                Classes="badge-env"
+                                                VerticalAlignment="Center"
+                                                IsVisible="{Binding HasEnvironment}">
+                                            <TextBlock Text="{Binding EnvironmentDisplayName}"
+                                                       FontWeight="SemiBold"/>
+                                        </Border>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </StackPanel>
         </Border>
     </StackPanel>

@@ -39,6 +39,32 @@ public class MessagesPanelViewTests
         disabledListCount.Should().Be(2);
     }
 
+    [Fact]
+    public void MessagesPanel_DefinesOperatorEmptyStates()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMessagesPanelPath());
+
+        // Assert
+        xaml.Should().Contain("Choose an entity");
+        xaml.Should().Contain("No active messages");
+        xaml.Should().Contain("No dead-letter messages");
+        xaml.Should().Contain("No messages match your search");
+        CountOccurrences(xaml, "Classes=\"message-empty-state\"").Should().Be(6);
+        CountOccurrences(xaml, "No active messages").Should().Be(1);
+        CountOccurrences(xaml, "No dead-letter messages").Should().Be(1);
+    }
+
+    [Fact]
+    public void MessagesPanel_UsesSingleNativeTabSelectionIndicator()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMessagesPanelPath());
+
+        // Assert
+        xaml.Should().NotContain("message-tab-underline");
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(

@@ -750,18 +750,24 @@ public partial class MessageOperationsViewModel : ViewModelBase
         ApplyMessageFilter();
     }
 
-    public async Task CopyMessageBodyAsync()
+    public async Task CopyMessageBodyAsync(MessageInfo? message = null)
     {
-        if (FormattedMessageBody == null) return;
+        var text = ResolveCopyMessageBody(message, FormattedMessageBody);
+        if (text == null) return;
 
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
         {
             var clipboard = desktop.MainWindow?.Clipboard;
             if (clipboard != null)
             {
-                await clipboard.SetTextAsync(FormattedMessageBody);
+                await clipboard.SetTextAsync(text);
             }
         }
+    }
+
+    internal static string? ResolveCopyMessageBody(MessageInfo? message, string? formattedMessageBody)
+    {
+        return message != null ? message.Body : formattedMessageBody;
     }
 
     /// <summary>

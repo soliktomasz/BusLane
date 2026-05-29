@@ -23,6 +23,19 @@ public class WelcomeViewTests
 
         // Assert
         xaml.Should().Contain("Classes=\"welcome-recent-surface\"");
+        xaml.Should().Contain("VerticalScrollBarVisibility=\"Auto\"");
+        xaml.Should().NotContain("ItemsSource=\"{Binding Connection.SavedConnections}\" MaxHeight");
+    }
+
+    [Fact]
+    public void WelcomeView_RendersEnvironmentForRecentConnections()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetWelcomeViewPath());
+
+        // Assert
+        xaml.Should().Contain("Classes=\"badge-env\"");
+        xaml.Should().Contain("Text=\"{Binding EnvironmentDisplayName}\"");
     }
 
     private static string GetWelcomeViewPath()

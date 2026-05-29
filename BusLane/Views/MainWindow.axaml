@@ -14,33 +14,15 @@
         WindowStartupLocation="CenterScreen">
     <Grid ColumnDefinitions="Auto,*">
         <!-- Navigation Pane (Fluent 2 Sidebar) -->
-        <controls:NavigationSidebar Grid.Column="0"
-                                    IsVisible="{Binding IsNavigationPanelVisible}"/>
+        <controls:NavigationSidebar Grid.Column="0"/>
 
         <!-- Main Content -->
         <Grid Grid.Column="1" RowDefinitions="Auto,*">
             <!-- Tab Bar with Show Panel Button -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
-                <!-- Show Panel Button (visible when panel is hidden and tabs exist) -->
-                <Border Grid.Column="0"
-                        Background="{DynamicResource TabNavBackground}"
-                        BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="0,0,0,1"
-                        Padding="12,8"
-                        IsVisible="{Binding !IsNavigationPanelVisible}">
-                    <Button Classes="subtle icon-button"
-                            Command="{Binding ToggleNavigationPanelCommand}"
-                            ToolTip.Tip="Show navigation panel"
-                            Padding="6">
-                        <LucideIcon Kind="PanelLeftOpen" Size="16"/>
-                    </Button>
-                </Border>
-                
-                <controls:TabBarView Grid.Column="1"/>
-            </Grid>
+            <controls:TabBarView Grid.Row="0"/>
 
             <!-- Content Area -->
-            <Grid Grid.Row="1" Margin="24" x:Name="MainContentGrid">
+            <Grid Grid.Row="1" x:Name="MainContentGrid">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -70,11 +52,10 @@
 
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="1"
-                                                  Margin="0,0,12,0"
                                                   IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
 
                     <!-- Messages Panel -->
-                    <controls:MessagesPanelView Grid.Column="2" Margin="12,0,0,0"/>
+                    <controls:MessagesPanelView Grid.Column="2"/>
                 </Grid>
             </Grid>
 
@@ -95,11 +76,10 @@
 
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="1"
-                                             Margin="0,0,12,0"
                                              IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
 
                     <!-- Messages Panel (reusing same structure as Azure mode) -->
-                    <controls:MessagesPanelView Grid.Column="2" Margin="12,0,0,0"/>
+                    <controls:MessagesPanelView Grid.Column="2"/>
                 </Grid>
             </Grid>
 
@@ -229,7 +209,7 @@
             </Border>
 
             <!-- Status Bar -->
-            <Border Grid.Row="2" Margin="0,12,0,0">
+            <Border Grid.Row="2" Classes="status-bar">
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                     <ProgressBar Grid.Column="0"
                                  IsIndeterminate="True"
@@ -240,14 +220,17 @@
                             Classes="subtle"
                             Command="{Binding ToggleStatusPopupCommand}"
                             HorizontalAlignment="Left"
-                            Margin="12,0,0,0"
                             Padding="8,4"
                             Cursor="Hand"
                             ToolTip.Tip="Click to see full message">
-                        <TextBlock Text="{Binding StatusMessage}"
-                                   Classes="caption"
-                                   TextTrimming="CharacterEllipsis"
-                                   MaxWidth="400"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Info" Size="13"
+                                        Foreground="{DynamicResource SubtleForeground}"/>
+                            <TextBlock Text="{Binding ShellStatusMessage}"
+                                       Classes="caption"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxWidth="460"/>
+                        </StackPanel>
                     </Button>
 
                     <controls:UpdateNotificationView Grid.Column="2"

@@ -105,6 +105,27 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ShellStatusMessage_TracksActiveTabStatusMessageChanges()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var activeTab = CreateTab("tab-1", preferences);
+        sut.ConnectionTabs.Add(activeTab);
+        sut.ActiveTab = activeTab;
+
+        var changedProperties = new List<string?>();
+        sut.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
+
+        // Act
+        activeTab.StatusMessage = "Connected";
+
+        // Assert
+        sut.ShellStatusMessage.Should().Be("Connected");
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.ShellStatusMessage));
+    }
+
+    [Fact]
     public void ActiveWorkspaceModeLabel_WithAzureTab_ReturnsAzureWorkspace()
     {
         // Arrange

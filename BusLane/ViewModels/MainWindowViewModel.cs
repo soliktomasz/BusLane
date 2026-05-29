@@ -161,7 +161,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // UI State
     [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _statusMessage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
+    private string? _statusMessage;
     [ObservableProperty] private bool _showStatusPopup;
 
     // Send message popup
@@ -884,7 +886,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void ClearMessageSearch() => CurrentMessageOps.ClearMessageSearch();
 
     [RelayCommand]
-    private async Task CopyMessageBodyAsync() => await CurrentMessageOps.CopyMessageBodyAsync();
+    private async Task CopyMessageBodyAsync(MessageInfo? message = null) => await CurrentMessageOps.CopyMessageBodyAsync(message);
 
     #endregion
 
@@ -1571,6 +1573,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     private void OnActiveTabPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(ConnectionTabViewModel.StatusMessage))
+        {
+            OnPropertyChanged(nameof(ShellStatusMessage));
+        }
+
         // When the active tab's IsConnected or Mode changes, notify computed properties
         if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected) or nameof(ConnectionTabViewModel.Mode))
         {

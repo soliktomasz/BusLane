@@ -159,4 +159,58 @@ public class MessageSelectionConverter : IMultiValueConverter
     }
 }
 
+/// <summary>
+/// Compares an integer value to an integer converter parameter.
+/// </summary>
+public class IntEqualsConverter : IValueConverter
+{
+    public static readonly IntEqualsConverter Instance = new();
 
+    /// <summary>
+    /// Converts an integer value to a boolean indicating whether it equals the converter parameter.
+    /// </summary>
+    /// <param name="value">The integer or integer string value to compare.</param>
+    /// <param name="targetType">The binding target type.</param>
+    /// <param name="parameter">The integer or integer string parameter to compare against.</param>
+    /// <param name="culture">The culture for the conversion.</param>
+    /// <returns><see langword="true"/> when both values parse with TryParseInt and are equal; otherwise <see langword="false"/>.</returns>
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (!TryParseInt(value, out var intValue) || !TryParseInt(parameter, out var parameterValue))
+            return false;
+
+        return intValue == parameterValue;
+    }
+
+    /// <summary>
+    /// Converts a checked boolean value back to the integer converter parameter.
+    /// </summary>
+    /// <param name="value">The checkbox or radio button checked state.</param>
+    /// <param name="targetType">The binding target type.</param>
+    /// <param name="parameter">The integer or integer string parameter to return when checked.</param>
+    /// <param name="culture">The culture for the conversion.</param>
+    /// <returns>The parsed parameter value when <paramref name="value"/> is <see langword="true"/> and TryParseInt succeeds; otherwise <see cref="BindingOperations.DoNothing"/>.</returns>
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is true && TryParseInt(parameter, out var parameterValue))
+            return parameterValue;
+
+        return BindingOperations.DoNothing;
+    }
+
+    private static bool TryParseInt(object? value, out int result)
+    {
+        switch (value)
+        {
+            case int intValue:
+                result = intValue;
+                return true;
+            case string text when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed):
+                result = parsed;
+                return true;
+            default:
+                result = 0;
+                return false;
+        }
+    }
+}
