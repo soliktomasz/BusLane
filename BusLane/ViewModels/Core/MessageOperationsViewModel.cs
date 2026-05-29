@@ -752,7 +752,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     public async Task CopyMessageBodyAsync(MessageInfo? message = null)
     {
-        var text = message?.Body ?? FormattedMessageBody;
+        var text = ResolveCopyMessageBody(message, FormattedMessageBody);
         if (text == null) return;
 
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
@@ -763,6 +763,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 await clipboard.SetTextAsync(text);
             }
         }
+    }
+
+    internal static string? ResolveCopyMessageBody(MessageInfo? message, string? formattedMessageBody)
+    {
+        return message != null ? message.Body : formattedMessageBody;
     }
 
     /// <summary>

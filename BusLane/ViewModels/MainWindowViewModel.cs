@@ -1573,6 +1573,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     private void OnActiveTabPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(ConnectionTabViewModel.StatusMessage))
+        {
+            OnPropertyChanged(nameof(ShellStatusMessage));
+        }
+
         // When the active tab's IsConnected or Mode changes, notify computed properties
         if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected) or nameof(ConnectionTabViewModel.Mode))
         {

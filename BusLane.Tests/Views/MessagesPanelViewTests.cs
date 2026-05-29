@@ -50,7 +50,9 @@ public class MessagesPanelViewTests
         xaml.Should().Contain("No active messages");
         xaml.Should().Contain("No dead-letter messages");
         xaml.Should().Contain("No messages match your search");
-        CountOccurrences(xaml, "Classes=\"message-empty-state\"").Should().BeGreaterThanOrEqualTo(4);
+        CountOccurrences(xaml, "Classes=\"message-empty-state\"").Should().Be(6);
+        CountOccurrences(xaml, "No active messages").Should().Be(1);
+        CountOccurrences(xaml, "No dead-letter messages").Should().Be(1);
     }
 
     [Fact]

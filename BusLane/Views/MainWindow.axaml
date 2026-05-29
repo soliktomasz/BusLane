@@ -224,8 +224,8 @@
                             Cursor="Hand"
                             ToolTip.Tip="Click to see full message">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <LucideIcon Kind="CircleCheck" Size="13"
-                                        Foreground="{DynamicResource TextSuccess}"/>
+                            <LucideIcon Kind="Info" Size="13"
+                                        Foreground="{DynamicResource SubtleForeground}"/>
                             <TextBlock Text="{Binding ShellStatusMessage}"
                                        Classes="caption"
                                        TextTrimming="CharacterEllipsis"

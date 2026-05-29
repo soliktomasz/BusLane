@@ -11,6 +11,39 @@ using NSubstitute;
 public class MessageOperationsViewModelTests
 {
     [Fact]
+    public void ResolveCopyMessageBody_WithMessageHavingNullBody_ReturnsNull()
+    {
+        // Arrange
+        var message = new MessageInfo(
+            "msg-1",
+            null,
+            null,
+            null!,
+            DateTimeOffset.UtcNow,
+            null,
+            1,
+            0,
+            null,
+            new Dictionary<string, object>());
+
+        // Act
+        var text = MessageOperationsViewModel.ResolveCopyMessageBody(message, "selected-body");
+
+        // Assert
+        text.Should().BeNull();
+    }
+
+    [Fact]
+    public void ResolveCopyMessageBody_WithoutMessage_ReturnsFormattedMessageBody()
+    {
+        // Act
+        var text = MessageOperationsViewModel.ResolveCopyMessageBody(null, "selected-body");
+
+        // Assert
+        text.Should().Be("selected-body");
+    }
+
+    [Fact]
     public async Task LoadMessagesAsync_WhenSessionScopeIsActive_PassesSessionIdToOperations()
     {
         // Arrange
