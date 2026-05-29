@@ -184,6 +184,105 @@ public class SessionInspectorViewModelTests
             Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task LoadSessionsAsync_SessionFilter_ExposesFilteredSessions()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var sessions = new[]
+        {
+            new SessionInspectorItem("order-session-1", 2, 0, null, null, null),
+            new SessionInspectorItem("invoice-session-2", 1, 0, null, null, null),
+            new SessionInspectorItem("order-session-3", 3, 0, null, null, null),
+        };
+
+        operations.GetSessionInspectorItemsAsync("orders", null, Arg.Any<CancellationToken>())
+            .Returns(sessions);
+
+        var preferences = CreatePreferences();
+        var logSink = Substitute.For<ILogSink>();
+        var messageOps = CreateMessageOperations(() => operations, preferences, logSink);
+        var sut = new SessionInspectorViewModel(
+            () => operations,
+            messageOps,
+            logSink,
+            () => "orders",
+            () => null,
+            () => true,
+            _ => { },
+            _ => { });
+
+        await sut.LoadSessionsAsync();
+
+        // Act
+        sut.SessionFilter = "order";
+
+        // Assert
+        sut.FilteredSessions.Should().HaveCount(2);
+        sut.FilteredSessions.Select(s => s.SessionId)
+            .Should().ContainInOrder("order-session-1", "order-session-3");
+    }
+
+    [Fact]
+    public async Task LoadSessionsAsync_EmptySessionFilter_ExposesAllSessions()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var sessions = new[]
+        {
+            new SessionInspectorItem("session-a", 1, 0, null, null, null),
+            new SessionInspectorItem("session-b", 2, 0, null, null, null),
+        };
+
+        operations.GetSessionInspectorItemsAsync("orders", null, Arg.Any<CancellationToken>())
+            .Returns(sessions);
+
+        var preferences = CreatePreferences();
+        var logSink = Substitute.For<ILogSink>();
+        var messageOps = CreateMessageOperations(() => operations, preferences, logSink);
+        var sut = new SessionInspectorViewModel(
+            () => operations,
+            messageOps,
+            logSink,
+            () => "orders",
+            () => null,
+            () => true,
+            _ => { },
+            _ => { });
+
+        await sut.LoadSessionsAsync();
+
+        // Act — leave SessionFilter as default (empty)
+
+        // Assert
+        sut.FilteredSessions.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void SessionFilter_CanBeSetAndRestored()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var preferences = CreatePreferences();
+        var logSink = Substitute.For<ILogSink>();
+        var messageOps = CreateMessageOperations(() => operations, preferences, logSink);
+        var sut = new SessionInspectorViewModel(
+            () => operations,
+            messageOps,
+            logSink,
+            () => "orders",
+            () => null,
+            () => true,
+            _ => { },
+            _ => { });
+
+        // Act
+        sut.SessionFilter = "persistent-filter";
+
+        // Assert — filter survives without a reload
+        sut.SessionFilter.Should().Be("persistent-filter");
+    }
+
     private static MessageOperationsViewModel CreateMessageOperations(
         Func<IServiceBusOperations?> getOperations,
         IPreferencesService preferences,

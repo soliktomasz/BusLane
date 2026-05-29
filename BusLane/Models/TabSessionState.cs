@@ -54,6 +54,16 @@ public record TabSessionState
     public int SelectedMessageTabIndex { get; init; }
 
     /// <summary>
+    /// The session ID that was actively scoped in the message panel.
+    /// </summary>
+    public string? ScopedSessionId { get; init; }
+
+    /// <summary>
+    /// Last-used filter text in the session inspector.
+    /// </summary>
+    public string? SessionFilter { get; init; }
+
+    /// <summary>
     /// Whether the entity pane is visible for this tab.
     /// Defaults to visible for older saved sessions.
     /// </summary>

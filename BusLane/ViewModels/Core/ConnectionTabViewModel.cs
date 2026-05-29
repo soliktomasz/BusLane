@@ -346,6 +346,8 @@ public partial class ConnectionTabViewModel : ViewModelBase
             MessageSearchText = MessageOps.MessageSearchText,
             ShowDeadLetter = Navigation.ShowDeadLetter,
             SelectedMessageTabIndex = Navigation.SelectedMessageTabIndex,
+            ScopedSessionId = MessageOps.ScopedSessionId,
+            SessionFilter = SessionInspector.SessionFilter,
             IsEntityPaneVisible = IsEntityPaneVisible,
             TabOrder = tabOrder
         };
@@ -358,6 +360,13 @@ public partial class ConnectionTabViewModel : ViewModelBase
         Navigation.ShowDeadLetter = state.ShowDeadLetter;
         MessageOps.MessageSearchText = state.MessageSearchText ?? string.Empty;
         IsEntityPaneVisible = state.IsEntityPaneVisible;
+
+        if (!string.IsNullOrWhiteSpace(state.ScopedSessionId))
+        {
+            MessageOps.OpenSessionScope(state.ScopedSessionId);
+        }
+
+        SessionInspector.SessionFilter = state.SessionFilter ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(state.SelectedEntityName))
         {
