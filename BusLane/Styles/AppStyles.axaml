@@ -1164,13 +1164,6 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
-    <Style Selector="Border.message-tab-underline">
-        <Setter Property="Height" Value="2"/>
-        <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
-        <Setter Property="CornerRadius" Value="1"/>
-        <Setter Property="Margin" Value="0,8,0,0"/>
-    </Style>
-
     <Style Selector="Border.entity-tree-divider">
         <Setter Property="Height" Value="0"/>
         <Setter Property="Background" Value="Transparent"/>

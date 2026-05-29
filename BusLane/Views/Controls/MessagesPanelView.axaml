@@ -201,17 +201,12 @@
 
                 <TabItem Classes="message-tab">
                     <TabItem.Header>
-                        <Grid RowDefinitions="Auto,2">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Active"/>
-                                <Border Classes="counter-active" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentNavigation.CurrentActiveMessageCount}"/>
-                                </Border>
-                            </StackPanel>
-                            <Border Grid.Row="1"
-                                    Classes="message-tab-underline"
-                                    IsVisible="{Binding CurrentNavigation.SelectedMessageTabIndex, Converter={StaticResource IntEqualsConverter}, ConverterParameter=0}"/>
-                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Active"/>
+                            <Border Classes="counter-active" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CurrentNavigation.CurrentActiveMessageCount}"/>
+                            </Border>
+                        </StackPanel>
                     </TabItem.Header>
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
@@ -461,17 +456,12 @@
 
                 <TabItem Classes="message-tab">
                     <TabItem.Header>
-                        <Grid RowDefinitions="Auto,2">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Dead Letter"/>
-                                <Border Classes="counter-dead" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentNavigation.CurrentDeadLetterCount}"/>
-                                </Border>
-                            </StackPanel>
-                            <Border Grid.Row="1"
-                                    Classes="message-tab-underline"
-                                    IsVisible="{Binding CurrentNavigation.SelectedMessageTabIndex, Converter={StaticResource IntEqualsConverter}, ConverterParameter=1}"/>
-                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Dead Letter"/>
+                            <Border Classes="counter-dead" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CurrentNavigation.CurrentDeadLetterCount}"/>
+                            </Border>
+                        </StackPanel>
                     </TabItem.Header>
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
@@ -729,12 +719,7 @@
                 <TabItem Classes="message-tab"
                          IsVisible="{Binding CurrentNavigation.CanShowSessionInspector}">
                     <TabItem.Header>
-                        <Grid RowDefinitions="Auto,2">
-                            <TextBlock Text="Sessions"/>
-                            <Border Grid.Row="1"
-                                    Classes="message-tab-underline"
-                                    IsVisible="{Binding CurrentNavigation.SelectedMessageTabIndex, Converter={StaticResource IntEqualsConverter}, ConverterParameter=2}"/>
-                        </Grid>
+                        <TextBlock Text="Sessions"/>
                     </TabItem.Header>
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">

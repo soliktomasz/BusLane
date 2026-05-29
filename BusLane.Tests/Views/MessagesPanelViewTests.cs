@@ -53,6 +53,16 @@ public class MessagesPanelViewTests
         CountOccurrences(xaml, "Classes=\"message-empty-state\"").Should().BeGreaterThanOrEqualTo(4);
     }
 
+    [Fact]
+    public void MessagesPanel_UsesSingleNativeTabSelectionIndicator()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMessagesPanelPath());
+
+        // Assert
+        xaml.Should().NotContain("message-tab-underline");
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(
