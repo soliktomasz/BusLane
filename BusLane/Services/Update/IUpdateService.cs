@@ -38,7 +38,7 @@ public interface IUpdateService
     /// <summary>Downloads the available update to a temporary location.</summary>
     Task DownloadUpdateAsync();
 
-    /// <summary>Opens the release page in the browser for manual installation.</summary>
+    /// <summary>Applies the staged update and restarts the app.</summary>
     Task InstallUpdateAsync();
 
     /// <summary>Marks the specified version as skipped so it won't trigger future notifications.</summary>
