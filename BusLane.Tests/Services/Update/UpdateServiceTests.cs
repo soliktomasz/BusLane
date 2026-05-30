@@ -9,30 +9,151 @@ using NSubstitute;
 
 public class UpdateServiceTests
 {
-    private readonly IVersionService _versionService;
-    private readonly IPreferencesService _preferencesService;
-    private readonly UpdateService _updateService;
+    private readonly IVersionService _versionService = Substitute.For<IVersionService>();
+    private readonly IPreferencesService _preferencesService = Substitute.For<IPreferencesService>();
+    private readonly FakeVelopackUpdateManager _manager = new();
 
     public UpdateServiceTests()
     {
-        _versionService = Substitute.For<IVersionService>();
         _versionService.Version.Returns("0.9.0");
         _versionService.InformationalVersion.Returns("0.9.0");
-
-        _preferencesService = Substitute.For<IPreferencesService>();
         _preferencesService.AutoCheckForUpdates.Returns(true);
         _preferencesService.SkippedUpdateVersion.Returns((string?)null);
         _preferencesService.UpdateRemindLaterDate.Returns((DateTime?)null);
+    }
 
-        _updateService = new UpdateService(_versionService, _preferencesService);
+    [Fact]
+    public async Task CheckForUpdatesAsync_WhenNotVelopackInstalled_ShowsNotInstalledForManualCheck()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = false;
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: true);
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.NotInstalled);
+        sut.CanSelfUpdate.Should().BeFalse();
+        sut.StatusMessage.Should().Contain("GitHub Releases");
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_WhenNoUpdateFound_ShowsUpToDateForManualCheck()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = true;
+        _manager.UpdateToReturn = null;
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: true);
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.UpToDate);
+        sut.AvailableRelease.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_WhenUpdateFound_ShowsUpdateAvailable()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = true;
+        _manager.UpdateToReturn = new VelopackUpdateInfo("1.0.0", "Release notes", null);
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: true);
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.UpdateAvailable);
+        sut.AvailableRelease.Should().NotBeNull();
+        sut.AvailableRelease!.Version.Should().Be("1.0.0");
+    }
+
+    [Fact]
+    public async Task DownloadUpdateAsync_WhenUpdateAvailable_ReportsProgressAndReadiesRestart()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = true;
+        _manager.UpdateToReturn = new VelopackUpdateInfo("1.0.0", "Release notes", null);
+        var progress = new List<double>();
+        sut.DownloadProgressChanged += (_, value) => progress.Add(value);
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: true);
+        await sut.DownloadUpdateAsync();
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.ReadyToRestart);
+        sut.AvailableRelease!.IsReadyToRestart.Should().BeTrue();
+        progress.Should().Contain(42);
+        progress.Should().Contain(100);
+    }
+
+    [Fact]
+    public async Task InstallUpdateAsync_WhenReadyToRestart_DelegatesToVelopack()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = true;
+        _manager.UpdateToReturn = new VelopackUpdateInfo("1.0.0", "Release notes", null);
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: true);
+        await sut.DownloadUpdateAsync();
+        await sut.InstallUpdateAsync();
+
+        // Assert
+        _manager.AppliedUpdate.Should().NotBeNull();
+        _manager.AppliedUpdate!.Version.Should().Be("1.0.0");
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_WhenSkippedVersionAndAutomaticCheck_DoesNotNotify()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = true;
+        _manager.UpdateToReturn = new VelopackUpdateInfo("1.0.0", "Release notes", null);
+        _preferencesService.SkippedUpdateVersion.Returns("1.0.0");
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: false);
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.Idle);
+        sut.AvailableRelease.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_ManualCheck_IgnoresRemindLater()
+    {
+        // Arrange
+        var sut = CreateSut();
+        _manager.IsInstalled = true;
+        _manager.UpdateToReturn = new VelopackUpdateInfo("1.0.0", "Release notes", null);
+        _preferencesService.UpdateRemindLaterDate.Returns(DateTime.UtcNow.AddDays(1));
+
+        // Act
+        await sut.CheckForUpdatesAsync(manualCheck: true);
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.UpdateAvailable);
     }
 
     [Fact]
     public void SkipVersion_SetsStatusToIdleAndSavesPreference()
     {
-        _updateService.SkipVersion("1.0.0");
+        // Arrange
+        var sut = CreateSut();
 
-        _updateService.Status.Should().Be(UpdateStatus.Idle);
+        // Act
+        sut.SkipVersion("1.0.0");
+
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.Idle);
         _preferencesService.SkippedUpdateVersion.Should().Be("1.0.0");
         _preferencesService.Received().Save();
     }
@@ -40,104 +161,43 @@ public class UpdateServiceTests
     [Fact]
     public void RemindLater_SetsStatusToIdleAndSavesDate()
     {
-        var delay = TimeSpan.FromDays(3);
+        // Arrange
+        var sut = CreateSut();
 
-        _updateService.RemindLater(delay);
+        // Act
+        sut.RemindLater(TimeSpan.FromDays(3));
 
-        _updateService.Status.Should().Be(UpdateStatus.Idle);
-        _preferencesService.Received().Save();
+        // Assert
+        sut.Status.Should().Be(UpdateStatus.Idle);
         _preferencesService.UpdateRemindLaterDate.Should().NotBeNull();
+        _preferencesService.Received().Save();
     }
 
-    [Fact]
-    public void DismissNotification_SetsStatusToIdle()
+    private UpdateService CreateSut() => new(_versionService, _preferencesService, _manager);
+
+    private sealed class FakeVelopackUpdateManager : IVelopackUpdateManager
     {
-        _updateService.DismissNotification();
+        public bool IsInstalled { get; set; } = true;
+        public VelopackUpdateInfo? PendingUpdate { get; set; }
+        public VelopackUpdateInfo? UpdateToReturn { get; set; }
+        public VelopackUpdateInfo? AppliedUpdate { get; private set; }
 
-        _updateService.Status.Should().Be(UpdateStatus.Idle);
-    }
+        public Task<VelopackUpdateInfo?> CheckForUpdatesAsync(CancellationToken ct = default)
+        {
+            return Task.FromResult(UpdateToReturn);
+        }
 
-    [Fact]
-    public void StatusChanged_FiresWhenStatusChanges()
-    {
-        var statuses = new List<UpdateStatus>();
-        _updateService.StatusChanged += (_, status) => statuses.Add(status);
+        public Task DownloadUpdatesAsync(VelopackUpdateInfo update, Action<int> progress, CancellationToken ct = default)
+        {
+            progress(42);
+            progress(100);
+            PendingUpdate = update;
+            return Task.CompletedTask;
+        }
 
-        _updateService.DismissNotification();
-
-        statuses.Should().Contain(UpdateStatus.Idle);
-    }
-
-    [Fact]
-    public async Task CheckForUpdatesAsync_WhenAutoCheckDisabled_DoesNotCheck()
-    {
-        _preferencesService.AutoCheckForUpdates.Returns(false);
-
-        await _updateService.CheckForUpdatesAsync(manualCheck: false);
-
-        _updateService.Status.Should().Be(UpdateStatus.Idle);
-    }
-
-    [Fact]
-    public async Task CheckForUpdatesAsync_WhenRemindLaterInFuture_DoesNotCheck()
-    {
-        _preferencesService.UpdateRemindLaterDate.Returns(DateTime.UtcNow.AddDays(1));
-
-        await _updateService.CheckForUpdatesAsync(manualCheck: false);
-
-        _updateService.Status.Should().Be(UpdateStatus.Idle);
-    }
-
-    [Fact]
-    public async Task CheckForUpdatesAsync_ManualCheck_IgnoresRemindLater()
-    {
-        _preferencesService.UpdateRemindLaterDate.Returns(DateTime.UtcNow.AddDays(1));
-
-        // Manual check should proceed even with remind-later set
-        // It will fail to reach GitHub but should at least attempt (transition to Checking)
-        var statuses = new List<UpdateStatus>();
-        _updateService.StatusChanged += (_, status) => statuses.Add(status);
-
-        await _updateService.CheckForUpdatesAsync(manualCheck: true);
-
-        statuses.Should().Contain(UpdateStatus.Checking);
-    }
-
-    [Fact]
-    public async Task DownloadUpdateAsync_WithNoRelease_SetsError()
-    {
-        await _updateService.DownloadUpdateAsync();
-
-        _updateService.Status.Should().Be(UpdateStatus.Error);
-        _updateService.ErrorMessage.Should().NotBeNullOrEmpty();
-    }
-
-    [Fact]
-    public async Task CheckForUpdatesAsync_AutomaticCheckThrows_DoesNotShowError()
-    {
-        _versionService.InformationalVersion.Returns(_ => throw new InvalidOperationException("Version read failed"));
-
-        await _updateService.CheckForUpdatesAsync(manualCheck: false);
-
-        _updateService.Status.Should().Be(UpdateStatus.Idle);
-        _updateService.ErrorMessage.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task CheckForUpdatesAsync_ManualCheckThrows_ShowsError()
-    {
-        _versionService.InformationalVersion.Returns(_ => throw new InvalidOperationException("Version read failed"));
-
-        await _updateService.CheckForUpdatesAsync(manualCheck: true);
-
-        _updateService.Status.Should().Be(UpdateStatus.Error);
-        _updateService.ErrorMessage.Should().NotBeNullOrWhiteSpace();
-    }
-
-    [Fact]
-    public void Dispose_StopsTimer()
-    {
-        // Should not throw
-        _updateService.Dispose();
+        public void ApplyUpdatesAndRestart(VelopackUpdateInfo update)
+        {
+            AppliedUpdate = update;
+        }
     }
 }

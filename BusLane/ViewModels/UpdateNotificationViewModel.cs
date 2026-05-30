@@ -65,11 +65,11 @@ public partial class UpdateNotificationViewModel : ViewModelBase, IDisposable
 
         IsVisible = status is UpdateStatus.UpdateAvailable
                               or UpdateStatus.Downloading
-                              or UpdateStatus.Downloaded
+                              or UpdateStatus.ReadyToRestart
                               or UpdateStatus.Error;
 
         IsDownloading = status == UpdateStatus.Downloading;
-        IsDownloaded = status == UpdateStatus.Downloaded;
+        IsDownloaded = status == UpdateStatus.ReadyToRestart;
         ErrorMessage = _updateService.ErrorMessage;
 
         if (release != null)

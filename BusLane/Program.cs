@@ -152,7 +152,7 @@ class Program
         services.AddSingleton<IDiagnosticBundleService, DiagnosticBundleService>();
 
         // Update services
-        services.AddSingleton<UpdateDownloadService>();
+        services.AddSingleton<IVelopackUpdateManager, VelopackUpdateManager>();
         services.AddSingleton<IUpdateService, UpdateService>();
 
         // Dashboard services

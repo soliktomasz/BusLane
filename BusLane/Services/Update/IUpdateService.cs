@@ -19,6 +19,12 @@ public interface IUpdateService
     /// <summary>Gets the error message from the last failed operation.</summary>
     string? ErrorMessage { get; }
 
+    /// <summary>Gets whether this app can self-update through Velopack.</summary>
+    bool CanSelfUpdate { get; }
+
+    /// <summary>Gets user-facing update status text.</summary>
+    string StatusMessage { get; }
+
     /// <summary>Raised when the update status changes.</summary>
     event EventHandler<UpdateStatus>? StatusChanged;
 
