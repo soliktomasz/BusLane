@@ -43,6 +43,12 @@ public class VelopackUpdateManager : IVelopackUpdateManager
             throw new InvalidOperationException("No Velopack update has been checked.");
         }
 
+        var availableVersion = _availableUpdate.TargetFullRelease?.Version?.ToString() ?? string.Empty;
+        if (!VersionsMatch(update, availableVersion))
+        {
+            throw new InvalidOperationException("The requested update does not match the checked Velopack update.");
+        }
+
         return _manager.DownloadUpdatesAsync(_availableUpdate, progress, ct);
     }
 
@@ -54,6 +60,17 @@ public class VelopackUpdateManager : IVelopackUpdateManager
             throw new InvalidOperationException("No Velopack update is ready to apply.");
         }
 
+        var pendingVersion = pending.Version?.ToString() ?? string.Empty;
+        if (!VersionsMatch(update, pendingVersion))
+        {
+            throw new InvalidOperationException("The requested update does not match the pending Velopack update.");
+        }
+
         _manager.ApplyUpdatesAndRestart(pending);
+    }
+
+    private static bool VersionsMatch(VelopackUpdateInfo update, string velopackVersion)
+    {
+        return string.Equals(update.Version, velopackVersion, StringComparison.OrdinalIgnoreCase);
     }
 }

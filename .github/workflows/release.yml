@@ -102,12 +102,14 @@ jobs:
         continue-on-error: true
 
       - name: Create Velopack package
+        env:
+          PACK_VERSION: ${{ steps.version.outputs.version }}
         run: |
           vpk pack \
             --packId BusLane \
             --packTitle BusLane \
             --packAuthors BusLane \
-            --packVersion ${{ steps.version.outputs.version }} \
+            --packVersion "$PACK_VERSION" \
             --packDir ./publish \
             --mainExe BusLane \
             --runtime linux-x64 \
@@ -289,12 +291,14 @@ jobs:
         continue-on-error: true
 
       - name: Create Velopack package
+        env:
+          PACK_VERSION: ${{ steps.version.outputs.version }}
         run: |
           vpk pack `
             --packId BusLane `
             --packTitle BusLane `
             --packAuthors BusLane `
-            --packVersion ${{ steps.version.outputs.version }} `
+            --packVersion "$env:PACK_VERSION" `
             --packDir ./publish `
             --mainExe BusLane.exe `
             --runtime win-x64 `
@@ -399,12 +403,14 @@ jobs:
         continue-on-error: true
 
       - name: Create Velopack package
+        env:
+          PACK_VERSION: ${{ steps.version.outputs.version }}
         run: |
           vpk pack \
             --packId BusLane \
             --packTitle BusLane \
             --packAuthors BusLane \
-            --packVersion ${{ steps.version.outputs.version }} \
+            --packVersion "$PACK_VERSION" \
             --packDir ./publish \
             --mainExe BusLane \
             --runtime ${{ matrix.runtime }} \
@@ -506,12 +512,12 @@ jobs:
 
       - name: Create tag for manual release
         if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ format('v{0}', github.event.inputs.version) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="v${{ github.event.inputs.version }}"
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v8
@@ -539,12 +545,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
       - name: Install Velopack CLI
         run: dotnet tool install --global vpk --version ${{ env.VELOPACK_VERSION }}
 
       - name: Upload Velopack packages
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}"
           for releases_dir in $(find artifacts -type d -name Releases); do
             artifact_dir="$(basename "$(dirname "$releases_dir")")"
             case "$artifact_dir" in
@@ -559,7 +572,7 @@ jobs:
               --outputDir "$releases_dir" \
               --repoUrl https://github.com/${{ github.repository }} \
               --channel "$channel" \
-              --token ${{ secrets.GITHUB_TOKEN }} \
+              --token "$VPK_TOKEN" \
               --merge \
               --publish \
               --tag "$TAG"

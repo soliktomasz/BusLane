@@ -219,7 +219,15 @@ public partial class SettingsViewModel : ViewModelBase
             FileName = "https://github.com/soliktomasz/BusLane/releases",
             UseShellExecute = true
         };
-        Process.Start(psi);
+
+        try
+        {
+            Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusMessage = $"Failed to open releases: {ex.Message}";
+        }
     }
 
     private void RefreshUpdateStatus()

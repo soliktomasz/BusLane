@@ -3,12 +3,10 @@ namespace BusLane.Services.Update;
 using System.Timers;
 using BusLane.Models.Update;
 using BusLane.Services.Abstractions;
-using BusLane.Services.Infrastructure;
 using Serilog;
 
 public class UpdateService : IUpdateService, IDisposable
 {
-    private readonly IVersionService _versionService;
     private readonly IPreferencesService _preferencesService;
     private readonly IVelopackUpdateManager _updateManager;
     private readonly System.Timers.Timer _checkTimer;
@@ -50,11 +48,9 @@ public class UpdateService : IUpdateService, IDisposable
     public event EventHandler<double>? DownloadProgressChanged;
 
     public UpdateService(
-        IVersionService versionService,
         IPreferencesService preferencesService,
         IVelopackUpdateManager updateManager)
     {
-        _versionService = versionService;
         _preferencesService = preferencesService;
         _updateManager = updateManager;
         CanSelfUpdate = _updateManager.IsInstalled;

@@ -103,7 +103,10 @@ public partial class UpdateNotificationViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        await _updateService.InstallUpdateAsync();
+        if (_updateService.Status == UpdateStatus.ReadyToRestart)
+        {
+            await _updateService.InstallUpdateAsync();
+        }
     }
 
     [RelayCommand]

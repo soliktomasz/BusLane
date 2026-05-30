@@ -47,6 +47,63 @@ public class UpdateNotificationViewModelTests
         sut.IsReadyToRestart.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task InstallNowCommand_WhenUpdateAvailable_DownloadsUpdate()
+    {
+        // Arrange
+        var service = new FakeUpdateService
+        {
+            Status = UpdateStatus.UpdateAvailable,
+            AvailableRelease = new ReleaseInfo { Version = "1.0.0" }
+        };
+        var sut = new UpdateNotificationViewModel(service);
+
+        // Act
+        await sut.InstallNowCommand.ExecuteAsync(null);
+
+        // Assert
+        service.DownloadUpdateCallCount.Should().Be(1);
+        service.InstallUpdateCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task InstallNowCommand_WhenReadyToRestart_InstallsUpdate()
+    {
+        // Arrange
+        var service = new FakeUpdateService
+        {
+            Status = UpdateStatus.ReadyToRestart,
+            AvailableRelease = new ReleaseInfo { Version = "1.0.0", IsReadyToRestart = true }
+        };
+        var sut = new UpdateNotificationViewModel(service);
+
+        // Act
+        await sut.InstallNowCommand.ExecuteAsync(null);
+
+        // Assert
+        service.DownloadUpdateCallCount.Should().Be(0);
+        service.InstallUpdateCallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task InstallNowCommand_WhenDownloading_DoesNothing()
+    {
+        // Arrange
+        var service = new FakeUpdateService
+        {
+            Status = UpdateStatus.Downloading,
+            AvailableRelease = new ReleaseInfo { Version = "1.0.0" }
+        };
+        var sut = new UpdateNotificationViewModel(service);
+
+        // Act
+        await sut.InstallNowCommand.ExecuteAsync(null);
+
+        // Assert
+        service.DownloadUpdateCallCount.Should().Be(0);
+        service.InstallUpdateCallCount.Should().Be(0);
+    }
+
     private sealed class FakeUpdateService : IUpdateService
     {
         public UpdateStatus Status { get; set; }
@@ -55,11 +112,23 @@ public class UpdateNotificationViewModelTests
         public string? ErrorMessage { get; set; }
         public bool CanSelfUpdate { get; set; } = true;
         public string StatusMessage { get; set; } = string.Empty;
+        public int DownloadUpdateCallCount { get; private set; }
+        public int InstallUpdateCallCount { get; private set; }
         public event EventHandler<UpdateStatus>? StatusChanged;
         public event EventHandler<double>? DownloadProgressChanged;
         public Task CheckForUpdatesAsync(bool manualCheck = false) => Task.CompletedTask;
-        public Task DownloadUpdateAsync() => Task.CompletedTask;
-        public Task InstallUpdateAsync() => Task.CompletedTask;
+        public Task DownloadUpdateAsync()
+        {
+            DownloadUpdateCallCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task InstallUpdateAsync()
+        {
+            InstallUpdateCallCount++;
+            return Task.CompletedTask;
+        }
+
         public void SkipVersion(string version) { }
         public void RemindLater(TimeSpan delay) { }
         public void DismissNotification() { }
