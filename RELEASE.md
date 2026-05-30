@@ -19,6 +19,8 @@ The `release_script.sh` automates the entire release process for BusLane, ensuri
 
 - ✅ **Interactive**: Prompts for confirmation before each major step
 
+- ✅ **Velopack Updates**: GitHub Actions publishes Velopack release feeds and packages used by the in-app updater
+
 - ✅ **Safe**:
   - Validates version format
   - Checks for uncommitted changes
@@ -211,7 +213,10 @@ Once you push the tag, GitHub Actions will automatically:
 2. Run tests
 3. Create a GitHub release
 4. Upload build artifacts
-5. Publish release notes
+5. Publish Velopack packages and `releases.{channel}.json` feeds for in-app updates
+6. Publish release notes
+
+The GitHub release still includes secondary manual downloads such as `.deb`, `.rpm`, `.flatpak`, `.snap`, `.dmg`, `.zip`, archives, and installers. BusLane's in-app updater uses the Velopack assets and release feed files.
 
 Monitor the workflow at: https://github.com/soliktomasz/BusLane/actions
 

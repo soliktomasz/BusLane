@@ -13,6 +13,10 @@ on:
 
 env:
   DOTNET_VERSION: '10.0.x'
+  VELOPACK_VERSION: '0.0.1298'
+
+permissions:
+  contents: write
 
 jobs:
   build-linux:
@@ -89,6 +93,26 @@ jobs:
             -p:UseAppHost=true \
             -p:PublishReadyToRun=true \
             -o ./publish
+
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk --version ${{ env.VELOPACK_VERSION }}
+
+      - name: Download previous Velopack release assets
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --channel linux-x64 --token ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create Velopack package
+        run: |
+          vpk pack \
+            --packId BusLane \
+            --packTitle BusLane \
+            --packAuthors BusLane \
+            --packVersion ${{ steps.version.outputs.version }} \
+            --packDir ./publish \
+            --mainExe BusLane \
+            --runtime linux-x64 \
+            --channel linux-x64 \
+            --icon BusLane/Assets/icon.png
 
       - name: Create archive
         run: |
@@ -203,6 +227,7 @@ jobs:
             BusLane-${{ steps.version.outputs.version }}-linux-x64.flatpak
             BusLane-${{ steps.version.outputs.version }}-linux-x64.AppImage
             BusLane-${{ steps.version.outputs.version }}-linux-x64.snap
+            Releases/**
           retention-days: 30
           if-no-files-found: warn
 
@@ -256,6 +281,26 @@ jobs:
             -p:PublishReadyToRun=true `
             -o ./publish
 
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk --version ${{ env.VELOPACK_VERSION }}
+
+      - name: Download previous Velopack release assets
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --channel win-x64 --token ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create Velopack package
+        run: |
+          vpk pack `
+            --packId BusLane `
+            --packTitle BusLane `
+            --packAuthors BusLane `
+            --packVersion ${{ steps.version.outputs.version }} `
+            --packDir ./publish `
+            --mainExe BusLane.exe `
+            --runtime win-x64 `
+            --channel win-x64 `
+            --icon BusLane/Assets/icon.png
+
       - name: Create archive
         run: |
           Compress-Archive -Path ./publish/* -DestinationPath ./BusLane-${{ steps.version.outputs.version }}-win-x64.zip
@@ -291,6 +336,7 @@ jobs:
           path: |
             BusLane-${{ steps.version.outputs.version }}-win-x64.zip
             *setup.exe
+            Releases/**
           retention-days: 30
 
   build-macos:
@@ -344,6 +390,26 @@ jobs:
             -p:EnableCompressionInSingleFile=true \
             -p:UseAppHost=true \
             -o ./publish
+
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk --version ${{ env.VELOPACK_VERSION }}
+
+      - name: Download previous Velopack release assets
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --channel ${{ matrix.runtime }} --token ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create Velopack package
+        run: |
+          vpk pack \
+            --packId BusLane \
+            --packTitle BusLane \
+            --packAuthors BusLane \
+            --packVersion ${{ steps.version.outputs.version }} \
+            --packDir ./publish \
+            --mainExe BusLane \
+            --runtime ${{ matrix.runtime }} \
+            --channel ${{ matrix.runtime }} \
+            --icon BusLane/Assets/icon.icns
 
       - name: Create macOS App Bundle
         run: |
@@ -414,8 +480,10 @@ jobs:
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v7
         with:
-          name: BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}
-          path: BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}.dmg
+          name: BusLane-${{ steps.version.outputs.version }}-${{ matrix.runtime }}
+          path: |
+            BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}.dmg
+            Releases/**
           retention-days: 30
 
   create-release:
@@ -470,3 +538,29 @@ jobs:
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.event.inputs.version, 'alpha') || contains(github.event.inputs.version, 'beta') || contains(github.event.inputs.version, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk --version ${{ env.VELOPACK_VERSION }}
+
+      - name: Upload Velopack packages
+        run: |
+          TAG="${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}"
+          for releases_dir in $(find artifacts -type d -name Releases); do
+            artifact_dir="$(basename "$(dirname "$releases_dir")")"
+            case "$artifact_dir" in
+              *win-x64*) channel="win-x64" ;;
+              *linux-x64*) channel="linux-x64" ;;
+              *osx-x64*) channel="osx-x64" ;;
+              *osx-arm64*) channel="osx-arm64" ;;
+              *) echo "Unknown Velopack artifact channel for $artifact_dir"; exit 1 ;;
+            esac
+
+            vpk upload github \
+              --outputDir "$releases_dir" \
+              --repoUrl https://github.com/${{ github.repository }} \
+              --channel "$channel" \
+              --token ${{ secrets.GITHUB_TOKEN }} \
+              --merge \
+              --publish \
+              --tag "$TAG"
+          done
