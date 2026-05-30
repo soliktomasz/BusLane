@@ -61,16 +61,11 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <!-- Install Now / Restart Button -->
+                <!-- Download / Restart Button -->
                 <Button Classes="primary small"
                         Command="{Binding InstallNowCommand}"
-                        IsVisible="{Binding !IsDownloaded}">
-                    <TextBlock Text="Install"/>
-                </Button>
-                <Button Classes="primary small"
-                        Command="{Binding InstallNowCommand}"
-                        IsVisible="{Binding IsDownloaded}">
-                    <TextBlock Text="Restart"/>
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                    <TextBlock Text="{Binding PrimaryActionText}"/>
                 </Button>
 
                 <!-- Retry Button (on error) -->

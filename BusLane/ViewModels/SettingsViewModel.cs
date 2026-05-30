@@ -1,5 +1,6 @@
 namespace BusLane.ViewModels;
 
+using System.Diagnostics;
 using BusLane.Models.Security;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Diagnostics;
@@ -33,9 +34,15 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _restoreTabsOnStartup = true;
     [ObservableProperty] private bool _enableTelemetry;
     [ObservableProperty] private bool _autoCheckForUpdates = true;
-    [ObservableProperty] private bool _isCheckingForUpdates;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCheckForUpdates))]
+    private bool _isCheckingForUpdates;
     [ObservableProperty] private bool _isExportingDiagnosticBundle;
     [ObservableProperty] private string? _diagnosticBundleStatus;
+    [ObservableProperty] private string _updateStatusMessage = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCheckForUpdates))]
+    private bool _canSelfUpdate = true;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
@@ -43,6 +50,7 @@ public partial class SettingsViewModel : ViewModelBase
     public int[] MaxTotalMessagesOptions { get; } = [100, 250, 500, 1000];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
     public AppLockSettingsViewModel AppLockSettings { get; }
+    public bool CanCheckForUpdates => CanSelfUpdate && !IsCheckingForUpdates;
 
     public SettingsViewModel(
         Action onClose,
@@ -105,6 +113,7 @@ public partial class SettingsViewModel : ViewModelBase
             RestoreTabsOnStartup = _preferencesService.RestoreTabsOnStartup;
             EnableTelemetry = _preferencesService.EnableTelemetry;
             AutoCheckForUpdates = _preferencesService.AutoCheckForUpdates;
+            RefreshUpdateStatus();
             // Note: _isLoading is set to false via Dispatcher in constructor (normal case)
         }
         catch
@@ -193,11 +202,30 @@ public partial class SettingsViewModel : ViewModelBase
         {
             IsCheckingForUpdates = true;
             await _updateService.CheckForUpdatesAsync(manualCheck: true);
+            RefreshUpdateStatus();
         }
         finally
         {
             IsCheckingForUpdates = false;
+            RefreshUpdateStatus();
         }
+    }
+
+    [RelayCommand]
+    private void OpenUpdateReleases()
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "https://github.com/soliktomasz/BusLane/releases",
+            UseShellExecute = true
+        };
+        Process.Start(psi);
+    }
+
+    private void RefreshUpdateStatus()
+    {
+        CanSelfUpdate = _updateService?.CanSelfUpdate ?? false;
+        UpdateStatusMessage = _updateService?.StatusMessage ?? "Update service is unavailable.";
     }
 
     [RelayCommand]
