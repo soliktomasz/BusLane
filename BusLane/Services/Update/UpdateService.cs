@@ -3,21 +3,21 @@ namespace BusLane.Services.Update;
 using System.Timers;
 using BusLane.Models.Update;
 using BusLane.Services.Abstractions;
-using BusLane.Services.Infrastructure;
 using Serilog;
 
 public class UpdateService : IUpdateService, IDisposable
 {
-    private readonly IVersionService _versionService;
     private readonly IPreferencesService _preferencesService;
-    private readonly UpdateDownloadService _downloadService;
+    private readonly IVelopackUpdateManager _updateManager;
     private readonly System.Timers.Timer _checkTimer;
-    private readonly string _platform;
 
     private UpdateStatus _status = UpdateStatus.Idle;
     private ReleaseInfo? _availableRelease;
+    private VelopackUpdateInfo? _availableUpdate;
     private double _downloadProgress;
     private string? _errorMessage;
+    private string _statusMessage = string.Empty;
+    private bool _canSelfUpdate;
 
     public UpdateStatus Status
     {
@@ -32,25 +32,31 @@ public class UpdateService : IUpdateService, IDisposable
     public ReleaseInfo? AvailableRelease => _availableRelease;
     public double DownloadProgress => _downloadProgress;
     public string? ErrorMessage => _errorMessage;
+    public bool CanSelfUpdate
+    {
+        get => _canSelfUpdate;
+        private set => _canSelfUpdate = value;
+    }
+
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => _statusMessage = value;
+    }
 
     public event EventHandler<UpdateStatus>? StatusChanged;
     public event EventHandler<double>? DownloadProgressChanged;
 
     public UpdateService(
-        IVersionService versionService,
         IPreferencesService preferencesService,
-        UpdateDownloadService? downloadService = null)
+        IVelopackUpdateManager updateManager)
     {
-        _versionService = versionService;
         _preferencesService = preferencesService;
-        _downloadService = downloadService ?? new UpdateDownloadService();
-        _platform = UpdateCheckService.GetCurrentPlatform();
-
-        _downloadService.ProgressChanged += (s, progress) =>
-        {
-            _downloadProgress = progress;
-            DownloadProgressChanged?.Invoke(this, progress);
-        };
+        _updateManager = updateManager;
+        CanSelfUpdate = _updateManager.IsInstalled;
+        StatusMessage = CanSelfUpdate
+            ? "Updates are managed by Velopack."
+            : "Self-update is unavailable for this build. Download updates from GitHub Releases.";
 
         // Check every 24 hours
         _checkTimer = new System.Timers.Timer(TimeSpan.FromHours(24).TotalMilliseconds);
@@ -73,9 +79,10 @@ public class UpdateService : IUpdateService, IDisposable
     public async Task CheckForUpdatesAsync(bool manualCheck = false)
     {
         if (Status == UpdateStatus.Checking || Status == UpdateStatus.Downloading)
+        {
             return;
+        }
 
-        // Respect user preferences for automatic checks
         if (!manualCheck && !ShouldAutoCheck())
         {
             Log.Information("Skipping automatic update check due to user preferences");
@@ -84,30 +91,53 @@ public class UpdateService : IUpdateService, IDisposable
 
         try
         {
-            Status = UpdateStatus.Checking;
             _errorMessage = null;
 
-            var currentVersion = _versionService.InformationalVersion;
-            var release = await UpdateCheckService.CheckForUpdateAsync(currentVersion, _platform);
-
-            if (release == null)
+            if (!_updateManager.IsInstalled)
             {
-                Status = UpdateStatus.Idle;
+                CanSelfUpdate = false;
+                StatusMessage = "Self-update is unavailable for this build. Download updates from GitHub Releases.";
+                Status = manualCheck ? UpdateStatus.NotInstalled : UpdateStatus.Idle;
                 return;
             }
 
-            // Check if user skipped this version
+            CanSelfUpdate = true;
+
+            var pending = _updateManager.PendingUpdate;
+            if (pending != null)
+            {
+                _availableUpdate = pending;
+                _availableRelease = ToReleaseInfo(pending, readyToRestart: true);
+                StatusMessage = $"BusLane {pending.Version} is ready to install.";
+                Status = UpdateStatus.ReadyToRestart;
+                return;
+            }
+
+            Status = UpdateStatus.Checking;
+            var update = await _updateManager.CheckForUpdatesAsync();
+            if (update == null)
+            {
+                _availableUpdate = null;
+                _availableRelease = null;
+                StatusMessage = manualCheck ? "BusLane is up to date." : string.Empty;
+                Status = manualCheck ? UpdateStatus.UpToDate : UpdateStatus.Idle;
+                return;
+            }
+
             var prefs = LoadPreferences();
-            if (prefs.SkippedVersion == release.Version && !manualCheck)
+            if (!manualCheck && prefs.SkippedVersion == update.Version)
             {
-                Log.Information("User skipped version {Version}, not notifying", release.Version);
+                Log.Information("User skipped version {Version}, not notifying", update.Version);
+                _availableUpdate = null;
+                _availableRelease = null;
                 Status = UpdateStatus.Idle;
                 return;
             }
 
-            _availableRelease = release;
+            _availableUpdate = update;
+            _availableRelease = ToReleaseInfo(update, readyToRestart: false);
+            StatusMessage = $"BusLane {update.Version} is available.";
             Status = UpdateStatus.UpdateAvailable;
-
         }
         catch (Exception ex)
         {
@@ -115,12 +145,14 @@ public class UpdateService : IUpdateService, IDisposable
             {
                 Log.Error(ex, "Manual update check failed");
                 _errorMessage = ex.Message;
+                StatusMessage = $"Update check failed: {ex.Message}";
                 Status = UpdateStatus.Error;
             }
             else
             {
                 Log.Warning(ex, "Automatic update check failed");
                 _errorMessage = null;
+                StatusMessage = string.Empty;
                 Status = UpdateStatus.Idle;
             }
         }
@@ -128,9 +160,10 @@ public class UpdateService : IUpdateService, IDisposable
 
     public async Task DownloadUpdateAsync()
     {
-        if (_availableRelease?.Assets.TryGetValue(_platform, out var asset) != true || asset == null)
+        if (_availableUpdate == null || _availableRelease == null)
         {
             _errorMessage = "No update available for download";
+            StatusMessage = _errorMessage;
             Status = UpdateStatus.Error;
             return;
         }
@@ -139,57 +172,49 @@ public class UpdateService : IUpdateService, IDisposable
         {
             Status = UpdateStatus.Downloading;
             _errorMessage = null;
+            StatusMessage = $"Downloading BusLane {_availableUpdate.Version}...";
 
-            var filePath = await _downloadService.DownloadAsync(asset);
-
-            if (filePath == null)
+            await _updateManager.DownloadUpdatesAsync(_availableUpdate, progress =>
             {
-                _errorMessage = "Download failed";
-                Status = UpdateStatus.Error;
-                return;
-            }
+                _downloadProgress = progress;
+                DownloadProgressChanged?.Invoke(this, progress);
+            });
 
-            Status = UpdateStatus.Downloaded;
+            _availableRelease = _availableRelease with { IsReadyToRestart = true };
+            StatusMessage = $"BusLane {_availableUpdate.Version} is ready to install.";
+            Status = UpdateStatus.ReadyToRestart;
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Download failed");
             _errorMessage = ex.Message;
+            StatusMessage = $"Update download failed: {ex.Message}";
             Status = UpdateStatus.Error;
         }
     }
 
     public Task InstallUpdateAsync()
     {
-        if (_availableRelease == null)
+        if (_availableUpdate == null || _availableRelease == null)
         {
             _errorMessage = "No update available";
+            StatusMessage = _errorMessage;
             Status = UpdateStatus.Error;
             return Task.CompletedTask;
         }
 
         try
         {
-            // Open the GitHub release page in the user's browser so they can
-            // download and verify the installer themselves. Direct execution of
-            // downloaded binaries is disabled until checksum validation is implemented.
-            var releaseUrl = _availableRelease.ReleaseUrl;
-            Log.Information("Opening release page for manual install: {Url}", releaseUrl);
-
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = releaseUrl,
-                UseShellExecute = true
-            };
-            System.Diagnostics.Process.Start(psi);
-
-            Status = UpdateStatus.Idle;
+            Status = UpdateStatus.Installing;
+            StatusMessage = $"Restarting to install BusLane {_availableUpdate.Version}...";
+            _updateManager.ApplyUpdatesAndRestart(_availableUpdate);
             return Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to open release page");
+            Log.Error(ex, "Failed to apply update");
             _errorMessage = ex.Message;
+            StatusMessage = $"Update install failed: {ex.Message}";
             Status = UpdateStatus.Error;
             return Task.CompletedTask;
         }
@@ -205,6 +230,7 @@ public class UpdateService : IUpdateService, IDisposable
             AutoCheckEnabled = true
         });
 
+        _availableUpdate = null;
         _availableRelease = null;
         Status = UpdateStatus.Idle;
     }
@@ -219,13 +245,13 @@ public class UpdateService : IUpdateService, IDisposable
             AutoCheckEnabled = true
         });
 
+        _availableUpdate = null;
         _availableRelease = null;
         Status = UpdateStatus.Idle;
     }
 
     public void DismissNotification()
     {
-        // Just hide the notification without skipping
         Status = UpdateStatus.Idle;
     }
 
@@ -234,10 +260,14 @@ public class UpdateService : IUpdateService, IDisposable
         var prefs = LoadPreferences();
 
         if (!prefs.AutoCheckEnabled)
+        {
             return false;
+        }
 
         if (prefs.RemindLaterDate.HasValue && prefs.RemindLaterDate > DateTime.UtcNow)
+        {
             return false;
+        }
 
         return true;
     }
@@ -264,10 +294,18 @@ public class UpdateService : IUpdateService, IDisposable
             prefs.SkippedVersion, prefs.RemindLaterDate);
     }
 
+    private static ReleaseInfo ToReleaseInfo(VelopackUpdateInfo update, bool readyToRestart) => new()
+    {
+        Version = update.Version,
+        ReleaseNotes = update.ReleaseNotes,
+        PublishedAt = update.PublishedAt,
+        CanSelfUpdate = true,
+        IsReadyToRestart = readyToRestart
+    };
+
     public void Dispose()
     {
-        _checkTimer?.Stop();
-        _checkTimer?.Dispose();
-        _downloadService?.Cleanup();
+        _checkTimer.Stop();
+        _checkTimer.Dispose();
     }
 }

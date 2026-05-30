@@ -19,6 +19,12 @@ public interface IUpdateService
     /// <summary>Gets the error message from the last failed operation.</summary>
     string? ErrorMessage { get; }
 
+    /// <summary>Gets whether this app can self-update through Velopack.</summary>
+    bool CanSelfUpdate { get; }
+
+    /// <summary>Gets user-facing update status text.</summary>
+    string StatusMessage { get; }
+
     /// <summary>Raised when the update status changes.</summary>
     event EventHandler<UpdateStatus>? StatusChanged;
 
@@ -32,7 +38,7 @@ public interface IUpdateService
     /// <summary>Downloads the available update to a temporary location.</summary>
     Task DownloadUpdateAsync();
 
-    /// <summary>Opens the release page in the browser for manual installation.</summary>
+    /// <summary>Applies the staged update and restarts the app.</summary>
     Task InstallUpdateAsync();
 
     /// <summary>Marks the specified version as skipped so it won't trigger future notifications.</summary>

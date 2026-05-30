@@ -563,12 +563,33 @@
                                                 <TextBlock Text="Manual check" FontWeight="Medium" FontSize="13"/>
                                                 <TextBlock Text="Check now for the latest version"
                                                            Classes="caption" FontSize="12"/>
+                                                <TextBlock Text="{Binding SettingsViewModel.UpdateStatusMessage}"
+                                                           Classes="caption"
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           MaxWidth="360"/>
                                             </StackPanel>
                                             <Button Grid.Column="1"
                                                     Classes="secondary small"
                                                     Content="Check now"
                                                     Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
-                                                    IsEnabled="{Binding !SettingsViewModel.IsCheckingForUpdates}"
+                                                    IsEnabled="{Binding SettingsViewModel.CanCheckForUpdates}"
+                                                    VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Grid Classes="settings-row"
+                                              ColumnDefinitions="*,Auto"
+                                              IsVisible="{Binding !SettingsViewModel.CanSelfUpdate}">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Manual downloads" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Use GitHub Releases for this build"
+                                                           Classes="caption"
+                                                           FontSize="12"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Classes="secondary small"
+                                                    Content="Open releases"
+                                                    Command="{Binding SettingsViewModel.OpenUpdateReleasesCommand}"
                                                     VerticalAlignment="Center"/>
                                         </Grid>
 

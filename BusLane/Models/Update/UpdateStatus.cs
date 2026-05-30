@@ -4,10 +4,12 @@ namespace BusLane.Models.Update;
 public enum UpdateStatus
 {
     Idle,
+    NotInstalled,
     Checking,
+    UpToDate,
     UpdateAvailable,
     Downloading,
-    Downloaded,
+    ReadyToRestart,
     Installing,
     Error
 }

@@ -27,7 +27,10 @@ public partial class UpdateNotificationViewModel : ViewModelBase, IDisposable
     private bool _isDownloading;
 
     [ObservableProperty]
-    private bool _isDownloaded;
+    private bool _isReadyToRestart;
+
+    [ObservableProperty]
+    private string _primaryActionText = "Download";
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -65,11 +68,12 @@ public partial class UpdateNotificationViewModel : ViewModelBase, IDisposable
 
         IsVisible = status is UpdateStatus.UpdateAvailable
                               or UpdateStatus.Downloading
-                              or UpdateStatus.Downloaded
+                              or UpdateStatus.ReadyToRestart
                               or UpdateStatus.Error;
 
         IsDownloading = status == UpdateStatus.Downloading;
-        IsDownloaded = status == UpdateStatus.Downloaded;
+        IsReadyToRestart = status == UpdateStatus.ReadyToRestart;
+        PrimaryActionText = IsReadyToRestart ? "Restart" : "Download";
         ErrorMessage = _updateService.ErrorMessage;
 
         if (release != null)
@@ -93,8 +97,16 @@ public partial class UpdateNotificationViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task InstallNowAsync()
     {
-        // Opens the GitHub release page so the user can download and verify manually
-        await _updateService.InstallUpdateAsync();
+        if (_updateService.Status == UpdateStatus.UpdateAvailable)
+        {
+            await _updateService.DownloadUpdateAsync();
+            return;
+        }
+
+        if (_updateService.Status == UpdateStatus.ReadyToRestart)
+        {
+            await _updateService.InstallUpdateAsync();
+        }
     }
 
     [RelayCommand]
