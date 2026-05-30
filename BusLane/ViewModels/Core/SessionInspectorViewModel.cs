@@ -24,8 +24,17 @@ public partial class SessionInspectorViewModel : ViewModelBase
 
     [ObservableProperty] private bool _isLoadingSessions;
     [ObservableProperty] private SessionInspectorItem? _selectedSession;
+    [ObservableProperty] private string _sessionFilter = string.Empty;
 
     public ObservableCollection<SessionInspectorItem> Sessions { get; } = [];
+
+    /// <summary>
+    /// Gets the sessions filtered by the current <see cref="SessionFilter"/> text.
+    /// </summary>
+    public IEnumerable<SessionInspectorItem> FilteredSessions =>
+        string.IsNullOrWhiteSpace(SessionFilter)
+            ? Sessions
+            : Sessions.Where(s => s.SessionId.Contains(SessionFilter, StringComparison.OrdinalIgnoreCase));
 
     public SessionInspectorViewModel(
         Func<IServiceBusOperations?> getOperations,
@@ -45,6 +54,13 @@ public partial class SessionInspectorViewModel : ViewModelBase
         _getRequiresSession = getRequiresSession;
         _setSelectedMessageTabIndex = setSelectedMessageTabIndex;
         _setStatus = setStatus;
+
+        Sessions.CollectionChanged += (_, _) => OnPropertyChanged(nameof(FilteredSessions));
+    }
+
+    partial void OnSessionFilterChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredSessions));
     }
 
     [RelayCommand]

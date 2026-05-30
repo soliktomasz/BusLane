@@ -563,6 +563,108 @@ public class ConnectionTabViewModelTests
         state.SelectedEntityName.Should().Be("orders/processor");
     }
 
+    [Fact]
+    public void CreateSessionState_PersistsScopedSessionId()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        tab.MessageOps.OpenSessionScope("session-42", knownTotalCount: 5, knownDeadLetterCount: 1);
+
+        // Act
+        var state = tab.CreateSessionState(0);
+
+        // Assert
+        state.ScopedSessionId.Should().Be("session-42");
+    }
+
+    [Fact]
+    public void CreateSessionState_WithNoActiveSession_ScopedSessionIdIsNull()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+
+        // Act
+        var state = tab.CreateSessionState(0);
+
+        // Assert
+        state.ScopedSessionId.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateSessionState_PersistsSessionFilter()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        tab.SessionInspector.SessionFilter = "order-sess";
+
+        // Act
+        var state = tab.CreateSessionState(0);
+
+        // Assert
+        state.SessionFilter.Should().Be("order-sess");
+    }
+
+    [Fact]
+    public void ApplySessionState_RestoresScopedSessionId()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        var state = new TabSessionState
+        {
+            TabId = "test-id",
+            Mode = ConnectionMode.ConnectionString,
+            ScopedSessionId = "session-99",
+            TabOrder = 0
+        };
+
+        // Act
+        tab.ApplySessionState(state);
+
+        // Assert
+        tab.MessageOps.ScopedSessionId.Should().Be("session-99");
+        tab.MessageOps.IsSessionScoped.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ApplySessionState_WithNullScopedSessionId_LeavesSessionScopeCleared()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        var state = new TabSessionState
+        {
+            TabId = "test-id",
+            Mode = ConnectionMode.ConnectionString,
+            ScopedSessionId = null,
+            TabOrder = 0
+        };
+
+        // Act
+        tab.ApplySessionState(state);
+
+        // Assert
+        tab.MessageOps.IsSessionScoped.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ApplySessionState_RestoresSessionFilter()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        var state = new TabSessionState
+        {
+            TabId = "test-id",
+            Mode = ConnectionMode.ConnectionString,
+            SessionFilter = "order-sess",
+            TabOrder = 0
+        };
+
+        // Act
+        tab.ApplySessionState(state);
+
+        // Assert
+        tab.SessionInspector.SessionFilter.Should().Be("order-sess");
+    }
+
     private sealed class TestTokenCredential : TokenCredential
     {
         public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken) =>
