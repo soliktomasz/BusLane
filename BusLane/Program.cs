@@ -20,6 +20,7 @@ using Services.Terminal;
 using Services.Update;
 using Services.Security;
 using ViewModels;
+using Velopack;
 
 class Program
 {
@@ -28,6 +29,8 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        VelopackApp.Build().Run();
+
         // Build configuration from appsettings files
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
