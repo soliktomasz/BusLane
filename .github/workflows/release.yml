@@ -315,8 +315,12 @@ jobs:
           TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
           VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for releases_dir in $(find artifacts -type d -name Releases); do
-            artifact_dir="$(basename "$(dirname "$releases_dir")")"
+          found_assets=0
+
+          while IFS= read -r assets_file; do
+            found_assets=1
+            releases_dir="$(dirname "$assets_file")"
+            artifact_dir="$(basename "$releases_dir")"
             case "$artifact_dir" in
               *win-x64*) channel="win-x64" ;;
               *linux-x64*) channel="linux-x64" ;;
@@ -324,6 +328,9 @@ jobs:
               *osx-arm64*) channel="osx-arm64" ;;
               *) echo "Unknown Velopack artifact channel for $artifact_dir"; exit 1 ;;
             esac
+
+            echo "Uploading Velopack assets for channel '$channel' from '$releases_dir':"
+            cat "$assets_file"
 
             max_attempts=3
             attempt=1
@@ -344,4 +351,10 @@ jobs:
               sleep "$sleep_seconds"
               attempt=$((attempt + 1))
             done
-          done
+          done < <(find artifacts -type f -name 'assets.*.json' | sort)
+
+          if [ "$found_assets" -eq 0 ]; then
+            echo "No Velopack assets.*.json files found in downloaded artifacts."
+            find artifacts -maxdepth 3 -type f | sort
+            exit 1
+          fi
