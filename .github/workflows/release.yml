@@ -532,16 +532,16 @@ jobs:
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
           files: |
-            artifacts/**/*.tar.gz
-            artifacts/**/*.tar.zst
-            artifacts/**/*.zip
-            artifacts/**/*.dmg
-            artifacts/**/*.exe
-            artifacts/**/*.deb
-            artifacts/**/*.rpm
-            artifacts/**/*.flatpak
-            artifacts/**/*.AppImage
-            artifacts/**/*.snap
+            artifacts/*/*.tar.gz
+            artifacts/*/*.tar.zst
+            artifacts/*/*.zip
+            artifacts/*/*.dmg
+            artifacts/*/*.exe
+            artifacts/*/*.deb
+            artifacts/*/*.rpm
+            artifacts/*/*.flatpak
+            artifacts/*/*.AppImage
+            artifacts/*/*.snap
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.event.inputs.version, 'alpha') || contains(github.event.inputs.version, 'beta') || contains(github.event.inputs.version, 'rc') }}
