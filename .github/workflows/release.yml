@@ -32,37 +32,6 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install modern archive tooling
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zstd
-
-      - name: Install distro packaging tools
-        run: |
-          sudo apt-get install -y ruby ruby-dev rpm
-          sudo gem install --no-document fpm
-
-      - name: Install Flatpak tooling
-        run: |
-          sudo apt-get install -y flatpak flatpak-builder
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
-
-      - name: Install AppImage tooling
-        run: |
-          sudo apt-get install -y libfuse2
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x appimagetool
-
-      - name: Install Snap tooling
-        run: |
-          sudo snap install snapcraft --classic
-
-      - name: Start snapd
-        run: |
-          sudo systemctl start snapd || true
-          sudo snap wait system seed.loaded || true
-
       - name: Restore dependencies
         run: dotnet restore -r linux-x64
 
@@ -114,124 +83,15 @@ jobs:
             --mainExe BusLane \
             --runtime linux-x64 \
             --channel linux-x64 \
+            --delta None \
             --icon BusLane/Assets/icon.png
-
-      - name: Create archive
-        run: |
-          cd publish
-          tar -czvf ../BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz .
-          tar --zstd -cvf ../BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.zst .
-
-      - name: Create Linux distro packages
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          ITERATION="1"
-          CLEAN_VERSION="${VERSION%%-*}"
-          if [ "$CLEAN_VERSION" != "$VERSION" ]; then
-            ITERATION="${VERSION#*-}"
-            ITERATION="${ITERATION//[^a-zA-Z0-9.]/.}"
-          fi
-
-          fpm -s dir -t deb \
-            -n buslane \
-            -v "$CLEAN_VERSION" \
-            --iteration "$ITERATION" \
-            --architecture amd64 \
-            --description "Azure Service Bus Manager" \
-            --url "https://github.com/${{ github.repository }}" \
-            --license "MIT" \
-            --maintainer "BusLane" \
-            --depends libgtk-3-0 \
-            --depends libx11-6 \
-            --depends libxkbcommon0 \
-            --depends libgbm1 \
-            --depends libasound2 \
-            --depends "libicu74 | libicu72 | libicu71" \
-            --depends libssl3 \
-            --prefix /opt/buslane \
-            -C publish \
-            --package "BusLane-${VERSION}-linux-x64.deb" \
-            .
-
-          fpm -s dir -t rpm \
-            -n buslane \
-            -v "$CLEAN_VERSION" \
-            --iteration "$ITERATION" \
-            --architecture x86_64 \
-            --description "Azure Service Bus Manager" \
-            --url "https://github.com/${{ github.repository }}" \
-            --license "MIT" \
-            --maintainer "BusLane" \
-            --depends gtk3 \
-            --depends libX11 \
-            --depends libxkbcommon \
-            --depends mesa-libgbm \
-            --depends alsa-lib \
-            --depends libicu \
-            --depends openssl-libs \
-            --prefix /opt/buslane \
-            -C publish \
-            --package "BusLane-${VERSION}-linux-x64.rpm" \
-            .
-
-      - name: Create Flatpak bundle
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          flatpak-builder --force-clean --repo=flatpak-repo flatpak-build packaging/flatpak/org.buslane.BusLane.yml
-          flatpak build-bundle flatpak-repo "BusLane-${VERSION}-linux-x64.flatpak" org.buslane.BusLane
-
-      - name: Create AppImage bundle
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          APPDIR="BusLane.AppDir"
-
-          rm -rf "$APPDIR"
-          mkdir -p "$APPDIR/usr/bin"
-          mkdir -p "$APPDIR/usr/share/applications"
-          mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-
-          cp publish/BusLane "$APPDIR/usr/bin/BusLane"
-          cp packaging/appimage/BusLane.desktop "$APPDIR/usr/share/applications/BusLane.desktop"
-          cp BusLane/Assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/BusLane.png"
-
-          cat > "$APPDIR/AppRun" << 'EOF'
-          #!/bin/sh
-          SELF_DIR="$(dirname "$(readlink -f "$0")")"
-          exec "$SELF_DIR/usr/bin/BusLane" "$@"
-          EOF
-          chmod +x "$APPDIR/AppRun"
-
-          cp packaging/appimage/BusLane.desktop "$APPDIR/BusLane.desktop"
-          cp BusLane/Assets/icon.png "$APPDIR/BusLane.png"
-
-          ARCH=x86_64 ./appimagetool "$APPDIR" "BusLane-${VERSION}-linux-x64.AppImage"
-
-      - name: Create Snap package
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          pushd packaging/snap
-          cp snapcraft.yaml snapcraft.yaml.bak
-          sed -i "s/^version: '0.0.0'/version: '${VERSION}'/" snapcraft.yaml
-          snapcraft pack --destructive-mode --output "../../BusLane-${VERSION}-linux-x64.snap" || true
-          mv snapcraft.yaml.bak snapcraft.yaml
-          popd
-        continue-on-error: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: BusLane-${{ steps.version.outputs.version }}-linux-x64
-          path: |
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.gz
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.tar.zst
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.deb
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.rpm
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.flatpak
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.AppImage
-            BusLane-${{ steps.version.outputs.version }}-linux-x64.snap
-            Releases/**
+          path: Releases/**
           retention-days: 30
-          if-no-files-found: warn
 
   build-windows:
     runs-on: windows-latest
@@ -306,44 +166,15 @@ jobs:
             --mainExe BusLane.exe `
             --runtime win-x64 `
             --channel win-x64 `
+            --delta None `
+            --noPortable `
             --icon BusLane/Assets/icon.ico
-
-      - name: Create archive
-        run: |
-          Compress-Archive -Path ./publish/* -DestinationPath ./BusLane-${{ steps.version.outputs.version }}-win-x64.zip
-
-      - name: Install Inno Setup
-        run: |
-          choco install innosetup -y
-
-      - name: Create Inno Setup installer
-        run: |
-          # Replace version placeholder in ISS file
-          (Get-Content ./installer.iss) -replace '\{\{APP_VERSION\}\}', '${{ steps.version.outputs.version }}' | Set-Content ./installer.iss
-          
-          # Build the installer
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ./installer.iss
-          
-          # List Output directory contents for debugging
-          Write-Output "Output directory contents:"
-          Get-ChildItem -Path ./Output -Recurse | Select-Object FullName, Length
-          
-          # Move installer to root (output goes to Output folder by default)
-          if (Test-Path "./Output") {
-            Move-Item -Path "./Output/*" -Destination "./" -Force -Include "*.exe"
-          }
-          
-          # Verify installer exists
-          Get-ChildItem -Path . -Filter "*setup.exe" | Select-Object Name, Length
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: BusLane-${{ steps.version.outputs.version }}-win-x64
-          path: |
-            BusLane-${{ steps.version.outputs.version }}-win-x64.zip
-            *setup.exe
-            Releases/**
+          path: Releases/**
           retention-days: 30
 
   build-macos:
@@ -418,81 +249,15 @@ jobs:
             --mainExe BusLane \
             --runtime ${{ matrix.runtime }} \
             --channel ${{ matrix.runtime }} \
+            --delta None \
+            --noPortable \
             --icon BusLane/Assets/icon.icns
 
-      - name: Create macOS App Bundle
-        run: |
-          APP_NAME="BusLane"
-          APP_BUNDLE="${APP_NAME}.app"
-          
-          # Create app bundle structure
-          mkdir -p "${APP_BUNDLE}/Contents/MacOS"
-          mkdir -p "${APP_BUNDLE}/Contents/Resources"
-          
-          # Copy published files to MacOS folder
-          cp -R ./publish/* "${APP_BUNDLE}/Contents/MacOS/"
-          
-          # Remove runtime config files that might cause the app to look for .NET SDK
-          # For single-file self-contained apps, these are embedded and external files should be removed
-          rm -f "${APP_BUNDLE}/Contents/MacOS/"*.runtimeconfig.json 2>/dev/null || true
-          rm -f "${APP_BUNDLE}/Contents/MacOS/"*.deps.json 2>/dev/null || true
-          
-          # Copy Info.plist (from BusLane project folder)
-          cp BusLane/Info.plist "${APP_BUNDLE}/Contents/"
-          
-          # Copy icon (from BusLane/Assets folder)
-          cp BusLane/Assets/icon.icns "${APP_BUNDLE}/Contents/Resources/icon.icns"
-          
-          # Make the main executable executable
-          chmod +x "${APP_BUNDLE}/Contents/MacOS/BusLane"
-          
-          # Create PkgInfo file
-          echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
-          
-          # Remove extended attributes that might cause Gatekeeper issues
-          xattr -cr "${APP_BUNDLE}"
-          
-          # Ad-hoc code sign the app bundle
-          codesign --force --deep --sign - "${APP_BUNDLE}"
-
-      - name: Install create-dmg
-        run: |
-          brew install create-dmg
-
-      - name: Convert DMG background SVG to PNG
-        run: |
-          # Use qlmanage (Quick Look) to convert SVG to PNG on macOS
-          # This handles SVG with gradients and text properly
-          cd BusLane/Assets
-          qlmanage -t -s 540 -o . dmg-background.svg
-          mv dmg-background.svg.png dmg-background.png 2>/dev/null || true
-
-      - name: Create DMG installer
-        run: |
-          APP_NAME="BusLane"
-          DMG_NAME="BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}"
-          
-          # Create DMG with pretty background and layout
-          create-dmg \
-            --volname "${APP_NAME}" \
-            --volicon "BusLane/Assets/icon.icns" \
-            --background "BusLane/Assets/dmg-background.png" \
-            --window-pos 200 120 \
-            --window-size 540 380 \
-            --icon-size 80 \
-            --icon "${APP_NAME}.app" 130 200 \
-            --hide-extension "${APP_NAME}.app" \
-            --app-drop-link 410 200 \
-            --no-internet-enable \
-            "${DMG_NAME}.dmg" \
-            "${APP_NAME}.app"
-      - name: Upload DMG artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: BusLane-${{ steps.version.outputs.version }}-${{ matrix.runtime }}
-          path: |
-            BusLane-${{ steps.version.outputs.version }}-osx-${{ matrix.arch }}.dmg
-            Releases/**
+          path: Releases/**
           retention-days: 30
 
   create-release:
@@ -531,17 +296,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
-          files: |
-            artifacts/*/*.tar.gz
-            artifacts/*/*.tar.zst
-            artifacts/*/*.zip
-            artifacts/*/*.dmg
-            artifacts/*/*.exe
-            artifacts/*/*.deb
-            artifacts/*/*.rpm
-            artifacts/*/*.flatpak
-            artifacts/*/*.AppImage
-            artifacts/*/*.snap
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') || contains(github.event.inputs.version, 'alpha') || contains(github.event.inputs.version, 'beta') || contains(github.event.inputs.version, 'rc') }}
