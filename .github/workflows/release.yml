@@ -571,12 +571,23 @@ jobs:
               *) echo "Unknown Velopack artifact channel for $artifact_dir"; exit 1 ;;
             esac
 
-            vpk upload github \
+            max_attempts=3
+            attempt=1
+            until vpk upload github \
               --outputDir "$releases_dir" \
               --repoUrl https://github.com/${{ github.repository }} \
               --channel "$channel" \
               --token "$VPK_TOKEN" \
               --merge \
               --publish \
-              --tag "$TAG"
+              --tag "$TAG"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "Velopack upload failed for channel '$channel' after ${max_attempts} attempts."
+                exit 1
+              fi
+              sleep_seconds=$((attempt * 15))
+              echo "Velopack upload failed for channel '$channel' (attempt ${attempt}/${max_attempts}). Retrying in ${sleep_seconds}s..."
+              sleep "$sleep_seconds"
+              attempt=$((attempt + 1))
+            done
           done
