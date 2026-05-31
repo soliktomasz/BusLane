@@ -7,6 +7,7 @@ using BusLane.Models;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Infrastructure;
 using BusLane.Services.ServiceBus;
+using BusLane.Services.Templates;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -19,8 +20,9 @@ public partial class SendMessageViewModel : ViewModelBase
     private readonly string _entityName;
     private readonly Action _onClose;
     private readonly Action<string> _onStatusUpdate;
+    private readonly string _savedMessagesPath;
 
-    private static readonly string SavedMessagesPath = Path.Combine(
+    private static readonly string DefaultSavedMessagesPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "BusLane",
         "saved_messages.json"
@@ -41,30 +43,40 @@ public partial class SendMessageViewModel : ViewModelBase
     [ObservableProperty] private bool _isSending;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private string _saveMessageName = "";
+    [ObservableProperty] private string _saveMessageCategory = "";
+    [ObservableProperty] private string _saveMessageTags = "";
+    [ObservableProperty] private string _templateSearchQuery = "";
     [ObservableProperty] private bool _showSaveDialog;
     [ObservableProperty] private bool _showLoadDialog;
     [ObservableProperty] private SavedMessage? _selectedSavedMessage;
+    [NotifyPropertyChangedFor(nameof(HasActiveTemplate))]
+    [ObservableProperty] private SavedMessage? _activeTemplate;
     [ObservableProperty] private bool _isComposeTabSelected = true;
     [ObservableProperty] private bool _isPropertiesTabSelected;
     [ObservableProperty] private bool _isCustomTabSelected;
 
     public ObservableCollection<CustomProperty> CustomProperties { get; } = new();
     public ObservableCollection<SavedMessage> SavedMessages { get; } = new();
+    public ObservableCollection<TemplateTokenValue> TemplateTokenValues { get; } = new();
 
     public string EntityName => _entityName;
+    public IEnumerable<SavedMessage> FilteredSavedMessages => SavedMessages.Where(MatchesTemplateSearch);
+    public bool HasActiveTemplate => ActiveTemplate != null;
 
     public SendMessageViewModel(
         IServiceBusOperations operations,
         string entityName,
         Action onClose,
         Action<string> onStatusUpdate,
-        IFileDialogService? fileDialogService = null)
+        IFileDialogService? fileDialogService = null,
+        string? savedMessagesPath = null)
     {
         _operations = operations;
         _fileDialogService = fileDialogService;
         _entityName = entityName;
         _onClose = onClose;
         _onStatusUpdate = onStatusUpdate;
+        _savedMessagesPath = savedMessagesPath ?? DefaultSavedMessagesPath;
 
         LoadSavedMessages();
     }
@@ -72,18 +84,46 @@ public partial class SendMessageViewModel : ViewModelBase
     [RelayCommand]
     private void AddCustomProperty()
     {
-        CustomProperties.Add(new CustomProperty());
+        var prop = new CustomProperty();
+        prop.PropertyChanged += OnCustomPropertyChanged;
+        CustomProperties.Add(prop);
     }
 
     [RelayCommand]
     private void RemoveCustomProperty(CustomProperty property)
     {
+        property.PropertyChanged -= OnCustomPropertyChanged;
         CustomProperties.Remove(property);
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    private void OnCustomPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
     }
 
     [RelayCommand]
     private async Task SendAsync()
     {
+        var templateValues = TemplateTokenValues.ToDictionary(t => t.Name, t => (string?)t.Value, StringComparer.OrdinalIgnoreCase);
+        var currentMessage = BuildSavedMessageFromForm();
+        var missingTokens = MessageTemplateEngine.FindMissingTokenValues(currentMessage, templateValues);
+        if (missingTokens.Count > 0)
+        {
+            ErrorMessage = $"Missing template values: {string.Join(", ", missingTokens)}";
+            return;
+        }
+
+        var messageToSend = MessageTemplateEngine.Apply(currentMessage, templateValues);
+
         if (string.IsNullOrWhiteSpace(Body))
         {
             ErrorMessage = "Message body is required";
@@ -95,43 +135,27 @@ public partial class SendMessageViewModel : ViewModelBase
 
         try
         {
-            TimeSpan? timeToLive = null;
-            if (!string.IsNullOrWhiteSpace(TimeToLiveText))
-            {
-                if (TimeSpan.TryParse(TimeToLiveText, out var ttl))
-                    timeToLive = ttl;
-                else if (int.TryParse(TimeToLiveText, out var seconds))
-                    timeToLive = TimeSpan.FromSeconds(seconds);
-            }
-
-            DateTimeOffset? scheduledTime = null;
-            if (!string.IsNullOrWhiteSpace(ScheduledEnqueueTimeText))
-            {
-                if (DateTimeOffset.TryParse(ScheduledEnqueueTimeText, out var parsed))
-                    scheduledTime = parsed;
-            }
-
             var properties = new Dictionary<string, object>();
-            foreach (var prop in CustomProperties.Where(p => !string.IsNullOrWhiteSpace(p.Key)))
+            foreach (var prop in messageToSend.CustomProperties.Where(p => !string.IsNullOrWhiteSpace(p.Key)))
             {
-                properties[prop.Key] = prop.Value ?? "";
+                properties[prop.Key] = prop.Value;
             }
 
             await _operations.SendMessageAsync(
                 _entityName,
-                Body,
+                messageToSend.Body,
                 properties,
-                ContentType,
-                CorrelationId,
-                MessageId,
-                SessionId,
-                Subject,
-                To,
-                ReplyTo,
-                ReplyToSessionId,
-                PartitionKey,
-                timeToLive,
-                scheduledTime
+                messageToSend.ContentType,
+                messageToSend.CorrelationId,
+                messageToSend.MessageId,
+                messageToSend.SessionId,
+                messageToSend.Subject,
+                messageToSend.To,
+                messageToSend.ReplyTo,
+                messageToSend.ReplyToSessionId,
+                messageToSend.PartitionKey,
+                messageToSend.TimeToLive,
+                messageToSend.ScheduledEnqueueTime
             );
 
             _onStatusUpdate("Message sent successfully");
@@ -157,6 +181,8 @@ public partial class SendMessageViewModel : ViewModelBase
     private void ShowSave()
     {
         SaveMessageName = "";
+        SaveMessageCategory = "";
+        SaveMessageTags = "";
         ShowSaveDialog = true;
     }
 
@@ -175,27 +201,16 @@ public partial class SendMessageViewModel : ViewModelBase
             return;
         }
 
-        var saved = new SavedMessage
-        {
-            Name = SaveMessageName,
-            Body = Body,
-            ContentType = ContentType,
-            CorrelationId = CorrelationId,
-            MessageId = MessageId,
-            SessionId = SessionId,
-            Subject = Subject,
-            To = To,
-            ReplyTo = ReplyTo,
-            ReplyToSessionId = ReplyToSessionId,
-            PartitionKey = PartitionKey,
-            TimeToLive = !string.IsNullOrWhiteSpace(TimeToLiveText) && TimeSpan.TryParse(TimeToLiveText, out var ttl) ? ttl : null,
-            ScheduledEnqueueTime = !string.IsNullOrWhiteSpace(ScheduledEnqueueTimeText) && DateTimeOffset.TryParse(ScheduledEnqueueTimeText, out var st) ? st : null,
-            CustomProperties = CustomProperties
-                .Where(p => !string.IsNullOrWhiteSpace(p.Key))
-                .ToDictionary(p => p.Key, p => p.Value ?? "")
-        };
+        var saved = BuildSavedMessageFromForm();
+        saved.Name = SaveMessageName;
+        saved.Category = SaveMessageCategory.Trim();
+        saved.Tags = ParseTags(SaveMessageTags);
+        saved.TokenValues = TemplateTokenValues
+            .Where(t => !string.IsNullOrWhiteSpace(t.Name) && !string.IsNullOrWhiteSpace(t.Value))
+            .ToDictionary(t => t.Name, t => t.Value);
 
         SavedMessages.Add(saved);
+        OnPropertyChanged(nameof(FilteredSavedMessages));
         PersistSavedMessages();
         ShowSaveDialog = false;
         _onStatusUpdate($"Message saved as '{SaveMessageName}'");
@@ -229,11 +244,15 @@ public partial class SendMessageViewModel : ViewModelBase
         PartitionKey = message.PartitionKey;
         TimeToLiveText = message.TimeToLive?.ToString();
         ScheduledEnqueueTimeText = message.ScheduledEnqueueTime?.ToString("O");
+        ActiveTemplate = message;
+        RefreshTemplateTokenValues(message);
 
         CustomProperties.Clear();
         foreach (var prop in message.CustomProperties)
         {
-            CustomProperties.Add(new CustomProperty { Key = prop.Key, Value = prop.Value });
+            var customProp = new CustomProperty { Key = prop.Key, Value = prop.Value };
+            customProp.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProp);
         }
 
         ShowLoadDialog = false;
@@ -244,7 +263,50 @@ public partial class SendMessageViewModel : ViewModelBase
     private void DeleteSavedMessage(SavedMessage message)
     {
         SavedMessages.Remove(message);
+        OnPropertyChanged(nameof(FilteredSavedMessages));
         PersistSavedMessages();
+    }
+
+    [RelayCommand]
+    private void DuplicateSavedMessage(SavedMessage message)
+    {
+        var duplicate = message.Duplicate();
+        SavedMessages.Add(duplicate);
+        OnPropertyChanged(nameof(FilteredSavedMessages));
+        PersistSavedMessages();
+        _onStatusUpdate($"Duplicated template '{message.Name}'");
+    }
+
+    [RelayCommand]
+    private void UpdateActiveTemplate()
+    {
+        if (ActiveTemplate == null)
+        {
+            ErrorMessage = "Load a template before updating it";
+            return;
+        }
+
+        var updated = BuildSavedMessageFromForm();
+        ActiveTemplate.Body = updated.Body;
+        ActiveTemplate.ContentType = updated.ContentType;
+        ActiveTemplate.CorrelationId = updated.CorrelationId;
+        ActiveTemplate.MessageId = updated.MessageId;
+        ActiveTemplate.SessionId = updated.SessionId;
+        ActiveTemplate.Subject = updated.Subject;
+        ActiveTemplate.To = updated.To;
+        ActiveTemplate.ReplyTo = updated.ReplyTo;
+        ActiveTemplate.ReplyToSessionId = updated.ReplyToSessionId;
+        ActiveTemplate.PartitionKey = updated.PartitionKey;
+        ActiveTemplate.TimeToLive = updated.TimeToLive;
+        ActiveTemplate.ScheduledEnqueueTime = updated.ScheduledEnqueueTime;
+        ActiveTemplate.CustomProperties = updated.CustomProperties;
+        ActiveTemplate.TokenValues = TemplateTokenValues
+            .Where(t => !string.IsNullOrWhiteSpace(t.Name) && !string.IsNullOrWhiteSpace(t.Value))
+            .ToDictionary(t => t.Name, t => t.Value);
+
+        OnPropertyChanged(nameof(FilteredSavedMessages));
+        PersistSavedMessages();
+        _onStatusUpdate($"Updated template '{ActiveTemplate.Name}'");
     }
 
     /// <summary>
@@ -452,7 +514,9 @@ public partial class SendMessageViewModel : ViewModelBase
         CustomProperties.Clear();
         foreach (var prop in message.Properties)
         {
-            CustomProperties.Add(new CustomProperty { Key = prop.Key, Value = prop.Value?.ToString() ?? "" });
+            var customProp = new CustomProperty { Key = prop.Key, Value = prop.Value?.ToString() ?? "" };
+            customProp.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProp);
         }
     }
 
@@ -472,6 +536,8 @@ public partial class SendMessageViewModel : ViewModelBase
         TimeToLiveText = null;
         ScheduledEnqueueTimeText = null;
         CustomProperties.Clear();
+        TemplateTokenValues.Clear();
+        ActiveTemplate = null;
         ErrorMessage = null;
     }
 
@@ -481,9 +547,9 @@ public partial class SendMessageViewModel : ViewModelBase
 
         try
         {
-            if (File.Exists(SavedMessagesPath))
+            if (File.Exists(_savedMessagesPath))
             {
-                var json = File.ReadAllText(SavedMessagesPath);
+                var json = File.ReadAllText(_savedMessagesPath);
                 var messages = Deserialize<List<SavedMessage>>(json);
                 if (messages != null)
                 {
@@ -493,6 +559,7 @@ public partial class SendMessageViewModel : ViewModelBase
                     }
                 }
             }
+            OnPropertyChanged(nameof(FilteredSavedMessages));
         }
         catch
         {
@@ -505,11 +572,197 @@ public partial class SendMessageViewModel : ViewModelBase
         try
         {
             var json = Serialize(SavedMessages.ToList());
-            AppPaths.CreateSecureFile(SavedMessagesPath, json);
+            AppPaths.CreateSecureFile(_savedMessagesPath, json);
         }
         catch
         {
             // Ignore errors saving messages
         }
+    }
+
+    partial void OnTemplateSearchQueryChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredSavedMessages));
+    }
+
+    partial void OnBodyChanged(string value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnContentTypeChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnCorrelationIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnMessageIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnSessionIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnSubjectChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnToChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnReplyToChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnReplyToSessionIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnPartitionKeyChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    private SavedMessage BuildSavedMessageFromForm()
+    {
+        return new SavedMessage
+        {
+            Body = Body,
+            ContentType = ContentType,
+            CorrelationId = CorrelationId,
+            MessageId = MessageId,
+            SessionId = SessionId,
+            Subject = Subject,
+            To = To,
+            ReplyTo = ReplyTo,
+            ReplyToSessionId = ReplyToSessionId,
+            PartitionKey = PartitionKey,
+            TimeToLive = ParseTimeToLive(),
+            ScheduledEnqueueTime = ParseScheduledEnqueueTime(),
+            CustomProperties = CustomProperties
+                .Where(p => !string.IsNullOrWhiteSpace(p.Key))
+                .ToDictionary(p => p.Key, p => p.Value ?? "")
+        };
+    }
+
+    private TimeSpan? ParseTimeToLive()
+    {
+        if (string.IsNullOrWhiteSpace(TimeToLiveText))
+        {
+            return null;
+        }
+
+        if (TimeSpan.TryParse(TimeToLiveText, out var ttl))
+        {
+            return ttl;
+        }
+
+        return int.TryParse(TimeToLiveText, out var seconds) ? TimeSpan.FromSeconds(seconds) : null;
+    }
+
+    private DateTimeOffset? ParseScheduledEnqueueTime()
+    {
+        if (string.IsNullOrWhiteSpace(ScheduledEnqueueTimeText))
+        {
+            return null;
+        }
+
+        return DateTimeOffset.TryParse(ScheduledEnqueueTimeText, out var scheduledTime) ? scheduledTime : null;
+    }
+
+    private void RefreshTemplateTokenValues(SavedMessage message)
+    {
+        var existingValues = TemplateTokenValues.ToDictionary(t => t.Name, t => t.Value, StringComparer.OrdinalIgnoreCase);
+        TemplateTokenValues.Clear();
+        foreach (var token in MessageTemplateEngine.ExtractTokenNames(message))
+        {
+            string? value = null;
+            if (!existingValues.TryGetValue(token, out value))
+            {
+                message.TokenValues.TryGetValue(token, out value);
+            }
+            TemplateTokenValues.Add(new TemplateTokenValue { Name = token, Value = value ?? "" });
+        }
+    }
+
+    private bool MatchesTemplateSearch(SavedMessage message)
+    {
+        if (string.IsNullOrWhiteSpace(TemplateSearchQuery))
+        {
+            return true;
+        }
+
+        var query = TemplateSearchQuery.Trim();
+        return Contains(message.Name, query)
+            || Contains(message.Category, query)
+            || message.Tags.Any(tag => Contains(tag, query))
+            || Contains(message.Body, query)
+            || Contains(message.ContentType, query)
+            || message.CustomProperties.Any(prop => Contains(prop.Key, query) || Contains(prop.Value, query));
+    }
+
+    private static bool Contains(string? value, string query)
+    {
+        return value?.Contains(query, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private static List<string> ParseTags(string tags)
+    {
+        return tags
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

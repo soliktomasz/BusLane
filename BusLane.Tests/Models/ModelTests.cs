@@ -305,6 +305,9 @@ public class SavedMessageTests
         message.Id.Should().NotBeNullOrEmpty();
         message.Name.Should().BeEmpty();
         message.Body.Should().BeEmpty();
+        message.Category.Should().BeEmpty();
+        message.Tags.Should().BeEmpty();
+        message.TokenValues.Should().BeEmpty();
         message.CustomProperties.Should().BeEmpty();
         message.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
@@ -329,6 +332,9 @@ public class SavedMessageTests
             PartitionKey = "partition1",
             TimeToLive = TimeSpan.FromMinutes(30),
             ScheduledEnqueueTime = new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero),
+            Category = "Orders",
+            Tags = new List<string> { "smoke", "billing" },
+            TokenValues = new Dictionary<string, string> { { "OrderId", "ORD-1" } },
             CustomProperties = new Dictionary<string, string> { { "key1", "value1" } }
         };
 
@@ -336,7 +342,40 @@ public class SavedMessageTests
         message.ContentType.Should().Be("application/json");
         message.CorrelationId.Should().Be("corr-123");
         message.TimeToLive.Should().Be(TimeSpan.FromMinutes(30));
+        message.Category.Should().Be("Orders");
+        message.Tags.Should().Equal("smoke", "billing");
+        message.TokenValues.Should().Contain("OrderId", "ORD-1");
         message.CustomProperties.Should().ContainKey("key1");
+    }
+
+    [Fact]
+    public void SavedMessage_Duplicate_CopiesTemplateMetadataWithNewIdentity()
+    {
+        // Arrange
+        var original = new SavedMessage
+        {
+            Id = "original-id",
+            Name = "Create Order",
+            Body = "{{OrderId}}",
+            Category = "Orders",
+            Tags = new List<string> { "smoke" },
+            TokenValues = new Dictionary<string, string> { { "OrderId", "ORD-1" } },
+            CustomProperties = new Dictionary<string, string> { { "tenant", "{{TenantId}}" } },
+            CreatedAt = DateTime.UtcNow.AddDays(-1)
+        };
+
+        // Act
+        var duplicate = original.Duplicate();
+
+        // Assert
+        duplicate.Id.Should().NotBe(original.Id);
+        duplicate.Name.Should().Be("Create Order Copy");
+        duplicate.Body.Should().Be(original.Body);
+        duplicate.Category.Should().Be("Orders");
+        duplicate.Tags.Should().Equal("smoke");
+        duplicate.TokenValues.Should().Contain("OrderId", "ORD-1");
+        duplicate.CustomProperties.Should().Contain("tenant", "{{TenantId}}");
+        duplicate.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 }
 
@@ -677,4 +716,3 @@ public class LiveStreamMessageTests
         msg.Properties.Should().HaveCount(2);
     }
 }
-

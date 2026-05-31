@@ -38,6 +38,21 @@
                              Padding="12,12"/>
                     <TextBlock Text="Choose a name that helps you identify this template" Classes="field-hint"/>
                 </StackPanel>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="Category" Classes="field-label"/>
+                        <TextBox Text="{Binding SendMessageViewModel.SaveMessageCategory}"
+                                 PlaceholderText="Orders"
+                                 Padding="12,12"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="Tags" Classes="field-label"/>
+                        <TextBox Text="{Binding SendMessageViewModel.SaveMessageTags}"
+                                 PlaceholderText="smoke, billing"
+                                 Padding="12,12"/>
+                    </StackPanel>
+                </Grid>
                 
                 <!-- Actions -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">

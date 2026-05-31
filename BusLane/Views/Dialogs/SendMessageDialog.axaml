@@ -77,15 +77,21 @@
                                             <Border MinWidth="300" MaxHeight="360" Padding="12">
                                                 <StackPanel Spacing="8">
                                                     <TextBlock Text="Saved Templates" Classes="body-strong"/>
+                                                    <TextBox Text="{Binding SendMessageViewModel.TemplateSearchQuery}"
+                                                             PlaceholderText="Search templates..."
+                                                             Padding="10,8"/>
                                                     <ScrollViewer MaxHeight="280">
                                                         <StackPanel Spacing="4">
-                                                            <ItemsControl ItemsSource="{ReflectionBinding SendMessageViewModel.SavedMessages}">
+                                                            <ItemsControl ItemsSource="{ReflectionBinding SendMessageViewModel.FilteredSavedMessages}">
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate x:DataType="models:SavedMessage">
                                                                         <Border Classes="property-row" Padding="12,8">
                                                                             <Grid ColumnDefinitions="*,Auto">
                                                                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                                                    <TextBlock Text="{Binding Category}"
+                                                                                               Classes="caption"
+                                                                                               FontSize="11"/>
                                                                                     <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}"
                                                                                                Classes="caption"
                                                                                                FontSize="11"/>
@@ -96,6 +102,12 @@
                                                                                             Padding="12,4"
                                                                                             Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.LoadMessageCommand}"
                                                                                             CommandParameter="{Binding}"/>
+                                                                                    <Button Classes="icon"
+                                                                                            ToolTip.Tip="Duplicate template"
+                                                                                            Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.DuplicateSavedMessageCommand}"
+                                                                                            CommandParameter="{Binding}">
+                                                                                        <LucideIcon Kind="Copy" Size="12"/>
+                                                                                    </Button>
                                                                                     <Button Classes="icon"
                                                                                             ToolTip.Tip="Delete template"
                                                                                             Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.DeleteSavedMessageCommand}"
@@ -127,6 +139,16 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="Save" Size="16"/>
                                         <TextBlock Text="Save" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Classes="toolbar"
+                                        ToolTip.Tip="Update loaded template"
+                                        IsVisible="{Binding SendMessageViewModel.HasActiveTemplate}"
+                                        Command="{ReflectionBinding SendMessageViewModel.UpdateActiveTemplateCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Check" Size="16"/>
+                                        <TextBlock Text="Update" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
 
@@ -210,6 +232,28 @@
                                                 </Border>
                                             </StackPanel>
                                         </Grid>
+                                        <Border Classes="property-row"
+                                                Padding="12"
+                                                IsVisible="{Binding SendMessageViewModel.TemplateTokenValues.Count}">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Text="Template Parameters" Classes="body-strong"/>
+                                                <ItemsControl ItemsSource="{ReflectionBinding SendMessageViewModel.TemplateTokenValues}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="models:TemplateTokenValue">
+                                                            <Grid ColumnDefinitions="160,*" ColumnSpacing="10" Margin="0,0,0,6">
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding Name}"
+                                                                           Classes="field-label"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Grid.Column="1"
+                                                                         Text="{Binding Value}"
+                                                                         Padding="10,8"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
                                         <TextBox Text="{Binding SendMessageViewModel.Body}"
                                                  Classes="code-editor"
                                                  AcceptsReturn="True"
