@@ -47,10 +47,38 @@ public class SavedMessage
     }
 }
 
-public class CustomProperty
+public class CustomProperty : System.ComponentModel.INotifyPropertyChanged
 {
-    public string Key { get; set; } = "";
-    public string Value { get; set; } = "";
+    private string _key = "";
+    private string _value = "";
+
+    public string Key
+    {
+        get => _key;
+        set
+        {
+            if (_key != value)
+            {
+                _key = value;
+                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Key)));
+            }
+        }
+    }
+
+    public string Value
+    {
+        get => _value;
+        set
+        {
+            if (_value != value)
+            {
+                _value = value;
+                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Value)));
+            }
+        }
+    }
+
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 }
 
 public class TemplateTokenValue

@@ -28,7 +28,11 @@ public static partial class MessageTemplateEngine
     public static IReadOnlyList<string> FindMissingTokenValues(SavedMessage message, IReadOnlyDictionary<string, string?> values)
     {
         return ExtractTokenNames(message)
-            .Where(token => !values.TryGetValue(token, out var value) || string.IsNullOrWhiteSpace(value))
+            .Where(token =>
+            {
+                var matchingEntry = values.FirstOrDefault(kvp => string.Equals(kvp.Key, token, StringComparison.OrdinalIgnoreCase));
+                return matchingEntry.Key == null || string.IsNullOrWhiteSpace(matchingEntry.Value);
+            })
             .ToList();
     }
 

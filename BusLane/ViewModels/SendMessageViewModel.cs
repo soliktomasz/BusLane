@@ -84,13 +84,30 @@ public partial class SendMessageViewModel : ViewModelBase
     [RelayCommand]
     private void AddCustomProperty()
     {
-        CustomProperties.Add(new CustomProperty());
+        var prop = new CustomProperty();
+        prop.PropertyChanged += OnCustomPropertyChanged;
+        CustomProperties.Add(prop);
     }
 
     [RelayCommand]
     private void RemoveCustomProperty(CustomProperty property)
     {
+        property.PropertyChanged -= OnCustomPropertyChanged;
         CustomProperties.Remove(property);
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    private void OnCustomPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
     }
 
     [RelayCommand]
@@ -233,7 +250,9 @@ public partial class SendMessageViewModel : ViewModelBase
         CustomProperties.Clear();
         foreach (var prop in message.CustomProperties)
         {
-            CustomProperties.Add(new CustomProperty { Key = prop.Key, Value = prop.Value });
+            var customProp = new CustomProperty { Key = prop.Key, Value = prop.Value };
+            customProp.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProp);
         }
 
         ShowLoadDialog = false;
@@ -495,7 +514,9 @@ public partial class SendMessageViewModel : ViewModelBase
         CustomProperties.Clear();
         foreach (var prop in message.Properties)
         {
-            CustomProperties.Add(new CustomProperty { Key = prop.Key, Value = prop.Value?.ToString() ?? "" });
+            var customProp = new CustomProperty { Key = prop.Key, Value = prop.Value?.ToString() ?? "" };
+            customProp.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProp);
         }
     }
 
@@ -564,6 +585,96 @@ public partial class SendMessageViewModel : ViewModelBase
         OnPropertyChanged(nameof(FilteredSavedMessages));
     }
 
+    partial void OnBodyChanged(string value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnContentTypeChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnCorrelationIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnMessageIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnSessionIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnSubjectChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnToChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnReplyToChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnReplyToSessionIdChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
+    partial void OnPartitionKeyChanged(string? value)
+    {
+        if (ActiveTemplate != null)
+        {
+            var message = BuildSavedMessageFromForm();
+            RefreshTemplateTokenValues(message);
+        }
+    }
+
     private SavedMessage BuildSavedMessageFromForm()
     {
         return new SavedMessage
@@ -613,10 +724,15 @@ public partial class SendMessageViewModel : ViewModelBase
 
     private void RefreshTemplateTokenValues(SavedMessage message)
     {
+        var existingValues = TemplateTokenValues.ToDictionary(t => t.Name, t => t.Value, StringComparer.OrdinalIgnoreCase);
         TemplateTokenValues.Clear();
         foreach (var token in MessageTemplateEngine.ExtractTokenNames(message))
         {
-            message.TokenValues.TryGetValue(token, out var value);
+            string? value = null;
+            if (!existingValues.TryGetValue(token, out value))
+            {
+                message.TokenValues.TryGetValue(token, out value);
+            }
             TemplateTokenValues.Add(new TemplateTokenValue { Name = token, Value = value ?? "" });
         }
     }

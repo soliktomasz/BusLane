@@ -2,9 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
+             xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Dialogs.LoadMessageDialog"
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
+
+    <UserControl.Resources>
+        <converters:StringToBoolConverter x:Key="StringToBoolConverter"/>
+    </UserControl.Resources>
     
     <Border Classes="modal-overlay"
             IsVisible="{Binding SendMessageViewModel.ShowLoadDialog, FallbackValue=False, TargetNullValue=False}">
@@ -121,7 +126,7 @@
                                                     <TextBlock Text="{Binding ContentType}" 
                                                                Classes="caption" FontSize="11"/>
                                                 </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding Category}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding Category, Converter={StaticResource StringToBoolConverter}}">
                                                     <TextBlock Text="{Binding Category}" Classes="caption" FontSize="11"/>
                                                     <TextBlock Text="{Binding Tags.Count, StringFormat='{}{0} tag(s)'}" Classes="caption" FontSize="11"/>
                                                 </StackPanel>
