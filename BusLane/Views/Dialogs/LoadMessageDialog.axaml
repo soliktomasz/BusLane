@@ -74,6 +74,12 @@
                 
                 <!-- Content -->
                 <DockPanel>
+                    <TextBox DockPanel.Dock="Top"
+                             Text="{Binding SendMessageViewModel.TemplateSearchQuery}"
+                             PlaceholderText="Search templates..."
+                             Margin="16,16,16,0"
+                             Padding="12,10"/>
+
                     <!-- Empty state -->
                     <Border DockPanel.Dock="Top"
                             Classes="empty-state"
@@ -91,7 +97,7 @@
                     </Border>
                     
                     <!-- Template list -->
-                    <ListBox ItemsSource="{Binding SendMessageViewModel.SavedMessages}"
+                    <ListBox ItemsSource="{Binding SendMessageViewModel.FilteredSavedMessages}"
                              Classes="entity-list"
                              Background="Transparent"
                              BorderThickness="0"
@@ -115,6 +121,10 @@
                                                     <TextBlock Text="{Binding ContentType}" 
                                                                Classes="caption" FontSize="11"/>
                                                 </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding Category}">
+                                                    <TextBlock Text="{Binding Category}" Classes="caption" FontSize="11"/>
+                                                    <TextBlock Text="{Binding Tags.Count, StringFormat='{}{0} tag(s)'}" Classes="caption" FontSize="11"/>
+                                                </StackPanel>
                                                 <TextBlock Text="{Binding Body}" 
                                                            Classes="caption"
                                                            TextTrimming="CharacterEllipsis"
@@ -131,6 +141,12 @@
                                                         Padding="14,6"
                                                         Command="{Binding $parent[Window].DataContext.SendMessageViewModel.LoadMessageCommand}"
                                                         CommandParameter="{Binding}"/>
+                                                <Button Classes="icon"
+                                                        ToolTip.Tip="Duplicate template"
+                                                        Command="{Binding $parent[Window].DataContext.SendMessageViewModel.DuplicateSavedMessageCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <LucideIcon Kind="Copy" Size="12"/>
+                                                </Button>
                                                 <Button Classes="icon"
                                                         ToolTip.Tip="Export message"
                                                         Command="{Binding $parent[Window].DataContext.SendMessageViewModel.ExportSingleMessageCommand}"
@@ -154,4 +170,3 @@
         </Border>
     </Border>
 </UserControl>
-
