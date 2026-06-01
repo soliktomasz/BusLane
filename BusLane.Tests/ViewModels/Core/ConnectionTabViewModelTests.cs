@@ -135,6 +135,40 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
+    public async Task ConnectWithConnectionStringAsync_LoadsPinsAfterEntityLoad()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        preferencesService.PinnedEntitiesJson.Returns("""
+            [{"WorkspaceId":"conn-1","Type":"Queue","Name":"orders","TopicName":null}]
+            """);
+        var logSink = CreateMockLogSink();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var queue = new QueueInfo("orders", 1, 1, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns([queue]);
+        operations.GetTopicsAsync().Returns([]);
+
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+
+        // Act
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Assert
+        tab.Navigation.IsPinned(queue).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task DisconnectAsync_ClearsConnectionState()
     {
         // Arrange

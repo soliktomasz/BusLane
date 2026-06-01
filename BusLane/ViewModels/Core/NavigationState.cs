@@ -2,6 +2,8 @@ namespace BusLane.ViewModels.Core;
 
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Services.Abstractions;
+using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
@@ -10,6 +12,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 /// </summary>
 public partial class NavigationState : ViewModelBase
 {
+    private readonly IPreferencesService? _preferencesService;
+    private readonly List<PinnedEntity> _allPinnedEntities = [];
+    private readonly ObservableCollection<PinnedEntity> _pinnedEntities = [];
+    private string? _pinScopeId;
+
     [ObservableProperty] private AzureSubscription? _selectedAzureSubscription;
     [ObservableProperty] private ServiceBusNamespace? _selectedNamespace;
     [ObservableProperty] private object? _selectedEntity;
@@ -30,22 +37,27 @@ public partial class NavigationState : ViewModelBase
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
 
     /// <summary>
+    /// Gets the pinned entities visible in the current workspace scope.
+    /// </summary>
+    public ReadOnlyObservableCollection<PinnedEntity> PinnedEntities { get; }
+
+    /// <summary>
     /// Gets the filtered queues based on the current entity filter text.
     /// </summary>
     public IEnumerable<QueueInfo> FilteredQueues =>
-        string.IsNullOrWhiteSpace(EntityFilter)
+        OrderPinnedFirst(string.IsNullOrWhiteSpace(EntityFilter)
             ? Queues
             : Queues.Where(q =>
-                q.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
+                q.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase)));
 
     /// <summary>
     /// Gets the filtered topics based on the current entity filter text.
     /// </summary>
     public IEnumerable<TopicInfo> FilteredTopics =>
-        string.IsNullOrWhiteSpace(EntityFilter)
+        OrderPinnedFirst(string.IsNullOrWhiteSpace(EntityFilter)
             ? Topics
             : Topics.Where(t =>
-                t.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
+                t.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase)));
 
     /// <summary>
     /// Gets the filtered namespaces based on the current filter text.
@@ -61,6 +73,11 @@ public partial class NavigationState : ViewModelBase
     // Computed properties for visibility bindings
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
+
+    /// <summary>
+    /// Gets whether the current workspace scope has visible pinned entities.
+    /// </summary>
+    public bool HasPinnedEntities => PinnedEntities.Count > 0;
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
     public long CurrentActiveMessageCount => SelectedQueue?.ActiveMessageCount ?? SelectedSubscription?.ActiveMessageCount ?? 0;
@@ -86,8 +103,34 @@ public partial class NavigationState : ViewModelBase
     public bool CurrentEntityRequiresSession => 
         SelectedQueue?.RequiresSession ?? SelectedSubscription?.RequiresSession ?? false;
 
+    /// <summary>
+    /// Gets whether the currently selected entity is pinned in the current workspace scope.
+    /// </summary>
+    public bool IsSelectedEntityPinned => SelectedEntity != null && IsPinned(SelectedEntity);
+
+    /// <summary>
+    /// Initializes a navigation state without persisted pin support.
+    /// </summary>
+    /// <remarks>
+    /// Pin changes are kept in memory only when no preferences service is supplied.
+    /// </remarks>
     public NavigationState()
+        : this(null)
     {
+    }
+
+    /// <summary>
+    /// Initializes a navigation state with optional persisted pin support.
+    /// </summary>
+    /// <param name="preferencesService">
+    /// Preferences store used to load and save pinned entities; when null, pins are kept in memory only.
+    /// </param>
+    public NavigationState(IPreferencesService? preferencesService)
+    {
+        _preferencesService = preferencesService;
+        PinnedEntities = new ReadOnlyObservableCollection<PinnedEntity>(_pinnedEntities);
+        LoadAllPinnedEntities();
+
         Queues.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(HasQueues));
@@ -104,6 +147,11 @@ public partial class NavigationState : ViewModelBase
         {
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
+        };
+        _pinnedEntities.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasPinnedEntities));
+            OnPropertyChanged(nameof(IsSelectedEntityPinned));
         };
         Namespaces.CollectionChanged += (_, _) =>
         {
@@ -151,6 +199,7 @@ public partial class NavigationState : ViewModelBase
     /// </summary>
     public void Clear()
     {
+        SetPinScope(null);
         Subscriptions.Clear();
         Namespaces.Clear();
         Queues.Clear();
@@ -178,6 +227,73 @@ public partial class NavigationState : ViewModelBase
         SelectedEntity = null;
     }
 
+    /// <summary>
+    /// Sets the workspace scope used to filter and persist pinned entities.
+    /// </summary>
+    /// <param name="scopeId">Workspace identifier, or null/empty to clear visible pins.</param>
+    public void SetPinScope(string? scopeId)
+    {
+        _pinScopeId = string.IsNullOrWhiteSpace(scopeId) ? null : scopeId;
+        ReloadScopedPins();
+    }
+
+    /// <summary>
+    /// Pins or unpins the supplied queue, topic, subscription, or existing pin.
+    /// </summary>
+    /// <param name="entity">Entity to toggle; unsupported values are ignored.</param>
+    /// <remarks>
+    /// Persistence failures roll back in-memory pin state before rethrowing.
+    /// </remarks>
+    public void TogglePin(object? entity)
+    {
+        var pin = CreatePin(entity);
+        if (pin == null)
+        {
+            return;
+        }
+
+        var previousPins = _allPinnedEntities.ToList();
+        var previousJson = _preferencesService?.PinnedEntitiesJson;
+        var existing = _allPinnedEntities.FirstOrDefault(item => item == pin);
+        if (existing == null)
+        {
+            _allPinnedEntities.Add(pin);
+        }
+        else
+        {
+            _allPinnedEntities.Remove(existing);
+        }
+
+        try
+        {
+            PersistPins();
+            ReloadScopedPins();
+        }
+        catch
+        {
+            _allPinnedEntities.Clear();
+            _allPinnedEntities.AddRange(previousPins);
+            if (_preferencesService != null)
+            {
+                _preferencesService.PinnedEntitiesJson = previousJson ?? "[]";
+            }
+
+            ReloadScopedPins();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the supplied entity is pinned in the current workspace scope.
+    /// </summary>
+    /// <param name="entity">Entity to check.</param>
+    /// <returns>True when the entity is pinned in the active scope; otherwise false.</returns>
+    public bool IsPinned(object? entity)
+    {
+        var pin = CreatePin(entity);
+        return pin != null && PinnedEntities.Contains(pin);
+    }
+
     private void OnCurrentEntitySelectionChanged()
     {
         OnPropertyChanged(nameof(CurrentEntityName));
@@ -186,10 +302,81 @@ public partial class NavigationState : ViewModelBase
         OnPropertyChanged(nameof(CurrentActiveMessageCount));
         OnPropertyChanged(nameof(CurrentDeadLetterCount));
         OnPropertyChanged(nameof(CanShowSessionInspector));
+        OnPropertyChanged(nameof(IsSelectedEntityPinned));
 
         if (!CurrentEntityRequiresSession && SelectedMessageTabIndex == 2)
         {
             SelectedMessageTabIndex = 0;
         }
+    }
+
+    private IEnumerable<T> OrderPinnedFirst<T>(IEnumerable<T> entities)
+    {
+        return entities
+            .Select((entity, index) => new { Entity = entity, Index = index })
+            .OrderBy(item => IsPinned(item.Entity) ? 0 : 1)
+            .ThenBy(item => item.Index)
+            .Select(item => item.Entity);
+    }
+
+    private PinnedEntity? CreatePin(object? entity)
+    {
+        if (string.IsNullOrWhiteSpace(_pinScopeId))
+        {
+            return null;
+        }
+
+        return entity switch
+        {
+            QueueInfo queue => new PinnedEntity(_pinScopeId, PinnedEntityType.Queue, queue.Name, null),
+            TopicInfo topic => new PinnedEntity(_pinScopeId, PinnedEntityType.Topic, topic.Name, null),
+            SubscriptionInfo subscription => new PinnedEntity(_pinScopeId, PinnedEntityType.Subscription, subscription.Name, subscription.TopicName),
+            PinnedEntity pin when pin.WorkspaceId == _pinScopeId => pin,
+            _ => null
+        };
+    }
+
+    private void LoadAllPinnedEntities()
+    {
+        _allPinnedEntities.Clear();
+        if (_preferencesService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _allPinnedEntities.AddRange(DeserializeList<PinnedEntity>(_preferencesService.PinnedEntitiesJson));
+        }
+        catch
+        {
+            // Invalid preference data should not block navigation.
+        }
+    }
+
+    private void PersistPins()
+    {
+        if (_preferencesService == null)
+        {
+            return;
+        }
+
+        _preferencesService.PinnedEntitiesJson = Serialize(_allPinnedEntities);
+        _preferencesService.Save();
+    }
+
+    private void ReloadScopedPins()
+    {
+        _pinnedEntities.Clear();
+        if (!string.IsNullOrWhiteSpace(_pinScopeId))
+        {
+            foreach (var pin in _allPinnedEntities.Where(pin => pin.WorkspaceId == _pinScopeId))
+            {
+                _pinnedEntities.Add(pin);
+            }
+        }
+
+        OnPropertyChanged(nameof(FilteredQueues));
+        OnPropertyChanged(nameof(FilteredTopics));
     }
 }

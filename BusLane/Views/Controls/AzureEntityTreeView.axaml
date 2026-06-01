@@ -18,7 +18,7 @@
             <Border DockPanel.Dock="Top"
                     Classes="pane-search-surface">
                 <StackPanel Spacing="12">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                         <Border Grid.Column="0" Classes="metric-icon-surface">
                             <LucideIcon Kind="PanelsTopLeft"
                                         Size="16"
@@ -31,6 +31,13 @@
                                    Classes="heading"
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Command="{Binding ToggleSelectedEntityPinCommand}"
+                                ToolTip.Tip="Pin selected entity"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="Pin" Size="15"/>
+                        </Button>
+                        <Button Grid.Column="3"
                                 Classes="icon-button"
                                 Command="{ReflectionBinding HideEntityPaneCommand}"
                                 ToolTip.Tip="Hide entity pane"
@@ -59,6 +66,87 @@
 
             <ScrollViewer>
                 <StackPanel Spacing="0" Margin="0,2,0,6">
+                    <StackPanel IsVisible="{Binding CurrentNavigation.HasPinnedEntities}"
+                                Margin="4,2,4,4"
+                                Spacing="2">
+                        <Border Classes="entity-group-header">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                    <Border Classes="entity-tree-section-icon"
+                                            Background="{DynamicResource SurfaceWarning}">
+                                        <LucideIcon Kind="Pin"
+                                                    Size="10"
+                                                    Foreground="{DynamicResource TextWarning}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="Pinned"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource AppForeground}"/>
+                                </StackPanel>
+                                <Border Grid.Column="2"
+                                        Classes="entity-tree-section-count"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentNavigation.PinnedEntities.Count}"
+                                               FontSize="10"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource SubtleForeground}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding CurrentNavigation.PinnedEntities}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:PinnedEntity">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                                        <Button Grid.Column="0"
+                                                Classes="entity-tree-row"
+                                                Command="{Binding $parent[Window].DataContext.SelectPinnedEntityCommand}"
+                                                CommandParameter="{Binding}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch">
+                                            <Border Classes="entity-tree-row-surface">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                    <LucideIcon Grid.Column="0"
+                                                                Kind="Pin"
+                                                                Size="12"
+                                                                Foreground="{DynamicResource TextWarning}"
+                                                                VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding DisplayName}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                               Foreground="{DynamicResource AppForeground}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Border Grid.Column="2"
+                                                            Classes="entity-tree-badge"
+                                                            Background="{DynamicResource SurfaceSubtle}"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding TypeLabel}"
+                                                                   Foreground="{DynamicResource SubtleForeground}"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </Button>
+                                        <Button Grid.Column="1"
+                                                Classes="icon-button"
+                                                Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Unpin entity"
+                                                VerticalAlignment="Center"
+                                                Margin="4,0,0,0">
+                                            <LucideIcon Kind="X" Size="12"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
                     <Expander Classes="entity-tree-group"
                               IsExpanded="{Binding CurrentNavigation.IsQueuesSectionExpanded}"
                               Margin="4,2,4,0">

@@ -111,4 +111,24 @@ public class PreferencesServiceTests : IDisposable
         reloaded.TerminalDockHeight.Should().Be(320);
         reloaded.TerminalWindowBoundsJson.Should().Be("{\"X\":120,\"Y\":140,\"Width\":900,\"Height\":420}");
     }
+
+    [Fact]
+    public void SaveAndReload_ShouldRoundTripPinnedEntitiesJson()
+    {
+        // Arrange
+        var sut = new PreferencesService
+        {
+            PinnedEntitiesJson = """
+                [{"WorkspaceId":"workspace-a","Type":"Queue","Name":"orders","TopicName":null}]
+                """
+        };
+
+        // Act
+        sut.Save();
+        var reloaded = new PreferencesService();
+
+        // Assert
+        reloaded.PinnedEntitiesJson.Should().Contain("workspace-a");
+        reloaded.PinnedEntitiesJson.Should().Contain("orders");
+    }
 }
