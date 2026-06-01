@@ -14,6 +14,7 @@ public partial class NavigationState : ViewModelBase
 {
     private readonly IPreferencesService? _preferencesService;
     private readonly List<PinnedEntity> _allPinnedEntities = [];
+    private readonly ObservableCollection<PinnedEntity> _pinnedEntities = [];
     private string? _pinScopeId;
 
     [ObservableProperty] private AzureSubscription? _selectedAzureSubscription;
@@ -34,7 +35,11 @@ public partial class NavigationState : ViewModelBase
     public ObservableCollection<QueueInfo> Queues { get; } = [];
     public ObservableCollection<TopicInfo> Topics { get; } = [];
     public ObservableCollection<SubscriptionInfo> TopicSubscriptions { get; } = [];
-    public ObservableCollection<PinnedEntity> PinnedEntities { get; } = [];
+
+    /// <summary>
+    /// Gets the pinned entities visible in the current workspace scope.
+    /// </summary>
+    public ReadOnlyObservableCollection<PinnedEntity> PinnedEntities { get; }
 
     /// <summary>
     /// Gets the filtered queues based on the current entity filter text.
@@ -68,6 +73,10 @@ public partial class NavigationState : ViewModelBase
     // Computed properties for visibility bindings
     public bool HasQueues => Queues.Count > 0;
     public bool HasTopics => Topics.Count > 0;
+
+    /// <summary>
+    /// Gets whether the current workspace scope has visible pinned entities.
+    /// </summary>
     public bool HasPinnedEntities => PinnedEntities.Count > 0;
     public long TotalDeadLetterCount => Queues.Sum(q => q.DeadLetterCount) + TopicSubscriptions.Sum(s => s.DeadLetterCount);
     public bool HasDeadLetters => TotalDeadLetterCount > 0;
@@ -93,16 +102,33 @@ public partial class NavigationState : ViewModelBase
     /// </summary>
     public bool CurrentEntityRequiresSession => 
         SelectedQueue?.RequiresSession ?? SelectedSubscription?.RequiresSession ?? false;
+
+    /// <summary>
+    /// Gets whether the currently selected entity is pinned in the current workspace scope.
+    /// </summary>
     public bool IsSelectedEntityPinned => SelectedEntity != null && IsPinned(SelectedEntity);
 
+    /// <summary>
+    /// Initializes a navigation state without persisted pin support.
+    /// </summary>
+    /// <remarks>
+    /// Pin changes are kept in memory only when no preferences service is supplied.
+    /// </remarks>
     public NavigationState()
         : this(null)
     {
     }
 
+    /// <summary>
+    /// Initializes a navigation state with optional persisted pin support.
+    /// </summary>
+    /// <param name="preferencesService">
+    /// Preferences store used to load and save pinned entities; when null, pins are kept in memory only.
+    /// </param>
     public NavigationState(IPreferencesService? preferencesService)
     {
         _preferencesService = preferencesService;
+        PinnedEntities = new ReadOnlyObservableCollection<PinnedEntity>(_pinnedEntities);
         LoadAllPinnedEntities();
 
         Queues.CollectionChanged += (_, _) =>
@@ -122,7 +148,7 @@ public partial class NavigationState : ViewModelBase
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
-        PinnedEntities.CollectionChanged += (_, _) =>
+        _pinnedEntities.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(HasPinnedEntities));
             OnPropertyChanged(nameof(IsSelectedEntityPinned));
@@ -201,12 +227,23 @@ public partial class NavigationState : ViewModelBase
         SelectedEntity = null;
     }
 
+    /// <summary>
+    /// Sets the workspace scope used to filter and persist pinned entities.
+    /// </summary>
+    /// <param name="scopeId">Workspace identifier, or null/empty to clear visible pins.</param>
     public void SetPinScope(string? scopeId)
     {
         _pinScopeId = string.IsNullOrWhiteSpace(scopeId) ? null : scopeId;
         ReloadScopedPins();
     }
 
+    /// <summary>
+    /// Pins or unpins the supplied queue, topic, subscription, or existing pin.
+    /// </summary>
+    /// <param name="entity">Entity to toggle; unsupported values are ignored.</param>
+    /// <remarks>
+    /// Persistence failures roll back in-memory pin state before rethrowing.
+    /// </remarks>
     public void TogglePin(object? entity)
     {
         var pin = CreatePin(entity);
@@ -215,6 +252,8 @@ public partial class NavigationState : ViewModelBase
             return;
         }
 
+        var previousPins = _allPinnedEntities.ToList();
+        var previousJson = _preferencesService?.PinnedEntitiesJson;
         var existing = _allPinnedEntities.FirstOrDefault(item => item == pin);
         if (existing == null)
         {
@@ -225,10 +264,30 @@ public partial class NavigationState : ViewModelBase
             _allPinnedEntities.Remove(existing);
         }
 
-        PersistPins();
-        ReloadScopedPins();
+        try
+        {
+            PersistPins();
+            ReloadScopedPins();
+        }
+        catch
+        {
+            _allPinnedEntities.Clear();
+            _allPinnedEntities.AddRange(previousPins);
+            if (_preferencesService != null)
+            {
+                _preferencesService.PinnedEntitiesJson = previousJson ?? "[]";
+            }
+
+            ReloadScopedPins();
+            throw;
+        }
     }
 
+    /// <summary>
+    /// Gets whether the supplied entity is pinned in the current workspace scope.
+    /// </summary>
+    /// <param name="entity">Entity to check.</param>
+    /// <returns>True when the entity is pinned in the active scope; otherwise false.</returns>
     public bool IsPinned(object? entity)
     {
         var pin = CreatePin(entity);
@@ -308,12 +367,12 @@ public partial class NavigationState : ViewModelBase
 
     private void ReloadScopedPins()
     {
-        PinnedEntities.Clear();
+        _pinnedEntities.Clear();
         if (!string.IsNullOrWhiteSpace(_pinScopeId))
         {
             foreach (var pin in _allPinnedEntities.Where(pin => pin.WorkspaceId == _pinScopeId))
             {
-                PinnedEntities.Add(pin);
+                _pinnedEntities.Add(pin);
             }
         }
 

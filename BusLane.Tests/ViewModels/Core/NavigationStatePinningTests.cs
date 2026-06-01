@@ -1,5 +1,6 @@
 namespace BusLane.Tests.ViewModels.Core;
 
+using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
 using BusLane.ViewModels.Core;
@@ -115,6 +116,36 @@ public class NavigationStatePinningTests
             pin.Name == "processor");
     }
 
+    [Fact]
+    public void TogglePin_WhenSaveFails_RollsBackInMemoryPinState()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService { ThrowOnSave = true };
+        var sut = new NavigationState(preferences);
+        sut.SetPinScope("workspace-a");
+        var queue = CreateQueue("orders");
+
+        // Act
+        var act = () => sut.TogglePin(queue);
+        act.Should().Throw<InvalidOperationException>();
+        sut.SetPinScope("workspace-a");
+
+        // Assert
+        sut.IsPinned(queue).Should().BeFalse();
+        sut.PinnedEntities.Should().BeEmpty();
+        preferences.PinnedEntitiesJson.Should().Be("[]");
+    }
+
+    [Fact]
+    public void PinnedEntities_ShouldExposeReadOnlyCollection()
+    {
+        // Arrange
+        var sut = new NavigationState(new TestPreferencesService());
+
+        // Assert
+        sut.PinnedEntities.Should().BeAssignableTo<ReadOnlyObservableCollection<PinnedEntity>>();
+    }
+
     private static QueueInfo CreateQueue(string name) =>
         new(name, 1, 1, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 
@@ -144,6 +175,7 @@ public class NavigationStatePinningTests
         public string? SkippedUpdateVersion { get; set; }
         public DateTime? UpdateRemindLaterDate { get; set; }
         public int SaveCount { get; private set; }
+        public bool ThrowOnSave { get; init; }
 
         public event EventHandler? PreferencesChanged
         {
@@ -151,7 +183,15 @@ public class NavigationStatePinningTests
             remove { }
         }
 
-        public void Save() => SaveCount++;
+        public void Save()
+        {
+            if (ThrowOnSave)
+            {
+                throw new InvalidOperationException("Save failed");
+            }
+
+            SaveCount++;
+        }
 
         public void Load()
         {
