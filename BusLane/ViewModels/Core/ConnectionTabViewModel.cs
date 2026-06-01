@@ -60,14 +60,14 @@ public partial class ConnectionTabViewModel : ViewModelBase
         _tabId = tabId;
         _tabTitle = tabTitle;
         _tabSubtitle = tabSubtitle;
-        _preferencesService = preferencesService;
+        _preferencesService = preferencesService ?? new DummyPreferencesService();
         _logSink = logSink;
 
-        Navigation = new NavigationState();
+        Navigation = new NavigationState(_preferencesService);
 
         MessageOps = new MessageOperationsViewModel(
             () => _operations,
-            preferencesService ?? new DummyPreferencesService(),
+            _preferencesService,
             logSink,
             () => Navigation.CurrentEntityName,
             () => Navigation.CurrentSubscriptionName,
@@ -114,6 +114,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             TabSubtitle = connection.Endpoint ?? "";
 
             await LoadEntitiesAsync(connection);
+            Navigation.SetPinScope(connection.Id ?? connection.Name);
 
             IsConnected = true;
             StatusMessage = "Connected";
@@ -151,6 +152,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         {
             Namespace = ns;
             Navigation.SelectedNamespace = ns;
+            Navigation.SetPinScope(ns.Id);
             _operations = operationsFactory.CreateFromAzureCredential(ns.Endpoint, ns.Id, credential);
             Mode = ConnectionMode.AzureAccount;
 
@@ -449,6 +451,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string OpenTabsJson { get; set; } = "[]";
+        public string PinnedEntitiesJson { get; set; } = "[]";
         public bool EnableTelemetry { get; set; }
         public bool AutoCheckForUpdates { get; set; } = true;
         public string? SkippedUpdateVersion { get; set; }

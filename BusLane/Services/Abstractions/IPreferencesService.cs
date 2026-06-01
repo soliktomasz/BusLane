@@ -25,6 +25,7 @@ public interface IPreferencesService
     // Session persistence
     bool RestoreTabsOnStartup { get; set; }
     string OpenTabsJson { get; set; }
+    string PinnedEntitiesJson { get; set; }
 
     // Privacy
     bool EnableTelemetry { get; set; }

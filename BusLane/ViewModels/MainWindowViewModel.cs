@@ -249,7 +249,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         NamespaceDashboard.Inbox.UpdateActions(OpenInboxMessages, OpenInboxDeadLetter, OpenInboxSessionInspector);
 
         // Initialize composed components
-        Navigation = new NavigationState();
+        Navigation = new NavigationState(preferencesService);
         LogViewer = new LogViewerViewModel(logSink);
         Terminal = new TerminalHostViewModel(terminalSessionService, _preferencesService, msg => StatusMessage = msg);
 
@@ -642,6 +642,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     {
         await Tabs.OpenTabForNamespaceAsync(ns);
         Navigation.SelectedNamespace = ns;
+        Navigation.SetPinScope(ns.Id);
 
         if (ActiveTab != null)
         {
@@ -756,6 +757,71 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         finally
         {
             topic.IsLoadingSubscriptions = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleSelectedEntityPin()
+    {
+        CurrentNavigation.TogglePin(CurrentNavigation.SelectedEntity);
+    }
+
+    [RelayCommand]
+    private void ToggleEntityPin(object? entity)
+    {
+        CurrentNavigation.TogglePin(entity);
+    }
+
+    [RelayCommand]
+    private async Task SelectPinnedEntityAsync(PinnedEntity? pin)
+    {
+        if (pin == null)
+        {
+            return;
+        }
+
+        switch (pin.Type)
+        {
+            case PinnedEntityType.Queue:
+                var queue = CurrentNavigation.Queues.FirstOrDefault(q => q.Name == pin.Name);
+                if (queue != null)
+                {
+                    await SelectQueueAsync(queue);
+                }
+                break;
+            case PinnedEntityType.Topic:
+                var topic = CurrentNavigation.Topics.FirstOrDefault(t => t.Name == pin.Name);
+                if (topic != null)
+                {
+                    await SelectTopicAsync(topic);
+                }
+                break;
+            case PinnedEntityType.Subscription:
+                await SelectPinnedSubscriptionAsync(pin);
+                break;
+        }
+    }
+
+    private async Task SelectPinnedSubscriptionAsync(PinnedEntity pin)
+    {
+        if (string.IsNullOrWhiteSpace(pin.TopicName))
+        {
+            return;
+        }
+
+        var topic = CurrentNavigation.Topics.FirstOrDefault(t => t.Name == pin.TopicName);
+        if (topic == null)
+        {
+            return;
+        }
+
+        await SelectTopicAsync(topic);
+        var subscription = CurrentNavigation.TopicSubscriptions.FirstOrDefault(sub =>
+            sub.TopicName == pin.TopicName &&
+            sub.Name == pin.Name);
+        if (subscription != null)
+        {
+            await SelectSubscriptionAsync(subscription);
         }
     }
 
