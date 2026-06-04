@@ -74,6 +74,50 @@ public class SettingsViewModelTests
         await updateService.DidNotReceive().DownloadUpdateAsync();
     }
 
+    [Fact]
+    public async Task InstallUpdateCommand_WhenDownloadFails_ShowsErrorAndResetsInstallingState()
+    {
+        // Arrange
+        var updateService = Substitute.For<IUpdateService>();
+        updateService.CanSelfUpdate.Returns(true);
+        updateService.Status.Returns(UpdateStatus.UpdateAvailable);
+        updateService.AvailableRelease.Returns(new ReleaseInfo { Version = "1.2.3" });
+        updateService.StatusMessage.Returns("BusLane 1.2.3 is available.");
+        updateService.DownloadUpdateAsync().Returns<Task>(_ => throw new InvalidOperationException("download failed"));
+        var sut = CreateSut(updateService);
+
+        // Act
+        var act = async () => await sut.InstallUpdateCommand.ExecuteAsync(null);
+
+        // Assert
+        await act.Should().NotThrowAsync();
+        sut.IsInstallingUpdate.Should().BeFalse();
+        sut.UpdateStatusMessage.Should().Be("Update install failed: download failed");
+    }
+
+    [Fact]
+    public void Dispose_WhenStatusChangedRaisedAfterDispose_DoesNotRefreshCachedStatus()
+    {
+        // Arrange
+        var updateService = Substitute.For<IUpdateService>();
+        updateService.CanSelfUpdate.Returns(true);
+        updateService.Status.Returns(UpdateStatus.Idle);
+        updateService.StatusMessage.Returns("Ready to check for updates.");
+        var sut = CreateSut(updateService);
+
+        // Act
+        sut.Dispose();
+        updateService.Status.Returns(UpdateStatus.UpdateAvailable);
+        updateService.AvailableRelease.Returns(new ReleaseInfo { Version = "1.2.3" });
+        updateService.StatusMessage.Returns("BusLane 1.2.3 is available.");
+        updateService.StatusChanged += Raise.Event<EventHandler<UpdateStatus>>(updateService, UpdateStatus.UpdateAvailable);
+
+        // Assert
+        sut.UpdateStatusMessage.Should().Be("Ready to check for updates.");
+        updateService.DidNotReceive().DownloadUpdateAsync();
+        updateService.DidNotReceive().InstallUpdateAsync();
+    }
+
     private static SettingsViewModel CreateSut(IUpdateService updateService)
     {
         var preferences = Substitute.For<IPreferencesService>();

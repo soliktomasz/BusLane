@@ -84,6 +84,23 @@ public class AppMenuTests
         item.IsEnabled.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task RunCheckForUpdatesMenuActionAsync_WhenCheckThrows_ShowsErrorAndKeepsMenuUsable()
+    {
+        // Arrange
+        var item = new NativeMenuItem("Check for Updates...");
+
+        // Act
+        var act = async () => await App.RunCheckForUpdatesMenuActionAsync(
+            item,
+            () => throw new InvalidOperationException("network unavailable"));
+
+        // Assert
+        await act.Should().NotThrowAsync();
+        item.Header.Should().Be("Check for Updates... (error)");
+        item.IsEnabled.Should().BeTrue();
+    }
+
     private static string GetAppPath()
     {
         return Path.GetFullPath(Path.Combine(

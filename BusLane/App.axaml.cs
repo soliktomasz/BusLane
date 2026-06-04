@@ -196,6 +196,13 @@ public partial class App : Application
                     : statusMessage;
             }
         }
+        catch (Exception)
+        {
+            if (menuItem != null)
+            {
+                menuItem.Header = "Check for Updates... (error)";
+            }
+        }
         finally
         {
             if (menuItem != null)

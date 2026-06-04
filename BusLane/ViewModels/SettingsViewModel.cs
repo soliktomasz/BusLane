@@ -58,9 +58,24 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     public int[] MaxTotalMessagesOptions { get; } = [100, 250, 500, 1000];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
     public AppLockSettingsViewModel AppLockSettings { get; }
+    /// <summary>
+    /// Gets whether a manual update check can run for this build while no update operation is already active.
+    /// </summary>
     public bool CanCheckForUpdates => CanSelfUpdate && !IsCheckingForUpdates && !IsInstallingUpdate;
+
+    /// <summary>
+    /// Gets whether Settings should show the update install action for an available or ready-to-restart update.
+    /// </summary>
     public bool ShowUpdateInstallAction => _updateService?.Status is UpdateStatus.UpdateAvailable or UpdateStatus.ReadyToRestart;
+
+    /// <summary>
+    /// Gets whether the current update can be downloaded or installed while self-update is available and idle.
+    /// </summary>
     public bool CanInstallUpdate => CanSelfUpdate && !IsCheckingForUpdates && !IsInstallingUpdate && ShowUpdateInstallAction;
+
+    /// <summary>
+    /// Gets the install action label, using "Install and Restart" when staged and "Download update" otherwise.
+    /// </summary>
     public string UpdateInstallActionText => _updateService?.Status == UpdateStatus.ReadyToRestart
         ? "Install and Restart"
         : "Download update";
@@ -235,6 +250,8 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         if (_updateService == null || !CanInstallUpdate)
             return;
 
+        string? installErrorMessage = null;
+
         try
         {
             IsInstallingUpdate = true;
@@ -250,10 +267,19 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 await _updateService.InstallUpdateAsync();
             }
         }
+        catch (Exception ex)
+        {
+            installErrorMessage = $"Update install failed: {ex.Message}";
+            UpdateStatusMessage = installErrorMessage;
+        }
         finally
         {
             IsInstallingUpdate = false;
             RefreshUpdateStatus();
+            if (installErrorMessage != null)
+            {
+                UpdateStatusMessage = installErrorMessage;
+            }
         }
     }
 
@@ -314,6 +340,9 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Unsubscribes from update service events so closed Settings instances no longer receive status refreshes.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
