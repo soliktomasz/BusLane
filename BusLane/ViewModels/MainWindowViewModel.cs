@@ -1282,6 +1282,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void CloseSettings()
     {
         ShowSettings = false;
+        SettingsViewModel?.Dispose();
         SettingsViewModel = null;
     }
 

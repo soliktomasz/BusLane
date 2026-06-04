@@ -574,6 +574,14 @@
                                                     Content="Check now"
                                                     Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
                                                     IsEnabled="{Binding SettingsViewModel.CanCheckForUpdates}"
+                                                    IsVisible="{Binding !SettingsViewModel.ShowUpdateInstallAction}"
+                                                    VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1"
+                                                    Classes="primary small"
+                                                    Content="{Binding SettingsViewModel.UpdateInstallActionText}"
+                                                    Command="{Binding SettingsViewModel.InstallUpdateCommand}"
+                                                    IsEnabled="{Binding SettingsViewModel.CanInstallUpdate}"
+                                                    IsVisible="{Binding SettingsViewModel.ShowUpdateInstallAction}"
                                                     VerticalAlignment="Center"/>
                                         </Grid>
 
