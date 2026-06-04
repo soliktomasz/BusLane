@@ -1,6 +1,7 @@
 namespace BusLane.ViewModels;
 
 using System.Diagnostics;
+using BusLane.Models.Update;
 using BusLane.Models.Security;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Diagnostics;
@@ -11,7 +12,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-public partial class SettingsViewModel : ViewModelBase
+public partial class SettingsViewModel : ViewModelBase, IDisposable
 {
     private readonly Action _onClose;
     private readonly MainWindowViewModel? _mainViewModel;
@@ -20,6 +21,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IDiagnosticBundleService? _diagnosticBundleService;
     private string _originalTheme = "Light";
     private bool _isLoading;
+    private bool _disposed;
 
     [ObservableProperty] private bool _confirmBeforeDelete = true;
     [ObservableProperty] private bool _confirmBeforePurge = true;
@@ -36,12 +38,18 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _autoCheckForUpdates = true;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanCheckForUpdates))]
+    [NotifyPropertyChangedFor(nameof(CanInstallUpdate))]
     private bool _isCheckingForUpdates;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCheckForUpdates))]
+    [NotifyPropertyChangedFor(nameof(CanInstallUpdate))]
+    private bool _isInstallingUpdate;
     [ObservableProperty] private bool _isExportingDiagnosticBundle;
     [ObservableProperty] private string? _diagnosticBundleStatus;
     [ObservableProperty] private string _updateStatusMessage = string.Empty;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanCheckForUpdates))]
+    [NotifyPropertyChangedFor(nameof(CanInstallUpdate))]
     private bool _canSelfUpdate = true;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
@@ -50,7 +58,27 @@ public partial class SettingsViewModel : ViewModelBase
     public int[] MaxTotalMessagesOptions { get; } = [100, 250, 500, 1000];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
     public AppLockSettingsViewModel AppLockSettings { get; }
-    public bool CanCheckForUpdates => CanSelfUpdate && !IsCheckingForUpdates;
+    /// <summary>
+    /// Gets whether a manual update check can run for this build while no update operation is already active.
+    /// </summary>
+    public bool CanCheckForUpdates => CanSelfUpdate && !IsCheckingForUpdates && !IsInstallingUpdate;
+
+    /// <summary>
+    /// Gets whether Settings should show the update install action for an available or ready-to-restart update.
+    /// </summary>
+    public bool ShowUpdateInstallAction => _updateService?.Status is UpdateStatus.UpdateAvailable or UpdateStatus.ReadyToRestart;
+
+    /// <summary>
+    /// Gets whether the current update can be downloaded or installed while self-update is available and idle.
+    /// </summary>
+    public bool CanInstallUpdate => CanSelfUpdate && !IsCheckingForUpdates && !IsInstallingUpdate && ShowUpdateInstallAction;
+
+    /// <summary>
+    /// Gets the install action label, using "Install and Restart" when staged and "Download update" otherwise.
+    /// </summary>
+    public string UpdateInstallActionText => _updateService?.Status == UpdateStatus.ReadyToRestart
+        ? "Install and Restart"
+        : "Download update";
 
     public SettingsViewModel(
         Action onClose,
@@ -68,6 +96,11 @@ public partial class SettingsViewModel : ViewModelBase
         _updateService = updateService;
         _diagnosticBundleService = diagnosticBundleService;
         AppLockSettings = new AppLockSettingsViewModel(appLockService, biometricAuthService, applyRuntimeSnapshot);
+
+        if (_updateService != null)
+        {
+            _updateService.StatusChanged += OnUpdateStatusChanged;
+        }
 
         // Capture original theme BEFORE loading to avoid any binding interference
         _originalTheme = preferencesService.Theme;
@@ -212,6 +245,45 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task InstallUpdateAsync()
+    {
+        if (_updateService == null || !CanInstallUpdate)
+            return;
+
+        string? installErrorMessage = null;
+
+        try
+        {
+            IsInstallingUpdate = true;
+
+            if (_updateService.Status == UpdateStatus.UpdateAvailable)
+            {
+                await _updateService.DownloadUpdateAsync();
+                return;
+            }
+
+            if (_updateService.Status == UpdateStatus.ReadyToRestart)
+            {
+                await _updateService.InstallUpdateAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            installErrorMessage = $"Update install failed: {ex.Message}";
+            UpdateStatusMessage = installErrorMessage;
+        }
+        finally
+        {
+            IsInstallingUpdate = false;
+            RefreshUpdateStatus();
+            if (installErrorMessage != null)
+            {
+                UpdateStatusMessage = installErrorMessage;
+            }
+        }
+    }
+
+    [RelayCommand]
     private void OpenUpdateReleases()
     {
         var psi = new ProcessStartInfo
@@ -234,6 +306,15 @@ public partial class SettingsViewModel : ViewModelBase
     {
         CanSelfUpdate = _updateService?.CanSelfUpdate ?? false;
         UpdateStatusMessage = _updateService?.StatusMessage ?? "Update service is unavailable.";
+        OnPropertyChanged(nameof(ShowUpdateInstallAction));
+        OnPropertyChanged(nameof(CanInstallUpdate));
+        OnPropertyChanged(nameof(UpdateInstallActionText));
+        OnPropertyChanged(nameof(CanCheckForUpdates));
+    }
+
+    private void OnUpdateStatusChanged(object? sender, UpdateStatus status)
+    {
+        Dispatcher.UIThread.Post(RefreshUpdateStatus);
     }
 
     [RelayCommand]
@@ -256,6 +337,22 @@ public partial class SettingsViewModel : ViewModelBase
         finally
         {
             IsExportingDiagnosticBundle = false;
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes from update service events so closed Settings instances no longer receive status refreshes.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        if (_updateService != null)
+        {
+            _updateService.StatusChanged -= OnUpdateStatusChanged;
         }
     }
 }

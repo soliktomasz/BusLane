@@ -9,8 +9,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using BusLane.Models.Update;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Infrastructure;
+using BusLane.Services.Update;
 using BusLane.ViewModels;
 using BusLane.Views;
 using BusLane.Views.Dialogs;
@@ -115,6 +117,9 @@ public partial class App : Application
             (_, _) => ToggleFullscreen(mainWindow),
             (_, _) => ShowLogViewer(viewModel),
             (_, _) => ShowTerminal(viewModel),
+            async (sender, _) => await RunCheckForUpdatesMenuActionAsync(
+                sender as NativeMenuItem,
+                CheckForUpdatesFromMenuAsync),
             async (_, _) => await ShowAboutDialogAsync(mainWindow));
         NativeMenu.SetMenu(mainWindow, menu);
     }
@@ -123,6 +128,7 @@ public partial class App : Application
         EventHandler onToggleFullscreenClick,
         EventHandler onShowLogViewerClick,
         EventHandler onShowTerminalClick,
+        EventHandler onCheckForUpdatesClick,
         EventHandler onAboutClick)
     {
         var toggleFullscreenItem = new NativeMenuItem("Toggle Fullscreen");
@@ -142,8 +148,12 @@ public partial class App : Application
         var aboutItem = new NativeMenuItem("About BusLane");
         aboutItem.Click += onAboutClick;
 
+        var checkForUpdatesItem = new NativeMenuItem("Check for Updates...");
+        checkForUpdatesItem.Click += onCheckForUpdatesClick;
+
         var helpMenu = new NativeMenu();
         helpMenu.Add(aboutItem);
+        helpMenu.Add(checkForUpdatesItem);
 
         var rootMenu = new NativeMenu();
         rootMenu.Add(new NativeMenuItem("View")
@@ -168,6 +178,53 @@ public partial class App : Application
     private static void ShowLogViewer(MainWindowViewModel viewModel) => viewModel.LogViewer.Open();
     private static void ShowTerminal(MainWindowViewModel viewModel) => viewModel.Terminal.Open();
 
+    internal static async Task RunCheckForUpdatesMenuActionAsync(NativeMenuItem? menuItem, Func<Task<string>> checkForUpdatesAsync)
+    {
+        if (menuItem != null)
+        {
+            menuItem.Header = "Checking for Updates...";
+            menuItem.IsEnabled = false;
+        }
+
+        try
+        {
+            var statusMessage = await checkForUpdatesAsync();
+            if (menuItem != null)
+            {
+                menuItem.Header = string.IsNullOrWhiteSpace(statusMessage)
+                    ? "Check for Updates..."
+                    : statusMessage;
+            }
+        }
+        catch (Exception)
+        {
+            if (menuItem != null)
+            {
+                menuItem.Header = "Check for Updates... (error)";
+            }
+        }
+        finally
+        {
+            if (menuItem != null)
+            {
+                menuItem.IsEnabled = true;
+            }
+        }
+    }
+
+    private static async Task<string> CheckForUpdatesFromMenuAsync()
+    {
+        var updateService = Program.Services?.GetService<IUpdateService>();
+        if (updateService == null)
+            return "Update service is unavailable.";
+
+        await updateService.CheckForUpdatesAsync(manualCheck: true);
+        if (updateService.Status == UpdateStatus.UpToDate)
+            return "No new updates";
+
+        return updateService.StatusMessage;
+    }
+
     private static async Task ShowAboutDialogAsync(Window owner)
     {
         var versionService = Program.Services?.GetService<IVersionService>();
@@ -182,6 +239,11 @@ public partial class App : Application
             return;
 
         await ShowAboutDialogAsync(MainWindow);
+    }
+
+    private async void CheckForUpdatesMenuItem_OnClick(object? sender, EventArgs args)
+    {
+        await RunCheckForUpdatesMenuActionAsync(sender as NativeMenuItem, CheckForUpdatesFromMenuAsync);
     }
 
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_getClass")]

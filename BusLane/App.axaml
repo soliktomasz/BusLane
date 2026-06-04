@@ -8,6 +8,7 @@
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="About BusLane" Click="AboutMenuItem_OnClick"/>
+            <NativeMenuItem Header="Check for Updates..." Click="CheckForUpdatesMenuItem_OnClick"/>
         </NativeMenu>
     </NativeMenu.Menu>
 
