@@ -137,7 +137,7 @@ public record BulkOperationExecutionResult(
             _ => "Completed"
         };
 
-        if (FailedCount == 0)
+        if (ClassifiedFailures.Count == 0)
         {
             return $"{Summary}. {statusText}.";
         }

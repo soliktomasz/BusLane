@@ -609,6 +609,7 @@ internal static class ServiceBusOperations
         var requestedMessages = messages.ToList();
         var deletedCount = 0;
         var sequenceSet = requestedMessages.Select(m => m.SequenceNumber).ToHashSet();
+        var failureExceptions = new Dictionary<long, ServiceBusException>();
         var consecutiveEmptyBatches = 0;
 
         while (sequenceSet.Count > 0 && consecutiveEmptyBatches < MaxEmptyBatches && !ct.IsCancellationRequested)
@@ -642,6 +643,7 @@ internal static class ServiceBusOperations
                     {
                         // Message might already be processed or lock expired, continue
                         Log.Debug(ex, "Failed to complete message {SequenceNumber}, continuing", msg.SequenceNumber);
+                        failureExceptions[msg.SequenceNumber] = ex;
                     }
                 }
                 else
@@ -663,10 +665,9 @@ internal static class ServiceBusOperations
             .Where(m => sequenceSet.Contains(m.SequenceNumber))
             .ToList();
         var failures = failed
-            .Select(identifier => new BulkOperationFailure(
-                identifier,
-                BulkOperationFailureKind.Retryable,
-                "Message was not completed before the operation finished"))
+            .Select(identifier => failureExceptions.TryGetValue(identifier.SequenceNumber, out var ex)
+                ? CreateFailure(identifier, ex)
+                : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not completed before the operation finished"))
             .ToList();
 
         return new BulkOperationExecutionResult(
@@ -675,7 +676,7 @@ internal static class ServiceBusOperations
             deletedCount,
             failed,
             $"Deleted {deletedCount} of {requestedMessages.Count} message(s)",
-            CanResume: failed.Count > 0,
+            CanResume: failures.Any(f => f.Kind == BulkOperationFailureKind.Retryable),
             Failures: failures,
             CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
     }
@@ -944,7 +945,7 @@ internal static class ServiceBusOperations
             progress?.Report(new BulkOperationProgress(
                 BulkOperationType.Purge,
                 deletedCount,
-                deletedCount,
+                0,
                 $"Purged {deletedCount} message(s)"));
         }
 

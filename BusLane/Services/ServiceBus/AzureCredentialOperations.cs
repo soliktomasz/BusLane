@@ -225,6 +225,11 @@ public class AzureCredentialOperations : IAzureCredentialOperations
             warnings.Add("Session-enabled entities may require multiple receive cycles to drain fully.");
         }
 
+        if (count == 0)
+        {
+            warnings.Add("No currently known messages matched this purge scope.");
+        }
+
         return new BulkOperationPreview(
             BulkOperationType.Purge,
             scope,

@@ -49,10 +49,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// <summary>
     /// Purges all messages from the current entity.
     /// </summary>
-    public async Task<bool> ShouldConfirmPurgeAsync()
+    public Task<bool> ShouldConfirmPurgeAsync()
     {
-        await Task.CompletedTask;
-        return true;
+        return Task.FromResult(true);
     }
 
     public async Task<string> GetPurgeConfirmationMessageAsync()
@@ -65,7 +64,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
         var strictWarning = _preferencesService.ConfirmBeforePurge
             ? $"{Environment.NewLine}{Environment.NewLine}Dry-run preview required. Purging messages cannot be undone."
-            : string.Empty;
+            : $"{Environment.NewLine}{Environment.NewLine}Purging messages cannot be undone.";
 
         return preview == null
             ? "Are you sure you want to purge all messages? This action cannot be undone."
@@ -396,17 +395,30 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             return null;
         }
 
-        var preview = await operations.PreviewPurgeMessagesAsync(
-            entityName,
-            _getNavigation().CurrentSubscriptionName,
-            _getNavigation().ShowDeadLetter);
-
-        var nav = _getNavigation();
-        return preview with
+        try
         {
-            Scope = BuildScope(nav, preview.RequiresSession, []),
-            IsHighRisk = true
-        };
+            var preview = await operations.PreviewPurgeMessagesAsync(
+                entityName,
+                _getNavigation().CurrentSubscriptionName,
+                _getNavigation().ShowDeadLetter);
+
+            var nav = _getNavigation();
+            return preview with
+            {
+                Scope = BuildScope(nav, preview.RequiresSession, []),
+                IsHighRisk = true
+            };
+        }
+        catch (Exception ex)
+        {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                "Failed to build purge preview",
+                ex.Message));
+            return null;
+        }
     }
 
     private BulkOperationPreview BuildSelectionPreview(

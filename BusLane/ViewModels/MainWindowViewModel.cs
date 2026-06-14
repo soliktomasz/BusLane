@@ -1076,7 +1076,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        _ = await BulkOps.ShouldConfirmBulkResendAsync();
         Confirmation.ShowConfirmation(
             "Confirm Bulk Resend",
             BulkOps.GetBulkResendConfirmationMessage(CurrentMessageOps.SelectedMessages),
