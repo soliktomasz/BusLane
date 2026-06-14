@@ -134,7 +134,7 @@ public abstract partial class DashboardWidgetViewModel : ViewModelBase, IDisposa
         _refreshDebounceTimer?.Dispose();
         _refreshDebounceTimer = new Timer(_ =>
         {
-            if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
+            if (Application.Current?.ApplicationLifetime is null || Dispatcher.UIThread.CheckAccess())
             {
                 RefreshData();
                 return;
