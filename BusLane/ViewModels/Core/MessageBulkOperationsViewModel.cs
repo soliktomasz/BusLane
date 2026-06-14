@@ -19,6 +19,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     private readonly Action<string> _setStatus;
 
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private int _bulkProgressCurrent;
+    [ObservableProperty] private int _bulkProgressTotal;
+    [ObservableProperty] private string _bulkProgressText = string.Empty;
 
     private string GetEntityDisplayName()
     {
@@ -46,9 +49,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// <summary>
     /// Purges all messages from the current entity.
     /// </summary>
-    public async Task<bool> ShouldConfirmPurgeAsync()
+    public Task<bool> ShouldConfirmPurgeAsync()
     {
-        return _preferencesService.ConfirmBeforePurge;
+        return Task.FromResult(true);
     }
 
     public async Task<string> GetPurgeConfirmationMessageAsync()
@@ -57,11 +60,19 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var warnings = preview?.Warnings.Any() == true
             ? $"{Environment.NewLine}{Environment.NewLine}Warnings:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", preview.Warnings)}"
             : string.Empty;
+        var context = preview?.Scope == null ? string.Empty : FormatScopeContext(preview.Scope);
+
+        var strictWarning = _preferencesService.ConfirmBeforePurge
+            ? $"{Environment.NewLine}{Environment.NewLine}Dry-run preview required. Purging messages cannot be undone."
+            : $"{Environment.NewLine}{Environment.NewLine}Purging messages cannot be undone.";
 
         return preview == null
             ? "Are you sure you want to purge all messages? This action cannot be undone."
-            : $"Purge scope: {preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{warnings}";
+            : $"Dry-run preview{Environment.NewLine}Purge scope: {preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{context}{warnings}{strictWarning}";
     }
+
+    public string GetPurgeConfirmText() =>
+        _preferencesService.ConfirmBeforePurge ? "Confirm Purge" : "Purge";
 
     public async Task ExecutePurgeAsync()
     {
@@ -86,6 +97,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
+        ResetProgress();
         _setStatus("Purging messages...");
         _logSink.Log(new LogEntry(
             DateTime.UtcNow,
@@ -95,13 +107,17 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
 
         try
         {
-            var result = await operations.PurgeMessagesDetailedAsync(entityName, subscription, _getNavigation().ShowDeadLetter);
-            _setStatus(result.Summary);
+            var result = await operations.PurgeMessagesDetailedAsync(
+                entityName,
+                subscription,
+                _getNavigation().ShowDeadLetter,
+                progress: CreateProgressReporter());
+            _setStatus(result.FinalSummary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"{result.Summary} from {entityDisplay}"));
+                $"{result.FinalSummary} from {entityDisplay}"));
             return result;
         }
         catch (Exception ex)
@@ -127,8 +143,10 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
     /// </summary>
     public Task<bool> ShouldConfirmBulkResendAsync()
     {
-        return Task.FromResult(_preferencesService.ConfirmBeforePurge);
+        return Task.FromResult(true);
     }
+
+    public string GetBulkResendConfirmText() => "Resend";
 
     public string GetBulkResendConfirmationMessage(ObservableCollection<MessageInfo> selectedMessages)
     {
@@ -158,6 +176,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
+        ResetProgress();
         var count = selectedMessages.Count;
         _setStatus($"Resending {count} message(s)...");
         _logSink.Log(new LogEntry(
@@ -169,14 +188,17 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         try
         {
             var messagesToResend = selectedMessages.ToList();
-            var result = await operations.ResendMessagesDetailedAsync(entityName, messagesToResend);
+            var result = await operations.ResendMessagesDetailedAsync(
+                entityName,
+                messagesToResend,
+                progress: CreateProgressReporter());
 
-            _setStatus(result.Summary);
+            _setStatus(result.FinalSummary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"{result.Summary} to {entityDisplay}"));
+                $"{result.FinalSummary} to {entityDisplay}"));
             return result;
         }
         catch (Exception ex)
@@ -205,6 +227,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         return FormatPreview(BuildBulkDeletePreview(selectedMessages));
     }
 
+    public string GetBulkDeleteConfirmText() =>
+        _preferencesService.ConfirmBeforeDelete ? "Confirm Delete" : "Delete";
+
     public async Task<int> ExecuteBulkDeleteAsync(ObservableCollection<MessageInfo> selectedMessages)
     {
         var result = await ExecuteBulkDeleteDetailedAsync(selectedMessages);
@@ -229,6 +254,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
+        ResetProgress();
         var count = selectedMessages.Count;
         _setStatus($"Deleting {count} message(s)...");
         _logSink.Log(new LogEntry(
@@ -242,14 +268,19 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             var identifiers = selectedMessages
                 .Select(m => new MessageIdentifier(m.SequenceNumber, m.MessageId))
                 .ToList();
-            var result = await operations.DeleteMessagesDetailedAsync(entityName, subscription, identifiers, _getNavigation().ShowDeadLetter);
+            var result = await operations.DeleteMessagesDetailedAsync(
+                entityName,
+                subscription,
+                identifiers,
+                _getNavigation().ShowDeadLetter,
+                progress: CreateProgressReporter());
 
-            _setStatus(result.Summary);
+            _setStatus(result.FinalSummary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"{result.Summary} from {entityDisplay}"));
+                $"{result.FinalSummary} from {entityDisplay}"));
             return result;
         }
         catch (Exception ex)
@@ -302,6 +333,7 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var entityDisplay = GetEntityDisplayName();
 
         IsLoading = true;
+        ResetProgress();
         var count = selectedMessages.Count;
         _setStatus($"Resubmitting {count} dead letter message(s)...");
         _logSink.Log(new LogEntry(
@@ -313,14 +345,18 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         try
         {
             var messagesToResubmit = selectedMessages.ToList();
-            var result = await operations.ResubmitDeadLetterMessagesDetailedAsync(entityName, subscription, messagesToResubmit);
+            var result = await operations.ResubmitDeadLetterMessagesDetailedAsync(
+                entityName,
+                subscription,
+                messagesToResubmit,
+                progress: CreateProgressReporter());
 
-            _setStatus(result.Summary);
+            _setStatus(result.FinalSummary);
             _logSink.Log(new LogEntry(
                 DateTime.UtcNow,
                 LogSource.ServiceBus,
                 LogLevel.Info,
-                $"{result.Summary} to {entityDisplay}"));
+                $"{result.FinalSummary} to {entityDisplay}"));
             return result;
         }
         catch (Exception ex)
@@ -359,10 +395,30 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             return null;
         }
 
-        return await operations.PreviewPurgeMessagesAsync(
-            entityName,
-            _getNavigation().CurrentSubscriptionName,
-            _getNavigation().ShowDeadLetter);
+        try
+        {
+            var preview = await operations.PreviewPurgeMessagesAsync(
+                entityName,
+                _getNavigation().CurrentSubscriptionName,
+                _getNavigation().ShowDeadLetter);
+
+            var nav = _getNavigation();
+            return preview with
+            {
+                Scope = BuildScope(nav, preview.RequiresSession, []),
+                IsHighRisk = true
+            };
+        }
+        catch (Exception ex)
+        {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.ServiceBus,
+                LogLevel.Error,
+                "Failed to build purge preview",
+                ex.Message));
+            return null;
+        }
     }
 
     private BulkOperationPreview BuildSelectionPreview(
@@ -370,25 +426,67 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         IReadOnlyCollection<MessageInfo> selectedMessages,
         string verb)
     {
-        var requiresSession = _getNavigation().CurrentEntityRequiresSession || selectedMessages.Any(m => !string.IsNullOrWhiteSpace(m.SessionId));
+        var nav = _getNavigation();
+        var requiresSession = nav.CurrentEntityRequiresSession || selectedMessages.Any(m => !string.IsNullOrWhiteSpace(m.SessionId));
+        var sessionIds = selectedMessages
+            .Select(m => m.SessionId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(id => id, StringComparer.Ordinal)
+            .ToList();
         var warnings = new List<string>();
         if (requiresSession)
         {
             warnings.Add("Selected messages span a session-enabled entity.");
         }
 
-        if (_getNavigation().ShowDeadLetter && operationType == BulkOperationType.Delete)
+        if (nav.ShowDeadLetter && operationType == BulkOperationType.Delete)
         {
             warnings.Add("Deleting from the dead-letter queue is irreversible.");
         }
 
+        var scope = BuildScope(nav, requiresSession, sessionIds);
+
         return new BulkOperationPreview(
             operationType,
-            GetEntityDisplayName(),
+            scope.DisplayName,
             selectedMessages.Count,
             selectedMessages.Select(m => m.MessageId).Where(id => !string.IsNullOrWhiteSpace(id)).Cast<string>().Take(5).ToList(),
             warnings,
-            requiresSession);
+            requiresSession,
+            scope,
+            operationType == BulkOperationType.Delete);
+    }
+
+    private static BulkOperationScope BuildScope(
+        NavigationState nav,
+        bool requiresSession,
+        IReadOnlyList<string> sessionIds)
+    {
+        return new BulkOperationScope(
+            nav.CurrentEntityName ?? "Unknown",
+            nav.CurrentSubscriptionName,
+            nav.ShowDeadLetter,
+            requiresSession,
+            sessionIds,
+            BuildSelectedFilters(nav));
+    }
+
+    private static IReadOnlyDictionary<string, string> BuildSelectedFilters(NavigationState nav)
+    {
+        var filters = new Dictionary<string, string>();
+        if (!string.IsNullOrWhiteSpace(nav.EntityFilter))
+        {
+            filters["Entity filter"] = nav.EntityFilter;
+        }
+
+        if (!string.IsNullOrWhiteSpace(nav.NamespaceFilter))
+        {
+            filters["Namespace filter"] = nav.NamespaceFilter;
+        }
+
+        return filters;
     }
 
     private static string FormatPreview(BulkOperationPreview preview)
@@ -396,10 +494,67 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         var sampleMessageIds = preview.SampleMessageIds.Any()
             ? $"{Environment.NewLine}Sample message IDs: {string.Join(", ", preview.SampleMessageIds)}"
             : string.Empty;
+        var context = preview.Scope == null ? string.Empty : FormatScopeContext(preview.Scope);
         var warnings = preview.Warnings.Any()
             ? $"{Environment.NewLine}{Environment.NewLine}Warnings:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", preview.Warnings)}"
             : string.Empty;
+        var highRisk = preview.IsHighRisk
+            ? $"{Environment.NewLine}{Environment.NewLine}This action cannot be undone."
+            : string.Empty;
 
-        return $"{preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{sampleMessageIds}{warnings}";
+        return $"Dry-run preview{Environment.NewLine}Scope: {preview.ScopeDescription}{Environment.NewLine}Estimated messages: {preview.EstimatedImpactedCount}{context}{sampleMessageIds}{warnings}{highRisk}";
+    }
+
+    private static string FormatScopeContext(BulkOperationScope scope)
+    {
+        var lines = new List<string>
+        {
+            $"Entity: {scope.EntityPath}",
+            $"Message source: {(scope.IsDeadLetter ? "Dead-letter" : "Active")}",
+            $"Sessions: {(scope.RequiresSession ? FormatSessions(scope.SessionIds) : "Not required")}"
+        };
+
+        if (scope.SelectedFilters.Any())
+        {
+            lines.Add($"Selected filters: {string.Join(", ", scope.SelectedFilters.Select(f => $"{f.Key}={f.Value}"))}");
+        }
+
+        return $"{Environment.NewLine}{string.Join(Environment.NewLine, lines)}";
+    }
+
+    private static string FormatSessions(IReadOnlyList<string> sessionIds)
+    {
+        return sessionIds.Count == 0
+            ? "Session-enabled scope"
+            : string.Join(", ", sessionIds);
+    }
+
+    private IProgress<BulkOperationProgress> CreateProgressReporter() =>
+        new ImmediateBulkOperationProgress(ApplyProgress);
+
+    private void ResetProgress()
+    {
+        BulkProgressCurrent = 0;
+        BulkProgressTotal = 0;
+        BulkProgressText = string.Empty;
+    }
+
+    private void ApplyProgress(BulkOperationProgress progress)
+    {
+        BulkProgressCurrent = progress.ProcessedCount;
+        BulkProgressTotal = progress.RequestedCount;
+        BulkProgressText = progress.Message;
+        if (!string.IsNullOrWhiteSpace(progress.Message))
+        {
+            _setStatus(progress.Message);
+        }
+    }
+
+    private sealed class ImmediateBulkOperationProgress(Action<BulkOperationProgress> onProgress) : IProgress<BulkOperationProgress>
+    {
+        public void Report(BulkOperationProgress value)
+        {
+            onProgress(value);
+        }
     }
 }

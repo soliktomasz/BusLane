@@ -1056,24 +1056,16 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        if (await BulkOps.ShouldConfirmPurgeAsync())
-        {
-            var confirmationMessage = await BulkOps.GetPurgeConfirmationMessageAsync();
-            Confirmation.ShowConfirmation(
-                "Confirm Purge",
-                confirmationMessage,
-                "Purge",
-                async () =>
-                {
-                    await BulkOps.ExecutePurgeAsync();
-                    await CurrentMessageOps.LoadMessagesAsync();
-                });
-        }
-        else
-        {
-            await BulkOps.ExecutePurgeAsync();
-            await CurrentMessageOps.LoadMessagesAsync();
-        }
+        var confirmationMessage = await BulkOps.GetPurgeConfirmationMessageAsync();
+        Confirmation.ShowConfirmation(
+            "Confirm Purge",
+            confirmationMessage,
+            BulkOps.GetPurgeConfirmText(),
+            async () =>
+            {
+                await BulkOps.ExecutePurgeAsync();
+                await CurrentMessageOps.LoadMessagesAsync();
+            });
     }
 
     [RelayCommand]
@@ -1084,25 +1076,16 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
 
-        if (await BulkOps.ShouldConfirmBulkResendAsync())
-        {
-            Confirmation.ShowConfirmation(
-                "Confirm Bulk Resend",
-                BulkOps.GetBulkResendConfirmationMessage(CurrentMessageOps.SelectedMessages),
-                "Resend",
-                async () =>
-                {
-                    await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
-                    CurrentMessageOps.SelectedMessages.Clear();
-                    await CurrentMessageOps.LoadMessagesAsync();
-                });
-        }
-        else
-        {
-            await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
-            CurrentMessageOps.SelectedMessages.Clear();
-            await CurrentMessageOps.LoadMessagesAsync();
-        }
+        Confirmation.ShowConfirmation(
+            "Confirm Bulk Resend",
+            BulkOps.GetBulkResendConfirmationMessage(CurrentMessageOps.SelectedMessages),
+            BulkOps.GetBulkResendConfirmText(),
+            async () =>
+            {
+                await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
+                CurrentMessageOps.SelectedMessages.Clear();
+                await CurrentMessageOps.LoadMessagesAsync();
+            });
     }
 
     [RelayCommand]
@@ -1116,7 +1099,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         Confirmation.ShowConfirmation(
             "Confirm Bulk Delete",
             BulkOps.GetBulkDeleteConfirmationMessage(CurrentMessageOps.SelectedMessages),
-            "Delete",
+            BulkOps.GetBulkDeleteConfirmText(),
             async () =>
             {
                 await BulkOps.ExecuteBulkDeleteAsync(CurrentMessageOps.SelectedMessages);

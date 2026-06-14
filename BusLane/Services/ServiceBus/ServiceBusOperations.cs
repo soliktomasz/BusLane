@@ -593,7 +593,8 @@ internal static class ServiceBusOperations
         string? subscription,
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter,
-        CancellationToken ct)
+        CancellationToken ct,
+        IProgress<BulkOperationProgress>? progress = null)
     {
         var receiverOptions = new ServiceBusReceiverOptions 
         { 
@@ -608,6 +609,7 @@ internal static class ServiceBusOperations
         var requestedMessages = messages.ToList();
         var deletedCount = 0;
         var sequenceSet = requestedMessages.Select(m => m.SequenceNumber).ToHashSet();
+        var failureExceptions = new Dictionary<long, ServiceBusException>();
         var consecutiveEmptyBatches = 0;
 
         while (sequenceSet.Count > 0 && consecutiveEmptyBatches < MaxEmptyBatches && !ct.IsCancellationRequested)
@@ -631,11 +633,17 @@ internal static class ServiceBusOperations
                         await receiver.CompleteMessageAsync(msg, ct);
                         sequenceSet.Remove(msg.SequenceNumber);
                         deletedCount++;
+                        progress?.Report(new BulkOperationProgress(
+                            BulkOperationType.Delete,
+                            deletedCount,
+                            requestedMessages.Count,
+                            $"Deleted {deletedCount} of {requestedMessages.Count} message(s)"));
                     }
                     catch (ServiceBusException ex)
                     {
                         // Message might already be processed or lock expired, continue
                         Log.Debug(ex, "Failed to complete message {SequenceNumber}, continuing", msg.SequenceNumber);
+                        failureExceptions[msg.SequenceNumber] = ex;
                     }
                 }
                 else
@@ -656,6 +664,11 @@ internal static class ServiceBusOperations
         var failed = requestedMessages
             .Where(m => sequenceSet.Contains(m.SequenceNumber))
             .ToList();
+        var failures = failed
+            .Select(identifier => failureExceptions.TryGetValue(identifier.SequenceNumber, out var ex)
+                ? CreateFailure(identifier, ex)
+                : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not completed before the operation finished"))
+            .ToList();
 
         return new BulkOperationExecutionResult(
             BulkOperationType.Delete,
@@ -663,7 +676,9 @@ internal static class ServiceBusOperations
             deletedCount,
             failed,
             $"Deleted {deletedCount} of {requestedMessages.Count} message(s)",
-            CanResume: failed.Count > 0);
+            CanResume: failures.Any(f => f.Kind == BulkOperationFailureKind.Retryable),
+            Failures: failures,
+            CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
     }
 
     /// <summary>
@@ -683,7 +698,8 @@ internal static class ServiceBusOperations
         ServiceBusClient client,
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct)
+        CancellationToken ct,
+        IProgress<BulkOperationProgress>? progress = null)
     {
         await using var sender = client.CreateSender(entityName);
 
@@ -691,6 +707,8 @@ internal static class ServiceBusOperations
         // Avoid allocation if already a list
         var messageList = messages as IList<MessageInfo> ?? messages.ToList();
         var failed = new List<MessageIdentifier>();
+        var failures = new List<BulkOperationFailure>();
+        var processedCount = 0;
 
         for (var i = 0; i < messageList.Count; i += ResendBatchSize)
         {
@@ -716,6 +734,12 @@ internal static class ServiceBusOperations
             {
                 await sender.SendMessagesAsync(serviceBusMessages, ct);
                 sentCount += batchSize;
+                processedCount += batchSize;
+                progress?.Report(new BulkOperationProgress(
+                    BulkOperationType.Resend,
+                    processedCount,
+                    messageList.Count,
+                    $"Processed {processedCount} of {messageList.Count} message(s)"));
             }
             catch (ServiceBusException ex)
             {
@@ -729,13 +753,27 @@ internal static class ServiceBusOperations
                         var sbMsg = serviceBusMessages[index];
                         await sender.SendMessageAsync(sbMsg, ct);
                         sentCount++;
+                        processedCount++;
+                        progress?.Report(new BulkOperationProgress(
+                            BulkOperationType.Resend,
+                            processedCount,
+                            messageList.Count,
+                            $"Processed {processedCount} of {messageList.Count} message(s)"));
                     }
                     catch (ServiceBusException innerEx)
                     {
                         // Individual message failed, continue with others
                         Log.Debug(innerEx, "Failed to send individual message, continuing with remaining messages");
                         var failedMessage = sourceBatch[index];
-                        failed.Add(new MessageIdentifier(failedMessage.SequenceNumber, failedMessage.MessageId));
+                        var identifier = new MessageIdentifier(failedMessage.SequenceNumber, failedMessage.MessageId);
+                        failed.Add(identifier);
+                        failures.Add(CreateFailure(identifier, innerEx));
+                        processedCount++;
+                        progress?.Report(new BulkOperationProgress(
+                            BulkOperationType.Resend,
+                            processedCount,
+                            messageList.Count,
+                            $"Processed {processedCount} of {messageList.Count} message(s)"));
                     }
                 }
             }
@@ -747,7 +785,9 @@ internal static class ServiceBusOperations
             sentCount,
             failed,
             $"Resent {sentCount} of {messageList.Count} message(s)",
-            CanResume: failed.Count > 0);
+            CanResume: failures.Any(f => f.Kind == BulkOperationFailureKind.Retryable),
+            Failures: failures,
+            CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
     }
 
     /// <summary>
@@ -769,7 +809,8 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct)
+        CancellationToken ct,
+        IProgress<BulkOperationProgress>? progress = null)
     {
         var receiverOptions = new ServiceBusReceiverOptions
         {
@@ -786,6 +827,8 @@ internal static class ServiceBusOperations
         var resubmittedCount = 0;
         var messageList = messages.ToList();
         var failed = new List<MessageIdentifier>();
+        var failures = new List<BulkOperationFailure>();
+        var processedCount = 0;
 
         // Iterate directly without materializing to list - we only enumerate once
         foreach (var msg in messageList)
@@ -797,7 +840,15 @@ internal static class ServiceBusOperations
                 var dlqMsg = await deadLetterReceiver.ReceiveDeferredMessageAsync(msg.SequenceNumber, ct);
                 if (dlqMsg == null)
                 {
-                    failed.Add(new MessageIdentifier(msg.SequenceNumber, msg.MessageId));
+                    var identifier = new MessageIdentifier(msg.SequenceNumber, msg.MessageId);
+                    failed.Add(identifier);
+                    failures.Add(new BulkOperationFailure(identifier, BulkOperationFailureKind.NonRetryable, "Message was not found in the dead-letter queue"));
+                    processedCount++;
+                    progress?.Report(new BulkOperationProgress(
+                        BulkOperationType.ResubmitDeadLetter,
+                        processedCount,
+                        messageList.Count,
+                        $"Processed {processedCount} of {messageList.Count} dead letter message(s)"));
                     continue;
                 }
 
@@ -820,12 +871,26 @@ internal static class ServiceBusOperations
                 await deadLetterReceiver.CompleteMessageAsync(dlqMsg, ct);
 
                 resubmittedCount++;
+                processedCount++;
+                progress?.Report(new BulkOperationProgress(
+                    BulkOperationType.ResubmitDeadLetter,
+                    processedCount,
+                    messageList.Count,
+                    $"Processed {processedCount} of {messageList.Count} dead letter message(s)"));
             }
             catch (ServiceBusException ex)
             {
                 // Message might not be found or already processed, continue
                 Log.Debug(ex, "Failed to resubmit message {SequenceNumber} from DLQ, continuing", msg.SequenceNumber);
-                failed.Add(new MessageIdentifier(msg.SequenceNumber, msg.MessageId));
+                var identifier = new MessageIdentifier(msg.SequenceNumber, msg.MessageId);
+                failed.Add(identifier);
+                failures.Add(CreateFailure(identifier, ex));
+                processedCount++;
+                progress?.Report(new BulkOperationProgress(
+                    BulkOperationType.ResubmitDeadLetter,
+                    processedCount,
+                    messageList.Count,
+                    $"Processed {processedCount} of {messageList.Count} dead letter message(s)"));
             }
         }
 
@@ -835,7 +900,9 @@ internal static class ServiceBusOperations
             resubmittedCount,
             failed,
             $"Resubmitted {resubmittedCount} of {messageList.Count} message(s)",
-            CanResume: failed.Count > 0);
+            CanResume: failures.Any(f => f.Kind == BulkOperationFailureKind.Retryable),
+            Failures: failures,
+            CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
     }
 
     /// <summary>
@@ -856,7 +923,8 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         bool deadLetter,
-        CancellationToken ct)
+        CancellationToken ct,
+        IProgress<BulkOperationProgress>? progress = null)
     {
         var options = new ServiceBusReceiverOptions
         {
@@ -874,6 +942,11 @@ internal static class ServiceBusOperations
             var msgs = await receiver.ReceiveMessagesAsync(PurgeBatchSize, PurgeReceiveTimeout, ct);
             if (msgs.Count == 0) break;
             deletedCount += msgs.Count;
+            progress?.Report(new BulkOperationProgress(
+                BulkOperationType.Purge,
+                deletedCount,
+                0,
+                $"Purged {deletedCount} message(s)"));
         }
 
         return new BulkOperationExecutionResult(
@@ -881,6 +954,16 @@ internal static class ServiceBusOperations
             deletedCount,
             deletedCount,
             [],
-            deletedCount == 0 ? "No messages found to purge" : $"Purged {deletedCount} message(s)");
+            deletedCount == 0 ? "No messages found to purge" : $"Purged {deletedCount} message(s)",
+            CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
+    }
+
+    private static BulkOperationFailure CreateFailure(MessageIdentifier identifier, ServiceBusException ex)
+    {
+        var kind = ex.IsTransient
+            ? BulkOperationFailureKind.Retryable
+            : BulkOperationFailureKind.NonRetryable;
+
+        return new BulkOperationFailure(identifier, kind, ex.Reason.ToString());
     }
 }

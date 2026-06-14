@@ -234,9 +234,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string entityName,
         string? subscription,
         bool deadLetter,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null)
     {
-        return await ServiceBusOperations.PurgeMessagesDetailedAsync(GetClient(), entityName, subscription, deadLetter, ct);
+        return await ServiceBusOperations.PurgeMessagesDetailedAsync(GetClient(), entityName, subscription, deadLetter, ct, progress);
     }
 
     public async Task<int> DeleteMessagesAsync(
@@ -251,9 +252,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string? subscription,
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter = false,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null)
     {
-        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct);
+        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct, progress);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
@@ -268,9 +270,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
     public async Task<BulkOperationExecutionResult> ResendMessagesDetailedAsync(
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null)
     {
-        return await ServiceBusOperations.ResendMessagesDetailedAsync(GetClient(), entityName, messages, ct);
+        return await ServiceBusOperations.ResendMessagesDetailedAsync(GetClient(), entityName, messages, ct, progress);
     }
 
     public async Task<int> ResubmitDeadLetterMessagesAsync(
@@ -287,9 +290,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null)
     {
-        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct);
+        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct, progress);
     }
 
     public async Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default)
@@ -461,7 +465,15 @@ public class ConnectionStringOperations : IConnectionStringOperations
             warnings.Add("No currently known messages matched this purge scope.");
         }
 
-        return new BulkOperationPreview(BulkOperationType.Purge, scope, estimatedCount, [], warnings, requiresSession);
+        return new BulkOperationPreview(
+            BulkOperationType.Purge,
+            scope,
+            estimatedCount,
+            [],
+            warnings,
+            requiresSession,
+            new BulkOperationScope(entityName, subscription, deadLetter, requiresSession, [], new Dictionary<string, string>()),
+            IsHighRisk: true);
     }
 
     #endregion
