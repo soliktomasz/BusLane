@@ -72,7 +72,8 @@ public interface IServiceBusOperations : IAsyncDisposable
         string entityName,
         string? subscription,
         bool deadLetter,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null);
 
     Task<int> DeleteMessagesAsync(
         string entityName,
@@ -86,7 +87,8 @@ public interface IServiceBusOperations : IAsyncDisposable
         string? subscription,
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter = false,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null);
 
     Task<int> ResendMessagesAsync(
         string entityName,
@@ -96,7 +98,8 @@ public interface IServiceBusOperations : IAsyncDisposable
     Task<BulkOperationExecutionResult> ResendMessagesDetailedAsync(
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null);
 
     Task<int> ResubmitDeadLetterMessagesAsync(
         string entityName,
@@ -108,7 +111,8 @@ public interface IServiceBusOperations : IAsyncDisposable
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        IProgress<BulkOperationProgress>? progress = null);
 
     Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default);
 }

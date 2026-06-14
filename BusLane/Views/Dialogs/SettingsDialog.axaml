@@ -244,11 +244,11 @@
                                 <!-- Settings Items -->
                                 <Border Padding="16">
                                     <StackPanel Spacing="12">
-                                        <!-- Confirm Delete -->
+                                        <!-- Destructive Delete Warning -->
                                         <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Confirm before delete" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Ask for confirmation when deleting messages"
+                                                <TextBlock Text="Stronger delete warnings" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Use a higher-risk confirmation for destructive delete actions"
                                                            Classes="caption" FontSize="12"/>
                                             </StackPanel>
                                             <ToggleSwitch Grid.Column="1"
@@ -259,11 +259,11 @@
 
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
-                                        <!-- Confirm Purge -->
+                                        <!-- Destructive Purge Warning -->
                                         <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Confirm before purge" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Ask for confirmation when purging queues"
+                                                <TextBlock Text="Stronger purge warnings" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Use a higher-risk confirmation for destructive purge actions"
                                                            Classes="caption" FontSize="12"/>
                                             </StackPanel>
                                             <ToggleSwitch Grid.Column="1"
