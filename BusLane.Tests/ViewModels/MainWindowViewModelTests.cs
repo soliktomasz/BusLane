@@ -640,6 +640,51 @@ public class MainWindowViewModelTests
         }
     }
 
+    [Fact]
+    public void OpenCommandPalette_ShouldExposeCommonActionsAndSavedConnections()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var connection = SavedConnection.Create(
+            "Orders",
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=key;SharedAccessKey=value",
+            ConnectionType.Queue,
+            entityName: "orders");
+        sut.Connection.SavedConnections.Add(connection);
+
+        // Act
+        sut.OpenCommandPaletteCommand.Execute(null);
+
+        // Assert
+        sut.CommandPalette.IsOpen.Should().BeTrue();
+        sut.CommandPalette.FilteredItems.Select(item => item.Title)
+            .Should().Contain([
+                "Open My Connections",
+                "Open Settings",
+                "Connect to Orders"
+            ]);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandPaletteItem_WithSettingsAction_ShouldClosePaletteAndOpenSettings()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        sut.OpenCommandPaletteCommand.Execute(null);
+        sut.CommandPalette.SearchText = "settings";
+        var item = sut.CommandPalette.FilteredItems.Should().ContainSingle().Subject;
+
+        // Act
+        await sut.ExecuteCommandPaletteItemCommand.ExecuteAsync(item);
+
+        // Assert
+        sut.CommandPalette.IsOpen.Should().BeFalse();
+        sut.ShowSettings.Should().BeTrue();
+        sut.SettingsViewModel.Should().NotBeNull();
+    }
+
     private static MainWindowViewModel CreateSut(
         TestPreferencesService preferences,
         IAzureAuthService? auth = null,

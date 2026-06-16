@@ -7,6 +7,21 @@ using FluentAssertions;
 public class KeyboardShortcutServiceTests
 {
     [Fact]
+    public void GetGesture_ForOpenCommandPalette_ReturnsPrimaryK()
+    {
+        // Arrange
+        var sut = new KeyboardShortcutService();
+
+        // Act
+        var gesture = sut.GetGesture(KeyboardShortcutAction.OpenCommandPalette);
+
+        // Assert
+        gesture.Should().NotBeNull();
+        gesture!.Key.Should().Be(Key.K);
+        gesture.KeyModifiers.Should().Be(sut.PrimaryModifier);
+    }
+
+    [Fact]
     public void GetGesture_ForToggleTerminal_ReturnsExpectedShortcut()
     {
         // Arrange

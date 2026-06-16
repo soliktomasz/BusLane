@@ -112,6 +112,9 @@ public partial class MainWindow : Window
             [KeyboardShortcutAction.OpenSettings] = vm =>
                 Execute(vm.OpenSettingsCommand),
 
+            [KeyboardShortcutAction.OpenCommandPalette] = vm =>
+                Execute(vm.OpenCommandPaletteCommand),
+
             // Connections
             [KeyboardShortcutAction.OpenConnectionLibrary] = vm =>
                 Execute(vm.OpenConnectionLibraryCommand),
@@ -214,7 +217,7 @@ public partial class MainWindow : Window
         }
 
         // Don't process other shortcuts if a dialog is open
-        if (vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.Confirmation.ShowConfirmDialog)
+        if (vm.CommandPalette.IsOpen || vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.Confirmation.ShowConfirmDialog)
             return;
 
         // Dispatch via action map
@@ -233,6 +236,11 @@ public partial class MainWindow : Window
         if (vm.ShowKeyboardShortcuts)
         {
             vm.CloseKeyboardShortcutsCommand.Execute(null);
+            return true;
+        }
+        if (vm.CommandPalette.IsOpen)
+        {
+            vm.CloseCommandPaletteCommand.Execute(null);
             return true;
         }
         if (vm.ShowSettings)
