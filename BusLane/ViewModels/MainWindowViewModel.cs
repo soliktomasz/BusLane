@@ -72,6 +72,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public TerminalHostViewModel Terminal { get; }
     public NamespaceSelectionViewModel NamespaceSelection { get; }
     public UpdateNotificationViewModel UpdateNotification { get; }
+    public CommandPaletteViewModel CommandPalette { get; } = new();
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -1232,6 +1233,215 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _preferencesService.ShowNavigationPanel = !_preferencesService.ShowNavigationPanel;
         _preferencesService.Save();
         OnPropertyChanged(nameof(IsNavigationPanelVisible));
+    }
+
+    [RelayCommand]
+    private void OpenCommandPalette()
+    {
+        CommandPalette.Open(BuildCommandPaletteItems());
+    }
+
+    [RelayCommand]
+    private void CloseCommandPalette() => CommandPalette.Close();
+
+    [RelayCommand]
+    private async Task ExecuteCommandPaletteItemAsync(CommandPaletteItem? item)
+    {
+        if (item == null)
+        {
+            return;
+        }
+
+        CommandPalette.Close();
+        await item.ExecuteAsync();
+    }
+
+    private IEnumerable<CommandPaletteItem> BuildCommandPaletteItems()
+    {
+        yield return new CommandPaletteItem(
+            "Open My Connections",
+            "Browse, add, import, or connect to saved Service Bus connections",
+            "Connections",
+            "Library",
+            OpenConnectionLibraryAsync);
+
+        if (!Connection.IsAuthenticated)
+        {
+            yield return new CommandPaletteItem(
+                "Sign in with Azure",
+                "Authenticate with Azure Identity and browse namespaces",
+                "Connections",
+                "Cloud",
+                LoginAsync);
+        }
+
+        if (Connection.ShowAzureSections)
+        {
+            yield return new CommandPaletteItem(
+                "Select Namespace",
+                "Choose Azure Service Bus namespace workspace",
+                "Connections",
+                "Server",
+                Run(OpenNamespacePanel));
+        }
+
+        foreach (var connection in Connection.SavedConnections
+                     .OrderByDescending(c => c.IsFavorite)
+                     .ThenBy(c => c.Name))
+        {
+            yield return new CommandPaletteItem(
+                $"Connect to {connection.Name}",
+                connection.EntityName ?? connection.Endpoint ?? connection.TypeDisplayName,
+                "Saved Connections",
+                "Cable",
+                () => ConnectToSavedConnectionAsync(connection));
+        }
+
+        if (HasActiveConnectionTab)
+        {
+            yield return new CommandPaletteItem(
+                "Refresh Workspace",
+                "Reload entities for active tab",
+                "Workspace",
+                "RefreshCw",
+                RefreshAsync);
+
+            yield return new CommandPaletteItem(
+                IsCurrentEntityPaneVisible ? "Hide Entity Pane" : "Show Entity Pane",
+                "Toggle queue/topic browser pane",
+                "Workspace",
+                IsCurrentEntityPaneVisible ? "PanelLeftClose" : "PanelLeftOpen",
+                Run(IsCurrentEntityPaneVisible ? HideEntityPane : ShowEntityPane));
+
+            yield return new CommandPaletteItem(
+                "Disconnect Workspace",
+                "Close active Service Bus workspace",
+                "Workspace",
+                "PlugZap",
+                Run(DisconnectConnection));
+        }
+
+        if (CurrentNavigation.CurrentEntityName != null)
+        {
+            yield return new CommandPaletteItem(
+                "Refresh Messages",
+                "Reload messages for selected entity",
+                "Messages",
+                "RefreshCw",
+                LoadMessagesAsync);
+
+            yield return new CommandPaletteItem(
+                "Send Message",
+                "Compose and send message to selected queue or topic",
+                "Messages",
+                "Send",
+                Run(OpenSendMessagePopup));
+
+            yield return new CommandPaletteItem(
+                CurrentNavigation.ShowDeadLetter ? "Show Active Messages" : "Show Dead Letters",
+                "Toggle active and dead-letter message view",
+                "Messages",
+                "Inbox",
+                ToggleDeadLetterViewAsync);
+        }
+
+        foreach (var pin in CurrentNavigation.PinnedEntities)
+        {
+            yield return new CommandPaletteItem(
+                $"Open {pin.DisplayName}",
+                pin.TypeLabel,
+                "Pinned Entities",
+                "Pin",
+                () => SelectPinnedEntityAsync(pin));
+        }
+
+        foreach (var queue in CurrentNavigation.Queues.OrderBy(q => q.Name))
+        {
+            yield return new CommandPaletteItem(
+                $"Open queue {queue.Name}",
+                $"{queue.ActiveMessageCount} active, {queue.DeadLetterCount} dead letters",
+                "Queues",
+                "Inbox",
+                () => SelectQueueAsync(queue));
+        }
+
+        foreach (var topic in CurrentNavigation.Topics.OrderBy(t => t.Name))
+        {
+            yield return new CommandPaletteItem(
+                $"Open topic {topic.Name}",
+                $"{topic.SubscriptionCount} subscriptions",
+                "Topics",
+                "Send",
+                () => SelectTopicAsync(topic));
+        }
+
+        foreach (var subscription in CurrentNavigation.TopicSubscriptions.OrderBy(s => s.TopicName).ThenBy(s => s.Name))
+        {
+            yield return new CommandPaletteItem(
+                $"Open subscription {subscription.TopicName}/{subscription.Name}",
+                $"{subscription.ActiveMessageCount} active, {subscription.DeadLetterCount} dead letters",
+                "Subscriptions",
+                "BookOpen",
+                () => SelectSubscriptionAsync(subscription));
+        }
+
+        yield return new CommandPaletteItem(
+            "Open Dashboard",
+            "Namespace metrics, inbox, and entity summaries",
+            "Features",
+            "LayoutDashboard",
+            Run(OpenCharts));
+
+        yield return new CommandPaletteItem(
+            "Open Live Stream",
+            "Real-time message monitoring",
+            "Features",
+            "Radio",
+            OpenLiveStream);
+
+        yield return new CommandPaletteItem(
+            "Open Alerts",
+            "Manage alert rules and notifications",
+            "Features",
+            "Bell",
+            Run(OpenAlerts));
+
+        yield return new CommandPaletteItem(
+            Terminal.ShowTerminalPanel ? "Hide Terminal" : "Show Terminal",
+            "Toggle embedded terminal panel",
+            "Tools",
+            "Terminal",
+            Run(ToggleTerminal));
+
+        yield return new CommandPaletteItem(
+            LogViewer.IsOpen ? "Hide Activity Log" : "Show Activity Log",
+            "Inspect recent application logs",
+            "Tools",
+            "ScrollText",
+            Run(ToggleLogViewer));
+
+        yield return new CommandPaletteItem(
+            "Open Settings",
+            "Preferences, security, updates, and diagnostics",
+            "General",
+            "Settings",
+            OpenSettingsAsync);
+
+        yield return new CommandPaletteItem(
+            "Show Keyboard Shortcuts",
+            "View available keyboard shortcuts",
+            "General",
+            "Keyboard",
+            Run(ShowKeyboardShortcutsHelp));
+    }
+
+    private static Func<Task> Run(Action action)
+    {
+        return () =>
+        {
+            action();
+            return Task.CompletedTask;
+        };
     }
 
     [RelayCommand]

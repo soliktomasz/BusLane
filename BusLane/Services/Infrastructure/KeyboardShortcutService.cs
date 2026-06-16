@@ -67,6 +67,7 @@ public enum KeyboardShortcutAction
     SwitchToTab9,
 
     // General
+    OpenCommandPalette,
     CloseDialog,
     ShowHelp
 }
@@ -193,7 +194,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             // Connection shortcuts
             [KeyboardShortcutAction.OpenConnectionLibrary] = new(
                 KeyboardShortcutAction.OpenConnectionLibrary, "Connections", "Open connection library",
-                primary, Key.K),
+                primary | KeyModifiers.Shift, Key.K),
             
             [KeyboardShortcutAction.Disconnect] = new(
                 KeyboardShortcutAction.Disconnect, "Connections", "Disconnect",
@@ -249,6 +250,10 @@ public class KeyboardShortcutService : IKeyboardShortcutService
                 primary, Key.D9),
 
             // General shortcuts
+            [KeyboardShortcutAction.OpenCommandPalette] = new(
+                KeyboardShortcutAction.OpenCommandPalette, "General", "Open command palette",
+                primary, Key.K),
+
             [KeyboardShortcutAction.CloseDialog] = new(
                 KeyboardShortcutAction.CloseDialog, "General", "Close dialog / Cancel",
                 KeyModifiers.None, Key.Escape),
