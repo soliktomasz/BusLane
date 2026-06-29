@@ -10,6 +10,59 @@ using Xunit;
 public class ServiceBusOperationsTests
 {
     [Fact]
+    public async Task PeekSessionMessagesAsync_WhenDeadLetter_UsesStandardDeadLetterReceiver()
+    {
+        // Arrange
+        var client = new RecordingServiceBusClient();
+
+        // Act
+        await ServiceBusOperations.PeekSessionMessagesAsync(
+            client,
+            "orders",
+            null,
+            25,
+            0,
+            deadLetter: true,
+            CancellationToken.None);
+
+        // Assert
+        client.CreatedQueueName.Should().Be("orders");
+        client.CreatedReceiverOptions.Should().NotBeNull();
+        client.CreatedReceiverOptions!.SubQueue.Should().Be(SubQueue.DeadLetter);
+        client.SessionAcceptWasCalled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task PeekSessionMessagesAsync_WithSessionIdAndDeadLetter_UsesStandardDeadLetterReceiver()
+    {
+        // Arrange
+        var client = new RecordingServiceBusClient(
+        [
+            ServiceBusModelFactory.ServiceBusReceivedMessage(messageId: "matching", sequenceNumber: 1, sessionId: "session-a"),
+            ServiceBusModelFactory.ServiceBusReceivedMessage(messageId: "other", sequenceNumber: 2, sessionId: "session-b")
+        ]);
+
+        // Act
+        var messages = await ServiceBusOperations.PeekSessionMessagesAsync(
+            client,
+            "orders",
+            null,
+            "session-a",
+            25,
+            0,
+            deadLetter: true,
+            CancellationToken.None);
+
+        // Assert
+        messages.Should().ContainSingle();
+        messages[0].MessageId.Should().Be("matching");
+        client.CreatedQueueName.Should().Be("orders");
+        client.CreatedReceiverOptions.Should().NotBeNull();
+        client.CreatedReceiverOptions!.SubQueue.Should().Be(SubQueue.DeadLetter);
+        client.SessionAcceptWasCalled.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task SelectAsync_WithMoreWorkThanBudget_DoesNotExceedConfiguredConcurrency()
     {
         // Arrange
@@ -116,6 +169,61 @@ public class ServiceBusOperationsTests
     {
         // This is a placeholder - the real implementation would require complex mocking
         throw new NotImplementedException("This test requires Service Bus client infrastructure setup");
+    }
+
+    private sealed class RecordingServiceBusClient(IReadOnlyList<ServiceBusReceivedMessage>? messages = null) : ServiceBusClient
+    {
+        private readonly IReadOnlyList<ServiceBusReceivedMessage> _messages = messages ?? [];
+
+        public string? CreatedQueueName { get; private set; }
+        public ServiceBusReceiverOptions? CreatedReceiverOptions { get; private set; }
+        public bool SessionAcceptWasCalled { get; private set; }
+
+        public override ServiceBusReceiver CreateReceiver(string queueName, ServiceBusReceiverOptions options)
+        {
+            CreatedQueueName = queueName;
+            CreatedReceiverOptions = options;
+            return new FakeReceiver(_messages);
+        }
+
+        public override Task<ServiceBusSessionReceiver> AcceptNextSessionAsync(
+            string queueName,
+            ServiceBusSessionReceiverOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            SessionAcceptWasCalled = true;
+            throw new InvalidOperationException("Session receiver should not be used for dead-letter subqueues.");
+        }
+
+        public override Task<ServiceBusSessionReceiver> AcceptSessionAsync(
+            string queueName,
+            string sessionId,
+            ServiceBusSessionReceiverOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            SessionAcceptWasCalled = true;
+            throw new InvalidOperationException("Session receiver should not be used for dead-letter subqueues.");
+        }
+    }
+
+    private sealed class FakeReceiver(IReadOnlyList<ServiceBusReceivedMessage> messages) : ServiceBusReceiver
+    {
+        public override Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekMessagesAsync(
+            int maxMessages,
+            long? fromSequenceNumber,
+            CancellationToken cancellationToken = default)
+        {
+            var filteredMessages = fromSequenceNumber.HasValue
+                ? messages.Where(message => message.SequenceNumber >= fromSequenceNumber.Value)
+                : messages;
+
+            return Task.FromResult(filteredMessages.Take(maxMessages).ToList().AsReadOnly() as IReadOnlyList<ServiceBusReceivedMessage>);
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 
     private static async Task<IReadOnlyList<TResult>> InvokeBoundedAdminProjectorAsync<TSource, TResult>(

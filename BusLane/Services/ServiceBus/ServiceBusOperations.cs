@@ -224,6 +224,12 @@ internal static class ServiceBusOperations
         bool deadLetter, 
         CancellationToken ct)
     {
+        // Azure Service Bus does not allow session receivers against subqueues.
+        if (deadLetter)
+        {
+            return await PeekStandardMessagesAsync(client, entityName, subscription, count, fromSequenceNumber, deadLetter, ct);
+        }
+
         var allMessages = new List<ServiceBusReceivedMessage>();
         var sessionsChecked = new HashSet<string>();
         var acquiredSessionReceivers = new List<ServiceBusSessionReceiver>();
@@ -297,6 +303,13 @@ internal static class ServiceBusOperations
         CancellationToken ct)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+
+        // Azure Service Bus does not allow session receivers against subqueues.
+        if (deadLetter)
+        {
+            var messages = await PeekStandardMessagesAsync(client, entityName, subscription, count, fromSequenceNumber, deadLetter, ct);
+            return messages.Where(m => string.Equals(m.SessionId, sessionId, StringComparison.Ordinal)).ToList();
+        }
 
         await using var receiver = await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter, ct);
 
