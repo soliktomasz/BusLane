@@ -685,6 +685,29 @@ public class MainWindowViewModelTests
         sut.SettingsViewModel.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task ExecuteCommandPaletteItem_WhenActionFails_ShouldSetStatusMessageWithoutThrowing()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        sut.OpenCommandPaletteCommand.Execute(null);
+        var item = new CommandPaletteItem(
+            "Failing Command",
+            "Throws during execution",
+            "Test",
+            "AlertTriangle",
+            () => throw new InvalidOperationException("Command failed"));
+
+        // Act
+        var act = () => sut.ExecuteCommandPaletteItemCommand.ExecuteAsync(item);
+
+        // Assert
+        await act.Should().NotThrowAsync();
+        sut.CommandPalette.IsOpen.Should().BeFalse();
+        sut.StatusMessage.Should().Be("Command failed: Command failed");
+    }
+
     private static MainWindowViewModel CreateSut(
         TestPreferencesService preferences,
         IAzureAuthService? auth = null,

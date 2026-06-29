@@ -1253,7 +1253,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
 
         CommandPalette.Close();
-        await item.ExecuteAsync();
+        try
+        {
+            await item.ExecuteAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Command failed: {ex.Message}";
+        }
     }
 
     private IEnumerable<CommandPaletteItem> BuildCommandPaletteItems()
