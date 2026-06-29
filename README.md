@@ -3,7 +3,7 @@
 A cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10.
 
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)
-![Avalonia UI](https://img.shields.io/badge/Avalonia-11.3-8B44AC?style=flat)
+![Avalonia UI](https://img.shields.io/badge/Avalonia-12.0-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/soliktomasz/BusLane)
