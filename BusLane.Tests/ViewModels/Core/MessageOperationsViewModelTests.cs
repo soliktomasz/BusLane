@@ -93,7 +93,6 @@ public class MessageOperationsViewModelTests
 
         var preferences = Substitute.For<IPreferencesService>();
         preferences.MessagesPerPage.Returns(25);
-        preferences.MaxTotalMessages.Returns(500);
 
         var logSink = Substitute.For<ILogSink>();
         var sut = new MessageOperationsViewModel(
@@ -131,7 +130,6 @@ public class MessageOperationsViewModelTests
         var operations = Substitute.For<IServiceBusOperations>();
         var preferences = Substitute.For<IPreferencesService>();
         preferences.MessagesPerPage.Returns(25);
-        preferences.MaxTotalMessages.Returns(500);
 
         var logSink = Substitute.For<ILogSink>();
         var sut = new MessageOperationsViewModel(
@@ -177,7 +175,6 @@ public class MessageOperationsViewModelTests
 
         var preferences = Substitute.For<IPreferencesService>();
         preferences.MessagesPerPage.Returns(25);
-        preferences.MaxTotalMessages.Returns(500);
 
         var logSink = Substitute.For<ILogSink>();
         var sut = new MessageOperationsViewModel(
@@ -237,7 +234,6 @@ public class MessageOperationsViewModelTests
 
         var preferences = Substitute.For<IPreferencesService>();
         preferences.MessagesPerPage.Returns(25);
-        preferences.MaxTotalMessages.Returns(500);
 
         var logSink = Substitute.For<ILogSink>();
         var sut = new MessageOperationsViewModel(
@@ -288,7 +284,6 @@ public class MessageOperationsViewModelTests
 
         var preferences = Substitute.For<IPreferencesService>();
         preferences.MessagesPerPage.Returns(25);
-        preferences.MaxTotalMessages.Returns(500);
 
         var logSink = Substitute.For<ILogSink>();
         var sut = new MessageOperationsViewModel(
@@ -312,6 +307,61 @@ public class MessageOperationsViewModelTests
         sut.Pagination.PageLabel.Should().Be("Page 1");
         sut.Pagination.PageRangeText.Should().Be("Showing 1-25");
         sut.Pagination.PageDetailText.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task LoadNextPageAsync_WhenCachedMessagesExceedFormerDefaultLimit_StillLoadsNextPage()
+    {
+        // Arrange
+        const int pageSize = 25;
+        const int pagesToLoad = 21;
+
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                Arg.Any<long?>(),
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var fromSequenceNumber = callInfo.ArgAt<long?>(3);
+                var startingSequenceNumber = fromSequenceNumber ?? 1;
+                return startingSequenceNumber <= pagesToLoad * pageSize
+                    ? CreateMessages(startingSequenceNumber, pageSize)
+                    : Array.Empty<MessageInfo>();
+            });
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(pageSize);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        await sut.LoadMessagesAsync();
+
+        // Act
+        for (var i = 2; i <= pagesToLoad; i++)
+        {
+            await sut.LoadNextPageCommand.ExecuteAsync(null);
+        }
+
+        // Assert
+        sut.Pagination.CurrentPage.Should().Be(pagesToLoad);
+        sut.Messages.Should().HaveCount(pageSize);
+        sut.Messages[0].SequenceNumber.Should().Be(501);
     }
 
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber, DateTimeOffset enqueuedTime)

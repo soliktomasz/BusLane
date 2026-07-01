@@ -64,19 +64,6 @@ public class PreferencesServiceTests : IDisposable
     }
     
     [Fact]
-    public void MaxTotalMessages_ShouldDefaultTo500()
-    {
-        // Arrange
-        var sut = new PreferencesService();
-        
-        // Act
-        var result = sut.MaxTotalMessages;
-        
-        // Assert
-        result.Should().Be(500);
-    }
-
-    [Fact]
     public void TerminalPreferences_ShouldHaveExpectedDefaults()
     {
         // Arrange

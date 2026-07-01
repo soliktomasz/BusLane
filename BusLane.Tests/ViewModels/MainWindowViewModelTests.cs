@@ -1116,7 +1116,6 @@ public class MainWindowViewModelTests
         public int AutoRefreshIntervalSeconds { get; set; } = 30;
         public int DefaultMessageCount { get; set; } = 100;
         public int MessagesPerPage { get; set; } = 100;
-        public int MaxTotalMessages { get; set; } = 500;
         public bool ShowDeadLetterBadges { get; set; } = true;
         public bool EnableMessagePreview { get; set; } = true;
         public bool ShowNavigationPanel { get; set; } = true;

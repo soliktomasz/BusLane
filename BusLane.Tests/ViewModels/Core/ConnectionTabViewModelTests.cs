@@ -206,7 +206,6 @@ public class ConnectionTabViewModelTests
         // Arrange
         var preferencesService = Substitute.For<IPreferencesService>();
         preferencesService.MessagesPerPage.Returns(25);
-        preferencesService.MaxTotalMessages.Returns(500);
         var logSink = CreateMockLogSink();
         var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
         var operations = Substitute.For<IConnectionStringOperations>();

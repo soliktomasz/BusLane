@@ -28,7 +28,6 @@ public class DiagnosticBundleServiceTests : IDisposable
         var preferences = Substitute.For<IPreferencesService>();
         preferences.Theme.Returns("Light");
         preferences.MessagesPerPage.Returns(100);
-        preferences.MaxTotalMessages.Returns(500);
         preferences.OpenTabsJson.Returns("[]");
 
         var alertService = Substitute.For<IAlertService>();

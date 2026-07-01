@@ -11,7 +11,6 @@ public interface IPreferencesService
     int AutoRefreshIntervalSeconds { get; set; }
     int DefaultMessageCount { get; set; }
     int MessagesPerPage { get; set; }
-    int MaxTotalMessages { get; set; }
     bool ShowDeadLetterBadges { get; set; }
     bool EnableMessagePreview { get; set; }
     bool ShowNavigationPanel { get; set; }

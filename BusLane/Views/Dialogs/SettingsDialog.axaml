@@ -137,22 +137,6 @@
 
                                         <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
-                                        <!-- Max Total Messages -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Maximum total messages" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Maximum messages to load across all pages"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ComboBox Grid.Column="1"
-                                                      ItemsSource="{Binding SettingsViewModel.MaxTotalMessagesOptions}"
-                                                      SelectedItem="{Binding SettingsViewModel.MaxTotalMessages}"
-                                                      Width="100"
-                                                      VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
                                         <!-- Message Preview -->
                                         <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">

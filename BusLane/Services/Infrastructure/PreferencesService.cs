@@ -16,7 +16,6 @@ public class PreferencesService : IPreferencesService
     public int AutoRefreshIntervalSeconds { get; set; } = 30;
     public int DefaultMessageCount { get; set; } = 100;
     public int MessagesPerPage { get; set; } = 100;
-    public int MaxTotalMessages { get; set; } = 500;
     public bool ShowDeadLetterBadges { get; set; } = true;
     public bool EnableMessagePreview { get; set; } = true;
     public bool ShowNavigationPanel { get; set; } = true;
@@ -63,7 +62,6 @@ public class PreferencesService : IPreferencesService
                     AutoRefreshIntervalSeconds = data.AutoRefreshIntervalSeconds;
                     DefaultMessageCount = data.DefaultMessageCount > 0 ? data.DefaultMessageCount : DefaultMessageCount;
                     MessagesPerPage = data.MessagesPerPage > 0 ? data.MessagesPerPage : MessagesPerPage;
-                    MaxTotalMessages = data.MaxTotalMessages > 0 ? data.MaxTotalMessages : MaxTotalMessages;
                     ShowDeadLetterBadges = data.ShowDeadLetterBadges;
                     EnableMessagePreview = data.EnableMessagePreview;
                     ShowNavigationPanel = data.ShowNavigationPanel;
@@ -103,7 +101,6 @@ public class PreferencesService : IPreferencesService
                 AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds,
                 DefaultMessageCount = DefaultMessageCount,
                 MessagesPerPage = MessagesPerPage,
-                MaxTotalMessages = MaxTotalMessages,
                 ShowDeadLetterBadges = ShowDeadLetterBadges,
                 EnableMessagePreview = EnableMessagePreview,
                 ShowNavigationPanel = ShowNavigationPanel,
@@ -141,7 +138,6 @@ public class PreferencesService : IPreferencesService
         public int AutoRefreshIntervalSeconds { get; set; }
         public int DefaultMessageCount { get; set; }
         public int MessagesPerPage { get; set; }
-        public int MaxTotalMessages { get; set; }
         public bool ShowDeadLetterBadges { get; set; }
         public bool EnableMessagePreview { get; set; }
         public bool ShowNavigationPanel { get; set; } = true;

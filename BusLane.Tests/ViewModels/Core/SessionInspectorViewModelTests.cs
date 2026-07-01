@@ -304,7 +304,6 @@ public class SessionInspectorViewModelTests
     {
         var preferences = Substitute.For<IPreferencesService>();
         preferences.MessagesPerPage.Returns(25);
-        preferences.MaxTotalMessages.Returns(500);
         preferences.DefaultMessageCount.Returns(25);
         return preferences;
     }

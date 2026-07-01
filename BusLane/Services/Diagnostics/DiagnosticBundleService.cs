@@ -96,7 +96,6 @@ public class DiagnosticBundleService : IDiagnosticBundleService
         {
             ["Theme"] = _preferencesService.Theme,
             ["MessagesPerPage"] = _preferencesService.MessagesPerPage,
-            ["MaxTotalMessages"] = _preferencesService.MaxTotalMessages,
             ["RestoreTabsOnStartup"] = _preferencesService.RestoreTabsOnStartup,
             ["OpenTabsJson"] = _preferencesService.OpenTabsJson
         };

@@ -124,7 +124,6 @@ public class SettingsViewModelTests
         preferences.Theme.Returns("System");
         preferences.DefaultMessageCount.Returns(100);
         preferences.MessagesPerPage.Returns(100);
-        preferences.MaxTotalMessages.Returns(500);
         preferences.AutoRefreshIntervalSeconds.Returns(30);
         preferences.AutoCheckForUpdates.Returns(true);
         preferences.ShowDeadLetterBadges.Returns(true);

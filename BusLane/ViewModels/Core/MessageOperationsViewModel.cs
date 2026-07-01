@@ -438,14 +438,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
             var fromSequenceNumber = _nextFromSequenceNumber;
 
-            // Check max messages limit
-            if (_pageCache.GetTotalCachedMessages() >= _preferencesService.MaxTotalMessages)
-            {
-                _setStatus($"Maximum message limit ({_preferencesService.MaxTotalMessages}) reached");
-                Pagination.CanGoNext = false;
-                return;
-            }
-
             var pageResult = await LoadPageAsync(nextPage, fromSequenceNumber);
             var pageMessages = pageResult.Messages;
 
@@ -611,12 +603,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return true;
         }
 
-        var loadedCount = _pageCache.GetTotalCachedMessages();
-        if (loadedCount >= _preferencesService.MaxTotalMessages)
-        {
-            return false;
-        }
-
         // Be optimistic. We verify the actual end when a next-page fetch produces
         // no unseen messages.
         return currentPageMessageCount > 0;
@@ -630,9 +616,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return new List<MessageInfo>().AsReadOnly();
         }
 
-        var scanCount = Math.Min(
-            _preferencesService.MaxTotalMessages,
-            _pageCache.GetTotalCachedMessages() + _preferencesService.MessagesPerPage);
+        var scanCount = _pageCache.GetTotalCachedMessages() + _preferencesService.MessagesPerPage;
 
         var messages = await operations.PeekMessagesAsync(
             _currentEntityName!,

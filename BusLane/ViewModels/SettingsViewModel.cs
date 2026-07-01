@@ -29,7 +29,6 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private int _autoRefreshIntervalSeconds = 30;
     [ObservableProperty] private int _defaultMessageCount = 100;
     [ObservableProperty] private int _messagesPerPage = 100;
-    [ObservableProperty] private int _maxTotalMessages = 500;
     [ObservableProperty] private bool _showDeadLetterBadges = true;
     [ObservableProperty] private bool _enableMessagePreview = true;
     [ObservableProperty] private string _theme = "Light";
@@ -55,7 +54,6 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
     public int[] MessagesPerPageOptions { get; } = [25, 50, 100];
-    public int[] MaxTotalMessagesOptions { get; } = [100, 250, 500, 1000];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
     public AppLockSettingsViewModel AppLockSettings { get; }
     /// <summary>
@@ -139,7 +137,6 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             AutoRefreshIntervalSeconds = _preferencesService.AutoRefreshIntervalSeconds;
             DefaultMessageCount = _preferencesService.DefaultMessageCount;
             MessagesPerPage = _preferencesService.MessagesPerPage;
-            MaxTotalMessages = _preferencesService.MaxTotalMessages;
             ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
@@ -169,7 +166,6 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         _preferencesService.AutoRefreshIntervalSeconds = AutoRefreshIntervalSeconds;
         _preferencesService.DefaultMessageCount = DefaultMessageCount;
         _preferencesService.MessagesPerPage = MessagesPerPage;
-        _preferencesService.MaxTotalMessages = MaxTotalMessages;
         _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
         _preferencesService.EnableMessagePreview = EnableMessagePreview;
         _preferencesService.Theme = themeToApply;
@@ -216,7 +212,6 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         AutoRefreshIntervalSeconds = 30;
         DefaultMessageCount = 100;
         MessagesPerPage = 100;
-        MaxTotalMessages = 500;
         ShowDeadLetterBadges = true;
         EnableMessagePreview = true;
         Theme = "Light";
