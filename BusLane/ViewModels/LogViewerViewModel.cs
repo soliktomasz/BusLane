@@ -133,7 +133,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 
             if (removedEntry != null)
             {
-                _filteredLogs.Remove(removedEntry);
+                RemoveFilteredEntryByReference(removedEntry);
             }
 
             OnPropertyChanged(nameof(TotalLogCount));
@@ -152,35 +152,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
 
     private void ApplyFilters()
     {
-        var query = _allLogs.AsEnumerable();
-
-        // Apply level filter
-        if (SelectedLevelFilter.HasValue)
-        {
-            query = query.Where(e => e.Level == SelectedLevelFilter.Value);
-        }
-
-        // Apply source filter
-        if (SelectedSourceFilter.HasValue)
-        {
-            query = query.Where(e => e.Source == SelectedSourceFilter.Value);
-        }
-
-        // Apply search text filter
-        if (!string.IsNullOrWhiteSpace(SearchText))
-        {
-            query = query.Where(e =>
-                e.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (e.Details?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
-        }
-
-        // Apply debug mode filter
-        if (!IsDebugModeEnabled)
-        {
-            query = query.Where(e => e.Level != LogLevel.Debug);
-        }
-
-        var filtered = query.ToList();
+        var filtered = _allLogs.Where(EntryMatchesFilters).ToList();
 
         RunOnUiThread(() =>
         {
@@ -213,6 +185,18 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         return string.IsNullOrWhiteSpace(SearchText) ||
                entry.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                (entry.Details?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private void RemoveFilteredEntryByReference(LogEntry removedEntry)
+    {
+        for (var i = _filteredLogs.Count - 1; i >= 0; i--)
+        {
+            if (ReferenceEquals(_filteredLogs[i], removedEntry))
+            {
+                _filteredLogs.RemoveAt(i);
+                return;
+            }
+        }
     }
 
     private static void RunOnUiThread(Action action)

@@ -563,11 +563,25 @@ public partial class MessageOperationsViewModel : ViewModelBase
             }
         }
 
-        messages.Sort((left, right) => SortDescending
-            ? right.EnqueuedTime.CompareTo(left.EnqueuedTime)
-            : left.EnqueuedTime.CompareTo(right.EnqueuedTime));
+        messages.Sort((left, right) => CompareMessageOrder(left, right, SortDescending));
 
         return new PageLoadResult(messages.AsReadOnly(), nextFrom);
+    }
+
+    internal static int CompareMessageOrder(MessageInfo left, MessageInfo right, bool sortDescending)
+    {
+        var primary = sortDescending
+            ? right.EnqueuedTime.CompareTo(left.EnqueuedTime)
+            : left.EnqueuedTime.CompareTo(right.EnqueuedTime);
+
+        if (primary != 0)
+        {
+            return primary;
+        }
+
+        return sortDescending
+            ? right.SequenceNumber.CompareTo(left.SequenceNumber)
+            : left.SequenceNumber.CompareTo(right.SequenceNumber);
     }
 
     private sealed record PageLoadResult(IReadOnlyList<MessageInfo> Messages, long? NextFromSequenceNumber);

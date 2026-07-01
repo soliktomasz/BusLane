@@ -11,6 +11,23 @@ using NSubstitute;
 public class MessageOperationsViewModelTests
 {
     [Fact]
+    public void CompareMessageOrder_WhenEnqueuedTimeMatches_UsesSequenceNumberTiebreaker()
+    {
+        // Arrange
+        var enqueuedAt = DateTimeOffset.UtcNow;
+        var lowSequence = CreateMessage("low", enqueuedAt, 10);
+        var highSequence = CreateMessage("high", enqueuedAt, 20);
+
+        // Act
+        var descending = MessageOperationsViewModel.CompareMessageOrder(lowSequence, highSequence, sortDescending: true);
+        var ascending = MessageOperationsViewModel.CompareMessageOrder(lowSequence, highSequence, sortDescending: false);
+
+        // Assert
+        descending.Should().BePositive();
+        ascending.Should().BeNegative();
+    }
+
+    [Fact]
     public void ResolveCopyMessageBody_WithMessageHavingNullBody_ReturnsNull()
     {
         // Arrange
@@ -31,6 +48,21 @@ public class MessageOperationsViewModelTests
 
         // Assert
         text.Should().BeNull();
+    }
+
+    private static MessageInfo CreateMessage(string id, DateTimeOffset enqueuedAt, long sequenceNumber)
+    {
+        return new MessageInfo(
+            id,
+            null,
+            null,
+            "body",
+            enqueuedAt,
+            null,
+            sequenceNumber,
+            0,
+            null,
+            new Dictionary<string, object>());
     }
 
     [Fact]

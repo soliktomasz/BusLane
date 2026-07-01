@@ -329,6 +329,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             }
         }
 
+        // Messages and FilteredMessages are newest-first via Insert(0, ...), so tail removal drops oldest buffered items.
         for (var i = 0; i < removedMessages.Count; i++)
         {
             if (Messages.Count > 0)

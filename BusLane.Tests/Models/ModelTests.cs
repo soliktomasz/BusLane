@@ -708,6 +708,30 @@ public class LiveStreamMessageTests
     }
 
     [Fact]
+    public void BodyPreview_WhenCopiedWithDifferentBody_RecomputesFromNewBody()
+    {
+        // Arrange
+        var original = new LiveStreamMessage(
+            "message-1",
+            null,
+            "text/plain",
+            new string('a', 210),
+            DateTimeOffset.UtcNow,
+            "queue-a",
+            "Queue",
+            null,
+            1,
+            null,
+            new Dictionary<string, object>());
+
+        // Act
+        var copied = original with { Body = "short" };
+
+        // Assert
+        copied.BodyPreview.Should().Be("short");
+    }
+
+    [Fact]
     public void LiveStreamMessage_ContainsAllProperties()
     {
         // Arrange
