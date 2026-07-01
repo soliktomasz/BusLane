@@ -16,16 +16,15 @@ public class MainWindowViewTests
     }
 
     [Fact]
-    public void MainWindow_StatusArea_ShowsFullShellStatusWithoutPopupTrigger()
+    public void MainWindow_StatusArea_OpensPopupOnClick()
     {
         // Arrange
         var xaml = File.ReadAllText(GetMainWindowPath());
 
         // Assert
-        xaml.Should().Contain("Text=\"{Binding ShellStatusMessage}\"");
-        xaml.Should().Contain("TextWrapping=\"Wrap\"");
-        xaml.Should().NotContain("ToggleStatusPopupCommand");
-        xaml.Should().NotContain("Click to see full message");
+        xaml.Should().Contain("Text=\"{Binding ShellStatusSummary}\"");
+        xaml.Should().Contain("Command=\"{Binding ToggleStatusPopupCommand}\"");
+        xaml.Should().Contain("TextTrimming=\"CharacterEllipsis\"");
     }
 
     private static string GetMainWindowPath()

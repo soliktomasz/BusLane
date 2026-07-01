@@ -200,20 +200,22 @@
                                  IsVisible="{Binding IsLoading}"
                                  Width="100" Height="3"
                                  VerticalAlignment="Center"/>
-                    <Border Grid.Column="1"
+                    <Button Grid.Column="1"
+                            Classes="subtle"
+                            Command="{Binding ToggleStatusPopupCommand}"
+                            HorizontalAlignment="Left"
                             Padding="8,4"
-                            HorizontalAlignment="Stretch">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                            Cursor="Hand"
+                            ToolTip.Tip="Click to see full message">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="Info" Size="13"
-                                        Foreground="{DynamicResource SubtleForeground}"
-                                        VerticalAlignment="Top"
-                                        Margin="0,1,0,0"/>
-                            <TextBlock Text="{Binding ShellStatusMessage}"
-                                       Grid.Column="1"
+                                        Foreground="{DynamicResource SubtleForeground}"/>
+                            <TextBlock Text="{Binding ShellStatusSummary}"
                                        Classes="caption"
-                                       TextWrapping="Wrap"/>
-                        </Grid>
-                    </Border>
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxWidth="460"/>
+                        </StackPanel>
+                    </Button>
 
                     <controls:UpdateNotificationView Grid.Column="2"
                                                      DataContext="{Binding UpdateNotification}"
