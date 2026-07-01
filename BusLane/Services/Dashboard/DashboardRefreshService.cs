@@ -158,8 +158,9 @@ public class DashboardRefreshService : IDashboardRefreshService
             gateEntered = true;
             return (await _currentOperations!.GetSubscriptionsAsync(topicName, ct)).ToList();
         }
-        catch (Exception) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
+            Log.Warning(ex, "Failed to fetch subscriptions for topic {TopicName}", topicName);
             return [];
         }
         finally

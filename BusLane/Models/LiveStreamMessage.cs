@@ -16,7 +16,7 @@ public record LiveStreamMessage(
 {
     private const int MaxPreviewLength = 200;
 
-    public string BodyPreview { get; } = string.IsNullOrEmpty(Body)
+    public string BodyPreview => string.IsNullOrEmpty(Body)
         ? string.Empty
         : Body.Length <= MaxPreviewLength
             ? Body.ReplaceLineEndings(" ")

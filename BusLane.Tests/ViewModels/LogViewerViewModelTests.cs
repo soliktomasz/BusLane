@@ -86,10 +86,33 @@ public class LogViewerViewModelTests
         actions.Should().NotContain(NotifyCollectionChangedAction.Reset);
     }
 
-    private static LogEntry CreateEntry(LogLevel level)
+    [Fact]
+    public void LogAdded_WhenDuplicateValuesOverflow_RemovesTrimmedInstanceNotNewestMatch()
+    {
+        // Arrange
+        var timestamp = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        var logSink = new LogSink();
+        using var sut = new LogViewerViewModel(logSink);
+
+        for (var i = 0; i < 1000; i++)
+        {
+            logSink.Log(CreateEntry(LogLevel.Info, timestamp));
+        }
+
+        var newestEntry = CreateEntry(LogLevel.Info, timestamp);
+
+        // Act
+        logSink.Log(newestEntry);
+
+        // Assert
+        sut.FilteredLogs.Should().HaveCount(1000);
+        sut.FilteredLogs[0].Should().BeSameAs(newestEntry);
+    }
+
+    private static LogEntry CreateEntry(LogLevel level, DateTime? timestamp = null)
     {
         return new LogEntry(
-            DateTime.UtcNow,
+            timestamp ?? DateTime.UtcNow,
             LogSource.Application,
             level,
             $"Test {level}");

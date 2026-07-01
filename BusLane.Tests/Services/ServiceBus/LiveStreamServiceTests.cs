@@ -49,4 +49,18 @@ public class LiveStreamServiceTests
         result.Should().HaveLength(4099);
         result.Should().EndWith("...");
     }
+
+    [Fact]
+    public void CreateStreamBody_WhenLimitSplitsUtf8Character_DoesNotEmitReplacementCharacter()
+    {
+        // Arrange
+        var payload = BinaryData.FromString($"{new string('a', 4095)}😀tail");
+
+        // Act
+        var result = LiveStreamService.CreateStreamBody(payload);
+
+        // Assert
+        result.Should().NotContain("\uFFFD");
+        result.Should().EndWith("...");
+    }
 }

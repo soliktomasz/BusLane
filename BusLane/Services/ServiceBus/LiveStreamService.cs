@@ -277,7 +277,54 @@ public class LiveStreamService : ILiveStreamService
             return body.ToString();
         }
 
-        return Encoding.UTF8.GetString(memory.Span[..MaxStreamBodyBytes]) + "...";
+        var length = GetUtf8BoundaryLength(memory.Span, MaxStreamBodyBytes);
+        return Encoding.UTF8.GetString(memory.Span[..length]) + "...";
+    }
+
+    private static int GetUtf8BoundaryLength(ReadOnlySpan<byte> bytes, int maxLength)
+    {
+        var length = Math.Min(maxLength, bytes.Length);
+        var start = length - 1;
+        while (start >= 0 && IsUtf8ContinuationByte(bytes[start]))
+        {
+            start--;
+        }
+
+        if (start < 0)
+        {
+            return 0;
+        }
+
+        var expectedLength = GetUtf8SequenceLength(bytes[start]);
+        if (expectedLength == 0)
+        {
+            return start;
+        }
+
+        var availableLength = length - start;
+        return availableLength >= expectedLength ? length : start;
+    }
+
+    private static bool IsUtf8ContinuationByte(byte value) => (value & 0b1100_0000) == 0b1000_0000;
+
+    private static int GetUtf8SequenceLength(byte value)
+    {
+        if ((value & 0b1000_0000) == 0)
+        {
+            return 1;
+        }
+
+        if ((value & 0b1110_0000) == 0b1100_0000)
+        {
+            return 2;
+        }
+
+        if ((value & 0b1111_0000) == 0b1110_0000)
+        {
+            return 3;
+        }
+
+        return (value & 0b1111_1000) == 0b1111_0000 ? 4 : 0;
     }
 
     public async Task StopStreamAsync()

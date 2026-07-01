@@ -21,15 +21,18 @@ public class LiveStreamViewTests
 
     private static string GetLiveStreamViewPath()
     {
-        return Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..",
-            "..",
-            "..",
-            "..",
-            "BusLane",
-            "Views",
-            "Controls",
-            "LiveStreamView.axaml"));
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null)
+        {
+            var projectPath = Path.Combine(directory.FullName, "BusLane", "BusLane.csproj");
+            if (File.Exists(projectPath))
+            {
+                return Path.Combine(directory.FullName, "BusLane", "Views", "Controls", "LiveStreamView.axaml");
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not locate BusLane project root.");
     }
 }
