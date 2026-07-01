@@ -1,0 +1,195 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.SubscriptionDetailDialog"
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
+
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding ShowSubscriptionDetailDialog}">
+        <Border Background="{DynamicResource CardBackground}"
+                CornerRadius="14"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BoxShadow="0 12 32 0 #38000000"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                MinWidth="580"
+                MaxWidth="720"
+                MaxHeight="680"
+                ClipToBounds="True"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceSubtle}"
+                        CornerRadius="14,14,0,0"
+                        Padding="20,16">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceWarning}"
+                                Margin="0,0,12,0">
+                            <LucideIcon Kind="Inbox" Size="18"
+                                        Foreground="{DynamicResource TextWarning}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Subscription Details"
+                                       Classes="heading"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="{Binding SubscriptionDetailItem.Name}"
+                                           FontSize="12"
+                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentBrand}"/>
+                                <TextBlock Text="on"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource SubtleForeground}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SubscriptionDetailItem.TopicName}"
+                                           FontSize="12"
+                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                           Foreground="{DynamicResource SubtleForeground}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="2" Classes="icon"
+                                Command="{Binding CloseSubscriptionDetailDialogCommand}"
+                                ToolTip.Tip="Close">
+                            <LucideIcon Kind="X" Size="16"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Spacing="16" Margin="20,20,20,28">
+
+                        <!-- General -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="GENERAL" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="14">
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="14">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Status" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.Status, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,0">
+                                        <TextBlock Text="Requires Session" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.RequiresSession}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <TextBlock Text="Batched Operations" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.EnableBatchedOperations, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Dead Lettering on Expiration" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.DeadLetteringOnMessageExpiration, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Message Counts -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="MESSAGE COUNTS" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="14">
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="14">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Active" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.ActiveMessageCount}"
+                                                             FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,0">
+                                        <TextBlock Text="Dead Letter" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.DeadLetterCount}"
+                                                             FontWeight="SemiBold"
+                                                             Foreground="{DynamicResource TextDanger}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <TextBlock Text="Total" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.MessageCount}"
+                                                             FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Transfer" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.TransferMessageCount}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1">
+                                        <TextBlock Text="Transfer DLQ" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.TransferDeadLetterMessageCount}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Configuration -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="CONFIGURATION" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="14">
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="14">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Lock Duration" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.LockDuration, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,0">
+                                        <TextBlock Text="Max Delivery Count" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.MaxDeliveryCount, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <TextBlock Text="Default Message TTL" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.DefaultMessageTimeToLive, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Auto Delete on Idle" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.AutoDeleteOnIdle, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,12,0"
+                                                IsVisible="{Binding SubscriptionDetailItem.ForwardTo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Forward To" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.ForwardTo}"
+                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontSize="12"
+                                                             TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="2"
+                                                IsVisible="{Binding SubscriptionDetailItem.ForwardDeadLetteredMessagesTo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="Forward DLQ To" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.ForwardDeadLetteredMessagesTo}"
+                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontSize="12"
+                                                             TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Timestamps -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="TIMESTAMPS" Classes="field-group-header"/>
+                            <Border Classes="surface-subtle" Padding="14">
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+                                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Last Accessed" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.AccessedAt, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                        <TextBlock Text="Created" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.CreatedAt, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Updated" Classes="caption" Margin="0,0,0,4"/>
+                                        <SelectableTextBlock Text="{Binding SubscriptionDetailItem.UpdatedAt, FallbackValue='N/A'}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>

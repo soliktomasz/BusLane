@@ -26,6 +26,10 @@ public interface IServiceBusOperations : IAsyncDisposable
         string topicName,
         SubscriptionCreationOptions options,
         CancellationToken ct = default);
+    Task DeleteSubscriptionAsync(
+        string topicName,
+        string subscriptionName,
+        CancellationToken ct = default);
 
     // Message operations
     Task<IEnumerable<MessageInfo>> PeekMessagesAsync(

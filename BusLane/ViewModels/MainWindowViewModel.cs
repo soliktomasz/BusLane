@@ -181,6 +181,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [ObservableProperty] private bool _newSubscriptionRequiresSession;
     [ObservableProperty] private bool _isCreatingSubscription;
 
+    // Subscription details dialog
+    [ObservableProperty] private bool _showSubscriptionDetailDialog;
+    [ObservableProperty] private SubscriptionInfo? _subscriptionDetailItem;
+
     // Settings
     [ObservableProperty] private bool _showSettings;
     [ObservableProperty] private SettingsViewModel? _settingsViewModel;
@@ -835,6 +839,67 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         finally
         {
             IsCreatingSubscription = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenSubscriptionDetailDialog(SubscriptionInfo subscription)
+    {
+        SubscriptionDetailItem = subscription;
+        ShowSubscriptionDetailDialog = true;
+    }
+
+    [RelayCommand]
+    private void CloseSubscriptionDetailDialog()
+    {
+        ShowSubscriptionDetailDialog = false;
+        SubscriptionDetailItem = null;
+    }
+
+    [RelayCommand]
+    private void DeleteSubscriptionRequest(SubscriptionInfo subscription)
+    {
+        Confirmation.ShowConfirmation(
+            "Delete subscription",
+            $"Are you sure you want to delete subscription '{subscription.Name}' from topic '{subscription.TopicName}'? This action cannot be undone.",
+            "Delete",
+            () => DeleteSubscriptionAsync(subscription));
+    }
+
+    private async Task DeleteSubscriptionAsync(SubscriptionInfo subscription)
+    {
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (operations == null)
+        {
+            StatusMessage = "No active connection";
+            return;
+        }
+
+        StatusMessage = $"Deleting subscription '{subscription.Name}'...";
+
+        try
+        {
+            await operations.DeleteSubscriptionAsync(subscription.TopicName, subscription.Name);
+
+            var topic = CurrentNavigation.Topics.FirstOrDefault(t =>
+                string.Equals(t.Name, subscription.TopicName, StringComparison.OrdinalIgnoreCase));
+
+            if (topic != null)
+            {
+                await ReloadTopicSubscriptionsAsync(topic, operations);
+            }
+
+            if (CurrentNavigation.SelectedSubscription == subscription)
+            {
+                CurrentNavigation.SelectedSubscription = null;
+                CurrentNavigation.SelectedEntity = null;
+            }
+
+            StatusMessage = $"Subscription '{subscription.Name}' deleted";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Unable to delete subscription: {ex.Message}";
         }
     }
 
