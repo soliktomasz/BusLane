@@ -728,6 +728,101 @@ public class MainWindowViewModelTests
         sut.StatusMessage.Should().Be("Command failed: Command failed");
     }
 
+    [Fact]
+    public async Task CreateSubscriptionAsync_WithBlankName_ShowsValidationAndDoesNotCallOperations()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetTopicInfoAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(new TopicInfo("orders-topic", 1024, 0, null, TimeSpan.FromDays(14)));
+        operations.GetSubscriptionsAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<SubscriptionInfo>>([]));
+
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateConnectedTopicTab("tab-1", preferences, operationsFactory, operations, "orders-topic");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        var topic = tab.Navigation.Topics.Single();
+
+        // Act
+        sut.OpenCreateSubscriptionDialogCommand.Execute(topic);
+        sut.NewSubscriptionName = " ";
+        await sut.CreateSubscriptionCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.ShowCreateSubscriptionDialog.Should().BeTrue();
+        sut.StatusMessage.Should().Be("Subscription name is required");
+        await operations.DidNotReceive().CreateSubscriptionAsync(
+            Arg.Any<string>(),
+            Arg.Any<SubscriptionCreationOptions>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionAsync_WithValidName_CreatesReloadsAndSelectsSubscription()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var initialSubscriptions = new[]
+        {
+            new SubscriptionInfo("existing", "orders-topic", 0, 0, 0, null, false)
+        };
+        var refreshedSubscriptions = new[]
+        {
+            initialSubscriptions[0],
+            new SubscriptionInfo("processor", "orders-topic", 0, 0, 0, null, true)
+        };
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetTopicInfoAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(new TopicInfo("orders-topic", 1024, 1, null, TimeSpan.FromDays(14)));
+        operations.GetSubscriptionsAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(
+                Task.FromResult<IEnumerable<SubscriptionInfo>>(initialSubscriptions),
+                Task.FromResult<IEnumerable<SubscriptionInfo>>(refreshedSubscriptions));
+        operations.PeekMessagesAsync(
+                "orders-topic",
+                "processor",
+                Arg.Any<int>(),
+                null,
+                false,
+                true,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<MessageInfo>>([]));
+
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateConnectedTopicTab("tab-1", preferences, operationsFactory, operations, "orders-topic");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        var topic = tab.Navigation.Topics.Single();
+
+        // Act
+        sut.OpenCreateSubscriptionDialogCommand.Execute(topic);
+        sut.NewSubscriptionName = "processor";
+        sut.NewSubscriptionRequiresSession = true;
+        await sut.CreateSubscriptionCommand.ExecuteAsync(null);
+
+        // Assert
+        await operations.Received(1).CreateSubscriptionAsync(
+            "orders-topic",
+            Arg.Is<SubscriptionCreationOptions>(options =>
+                options.Name == "processor" &&
+                options.RequiresSession),
+            Arg.Any<CancellationToken>());
+        sut.ShowCreateSubscriptionDialog.Should().BeFalse();
+        topic.IsExpanded.Should().BeTrue();
+        topic.Subscriptions.Should().ContainSingle(subscription => subscription.Name == "processor");
+        tab.Navigation.SelectedSubscription.Should().NotBeNull();
+        tab.Navigation.SelectedSubscription!.Name.Should().Be("processor");
+        sut.StatusMessage.Should().Be("Subscription 'processor' created");
+    }
+
     private static MainWindowViewModel CreateSut(
         TestPreferencesService preferences,
         IAzureAuthService? auth = null,
@@ -839,6 +934,24 @@ public class MainWindowViewModelTests
             "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
             ConnectionType.Queue,
             entityName: entityName);
+
+        tab.ConnectWithConnectionStringAsync(connection, operationsFactory).GetAwaiter().GetResult();
+        return tab;
+    }
+
+    private static ConnectionTabViewModel CreateConnectedTopicTab(
+        string tabId,
+        TestPreferencesService preferences,
+        IServiceBusOperationsFactory operationsFactory,
+        IServiceBusOperations operations,
+        string topicName)
+    {
+        var tab = CreateTab(tabId, preferences);
+        var connection = SavedConnection.Create(
+            "Orders Topic",
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            ConnectionType.Topic,
+            entityName: topicName);
 
         tab.ConnectWithConnectionStringAsync(connection, operationsFactory).GetAwaiter().GetResult();
         return tab;

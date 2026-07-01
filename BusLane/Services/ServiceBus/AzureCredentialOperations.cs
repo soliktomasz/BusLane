@@ -1,8 +1,10 @@
 namespace BusLane.Services.ServiceBus;
 
+using Azure;
 using Azure.Core;
 using Azure.Messaging.ServiceBus;
 using Azure.ResourceManager.ServiceBus;
+using Azure.ResourceManager.ServiceBus.Models;
 using BusLane.Models;
 using Serilog;
 
@@ -155,6 +157,29 @@ public class AzureCredentialOperations : IAzureCredentialOperations
             ));
         }
         return subs;
+    }
+
+    public async Task CreateSubscriptionAsync(
+        string topicName,
+        SubscriptionCreationOptions options,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Name))
+        {
+            throw new ArgumentException("Subscription name is required.", nameof(SubscriptionCreationOptions.Name));
+        }
+
+        var ns = _getNamespaceResource();
+        var topic = await ns.GetServiceBusTopicAsync(topicName, ct);
+        var data = new ServiceBusSubscriptionData
+        {
+            RequiresSession = options.RequiresSession
+        };
+
+        await topic.Value.GetServiceBusSubscriptions()
+            .CreateOrUpdateAsync(WaitUntil.Completed, options.Name, data, ct);
     }
 
     public async Task<IEnumerable<MessageInfo>> PeekMessagesAsync(

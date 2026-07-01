@@ -10,6 +10,53 @@ using Xunit;
 public class ServiceBusOperationsTests
 {
     [Fact]
+    public void BuildCreateSubscriptionOptions_WithSessionOption_MapsTopicNameSubscriptionNameAndRequiresSession()
+    {
+        // Arrange
+        var options = new SubscriptionCreationOptions("processor", RequiresSession: true);
+
+        // Act
+        var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions("orders-topic", options);
+
+        // Assert
+        sdkOptions.TopicName.Should().Be("orders-topic");
+        sdkOptions.SubscriptionName.Should().Be("processor");
+        sdkOptions.RequiresSession.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void BuildCreateSubscriptionOptions_WithBlankTopicName_Throws(string topicName)
+    {
+        // Arrange
+        var options = new SubscriptionCreationOptions("processor");
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("topicName");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void BuildCreateSubscriptionOptions_WithBlankSubscriptionName_Throws(string subscriptionName)
+    {
+        // Arrange
+        var options = new SubscriptionCreationOptions(subscriptionName);
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateSubscriptionOptions("orders-topic", options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("Name");
+    }
+
+    [Fact]
     public async Task PeekSessionMessagesAsync_WhenDeadLetter_UsesStandardDeadLetterReceiver()
     {
         // Arrange

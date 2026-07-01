@@ -22,6 +22,10 @@ public interface IServiceBusOperations : IAsyncDisposable
     Task<IEnumerable<TopicInfo>> GetTopicsAsync(CancellationToken ct = default);
     Task<TopicInfo?> GetTopicInfoAsync(string topicName, CancellationToken ct = default);
     Task<IEnumerable<SubscriptionInfo>> GetSubscriptionsAsync(string topicName, CancellationToken ct = default);
+    Task CreateSubscriptionAsync(
+        string topicName,
+        SubscriptionCreationOptions options,
+        CancellationToken ct = default);
 
     // Message operations
     Task<IEnumerable<MessageInfo>> PeekMessagesAsync(
@@ -127,6 +131,13 @@ public record NamespaceInfo(
     IReadOnlyList<string> QueueNames,
     IReadOnlyList<string> TopicNames
 );
+
+/// <summary>
+/// Options used when creating a Service Bus subscription.
+/// </summary>
+public record SubscriptionCreationOptions(
+    string Name,
+    bool RequiresSession = false);
 
 /// <summary>
 /// Extended operations available only for connection string mode.

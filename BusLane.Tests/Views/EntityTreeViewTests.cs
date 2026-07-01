@@ -38,6 +38,19 @@ public class EntityTreeViewTests
         azureTree.Should().Contain("SelectPinnedEntityCommand");
     }
 
+    [Fact]
+    public void EntityTreeView_ExposesCreateSubscriptionActionAndDialog()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetConnectionTreePath());
+
+        // Assert
+        xaml.Should().Contain("OpenCreateSubscriptionDialogCommand");
+        xaml.Should().Contain("ShowCreateSubscriptionDialog");
+        xaml.Should().Contain("CreateSubscriptionCommand");
+        xaml.Should().Contain("NewSubscriptionRequiresSession");
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(

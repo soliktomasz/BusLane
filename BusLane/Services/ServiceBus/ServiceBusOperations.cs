@@ -1,6 +1,7 @@
 namespace BusLane.Services.ServiceBus;
 
 using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using BusLane.Models;
 using Serilog;
 
@@ -67,6 +68,26 @@ internal static class ServiceBusOperations
         DateTimeOffset? LastActivityAt,
         DateTimeOffset? LockedUntil,
         string? State);
+
+    /// <summary>
+    /// Builds Azure SDK subscription creation options from BusLane creation options.
+    /// </summary>
+    public static CreateSubscriptionOptions BuildCreateSubscriptionOptions(
+        string topicName,
+        SubscriptionCreationOptions options)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Name))
+        {
+            throw new ArgumentException("Subscription name is required.", nameof(SubscriptionCreationOptions.Name));
+        }
+
+        return new CreateSubscriptionOptions(topicName, options.Name)
+        {
+            RequiresSession = options.RequiresSession
+        };
+    }
 
     /// <summary>
     /// Maps a ServiceBusReceivedMessage to our MessageInfo model.

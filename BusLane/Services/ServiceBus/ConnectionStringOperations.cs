@@ -149,6 +149,15 @@ public class ConnectionStringOperations : IConnectionStringOperations
         )).ToList();
     }
 
+    public async Task CreateSubscriptionAsync(
+        string topicName,
+        SubscriptionCreationOptions options,
+        CancellationToken ct = default)
+    {
+        var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
+        await AdminClient.CreateSubscriptionAsync(sdkOptions, ct);
+    }
+
     public async Task<NamespaceInfo?> GetNamespaceInfoAsync(CancellationToken ct = default)
     {
         try
