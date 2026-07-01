@@ -1,5 +1,6 @@
 namespace BusLane.Services.ServiceBus;
 
+using System.Text;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Azure.Messaging.ServiceBus;
@@ -26,6 +27,7 @@ public class LiveStreamService : ILiveStreamService
     private const int ErrorRetryDelaySeconds = 5;
     private const int GracefulShutdownTimeoutSeconds = 5;
     private const int DefaultPeekBatchSize = 10;
+    private const int MaxStreamBodyBytes = 4096;
 
     public LiveStreamService(IPreferencesService preferencesService)
     {
@@ -172,7 +174,7 @@ public class LiveStreamService : ILiveStreamService
                                 msg.MessageId,
                                 msg.CorrelationId,
                                 msg.ContentType,
-                                msg.Body.ToString(),
+                                CreateStreamBody(msg.Body),
                                 DateTimeOffset.UtcNow,
                                 subscriptionName ?? entityName,
                                 subscriptionName != null ? "Subscription" : "Queue",
@@ -241,7 +243,7 @@ public class LiveStreamService : ILiveStreamService
                 msg.MessageId,
                 msg.CorrelationId,
                 msg.ContentType,
-                msg.Body.ToString(),
+                CreateStreamBody(msg.Body),
                 DateTimeOffset.UtcNow,
                 subscriptionName ?? entityName,
                 subscriptionName != null ? "Subscription" : "Queue",
@@ -265,6 +267,17 @@ public class LiveStreamService : ILiveStreamService
         };
 
         await _processor.StartProcessingAsync();
+    }
+
+    internal static string CreateStreamBody(BinaryData body)
+    {
+        var memory = body.ToMemory();
+        if (memory.Length <= MaxStreamBodyBytes)
+        {
+            return body.ToString();
+        }
+
+        return Encoding.UTF8.GetString(memory.Span[..MaxStreamBodyBytes]) + "...";
     }
 
     public async Task StopStreamAsync()

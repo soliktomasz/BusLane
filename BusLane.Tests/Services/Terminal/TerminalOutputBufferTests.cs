@@ -24,6 +24,22 @@ public class TerminalOutputBufferTests
     }
 
     [Fact]
+    public void Append_WhenFullRefreshNotRequired_DoesNotReturnFullTextSnapshot()
+    {
+        // Arrange
+        var sut = new TerminalOutputBuffer(maxOutputLines: 2);
+
+        // Act
+        var update = sut.Append("hello");
+
+        // Assert
+        update.RequiresFullRefresh.Should().BeFalse();
+        update.Text.Should().BeEmpty();
+        update.AppendedText.Should().Be("hello");
+        sut.Text.Should().Be("hello");
+    }
+
+    [Fact]
     public void Append_WhenTrimIsRequired_ReturnsFullRefreshWithTrimmedText()
     {
         // Arrange

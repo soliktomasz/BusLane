@@ -6,10 +6,28 @@ public class MessagePageCache
 {
     private static readonly IReadOnlyList<MessageInfo> EmptyPage = [];
     private readonly Dictionary<int, IReadOnlyList<MessageInfo>> _pages = new();
+    private readonly Dictionary<long, int> _sequenceNumberRefs = new();
+    private int _totalCachedMessages;
 
     public void StorePage(int pageNumber, IEnumerable<MessageInfo> messages)
     {
-        _pages[pageNumber] = messages.ToList().AsReadOnly();
+        if (_pages.TryGetValue(pageNumber, out var existingMessages))
+        {
+            _totalCachedMessages -= existingMessages.Count;
+            foreach (var message in existingMessages)
+            {
+                RemoveSequenceNumber(message.SequenceNumber);
+            }
+        }
+
+        var pageMessages = messages.ToList().AsReadOnly();
+        _pages[pageNumber] = pageMessages;
+        _totalCachedMessages += pageMessages.Count;
+
+        foreach (var message in pageMessages)
+        {
+            AddSequenceNumber(message.SequenceNumber);
+        }
     }
 
     public IReadOnlyList<MessageInfo> GetPage(int pageNumber)
@@ -45,52 +63,45 @@ public class MessagePageCache
 
     public long? GetMaxSequenceNumber()
     {
-        if (_pages.Count == 0) return null;
-
-        long? maxSequenceNumber = null;
-
-        foreach (var page in _pages.Values)
-        {
-            foreach (var message in page)
-            {
-                if (!maxSequenceNumber.HasValue || message.SequenceNumber > maxSequenceNumber.Value)
-                {
-                    maxSequenceNumber = message.SequenceNumber;
-                }
-            }
-        }
-
-        return maxSequenceNumber;
+        return _sequenceNumberRefs.Count == 0 ? null : _sequenceNumberRefs.Keys.Max();
     }
 
     public void Clear()
     {
         _pages.Clear();
+        _sequenceNumberRefs.Clear();
+        _totalCachedMessages = 0;
     }
 
     public int GetTotalCachedMessages()
     {
-        var total = 0;
-        foreach (var page in _pages.Values)
-        {
-            total += page.Count;
-        }
-
-        return total;
+        return _totalCachedMessages;
     }
 
     public HashSet<long> GetCachedSequenceNumbers()
     {
-        var sequenceNumbers = new HashSet<long>();
+        return new HashSet<long>(_sequenceNumberRefs.Keys);
+    }
 
-        foreach (var page in _pages.Values)
+    private void AddSequenceNumber(long sequenceNumber)
+    {
+        _sequenceNumberRefs.TryGetValue(sequenceNumber, out var count);
+        _sequenceNumberRefs[sequenceNumber] = count + 1;
+    }
+
+    private void RemoveSequenceNumber(long sequenceNumber)
+    {
+        if (!_sequenceNumberRefs.TryGetValue(sequenceNumber, out var count))
         {
-            foreach (var message in page)
-            {
-                sequenceNumbers.Add(message.SequenceNumber);
-            }
+            return;
         }
 
-        return sequenceNumbers;
+        if (count <= 1)
+        {
+            _sequenceNumberRefs.Remove(sequenceNumber);
+            return;
+        }
+
+        _sequenceNumberRefs[sequenceNumber] = count - 1;
     }
 }

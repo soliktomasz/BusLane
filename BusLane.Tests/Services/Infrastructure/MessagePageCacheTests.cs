@@ -124,6 +124,36 @@ public class MessagePageCacheTests
         // Assert
         result.Should().BeEquivalentTo([10, 20, 30]);
     }
+
+    [Fact]
+    public void StorePage_WhenOverwritingPage_UpdatesTotalCountAndSequenceNumbers()
+    {
+        // Arrange
+        var sut = new MessagePageCache();
+        sut.StorePage(1, [CreateMessage("1", "body1", 10), CreateMessage("2", "body2", 20)]);
+
+        // Act
+        sut.StorePage(1, [CreateMessage("3", "body3", 30)]);
+
+        // Assert
+        sut.GetTotalCachedMessages().Should().Be(1);
+        sut.GetCachedSequenceNumbers().Should().BeEquivalentTo([30]);
+    }
+
+    [Fact]
+    public void StorePage_WhenOverwritingDuplicateSequence_PreservesSequenceStillUsedByOtherPage()
+    {
+        // Arrange
+        var sut = new MessagePageCache();
+        sut.StorePage(1, [CreateMessage("1", "body1", 10), CreateMessage("2", "body2", 20)]);
+        sut.StorePage(2, [CreateMessage("3", "body3", 20), CreateMessage("4", "body4", 30)]);
+
+        // Act
+        sut.StorePage(1, [CreateMessage("5", "body5", 40)]);
+
+        // Assert
+        sut.GetCachedSequenceNumbers().Should().BeEquivalentTo([20, 30, 40]);
+    }
     
     [Fact]
     public void Clear_ShouldRemoveAllPages()

@@ -1,5 +1,6 @@
 namespace BusLane.Tests.ViewModels;
 
+using System.Collections.Specialized;
 using BusLane.Models.Logging;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
@@ -63,6 +64,26 @@ public class LogViewerViewModelTests
 
         // Assert
         sut.HasUnreadErrors.Should().BeFalse();
+    }
+
+    [Fact]
+    public void LogAdded_WhenEntryMatchesCurrentFilters_AppendsWithoutResettingCollection()
+    {
+        // Arrange
+        var logSink = new LogSink();
+        using var sut = new LogViewerViewModel(logSink);
+        sut.SelectedLevelFilter = LogLevel.Info;
+
+        var actions = new List<NotifyCollectionChangedAction>();
+        sut.FilteredLogs.CollectionChanged += (_, e) => actions.Add(e.Action);
+
+        // Act
+        logSink.Log(CreateEntry(LogLevel.Info));
+
+        // Assert
+        sut.FilteredLogs.Should().ContainSingle();
+        actions.Should().Contain(NotifyCollectionChangedAction.Add);
+        actions.Should().NotContain(NotifyCollectionChangedAction.Reset);
     }
 
     private static LogEntry CreateEntry(LogLevel level)

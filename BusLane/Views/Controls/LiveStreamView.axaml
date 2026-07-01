@@ -270,6 +270,11 @@
                          IsVisible="{Binding IsStreaming}"
                          Padding="8"
                          Classes="entity-list">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="models:LiveStreamMessage">
                             <Border Classes="entity-item" Padding="12">
@@ -287,7 +292,7 @@
 
                                     <!-- Body preview -->
                                     <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
-                                               Text="{Binding Body}"
+                                               Text="{Binding BodyPreview}"
                                                MaxLines="2" TextTrimming="CharacterEllipsis"
                                                Classes="body"
                                                Foreground="{DynamicResource SubtleForeground}"
@@ -319,4 +324,3 @@
         </Grid>
     </Border>
 </UserControl>
-

@@ -189,6 +189,42 @@ public class DashboardRefreshServiceTests
         maxConcurrentSubscriptionCalls.Should().BeGreaterThan(1);
     }
 
+    [Fact]
+    public async Task RefreshAsync_WithManyTopics_BoundsConcurrentSubscriptionFetches()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var activeSubscriptionCalls = 0;
+        var maxConcurrentSubscriptionCalls = 0;
+
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 12)
+                .Select(i => new TopicInfo($"topic-{i}", sizeInBytes: 1, subscriptionCount: 1, accessedAt: null, defaultMessageTtl: TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(async callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                var inFlight = Interlocked.Increment(ref activeSubscriptionCalls);
+                UpdateMaxValue(ref maxConcurrentSubscriptionCalls, inFlight);
+                await Task.Delay(TimeSpan.FromMilliseconds(40));
+                Interlocked.Decrement(ref activeSubscriptionCalls);
+
+                return (IEnumerable<SubscriptionInfo>)
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ];
+            });
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        maxConcurrentSubscriptionCalls.Should().BeLessThanOrEqualTo(4);
+    }
+
     private static void UpdateMaxValue(ref int target, int candidate)
     {
         while (true)
