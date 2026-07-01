@@ -69,6 +69,20 @@
         <Style Selector="TextBlock.log-level.Debug">
             <Setter Property="Foreground" Value="{DynamicResource MutedForeground}"/>
         </Style>
+
+        <Style Selector="Border.log-viewer-panel-surface">
+            <Setter Property="Opacity" Value="0"/>
+            <Style.Animations>
+                <Animation Duration="0:0:0.15" FillMode="Forward">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
     </UserControl.Styles>
 
     <Grid>
@@ -90,28 +104,13 @@
 
         <!-- Slide-in panel from right -->
         <Border Width="400"
+                Classes="log-viewer-panel-surface"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Stretch"
                 Background="{DynamicResource CardBackground}"
                 BorderBrush="{DynamicResource BorderDefault}"
                 BorderThickness="1,0,0,0"
                 BoxShadow="-8 0 24 0 #32000000">
-            <Border.Styles>
-                <Style Selector="Border">
-                    <Setter Property="Opacity" Value="0"/>
-                    <Style.Animations>
-                        <Animation Duration="0:0:0.15" FillMode="Forward">
-                            <KeyFrame Cue="0%">
-                                <Setter Property="Opacity" Value="0"/>
-                            </KeyFrame>
-                            <KeyFrame Cue="100%">
-                                <Setter Property="Opacity" Value="1"/>
-                            </KeyFrame>
-                        </Animation>
-                    </Style.Animations>
-                </Style>
-            </Border.Styles>
-
             <Grid RowDefinitions="Auto,Auto,*">
 
                 <!-- Header -->
