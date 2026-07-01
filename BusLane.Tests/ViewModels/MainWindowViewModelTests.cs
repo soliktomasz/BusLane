@@ -122,7 +122,27 @@ public class MainWindowViewModelTests
 
         // Assert
         sut.ShellStatusMessage.Should().Be("Connected");
+        sut.ShellStatusSummary.Should().Be("Connected");
         changedProperties.Should().Contain(nameof(MainWindowViewModel.ShellStatusMessage));
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.ShellStatusSummary));
+    }
+
+    [Fact]
+    public void ShellStatusSummary_TruncatesVerboseErrorMessages()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var activeTab = CreateTab("tab-1", preferences);
+        sut.ConnectionTabs.Add(activeTab);
+        sut.ActiveTab = activeTab;
+
+        // Act
+        activeTab.StatusMessage = "Connection failed: InvalidSignature: The token has an invalid signature. TrackingId:abc";
+
+        // Assert
+        sut.ShellStatusSummary.Should().Be("Connection failed");
+        sut.ShellStatusMessage.Should().Contain("InvalidSignature");
     }
 
     [Fact]

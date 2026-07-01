@@ -90,6 +90,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveTabs))]
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
+    [NotifyPropertyChangedFor(nameof(ShellStatusSummary))]
     [NotifyPropertyChangedFor(nameof(CurrentNavigation))]
     [NotifyPropertyChangedFor(nameof(CurrentMessageOps))]
     [NotifyPropertyChangedFor(nameof(CurrentSessionInspector))]
@@ -101,6 +102,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     public bool HasActiveTabs => ConnectionTabs.Count > 0;
     public string? ShellStatusMessage => ActiveTab?.StatusMessage ?? StatusMessage;
+    public string? ShellStatusSummary => TruncateStatus(ShellStatusMessage);
 
     /// <summary>
     /// Gets whether there's an active tab that is connected.
@@ -164,6 +166,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
+    [NotifyPropertyChangedFor(nameof(ShellStatusSummary))]
     private string? _statusMessage;
     [ObservableProperty] private bool _showStatusPopup;
 
@@ -1460,6 +1463,25 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private void CloseStatusPopup() => ShowStatusPopup = false;
 
+    private static string? TruncateStatus(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return message;
+
+        var firstLine = message.AsSpan();
+        var newlineIndex = firstLine.IndexOfAny('\r', '\n');
+        if (newlineIndex >= 0)
+            firstLine = firstLine[..newlineIndex];
+
+        var colonIndex = firstLine.IndexOf(':');
+        if (colonIndex > 0 && colonIndex < 40)
+            return firstLine[..colonIndex].ToString();
+
+        return firstLine.Length > 60
+            ? string.Concat(firstLine[..57], "...")
+            : firstLine.ToString();
+    }
+
     [RelayCommand]
     private async Task OpenSettingsAsync()
     {
@@ -1807,6 +1829,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
 
         OnPropertyChanged(nameof(ShellStatusMessage));
+        OnPropertyChanged(nameof(ShellStatusSummary));
 
         // Notify computed properties that depend on active tab state
         NotifyActiveTabDependentProperties();
@@ -1843,6 +1866,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(ConnectionTabViewModel.StatusMessage))
         {
             OnPropertyChanged(nameof(ShellStatusMessage));
+            OnPropertyChanged(nameof(ShellStatusSummary));
         }
 
         // When the active tab's IsConnected or Mode changes, notify computed properties

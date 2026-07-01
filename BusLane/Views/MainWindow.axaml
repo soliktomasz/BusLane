@@ -210,7 +210,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="Info" Size="13"
                                         Foreground="{DynamicResource SubtleForeground}"/>
-                            <TextBlock Text="{Binding ShellStatusMessage}"
+                            <TextBlock Text="{Binding ShellStatusSummary}"
                                        Classes="caption"
                                        TextTrimming="CharacterEllipsis"
                                        MaxWidth="460"/>

@@ -15,6 +15,18 @@ public class MainWindowViewTests
         xaml.Should().Contain("Foreground=\"{DynamicResource SubtleForeground}\"");
     }
 
+    [Fact]
+    public void MainWindow_StatusArea_OpensPopupOnClick()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMainWindowPath());
+
+        // Assert
+        xaml.Should().Contain("Text=\"{Binding ShellStatusSummary}\"");
+        xaml.Should().Contain("Command=\"{Binding ToggleStatusPopupCommand}\"");
+        xaml.Should().Contain("TextTrimming=\"CharacterEllipsis\"");
+    }
+
     private static string GetMainWindowPath()
     {
         return Path.GetFullPath(Path.Combine(

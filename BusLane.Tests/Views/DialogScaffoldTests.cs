@@ -46,6 +46,17 @@ public class DialogScaffoldTests
         refreshIntervalRow.Should().Contain("Classes=\"settings-row\"");
     }
 
+    [Fact]
+    public void StatusPopupDialog_UsesShellStatusMessage()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetStatusPopupDialogPath());
+
+        // Assert
+        xaml.Should().Contain("Text=\"{Binding ShellStatusMessage}\"");
+        xaml.Should().NotContain("Text=\"{Binding StatusMessage}\"");
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -71,5 +82,19 @@ public class DialogScaffoldTests
             "Views",
             "Dialogs",
             "SettingsDialog.axaml"));
+    }
+
+    private static string GetStatusPopupDialogPath()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Views",
+            "Dialogs",
+            "StatusPopupDialog.axaml"));
     }
 }
