@@ -1,6 +1,8 @@
 # BusLane Roadmap
 
-This roadmap reflects the current BusLane codebase and planned feature work as of February 17, 2026.
+This roadmap reflects the current BusLane codebase and planned feature work as of July 1, 2026.
+
+Progress audit: the February 2026 roadmap was stale. Several Q1/Q2 items have since shipped and are marked below. Items left unchecked still need product/UI hardening, documentation, platform validation, or broader implementation.
 
 > Have a feature request? Open an [issue](https://github.com/soliktomasz/BusLane/issues) or start a [discussion](https://github.com/soliktomasz/BusLane/discussions).
 
@@ -19,47 +21,47 @@ This roadmap reflects the current BusLane codebase and planned feature work as o
 ## Horizon 1: Message Workflow Excellence (Q1 2026)
 
 ### 1. Message Templates v2
-- [ ] Parameterized templates (tokens like `{{OrderId}}`)
-- [ ] Template categories/tags and quick search
-- [ ] Duplicate/edit from existing message payload
+- [x] Parameterized templates (tokens like `{{OrderId}}`)
+- [x] Template categories/tags and quick search
+- [x] Duplicate/edit from existing message payload
 
 ### 2. Safer Bulk Operations
-- [ ] Dry-run preview for bulk delete/resend actions
-- [ ] Progress + partial-failure summary UI
-- [ ] Optional operation confirmation rules for destructive actions
+- [x] Dry-run preview for bulk delete/resend actions
+- [x] Progress + partial-failure summary UI
+- [x] Optional operation confirmation rules for destructive actions
 
 ### 3. Session-Aware Operations
-- [ ] Better tools for session-enabled queues (session drill-down and diagnostics)
-- [ ] Persist last-used session filters per tab
+- [x] Better tools for session-enabled queues (session drill-down and diagnostics)
+- [x] Persist last-used session filters per tab
 
 ## Horizon 2: Monitoring & Incident Response (Q2 2026)
 
 ### 4. Historical Metrics
-- [ ] Persist metric snapshots locally with configurable retention
-- [ ] Time-range comparisons (last hour/day/week)
-- [ ] Trend overlays for queue depth and DLQ growth
+- [x] Persist metric snapshots locally with configurable retention
+- [x] Time-range comparisons (last hour/day/week)
+- [x] Trend overlays for queue depth and DLQ growth
 
 ### 5. Dashboard Presets
-- [ ] Save/load dashboard presets per namespace
+- [x] Save/load dashboard presets per namespace
 - [ ] One-click reset to default layout
 - [ ] Import/export dashboard configuration
 
 ### 6. Alerting Improvements
-- [ ] Quiet hours and rule cooldown windows
-- [ ] Better rule testing experience and alert history panel
-- [ ] Optional notification channels beyond in-app toast (pluggable)
+- [x] Quiet hours and rule cooldown windows
+- [x] Better rule testing experience and alert history panel
+- [x] Optional notification channels beyond in-app toast (pluggable)
 
 ## Horizon 3: 1.0 Readiness (Q3 2026)
 
 ### 7. Distribution & Trust
-- [ ] Production-ready installers/signing pipeline
+- [x] Production-ready release packaging and Velopack update pipeline
 - [ ] macOS notarization, Windows installer polish, Linux package validation
 - [ ] Release quality gates and smoke-check checklist
 
 ### 8. Reliability & Performance
-- [ ] Performance pass for large message/entity sets
+- [x] Performance pass for large message/entity sets
 - [ ] Better reconnection handling for intermittent network/auth failures
-- [ ] Memory usage guardrails for long-running live stream sessions
+- [x] Memory usage guardrails for long-running live stream sessions
 
 ### 9. Documentation & Onboarding
 - [ ] End-to-end user guide with common workflows
