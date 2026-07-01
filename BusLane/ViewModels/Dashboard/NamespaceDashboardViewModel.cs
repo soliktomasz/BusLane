@@ -346,7 +346,6 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
         return _summaryHistory
             .Where(s => s.Timestamp >= now - timeSpan)
-            .OrderBy(s => s.Timestamp)
             .ToList();
     }
 }

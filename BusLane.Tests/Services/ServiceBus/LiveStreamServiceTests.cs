@@ -35,4 +35,18 @@ public class LiveStreamServiceTests
 
         await sut.StopStreamAsync();
     }
+
+    [Fact]
+    public void CreateStreamBody_WithLargePayload_ReturnsBoundedPreview()
+    {
+        // Arrange
+        var payload = BinaryData.FromString(new string('a', 5000));
+
+        // Act
+        var result = LiveStreamService.CreateStreamBody(payload);
+
+        // Assert
+        result.Should().HaveLength(4099);
+        result.Should().EndWith("...");
+    }
 }

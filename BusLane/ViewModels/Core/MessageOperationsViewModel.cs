@@ -553,10 +553,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
             _currentRequiresSession,
             ScopedSessionId)).ToList();
 
-        var sorted = SortDescending
-            ? messages.OrderByDescending(m => m.EnqueuedTime)
-            : messages.OrderBy(m => m.EnqueuedTime);
-
         var nextFrom = fromSequenceNumber;
         if (messages.Count > 0)
         {
@@ -567,7 +563,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
             }
         }
 
-        return new PageLoadResult(sorted.ToList().AsReadOnly(), nextFrom);
+        messages.Sort((left, right) => SortDescending
+            ? right.EnqueuedTime.CompareTo(left.EnqueuedTime)
+            : left.EnqueuedTime.CompareTo(right.EnqueuedTime));
+
+        return new PageLoadResult(messages.AsReadOnly(), nextFrom);
     }
 
     private sealed record PageLoadResult(IReadOnlyList<MessageInfo> Messages, long? NextFromSequenceNumber);

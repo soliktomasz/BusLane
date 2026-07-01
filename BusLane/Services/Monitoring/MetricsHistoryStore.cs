@@ -26,10 +26,16 @@ public class MetricsHistoryStore : IMetricsHistoryStore
 
     public void RecordSnapshots(IEnumerable<MetricSnapshot> snapshots)
     {
+        var snapshotList = snapshots as ICollection<MetricSnapshot> ?? snapshots.ToList();
+        if (snapshotList.Count == 0)
+        {
+            return;
+        }
+
         lock (_lock)
         {
             EnsureLoaded();
-            _snapshots.AddRange(snapshots);
+            _snapshots.AddRange(snapshotList);
             _snapshots = RemoveExpired(_snapshots);
             SaveInternal(_snapshots);
         }
@@ -100,10 +106,8 @@ public class MetricsHistoryStore : IMetricsHistoryStore
     private List<MetricSnapshot> RemoveExpired(List<MetricSnapshot> snapshots)
     {
         var cutoff = _nowProvider() - _retention;
-        return snapshots
-            .Where(s => s.Timestamp >= cutoff)
-            .OrderBy(s => s.Timestamp)
-            .ToList();
+        snapshots.RemoveAll(s => s.Timestamp < cutoff);
+        return snapshots;
     }
 
     private List<MetricSnapshot> LoadInternal()

@@ -113,18 +113,31 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
         // Marshal all operations to UI thread for thread safety
         RunOnUiThread(() =>
         {
+            LogEntry? removedEntry = null;
             _allLogs.Insert(0, entry);
-            TrimLogCollection(_allLogs);
+            if (_allLogs.Count > MaxLogEntries)
+            {
+                removedEntry = _allLogs[^1];
+                _allLogs.RemoveAt(_allLogs.Count - 1);
+            }
 
             if (!IsOpen && entry.Level == LogLevel.Error)
             {
                 HasUnreadErrors = true;
             }
 
-            // Reapply filters for consistency with filter-change behavior.
-            // This avoids stale/blank item containers when logs stream in.
-            ApplyFilters();
+            if (EntryMatchesFilters(entry))
+            {
+                _filteredLogs.Insert(0, entry);
+            }
+
+            if (removedEntry != null)
+            {
+                _filteredLogs.Remove(removedEntry);
+            }
+
             OnPropertyChanged(nameof(TotalLogCount));
+            OnPropertyChanged(nameof(ShowingLogCount));
         });
     }
 
@@ -178,6 +191,28 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
             }
             OnPropertyChanged(nameof(ShowingLogCount));
         });
+    }
+
+    private bool EntryMatchesFilters(LogEntry entry)
+    {
+        if (SelectedLevelFilter.HasValue && entry.Level != SelectedLevelFilter.Value)
+        {
+            return false;
+        }
+
+        if (SelectedSourceFilter.HasValue && entry.Source != SelectedSourceFilter.Value)
+        {
+            return false;
+        }
+
+        if (!IsDebugModeEnabled && entry.Level == LogLevel.Debug)
+        {
+            return false;
+        }
+
+        return string.IsNullOrWhiteSpace(SearchText) ||
+               entry.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+               (entry.Details?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
     private static void RunOnUiThread(Action action)

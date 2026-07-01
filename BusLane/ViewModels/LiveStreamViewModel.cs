@@ -329,10 +329,17 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             }
         }
 
-        foreach (var removedMessage in removedMessages)
+        for (var i = 0; i < removedMessages.Count; i++)
         {
-            Messages.Remove(removedMessage);
-            FilteredMessages.Remove(removedMessage);
+            if (Messages.Count > 0)
+            {
+                Messages.RemoveAt(Messages.Count - 1);
+            }
+
+            if (FilteredMessages.Count > 0 && MatchesFilter(removedMessages[i]))
+            {
+                FilteredMessages.Remove(removedMessages[i]);
+            }
         }
 
         for (var i = 0; i < newMessages.Count; i++)

@@ -23,7 +23,7 @@ internal sealed class TerminalOutputBuffer
     {
         if (string.IsNullOrEmpty(chunk))
         {
-            return new TerminalOutputUpdate(false, Text, string.Empty);
+            return new TerminalOutputUpdate(false, string.Empty, string.Empty);
         }
 
         var appendedText = new StringBuilder();
@@ -60,7 +60,7 @@ internal sealed class TerminalOutputBuffer
 
         if (!requiresFullRefresh)
         {
-            return new TerminalOutputUpdate(false, Text, appendedText.ToString());
+            return new TerminalOutputUpdate(false, string.Empty, appendedText.ToString());
         }
 
         RebuildText();

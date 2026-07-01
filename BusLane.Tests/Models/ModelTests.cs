@@ -682,6 +682,32 @@ public class LiveStreamMessageTests
     }
 
     [Fact]
+    public void BodyPreview_WithLongBody_TruncatesAndFlattensLineEndings()
+    {
+        // Arrange
+        var body = $"{new string('a', 210)}{Environment.NewLine}tail";
+
+        // Act
+        var message = new LiveStreamMessage(
+            "message-1",
+            null,
+            "text/plain",
+            body,
+            DateTimeOffset.UtcNow,
+            "queue-a",
+            "Queue",
+            null,
+            1,
+            null,
+            new Dictionary<string, object>());
+
+        // Assert
+        message.BodyPreview.Should().HaveLength(203);
+        message.BodyPreview.Should().EndWith("...");
+        message.BodyPreview.Should().NotContain(Environment.NewLine);
+    }
+
+    [Fact]
     public void LiveStreamMessage_ContainsAllProperties()
     {
         // Arrange

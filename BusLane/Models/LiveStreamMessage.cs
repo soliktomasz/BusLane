@@ -12,5 +12,13 @@ public record LiveStreamMessage(
     long SequenceNumber,
     string? SessionId,
     IDictionary<string, object> Properties
-);
+)
+{
+    private const int MaxPreviewLength = 200;
 
+    public string BodyPreview { get; } = string.IsNullOrEmpty(Body)
+        ? string.Empty
+        : Body.Length <= MaxPreviewLength
+            ? Body.ReplaceLineEndings(" ")
+            : Body[..MaxPreviewLength].ReplaceLineEndings(" ") + "...";
+}

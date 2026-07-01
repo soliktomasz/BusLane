@@ -12,6 +12,8 @@ namespace BusLane.Services.Dashboard;
 
 public class DashboardRefreshService : IDashboardRefreshService
 {
+    private const int MaxConcurrentSubscriptionRefreshes = 4;
+
     public DateTimeOffset? LastRefreshTime { get; private set; }
     public bool IsRefreshing { get; private set; }
 
@@ -68,18 +70,8 @@ public class DashboardRefreshService : IDashboardRefreshService
             var topics = topicsTask.Result.ToList();
 
             // Fetch subscriptions for all topics to get complete message counts
-            var subscriptionTasks = topics.Select(async topic =>
-            {
-                try
-                {
-                    return (await _currentOperations.GetSubscriptionsAsync(topic.Name, ct)).ToList();
-                }
-                catch (Exception)
-                {
-                    // Ignore errors for individual topics
-                    return new List<SubscriptionInfo>();
-                }
-            }).ToList();
+            using var subscriptionGate = new SemaphoreSlim(MaxConcurrentSubscriptionRefreshes);
+            var subscriptionTasks = FetchSubscriptionsForTopicsAsync(topics, subscriptionGate, ct);
             var subscriptionResults = await Task.WhenAll(subscriptionTasks);
             var allSubscriptions = subscriptionResults.SelectMany(static subscriptions => subscriptions).ToList();
 
@@ -144,6 +136,39 @@ public class DashboardRefreshService : IDashboardRefreshService
         }
 
         return ((double)(current - previous) / previous) * 100.0;
+    }
+
+    private IEnumerable<Task<List<SubscriptionInfo>>> FetchSubscriptionsForTopicsAsync(
+        IReadOnlyList<TopicInfo> topics,
+        SemaphoreSlim gate,
+        CancellationToken ct)
+    {
+        return topics.Select(topic => FetchSubscriptionsForTopicAsync(topic.Name, gate, ct)).ToList();
+    }
+
+    private async Task<List<SubscriptionInfo>> FetchSubscriptionsForTopicAsync(
+        string topicName,
+        SemaphoreSlim gate,
+        CancellationToken ct)
+    {
+        var gateEntered = false;
+        try
+        {
+            await gate.WaitAsync(ct);
+            gateEntered = true;
+            return (await _currentOperations!.GetSubscriptionsAsync(topicName, ct)).ToList();
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return [];
+        }
+        finally
+        {
+            if (gateEntered)
+            {
+                gate.Release();
+            }
+        }
     }
 
     private static IReadOnlyList<TopEntityInfo> BuildTopEntitiesList(
