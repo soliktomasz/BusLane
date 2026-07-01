@@ -1,8 +1,11 @@
 namespace BusLane.Services.ServiceBus;
 
+using Azure;
 using Azure.Core;
 using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using Azure.ResourceManager.ServiceBus;
+using Azure.ResourceManager.ServiceBus.Models;
 using BusLane.Models;
 using Serilog;
 
@@ -151,10 +154,56 @@ public class AzureCredentialOperations : IAzureCredentialOperations
                 s.Data.CountDetails?.ActiveMessageCount ?? 0,
                 s.Data.CountDetails?.DeadLetterMessageCount ?? 0,
                 s.Data.AccessedOn,
-                s.Data.RequiresSession ?? false
+                s.Data.RequiresSession ?? false,
+                s.Data.LockDuration,
+                s.Data.MaxDeliveryCount,
+                s.Data.DefaultMessageTimeToLive,
+                s.Data.AutoDeleteOnIdle,
+                s.Data.ForwardTo,
+                s.Data.ForwardDeadLetteredMessagesTo,
+                s.Data.EnableBatchedOperations,
+                s.Data.DeadLetteringOnMessageExpiration,
+                s.Data.Status?.ToString(),
+                s.Data.CreatedOn,
+                s.Data.UpdatedOn,
+                s.Data.CountDetails?.TransferMessageCount ?? 0,
+                s.Data.CountDetails?.TransferDeadLetterMessageCount ?? 0
             ));
         }
         return subs;
+    }
+
+    public async Task CreateSubscriptionAsync(
+        string topicName,
+        SubscriptionCreationOptions options,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Name))
+        {
+            throw new ArgumentException("Subscription name is required.", nameof(SubscriptionCreationOptions.Name));
+        }
+
+        var ns = _getNamespaceResource();
+        _ = await ns.GetServiceBusTopicAsync(topicName, ct);
+        var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
+        var adminClient = new ServiceBusAdministrationClient(_endpoint, _credential);
+        await adminClient.CreateSubscriptionAsync(sdkOptions, ct);
+    }
+
+    public async Task DeleteSubscriptionAsync(
+        string topicName,
+        string subscriptionName,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+
+        var ns = _getNamespaceResource();
+        var topic = await ns.GetServiceBusTopicAsync(topicName, ct);
+        var subscription = await topic.Value.GetServiceBusSubscriptionAsync(subscriptionName, ct);
+        await subscription.Value.DeleteAsync(WaitUntil.Completed, ct);
     }
 
     public async Task<IEnumerable<MessageInfo>> PeekMessagesAsync(

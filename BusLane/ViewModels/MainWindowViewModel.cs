@@ -174,6 +174,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [ObservableProperty] private bool _showSendMessagePopup;
     [ObservableProperty] private SendMessageViewModel? _sendMessageViewModel;
 
+    // Create subscription dialog
+    [ObservableProperty] private bool _showCreateSubscriptionDialog;
+    [ObservableProperty] private TopicInfo? _createSubscriptionTopic;
+    [ObservableProperty] private string _newSubscriptionName = "";
+    [ObservableProperty] private bool _newSubscriptionRequiresSession;
+    [ObservableProperty] private bool _isCreatingSubscription;
+    private ConnectionTabViewModel? _createSubscriptionTab;
+    private IServiceBusOperations? _createSubscriptionOperations;
+    private ConnectionTabViewModel? _deleteSubscriptionTab;
+    private IServiceBusOperations? _deleteSubscriptionOperations;
+
+    // Subscription details dialog
+    [ObservableProperty] private bool _showSubscriptionDetailDialog;
+    [ObservableProperty] private SubscriptionInfo? _subscriptionDetailItem;
+
     // Settings
     [ObservableProperty] private bool _showSettings;
     [ObservableProperty] private SettingsViewModel? _settingsViewModel;
@@ -721,19 +736,28 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task SelectSubscriptionAsync(SubscriptionInfo sub)
     {
-        CurrentNavigation.SelectedSubscription = sub;
-        CurrentNavigation.SelectedQueue = null;
-        CurrentNavigation.SelectedEntity = sub;
-        CurrentMessageOps.ClearSessionScope();
-        CurrentSessionInspector.Clear();
+        await SelectSubscriptionAsync(sub, CurrentNavigation, CurrentMessageOps, CurrentSessionInspector);
+    }
 
-        if (CurrentNavigation.IsSessionInspectorTabSelected)
+    private async Task SelectSubscriptionAsync(
+        SubscriptionInfo sub,
+        NavigationState navigation,
+        MessageOperationsViewModel messageOps,
+        SessionInspectorViewModel sessionInspector)
+    {
+        navigation.SelectedSubscription = sub;
+        navigation.SelectedQueue = null;
+        navigation.SelectedEntity = sub;
+        messageOps.ClearSessionScope();
+        sessionInspector.Clear();
+
+        if (navigation.IsSessionInspectorTabSelected)
         {
-            await CurrentSessionInspector.LoadSessionsAsync();
+            await sessionInspector.LoadSessionsAsync();
             return;
         }
 
-        await CurrentMessageOps.LoadMessagesAsync();
+        await messageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
@@ -747,12 +771,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         try
         {
-            var subs = await operations.GetSubscriptionsAsync(topic.Name);
-
-            topic.Subscriptions.Clear();
-            foreach (var sub in subs)
-                topic.Subscriptions.Add(sub);
-            topic.SubscriptionsLoaded = true;
+            await ReloadTopicSubscriptionsAsync(topic, operations, CurrentNavigation);
         }
         catch (Exception ex)
         {
@@ -761,6 +780,180 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         finally
         {
             topic.IsLoadingSubscriptions = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenCreateSubscriptionDialog(TopicInfo topic)
+    {
+        CreateSubscriptionTopic = topic;
+        _createSubscriptionTab = ActiveTab;
+        _createSubscriptionOperations = ActiveTab?.Operations ?? _operations;
+        NewSubscriptionName = string.Empty;
+        NewSubscriptionRequiresSession = false;
+        ShowCreateSubscriptionDialog = true;
+    }
+
+    [RelayCommand]
+    private void CloseCreateSubscriptionDialog()
+    {
+        ShowCreateSubscriptionDialog = false;
+        CreateSubscriptionTopic = null;
+        _createSubscriptionTab = null;
+        _createSubscriptionOperations = null;
+        NewSubscriptionName = string.Empty;
+        NewSubscriptionRequiresSession = false;
+    }
+
+    [RelayCommand]
+    private async Task CreateSubscriptionAsync()
+    {
+        var topic = CreateSubscriptionTopic;
+        var operations = _createSubscriptionOperations;
+        var navigation = _createSubscriptionTab?.Navigation ?? Navigation;
+        var messageOps = _createSubscriptionTab?.MessageOps ?? MessageOps;
+        var sessionInspector = _createSubscriptionTab?.SessionInspector ?? SessionInspector;
+
+        if (topic == null || operations == null)
+        {
+            StatusMessage = "Select a topic before creating a subscription";
+            return;
+        }
+
+        var subscriptionName = NewSubscriptionName.Trim();
+        if (string.IsNullOrWhiteSpace(subscriptionName))
+        {
+            StatusMessage = "Subscription name is required";
+            return;
+        }
+
+        IsCreatingSubscription = true;
+        StatusMessage = $"Creating subscription '{subscriptionName}'...";
+
+        try
+        {
+            var options = new SubscriptionCreationOptions(subscriptionName, NewSubscriptionRequiresSession);
+            await operations.CreateSubscriptionAsync(topic.Name, options);
+            await ReloadTopicSubscriptionsAsync(topic, operations, navigation);
+
+            var createdSubscription = topic.Subscriptions.FirstOrDefault(subscription =>
+                string.Equals(subscription.Name, subscriptionName, StringComparison.OrdinalIgnoreCase));
+
+            if (createdSubscription != null)
+            {
+                topic.IsExpanded = true;
+                navigation.SelectedTopic = topic;
+                navigation.TopicSubscriptions.Clear();
+                foreach (var subscription in topic.Subscriptions)
+                    navigation.TopicSubscriptions.Add(subscription);
+                await SelectSubscriptionAsync(createdSubscription, navigation, messageOps, sessionInspector);
+            }
+
+            StatusMessage = $"Subscription '{subscriptionName}' created";
+            CloseCreateSubscriptionDialog();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Unable to create subscription: {ex.Message}";
+        }
+        finally
+        {
+            IsCreatingSubscription = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenSubscriptionDetailDialog(SubscriptionInfo subscription)
+    {
+        SubscriptionDetailItem = subscription;
+        ShowSubscriptionDetailDialog = true;
+    }
+
+    [RelayCommand]
+    private void CloseSubscriptionDetailDialog()
+    {
+        ShowSubscriptionDetailDialog = false;
+        SubscriptionDetailItem = null;
+    }
+
+    [RelayCommand]
+    private void DeleteSubscriptionRequest(SubscriptionInfo subscription)
+    {
+        _deleteSubscriptionTab = ActiveTab;
+        _deleteSubscriptionOperations = ActiveTab?.Operations ?? _operations;
+        Confirmation.ShowConfirmation(
+            "Delete subscription",
+            $"Are you sure you want to delete subscription '{subscription.Name}' from topic '{subscription.TopicName}'? This action cannot be undone.",
+            "Delete",
+            () => DeleteSubscriptionAsync(subscription));
+    }
+
+    private async Task DeleteSubscriptionAsync(SubscriptionInfo subscription)
+    {
+        var operations = _deleteSubscriptionOperations;
+        var navigation = _deleteSubscriptionTab?.Navigation ?? Navigation;
+        var messageOps = _deleteSubscriptionTab?.MessageOps ?? MessageOps;
+        var sessionInspector = _deleteSubscriptionTab?.SessionInspector ?? SessionInspector;
+        if (operations == null)
+        {
+            StatusMessage = "No active connection";
+            return;
+        }
+
+        StatusMessage = $"Deleting subscription '{subscription.Name}'...";
+
+        try
+        {
+            await operations.DeleteSubscriptionAsync(subscription.TopicName, subscription.Name);
+
+            var topic = navigation.Topics.FirstOrDefault(t =>
+                string.Equals(t.Name, subscription.TopicName, StringComparison.OrdinalIgnoreCase));
+
+            if (topic != null)
+            {
+                await ReloadTopicSubscriptionsAsync(topic, operations, navigation);
+            }
+
+            if (navigation.SelectedSubscription == subscription)
+            {
+                navigation.SelectedSubscription = null;
+                navigation.SelectedEntity = null;
+                messageOps.Clear();
+                sessionInspector.Clear();
+            }
+
+            StatusMessage = $"Subscription '{subscription.Name}' deleted";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Unable to delete subscription: {ex.Message}";
+        }
+        finally
+        {
+            _deleteSubscriptionTab = null;
+            _deleteSubscriptionOperations = null;
+        }
+    }
+
+    private async Task ReloadTopicSubscriptionsAsync(
+        TopicInfo topic,
+        IServiceBusOperations operations,
+        NavigationState navigation)
+    {
+        var subs = (await operations.GetSubscriptionsAsync(topic.Name)).ToList();
+
+        topic.Subscriptions.Clear();
+        foreach (var sub in subs)
+            topic.Subscriptions.Add(sub);
+        topic.SubscriptionCount = subs.Count;
+        topic.SubscriptionsLoaded = true;
+
+        if (navigation.SelectedTopic == topic ||
+            string.Equals(navigation.CurrentEntityName, topic.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            navigation.TopicSubscriptions.Clear();
+            foreach (var sub in subs)
+                navigation.TopicSubscriptions.Add(sub);
         }
     }
 

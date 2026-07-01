@@ -38,6 +38,32 @@ public class EntityTreeViewTests
         azureTree.Should().Contain("SelectPinnedEntityCommand");
     }
 
+    [Fact]
+    public void EntityTreeView_ExposesCreateSubscriptionActionAndDialog()
+    {
+        // Arrange
+        var connectionTreeXaml = File.ReadAllText(GetConnectionTreePath());
+        var azureTreeXaml = File.ReadAllText(GetAzureTreePath());
+        var dialogXaml = File.ReadAllText(GetSubscriptionCreateDialogPath());
+
+        // Assert
+        connectionTreeXaml.Should().Contain("OpenCreateSubscriptionDialogCommand");
+        azureTreeXaml.Should().Contain("OpenCreateSubscriptionDialogCommand");
+        dialogXaml.Should().Contain("ShowCreateSubscriptionDialog");
+        dialogXaml.Should().Contain("CreateSubscriptionCommand");
+        dialogXaml.Should().Contain("NewSubscriptionRequiresSession");
+    }
+
+    [Fact]
+    public void AzureEntityTreeView_ExposesCreateSubscriptionAction()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetAzureTreePath());
+
+        // Assert
+        xaml.Should().Contain("OpenCreateSubscriptionDialogCommand");
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -77,5 +103,19 @@ public class EntityTreeViewTests
             "Views",
             "Controls",
             "AzureEntityTreeView.axaml"));
+    }
+
+    private static string GetSubscriptionCreateDialogPath()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Views",
+            "Dialogs",
+            "SubscriptionCreateDialog.axaml"));
     }
 }

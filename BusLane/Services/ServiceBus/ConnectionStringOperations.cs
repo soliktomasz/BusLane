@@ -145,8 +145,38 @@ public class ConnectionStringOperations : IConnectionStringOperations
             runtime.Value.ActiveMessageCount,
             runtime.Value.DeadLetterMessageCount,
             runtime.Value.AccessedAt,
-            sub.RequiresSession
+            sub.RequiresSession,
+            sub.LockDuration,
+            sub.MaxDeliveryCount,
+            sub.DefaultMessageTimeToLive,
+            sub.AutoDeleteOnIdle,
+            sub.ForwardTo,
+            sub.ForwardDeadLetteredMessagesTo,
+            sub.EnableBatchedOperations,
+            sub.DeadLetteringOnMessageExpiration,
+            sub.Status.ToString(),
+            runtime.Value.CreatedAt,
+            runtime.Value.UpdatedAt,
+            runtime.Value.TransferMessageCount,
+            runtime.Value.TransferDeadLetterMessageCount
         )).ToList();
+    }
+
+    public async Task CreateSubscriptionAsync(
+        string topicName,
+        SubscriptionCreationOptions options,
+        CancellationToken ct = default)
+    {
+        var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
+        await AdminClient.CreateSubscriptionAsync(sdkOptions, ct);
+    }
+
+    public async Task DeleteSubscriptionAsync(
+        string topicName,
+        string subscriptionName,
+        CancellationToken ct = default)
+    {
+        await AdminClient.DeleteSubscriptionAsync(topicName, subscriptionName, ct);
     }
 
     public async Task<NamespaceInfo?> GetNamespaceInfoAsync(CancellationToken ct = default)

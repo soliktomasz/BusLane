@@ -13,6 +13,7 @@
         <converters:DeadLetterBadgeVisibilityConverter x:Key="DeadLetterBadgeVisibilityConverter"/>
     </UserControl.Resources>
 
+    <Grid>
     <Border Classes="pane-card entity-pane" Padding="0">
         <DockPanel>
             <Border DockPanel.Dock="Top"
@@ -374,7 +375,7 @@
                                                                 <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedTopic"/>
                                                             </MultiBinding>
                                                         </Border.Background>
-                                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                                                             <LucideIcon Grid.Column="0"
                                                                         Kind="Megaphone"
                                                                         Size="13"
@@ -396,6 +397,14 @@
                                                                     <Run Text="{Binding SubscriptionCount}"/><Run Text=" subs"/>
                                                                 </TextBlock>
                                                             </Border>
+                                                            <Button Grid.Column="3"
+                                                                    Classes="icon-button"
+                                                                    Command="{ReflectionBinding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Create subscription"
+                                                                    VerticalAlignment="Center">
+                                                                <LucideIcon Kind="Plus" Size="12"/>
+                                                            </Button>
                                                         </Grid>
                                                     </Border>
                                                 </Grid>
@@ -431,76 +440,97 @@
                                                         </ListBox.ItemsPanel>
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate x:DataType="models:SubscriptionInfo">
-                                                                <Button Classes="entity-tree-row"
-                                                                        Command="{ReflectionBinding $parent[Window].DataContext.SelectSubscriptionCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        HorizontalAlignment="Stretch"
-                                                                        HorizontalContentAlignment="Stretch"
-                                                                        Margin="0,1">
-                                                                    <Grid ColumnDefinitions="3,*">
-                                                                        <Border Grid.Column="0"
-                                                                                Background="{DynamicResource TextWarning}"
-                                                                                CornerRadius="1.5"
-                                                                                Width="3"
-                                                                                Margin="0,4"
-                                                                                HorizontalAlignment="Left">
-                                                                            <Border.IsVisible>
-                                                                                <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
-                                                                                    <Binding Path="."/>
-                                                                                    <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
-                                                                                </MultiBinding>
-                                                                            </Border.IsVisible>
-                                                                        </Border>
+                                                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
+                                                                    <Button Grid.Column="0"
+                                                                            Classes="entity-tree-row"
+                                                                            Command="{ReflectionBinding $parent[Window].DataContext.SelectSubscriptionCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            HorizontalContentAlignment="Stretch">
+                                                                        <Grid ColumnDefinitions="3,*">
+                                                                            <Border Grid.Column="0"
+                                                                                    Background="{DynamicResource TextWarning}"
+                                                                                    CornerRadius="1.5"
+                                                                                    Width="3"
+                                                                                    Margin="0,4"
+                                                                                    HorizontalAlignment="Left">
+                                                                                <Border.IsVisible>
+                                                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                                        <Binding Path="."/>
+                                                                                        <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
+                                                                                    </MultiBinding>
+                                                                                </Border.IsVisible>
+                                                                            </Border>
 
-                                                                        <Border Grid.Column="1"
-                                                                                Classes="entity-tree-row-surface">
-                                                                            <Border.Background>
-                                                                                <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
-                                                                                    <Binding Path="."/>
-                                                                                    <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
-                                                                                </MultiBinding>
-                                                                            </Border.Background>
-                                                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                                                                <LucideIcon Grid.Column="0"
-                                                                                            Kind="Inbox"
-                                                                                            Size="12"
-                                                                                            Foreground="{DynamicResource TextWarning}"
-                                                                                            VerticalAlignment="Center"/>
-                                                                                <TextBlock Grid.Column="1"
-                                                                                           Text="{Binding Name}"
-                                                                                           FontSize="12"
-                                                                                           FontWeight="Medium"
-                                                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                                                           Foreground="{DynamicResource AppForeground}"
-                                                                                           VerticalAlignment="Center"
-                                                                                           TextTrimming="CharacterEllipsis"/>
-                                                                                <StackPanel Grid.Column="2"
-                                                                                            Orientation="Horizontal"
-                                                                                            Spacing="4"
-                                                                                            VerticalAlignment="Center">
-                                                                                    <Border Classes="entity-tree-badge"
-                                                                                            Background="{DynamicResource SurfaceBrand}"
-                                                                                            IsVisible="{Binding ActiveMessageCount}">
-                                                                                        <TextBlock Foreground="{DynamicResource AccentBrand}"
-                                                                                                   Text="{Binding ActiveMessageCount}"/>
-                                                                                    </Border>
-                                                                                    <Border Classes="entity-tree-badge"
-                                                                                            Background="{DynamicResource SurfaceDanger}">
-                                                                                        <Border.IsVisible>
-                                                                                            <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
-                                                                                                <Binding Path="DeadLetterCount"/>
-                                                                                                <Binding Path="$parent[Window].DataContext.ShowDeadLetterBadges"/>
-                                                                                            </MultiBinding>
-                                                                                        </Border.IsVisible>
-                                                                                        <TextBlock Foreground="{DynamicResource TextDanger}">
-                                                                                            <Run Text="{Binding DeadLetterCount}"/><Run Text=" dlq"/>
-                                                                                        </TextBlock>
-                                                                                    </Border>
-                                                                                </StackPanel>
-                                                                            </Grid>
-                                                                        </Border>
-                                                                    </Grid>
-                                                                </Button>
+                                                                            <Border Grid.Column="1"
+                                                                                    Classes="entity-tree-row-surface">
+                                                                                <Border.Background>
+                                                                                    <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                                        <Binding Path="."/>
+                                                                                        <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
+                                                                                    </MultiBinding>
+                                                                                </Border.Background>
+                                                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                                                    <LucideIcon Grid.Column="0"
+                                                                                                Kind="Inbox"
+                                                                                                Size="12"
+                                                                                                Foreground="{DynamicResource TextWarning}"
+                                                                                                VerticalAlignment="Center"/>
+                                                                                    <TextBlock Grid.Column="1"
+                                                                                               Text="{Binding Name}"
+                                                                                               FontSize="12"
+                                                                                               FontWeight="Medium"
+                                                                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                                               Foreground="{DynamicResource AppForeground}"
+                                                                                               VerticalAlignment="Center"
+                                                                                               TextTrimming="CharacterEllipsis"/>
+                                                                                    <StackPanel Grid.Column="2"
+                                                                                                Orientation="Horizontal"
+                                                                                                Spacing="4"
+                                                                                                VerticalAlignment="Center">
+                                                                                        <Border Classes="entity-tree-badge"
+                                                                                                Background="{DynamicResource SurfaceBrand}"
+                                                                                                IsVisible="{Binding ActiveMessageCount}">
+                                                                                            <TextBlock Foreground="{DynamicResource AccentBrand}"
+                                                                                                       Text="{Binding ActiveMessageCount}"/>
+                                                                                        </Border>
+                                                                                        <Border Classes="entity-tree-badge"
+                                                                                                Background="{DynamicResource SurfaceDanger}">
+                                                                                            <Border.IsVisible>
+                                                                                                <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
+                                                                                                    <Binding Path="DeadLetterCount"/>
+                                                                                                    <Binding Path="$parent[Window].DataContext.ShowDeadLetterBadges"/>
+                                                                                                </MultiBinding>
+                                                                                            </Border.IsVisible>
+                                                                                            <TextBlock Foreground="{DynamicResource TextDanger}">
+                                                                                                <Run Text="{Binding DeadLetterCount}"/><Run Text=" dlq"/>
+                                                                                            </TextBlock>
+                                                                                        </Border>
+                                                                                    </StackPanel>
+                                                                                </Grid>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                    </Button>
+                                                                    <Button Grid.Column="1"
+                                                                            Classes="icon-button"
+                                                                            Command="{ReflectionBinding $parent[Window].DataContext.OpenSubscriptionDetailDialogCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip.Tip="Subscription details"
+                                                                            VerticalAlignment="Center"
+                                                                            Margin="2,0,0,0">
+                                                                        <LucideIcon Kind="Info" Size="11"/>
+                                                                    </Button>
+                                                                    <Button Grid.Column="2"
+                                                                            Classes="icon-button"
+                                                                            Command="{ReflectionBinding $parent[Window].DataContext.DeleteSubscriptionRequestCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip.Tip="Delete subscription"
+                                                                            VerticalAlignment="Center"
+                                                                            Margin="0,0,0,0">
+                                                                        <LucideIcon Kind="Trash2" Size="11"
+                                                                                    Foreground="{DynamicResource TextDanger}"/>
+                                                                    </Button>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </ListBox.ItemTemplate>
                                                     </ListBox>
@@ -516,4 +546,6 @@
             </ScrollViewer>
         </DockPanel>
     </Border>
+
+    </Grid>
 </UserControl>
