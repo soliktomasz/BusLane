@@ -180,6 +180,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [ObservableProperty] private string _newSubscriptionName = "";
     [ObservableProperty] private bool _newSubscriptionRequiresSession;
     [ObservableProperty] private bool _isCreatingSubscription;
+    private ConnectionTabViewModel? _createSubscriptionTab;
+    private IServiceBusOperations? _createSubscriptionOperations;
+    private ConnectionTabViewModel? _deleteSubscriptionTab;
+    private IServiceBusOperations? _deleteSubscriptionOperations;
 
     // Subscription details dialog
     [ObservableProperty] private bool _showSubscriptionDetailDialog;
@@ -732,19 +736,28 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task SelectSubscriptionAsync(SubscriptionInfo sub)
     {
-        CurrentNavigation.SelectedSubscription = sub;
-        CurrentNavigation.SelectedQueue = null;
-        CurrentNavigation.SelectedEntity = sub;
-        CurrentMessageOps.ClearSessionScope();
-        CurrentSessionInspector.Clear();
+        await SelectSubscriptionAsync(sub, CurrentNavigation, CurrentMessageOps, CurrentSessionInspector);
+    }
 
-        if (CurrentNavigation.IsSessionInspectorTabSelected)
+    private async Task SelectSubscriptionAsync(
+        SubscriptionInfo sub,
+        NavigationState navigation,
+        MessageOperationsViewModel messageOps,
+        SessionInspectorViewModel sessionInspector)
+    {
+        navigation.SelectedSubscription = sub;
+        navigation.SelectedQueue = null;
+        navigation.SelectedEntity = sub;
+        messageOps.ClearSessionScope();
+        sessionInspector.Clear();
+
+        if (navigation.IsSessionInspectorTabSelected)
         {
-            await CurrentSessionInspector.LoadSessionsAsync();
+            await sessionInspector.LoadSessionsAsync();
             return;
         }
 
-        await CurrentMessageOps.LoadMessagesAsync();
+        await messageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
@@ -758,7 +771,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         try
         {
-            await ReloadTopicSubscriptionsAsync(topic, operations);
+            await ReloadTopicSubscriptionsAsync(topic, operations, CurrentNavigation);
         }
         catch (Exception ex)
         {
@@ -774,6 +787,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void OpenCreateSubscriptionDialog(TopicInfo topic)
     {
         CreateSubscriptionTopic = topic;
+        _createSubscriptionTab = ActiveTab;
+        _createSubscriptionOperations = ActiveTab?.Operations ?? _operations;
         NewSubscriptionName = string.Empty;
         NewSubscriptionRequiresSession = false;
         ShowCreateSubscriptionDialog = true;
@@ -784,6 +799,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     {
         ShowCreateSubscriptionDialog = false;
         CreateSubscriptionTopic = null;
+        _createSubscriptionTab = null;
+        _createSubscriptionOperations = null;
         NewSubscriptionName = string.Empty;
         NewSubscriptionRequiresSession = false;
     }
@@ -792,7 +809,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private async Task CreateSubscriptionAsync()
     {
         var topic = CreateSubscriptionTopic;
-        var operations = ActiveTab?.Operations ?? _operations;
+        var operations = _createSubscriptionOperations;
+        var navigation = _createSubscriptionTab?.Navigation ?? Navigation;
+        var messageOps = _createSubscriptionTab?.MessageOps ?? MessageOps;
+        var sessionInspector = _createSubscriptionTab?.SessionInspector ?? SessionInspector;
 
         if (topic == null || operations == null)
         {
@@ -814,7 +834,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             var options = new SubscriptionCreationOptions(subscriptionName, NewSubscriptionRequiresSession);
             await operations.CreateSubscriptionAsync(topic.Name, options);
-            await ReloadTopicSubscriptionsAsync(topic, operations);
+            await ReloadTopicSubscriptionsAsync(topic, operations, navigation);
 
             var createdSubscription = topic.Subscriptions.FirstOrDefault(subscription =>
                 string.Equals(subscription.Name, subscriptionName, StringComparison.OrdinalIgnoreCase));
@@ -822,11 +842,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             if (createdSubscription != null)
             {
                 topic.IsExpanded = true;
-                CurrentNavigation.SelectedTopic = topic;
-                CurrentNavigation.TopicSubscriptions.Clear();
+                navigation.SelectedTopic = topic;
+                navigation.TopicSubscriptions.Clear();
                 foreach (var subscription in topic.Subscriptions)
-                    CurrentNavigation.TopicSubscriptions.Add(subscription);
-                await SelectSubscriptionAsync(createdSubscription);
+                    navigation.TopicSubscriptions.Add(subscription);
+                await SelectSubscriptionAsync(createdSubscription, navigation, messageOps, sessionInspector);
             }
 
             StatusMessage = $"Subscription '{subscriptionName}' created";
@@ -859,6 +879,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private void DeleteSubscriptionRequest(SubscriptionInfo subscription)
     {
+        _deleteSubscriptionTab = ActiveTab;
+        _deleteSubscriptionOperations = ActiveTab?.Operations ?? _operations;
         Confirmation.ShowConfirmation(
             "Delete subscription",
             $"Are you sure you want to delete subscription '{subscription.Name}' from topic '{subscription.TopicName}'? This action cannot be undone.",
@@ -868,7 +890,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     private async Task DeleteSubscriptionAsync(SubscriptionInfo subscription)
     {
-        var operations = ActiveTab?.Operations ?? _operations;
+        var operations = _deleteSubscriptionOperations;
+        var navigation = _deleteSubscriptionTab?.Navigation ?? Navigation;
+        var messageOps = _deleteSubscriptionTab?.MessageOps ?? MessageOps;
+        var sessionInspector = _deleteSubscriptionTab?.SessionInspector ?? SessionInspector;
         if (operations == null)
         {
             StatusMessage = "No active connection";
@@ -881,18 +906,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             await operations.DeleteSubscriptionAsync(subscription.TopicName, subscription.Name);
 
-            var topic = CurrentNavigation.Topics.FirstOrDefault(t =>
+            var topic = navigation.Topics.FirstOrDefault(t =>
                 string.Equals(t.Name, subscription.TopicName, StringComparison.OrdinalIgnoreCase));
 
             if (topic != null)
             {
-                await ReloadTopicSubscriptionsAsync(topic, operations);
+                await ReloadTopicSubscriptionsAsync(topic, operations, navigation);
             }
 
-            if (CurrentNavigation.SelectedSubscription == subscription)
+            if (navigation.SelectedSubscription == subscription)
             {
-                CurrentNavigation.SelectedSubscription = null;
-                CurrentNavigation.SelectedEntity = null;
+                navigation.SelectedSubscription = null;
+                navigation.SelectedEntity = null;
+                messageOps.Clear();
+                sessionInspector.Clear();
             }
 
             StatusMessage = $"Subscription '{subscription.Name}' deleted";
@@ -901,23 +928,32 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             StatusMessage = $"Unable to delete subscription: {ex.Message}";
         }
+        finally
+        {
+            _deleteSubscriptionTab = null;
+            _deleteSubscriptionOperations = null;
+        }
     }
 
-    private async Task ReloadTopicSubscriptionsAsync(TopicInfo topic, IServiceBusOperations operations)
+    private async Task ReloadTopicSubscriptionsAsync(
+        TopicInfo topic,
+        IServiceBusOperations operations,
+        NavigationState navigation)
     {
         var subs = (await operations.GetSubscriptionsAsync(topic.Name)).ToList();
 
         topic.Subscriptions.Clear();
         foreach (var sub in subs)
             topic.Subscriptions.Add(sub);
+        topic.SubscriptionCount = subs.Count;
         topic.SubscriptionsLoaded = true;
 
-        if (CurrentNavigation.SelectedTopic == topic ||
-            string.Equals(CurrentNavigation.CurrentEntityName, topic.Name, StringComparison.OrdinalIgnoreCase))
+        if (navigation.SelectedTopic == topic ||
+            string.Equals(navigation.CurrentEntityName, topic.Name, StringComparison.OrdinalIgnoreCase))
         {
-            CurrentNavigation.TopicSubscriptions.Clear();
+            navigation.TopicSubscriptions.Clear();
             foreach (var sub in subs)
-                CurrentNavigation.TopicSubscriptions.Add(sub);
+                navigation.TopicSubscriptions.Add(sub);
         }
     }
 

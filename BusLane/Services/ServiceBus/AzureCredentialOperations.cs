@@ -3,6 +3,7 @@ namespace BusLane.Services.ServiceBus;
 using Azure;
 using Azure.Core;
 using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.ServiceBus.Models;
 using BusLane.Models;
@@ -185,14 +186,10 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         }
 
         var ns = _getNamespaceResource();
-        var topic = await ns.GetServiceBusTopicAsync(topicName, ct);
-        var data = new ServiceBusSubscriptionData
-        {
-            RequiresSession = options.RequiresSession
-        };
-
-        await topic.Value.GetServiceBusSubscriptions()
-            .CreateOrUpdateAsync(WaitUntil.Completed, options.Name, data, ct);
+        _ = await ns.GetServiceBusTopicAsync(topicName, ct);
+        var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
+        var adminClient = new ServiceBusAdministrationClient(_endpoint, _credential);
+        await adminClient.CreateSubscriptionAsync(sdkOptions, ct);
     }
 
     public async Task DeleteSubscriptionAsync(

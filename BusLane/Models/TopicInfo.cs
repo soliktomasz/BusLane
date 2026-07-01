@@ -11,9 +11,12 @@ public partial class TopicInfo : ObservableObject
 {
     public string Name { get; init; } = string.Empty;
     public long SizeInBytes { get; init; }
-    public int SubscriptionCount { get; init; }
     public DateTimeOffset? AccessedAt { get; init; }
     public TimeSpan DefaultMessageTtl { get; init; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayStatus))]
+    private int _subscriptionCount;
 
     /// <summary>
     /// Collection of subscriptions for this topic (loaded on demand).

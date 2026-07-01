@@ -1,19 +1,35 @@
 namespace BusLane.Tests.Views;
 
 using FluentAssertions;
+using System.Xml.Linq;
 
 public class LogViewerPanelTests
 {
     [Fact]
-    public void LogViewerPanel_ScopesOpenAnimationToPanelSurface()
+    public void LogViewerPanel_WhenOpenAnimationIsDefined_ScopesAnimationToPanelSurface()
     {
         // Arrange
         var xaml = File.ReadAllText(GetLogViewerPanelPath());
 
+        // Act
+        var document = XDocument.Parse(xaml);
+        var styleSelectors = document
+            .Descendants()
+            .Where(element => element.Name.LocalName == "Style")
+            .Select(element => element.Attribute("Selector")?.Value)
+            .Where(selector => selector != null)
+            .ToList();
+        var borderClasses = document
+            .Descendants()
+            .Where(element => element.Name.LocalName == "Border")
+            .Select(element => element.Attribute("Classes")?.Value)
+            .Where(classes => classes != null)
+            .ToList();
+
         // Assert
-        xaml.Should().Contain("Classes=\"log-viewer-panel-surface\"");
-        xaml.Should().Contain("<Style Selector=\"Border.log-viewer-panel-surface\">");
-        xaml.Should().NotContain("<Style Selector=\"Border\">");
+        borderClasses.Should().Contain("log-viewer-panel-surface");
+        styleSelectors.Should().Contain("Border.log-viewer-panel-surface");
+        styleSelectors.Should().NotContain("Border");
     }
 
     private static string GetLogViewerPanelPath()

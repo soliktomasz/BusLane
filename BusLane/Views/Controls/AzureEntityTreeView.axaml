@@ -13,6 +13,7 @@
         <converters:DeadLetterBadgeVisibilityConverter x:Key="DeadLetterBadgeVisibilityConverter"/>
     </UserControl.Resources>
 
+    <Grid>
     <Border Classes="pane-card entity-pane" Padding="0">
         <DockPanel>
             <Border DockPanel.Dock="Top"
@@ -374,7 +375,7 @@
                                                                 <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedTopic"/>
                                                             </MultiBinding>
                                                         </Border.Background>
-                                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                                                             <LucideIcon Grid.Column="0"
                                                                         Kind="Megaphone"
                                                                         Size="13"
@@ -396,6 +397,14 @@
                                                                     <Run Text="{Binding SubscriptionCount}"/><Run Text=" subs"/>
                                                                 </TextBlock>
                                                             </Border>
+                                                            <Button Grid.Column="3"
+                                                                    Classes="icon-button"
+                                                                    Command="{ReflectionBinding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Create subscription"
+                                                                    VerticalAlignment="Center">
+                                                                <LucideIcon Kind="Plus" Size="12"/>
+                                                            </Button>
                                                         </Grid>
                                                     </Border>
                                                 </Grid>
@@ -537,4 +546,6 @@
             </ScrollViewer>
         </DockPanel>
     </Border>
+
+    </Grid>
 </UserControl>

@@ -284,6 +284,7 @@
         <dialogs:CommandPaletteDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SettingsDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="2"/>
+        <dialogs:SubscriptionCreateDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SubscriptionDetailDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:KeyboardShortcutsDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:DeviceCodeDialog Grid.Column="0" Grid.ColumnSpan="2"/>

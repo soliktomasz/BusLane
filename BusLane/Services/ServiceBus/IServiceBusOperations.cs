@@ -22,10 +22,24 @@ public interface IServiceBusOperations : IAsyncDisposable
     Task<IEnumerable<TopicInfo>> GetTopicsAsync(CancellationToken ct = default);
     Task<TopicInfo?> GetTopicInfoAsync(string topicName, CancellationToken ct = default);
     Task<IEnumerable<SubscriptionInfo>> GetSubscriptionsAsync(string topicName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Creates a subscription on the specified topic.
+    /// </summary>
+    /// <param name="topicName">Name of the topic that will own the subscription.</param>
+    /// <param name="options">Subscription creation options, including name and session requirement.</param>
+    /// <param name="ct">Cancellation token for the create operation.</param>
     Task CreateSubscriptionAsync(
         string topicName,
         SubscriptionCreationOptions options,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes a subscription from the specified topic.
+    /// </summary>
+    /// <param name="topicName">Name of the topic that owns the subscription.</param>
+    /// <param name="subscriptionName">Name of the subscription to delete.</param>
+    /// <param name="ct">Cancellation token for the delete operation.</param>
     Task DeleteSubscriptionAsync(
         string topicName,
         string subscriptionName,

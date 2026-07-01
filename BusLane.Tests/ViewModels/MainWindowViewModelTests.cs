@@ -817,10 +817,124 @@ public class MainWindowViewModelTests
             Arg.Any<CancellationToken>());
         sut.ShowCreateSubscriptionDialog.Should().BeFalse();
         topic.IsExpanded.Should().BeTrue();
+        topic.SubscriptionCount.Should().Be(2);
         topic.Subscriptions.Should().ContainSingle(subscription => subscription.Name == "processor");
         tab.Navigation.SelectedSubscription.Should().NotBeNull();
         tab.Navigation.SelectedSubscription!.Name.Should().Be("processor");
         sut.StatusMessage.Should().Be("Subscription 'processor' created");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionAsync_WhenActiveTabChanges_UsesOriginalWorkspaceOperations()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var originalOperations = Substitute.For<IConnectionStringOperations>();
+        var otherOperations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var refreshedSubscriptions = new[]
+        {
+            new SubscriptionInfo("processor", "orders-topic", 0, 0, 0, null, false)
+        };
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>())
+            .Returns(originalOperations, otherOperations);
+        originalOperations.GetTopicInfoAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(new TopicInfo("orders-topic", 1024, 0, null, TimeSpan.FromDays(14)));
+        originalOperations.GetSubscriptionsAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(
+                Task.FromResult<IEnumerable<SubscriptionInfo>>([]),
+                Task.FromResult<IEnumerable<SubscriptionInfo>>(refreshedSubscriptions));
+        originalOperations.PeekMessagesAsync(
+                "orders-topic",
+                "processor",
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<MessageInfo>>([]));
+        otherOperations.GetQueueInfoAsync("billing", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo("billing", 0, 0, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1)));
+
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var originalTab = CreateConnectedTopicTab("tab-1", preferences, operationsFactory, originalOperations, "orders-topic");
+        var otherTab = CreateConnectedQueueTab("tab-2", preferences, operationsFactory, "Billing", "billing");
+        sut.ConnectionTabs.Add(originalTab);
+        sut.ConnectionTabs.Add(otherTab);
+        sut.ActiveTab = originalTab;
+        var topic = originalTab.Navigation.Topics.Single();
+
+        // Act
+        sut.OpenCreateSubscriptionDialogCommand.Execute(topic);
+        sut.NewSubscriptionName = "processor";
+        sut.ActiveTab = otherTab;
+        await sut.CreateSubscriptionCommand.ExecuteAsync(null);
+
+        // Assert
+        await originalOperations.Received(1).CreateSubscriptionAsync(
+            "orders-topic",
+            Arg.Is<SubscriptionCreationOptions>(options => options.Name == "processor"),
+            Arg.Any<CancellationToken>());
+        await otherOperations.DidNotReceive().CreateSubscriptionAsync(
+            Arg.Any<string>(),
+            Arg.Any<SubscriptionCreationOptions>(),
+            Arg.Any<CancellationToken>());
+        originalTab.Navigation.SelectedSubscription.Should().NotBeNull();
+        originalTab.Navigation.SelectedSubscription!.Name.Should().Be("processor");
+        otherTab.Navigation.SelectedSubscription.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteSubscriptionAsync_WhenDeletingSelectedSubscription_ClearsLoadedMessages()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var subscription = new SubscriptionInfo("processor", "orders-topic", 1, 1, 0, null, false);
+        var message = new MessageInfo(
+            "message-1",
+            null,
+            null,
+            "{}",
+            DateTimeOffset.UtcNow,
+            null,
+            1,
+            1,
+            null,
+            new Dictionary<string, object>());
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetTopicInfoAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(new TopicInfo("orders-topic", 1024, 1, null, TimeSpan.FromDays(14)));
+        operations.GetSubscriptionsAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(
+                Task.FromResult<IEnumerable<SubscriptionInfo>>([subscription]),
+                Task.FromResult<IEnumerable<SubscriptionInfo>>([]));
+
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateConnectedTopicTab("tab-1", preferences, operationsFactory, operations, "orders-topic");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        tab.Navigation.SelectedSubscription = subscription;
+        tab.Navigation.SelectedEntity = subscription;
+        tab.MessageOps.Messages.Add(message);
+        tab.MessageOps.FilteredMessages.Add(message);
+        tab.MessageOps.SelectedMessage = message;
+
+        // Act
+        sut.DeleteSubscriptionRequestCommand.Execute(subscription);
+        await sut.Confirmation.ExecuteConfirmDialogAsync();
+
+        // Assert
+        tab.Navigation.SelectedSubscription.Should().BeNull();
+        tab.Navigation.SelectedEntity.Should().BeNull();
+        tab.Navigation.Topics.Single().SubscriptionCount.Should().Be(0);
+        tab.MessageOps.Messages.Should().BeEmpty();
+        tab.MessageOps.FilteredMessages.Should().BeEmpty();
+        tab.MessageOps.SelectedMessage.Should().BeNull();
     }
 
     private static MainWindowViewModel CreateSut(
