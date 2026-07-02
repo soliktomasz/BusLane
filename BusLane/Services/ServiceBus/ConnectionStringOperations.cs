@@ -217,7 +217,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
                 ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct)
                 : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct);
 
-        return messages.Select(message => ServiceBusOperations.MapToMessageInfo(message, includeFullBody));
+        return messages.Select(message => ServiceBusOperations.MapToMessageInfo(message, includeFullBody)).ToList();
     }
 
     public async Task<IReadOnlyList<SessionInspectorItem>> GetSessionInspectorItemsAsync(

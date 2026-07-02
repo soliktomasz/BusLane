@@ -1,5 +1,6 @@
 namespace BusLane.Services.ServiceBus;
 
+using System.Text;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using BusLane.Models;
@@ -61,6 +62,7 @@ internal static class ServiceBusOperations
 
     internal static readonly TimeSpan SessionAcceptTimeout = TimeSpan.FromSeconds(5);
     internal static readonly int SessionInspectorPeekBatchSize = 100;
+    private const int PreviewDecodeByteLimit = MessageInfo.MaxPreviewLength * 4;
 
     internal record SessionMessageSnapshot(
         string SessionId,
@@ -94,9 +96,7 @@ internal static class ServiceBusOperations
     /// </summary>
     public static MessageInfo MapToMessageInfo(ServiceBusReceivedMessage m, bool includeFullBody = false)
     {
-        var body = m.Body.ToString();
-        var isPreviewOnly = !includeFullBody && body.Length > MessageInfo.MaxPreviewLength;
-        var storedBody = isPreviewOnly ? MessageInfo.CreateBodyPreview(body) : body;
+        var (storedBody, isPreviewOnly) = CreateStoredBody(m.Body, includeFullBody);
 
         return new MessageInfo(
             m.MessageId,
@@ -123,6 +123,78 @@ internal static class ServiceBusOperations
             m.DeadLetterErrorDescription,
             isPreviewOnly
         );
+    }
+
+    private static (string Body, bool IsPreviewOnly) CreateStoredBody(BinaryData body, bool includeFullBody)
+    {
+        if (includeFullBody)
+        {
+            return (body.ToString(), false);
+        }
+
+        var memory = body.ToMemory();
+        if (memory.Length <= PreviewDecodeByteLimit)
+        {
+            var fullBody = body.ToString();
+            var isPreviewOnly = fullBody.Length > MessageInfo.MaxPreviewLength;
+            return (isPreviewOnly ? MessageInfo.CreateBodyPreview(fullBody) : fullBody, isPreviewOnly);
+        }
+
+        var previewLength = GetUtf8BoundaryLength(memory.Span, PreviewDecodeByteLimit);
+        var previewPrefix = Encoding.UTF8.GetString(memory.Span[..previewLength]);
+        var preview = MessageInfo.CreateBodyPreview(previewPrefix);
+        if (!preview.EndsWith("…", StringComparison.Ordinal))
+        {
+            preview += "…";
+        }
+
+        return (preview, true);
+    }
+
+    private static int GetUtf8BoundaryLength(ReadOnlySpan<byte> bytes, int maxLength)
+    {
+        var length = Math.Min(maxLength, bytes.Length);
+        var start = length - 1;
+        while (start >= 0 && IsUtf8ContinuationByte(bytes[start]))
+        {
+            start--;
+        }
+
+        if (start < 0)
+        {
+            return 0;
+        }
+
+        var expectedLength = GetUtf8SequenceLength(bytes[start]);
+        if (expectedLength == 0)
+        {
+            return start;
+        }
+
+        var availableLength = length - start;
+        return availableLength >= expectedLength ? length : start;
+    }
+
+    private static bool IsUtf8ContinuationByte(byte value) => (value & 0b1100_0000) == 0b1000_0000;
+
+    private static int GetUtf8SequenceLength(byte value)
+    {
+        if ((value & 0b1000_0000) == 0)
+        {
+            return 1;
+        }
+
+        if ((value & 0b1110_0000) == 0b1100_0000)
+        {
+            return 2;
+        }
+
+        if ((value & 0b1111_0000) == 0b1110_0000)
+        {
+            return 3;
+        }
+
+        return (value & 0b1111_1000) == 0b1111_0000 ? 4 : 0;
     }
 
     public static SessionInspectorItem BuildSessionInspectorItem(

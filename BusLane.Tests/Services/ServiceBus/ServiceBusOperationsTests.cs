@@ -79,6 +79,31 @@ public class ServiceBusOperationsTests
     }
 
     [Fact]
+    public void MapToMessageInfo_WithLargeBodyAndPreviewMode_DoesNotDecodeFullBodyString()
+    {
+        // Arrange
+        const int payloadSizeBytes = 1_000_000;
+        var bodyBytes = new byte[payloadSizeBytes];
+        Array.Fill(bodyBytes, (byte)'a');
+        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            body: BinaryData.FromBytes(bodyBytes),
+            messageId: "msg-1",
+            sequenceNumber: 42);
+
+        // Act
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var result = ServiceBusOperations.MapToMessageInfo(message);
+        var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        // Assert
+        result.IsBodyPreviewOnly.Should().BeTrue();
+        result.Body.Should().HaveLength(MessageInfo.MaxPreviewLength + 1);
+        allocatedBytes.Should().BeLessThan(
+            payloadSizeBytes + (256 * 1024),
+            "preview mapping should not decode and allocate an additional full UTF-16 body string");
+    }
+
+    [Fact]
     public void MapToMessageInfo_WithLongBodyAndFullBodyMode_StoresFullBody()
     {
         // Arrange

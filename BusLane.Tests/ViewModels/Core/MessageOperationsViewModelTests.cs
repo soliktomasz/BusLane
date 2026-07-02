@@ -258,6 +258,68 @@ public class MessageOperationsViewModelTests
     }
 
     [Fact]
+    public async Task LoadMessagesAsync_AfterRepeatedRefreshes_ReleasesPreviousPageMessages()
+    {
+        // Arrange
+        const int refreshCount = 8;
+        const int pageSize = 5;
+        var refreshNumber = 0;
+        var previousRefreshMessages = new List<WeakReference<MessageInfo>>();
+
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                refreshNumber++;
+                var messages = CreateMessages(refreshNumber * 100, pageSize).ToArray();
+
+                if (refreshNumber < refreshCount)
+                {
+                    previousRefreshMessages.AddRange(messages.Select(static message => new WeakReference<MessageInfo>(message)));
+                }
+
+                return messages;
+            });
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(pageSize);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => pageSize,
+            _ => { });
+
+        // Act
+        for (var i = 0; i < refreshCount; i++)
+        {
+            await sut.LoadMessagesAsync();
+        }
+
+        ForceFullCollection();
+
+        // Assert
+        sut.Messages.Should().HaveCount(pageSize);
+        previousRefreshMessages.Should().AllSatisfy(
+            weakReference => IsCollected(weakReference).Should().BeTrue(
+                "refresh should clear the previous page, cache, selection, and full-body cache"));
+    }
+
+    [Fact]
     public async Task LoadPreviousPage_WhenTotalUnknown_DoesNotUseCachedCountAsKnownTotal()
     {
         // Arrange
@@ -679,5 +741,17 @@ public class MessageOperationsViewModelTests
                 startingSequenceNumber + offset,
                 DateTimeOffset.UtcNow.AddMinutes(-(startingSequenceNumber + offset))))
             .ToArray();
+    }
+
+    private static void ForceFullCollection()
+    {
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+    }
+
+    private static bool IsCollected(WeakReference<MessageInfo> weakReference)
+    {
+        return !weakReference.TryGetTarget(out var _);
     }
 }
