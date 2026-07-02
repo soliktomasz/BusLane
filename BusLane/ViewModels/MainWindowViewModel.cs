@@ -684,7 +684,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         CurrentNavigation.SelectedSubscription = null;
         CurrentNavigation.SelectedEntity = queue;
         CurrentNavigation.TopicSubscriptions.Clear();
-        CurrentMessageOps.ClearSessionScope();
+        CurrentMessageOps.Clear();
         CurrentSessionInspector.Clear();
 
         if (CurrentNavigation.IsSessionInspectorTabSelected)
@@ -748,7 +748,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         navigation.SelectedSubscription = sub;
         navigation.SelectedQueue = null;
         navigation.SelectedEntity = sub;
-        messageOps.ClearSessionScope();
+        messageOps.Clear();
         sessionInspector.Clear();
 
         if (navigation.IsSessionInspectorTabSelected)
@@ -1091,7 +1091,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 return;
         }
 
-        CurrentMessageOps.ClearSessionScope();
+        CurrentMessageOps.Clear();
         CurrentSessionInspector.Clear();
         CurrentNavigation.SelectedMessageTabIndex = selectedTabIndex;
 
@@ -1201,6 +1201,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         try
         {
+            msg = await CurrentMessageOps.EnsureFullBodyLoadedAsync(msg);
+            if (msg == null) return;
+
             var properties = msg.Properties.ToDictionary(p => p.Key, p => p.Value);
 
             await operations.SendMessageAsync(
@@ -1222,7 +1225,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private void CloneMessage(MessageInfo? message = null)
+    private async Task CloneMessageAsync(MessageInfo? message = null)
     {
         var msg = message ?? CurrentMessageOps.SelectedMessage;
         var operations = ActiveTab?.Operations ?? _operations;
@@ -1230,6 +1233,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         var entityName = CurrentNavigation.CurrentEntityName;
         if (entityName == null) return;
+
+        msg = await CurrentMessageOps.EnsureFullBodyLoadedAsync(msg);
+        if (msg == null) return;
 
         SendMessageViewModel = new SendMessageViewModel(
             operations,
@@ -1279,7 +1285,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             BulkOps.GetBulkResendConfirmText(),
             async () =>
             {
-                await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
+                var messages = await CurrentMessageOps.EnsureFullBodiesLoadedAsync(CurrentMessageOps.SelectedMessages);
+                await BulkOps.ExecuteBulkResendAsync(new System.Collections.ObjectModel.ObservableCollection<MessageInfo>(messages));
                 CurrentMessageOps.SelectedMessages.Clear();
                 await CurrentMessageOps.LoadMessagesAsync();
             });
@@ -1922,6 +1929,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             StatusMessage = "No message selected";
             return;
         }
+
+        msg = await MessageOps.EnsureFullBodyLoadedAsync(msg);
+        if (msg == null) return;
 
         await ExportOps.ExportMessageAsync(msg);
     }

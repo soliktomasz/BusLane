@@ -54,7 +54,8 @@ public interface IServiceBusOperations : IAsyncDisposable
         bool deadLetter,
         bool requiresSession = false,
         string? sessionId = null,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        bool includeFullBody = false);
 
     Task<IReadOnlyList<SessionInspectorItem>> GetSessionInspectorItemsAsync(
         string entityName,

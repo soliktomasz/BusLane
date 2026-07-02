@@ -208,7 +208,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
 
     public async Task<IEnumerable<MessageInfo>> PeekMessagesAsync(
         string entityName, string? subscription, int count, long? fromSequenceNumber, bool deadLetter,
-        bool requiresSession = false, string? sessionId = null, CancellationToken ct = default)
+        bool requiresSession = false, string? sessionId = null, CancellationToken ct = default, bool includeFullBody = false)
     {
         entityName = NormalizeEntityPath(entityName);
 
@@ -216,9 +216,9 @@ public class AzureCredentialOperations : IAzureCredentialOperations
             ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, sessionId, count, fromSequenceNumber, deadLetter, ct)
             : requiresSession
                 ? await ServiceBusOperations.PeekSessionMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct)
-            : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct);
+                : await ServiceBusOperations.PeekStandardMessagesAsync(GetClient(), entityName, subscription, count, fromSequenceNumber, deadLetter, ct);
 
-        return messages.Select(ServiceBusOperations.MapToMessageInfo);
+        return messages.Select(message => ServiceBusOperations.MapToMessageInfo(message, includeFullBody));
     }
 
     public async Task<IReadOnlyList<SessionInspectorItem>> GetSessionInspectorItemsAsync(

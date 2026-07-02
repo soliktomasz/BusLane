@@ -1,6 +1,7 @@
 namespace BusLane.Tests.Services.ServiceBus;
 
 using Azure.Messaging.ServiceBus;
+using BusLane.Models;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
 using NSubstitute;
@@ -54,6 +55,46 @@ public class ServiceBusOperationsTests
         // Assert
         act.Should().Throw<ArgumentException>()
             .WithParameterName("Name");
+    }
+
+    [Fact]
+    public void MapToMessageInfo_WithLongBodyAndPreviewMode_StoresPreviewOnly()
+    {
+        // Arrange
+        var body = new string('A', 250) + "tail";
+        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            body: BinaryData.FromString(body),
+            messageId: "msg-1",
+            sequenceNumber: 42);
+
+        // Act
+        var result = ServiceBusOperations.MapToMessageInfo(message);
+
+        // Assert
+        result.IsBodyPreviewOnly.Should().BeTrue();
+        result.Body.Should().HaveLength(201);
+        result.Body.Should().EndWith("…");
+        result.Body.Should().NotContain("tail");
+        result.BodyPreview.Should().Be(result.Body);
+    }
+
+    [Fact]
+    public void MapToMessageInfo_WithLongBodyAndFullBodyMode_StoresFullBody()
+    {
+        // Arrange
+        var body = new string('A', 250) + "tail";
+        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            body: BinaryData.FromString(body),
+            messageId: "msg-1",
+            sequenceNumber: 42);
+
+        // Act
+        var result = ServiceBusOperations.MapToMessageInfo(message, includeFullBody: true);
+
+        // Assert
+        result.IsBodyPreviewOnly.Should().BeFalse();
+        result.Body.Should().Be(body);
+        result.BodyPreview.Should().EndWith("…");
     }
 
     [Fact]

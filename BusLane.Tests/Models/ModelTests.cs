@@ -470,6 +470,21 @@ public class MessageInfoTests
     }
 
     [Fact]
+    public void MessageInfo_WhenBodyIsPreviewOnly_UsesBodyAsPreview()
+    {
+        // Arrange
+        var preview = new string('A', 200) + "…";
+
+        // Act
+        var msg = new MessageInfo("msg-1", null, null, preview, DateTimeOffset.UtcNow, null, 1, 0, null, new Dictionary<string, object>(), IsBodyPreviewOnly: true);
+
+        // Assert
+        msg.IsBodyPreviewOnly.Should().BeTrue();
+        msg.Body.Should().Be(preview);
+        msg.BodyPreview.Should().Be(preview);
+    }
+
+    [Fact]
     public void MessageInfo_ContainsAllProperties()
     {
         // Arrange

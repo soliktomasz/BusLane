@@ -24,18 +24,27 @@ public record MessageInfo(
     // Dead letter specific properties
     string? DeadLetterSource = null,
     string? DeadLetterReason = null,
-    string? DeadLetterErrorDescription = null
+    string? DeadLetterErrorDescription = null,
+    bool IsBodyPreviewOnly = false
 )
 {
     // Pre-computed truncated body preview for efficient list rendering
     // Limit to ~200 chars to avoid performance issues with large message bodies
-    private const int MaxPreviewLength = 200;
+    public const int MaxPreviewLength = 200;
 
-    public string BodyPreview { get; } = string.IsNullOrEmpty(Body)
-        ? string.Empty
-        : Body.Length <= MaxPreviewLength
-            ? Body.ReplaceLineEndings(" ")
-            : Body[..MaxPreviewLength].ReplaceLineEndings(" ") + "…";
+    public string BodyPreview { get; } = IsBodyPreviewOnly ? Body : CreateBodyPreview(Body);
+
+    public static string CreateBodyPreview(string? body)
+    {
+        if (string.IsNullOrEmpty(body))
+        {
+            return string.Empty;
+        }
+
+        return body.Length <= MaxPreviewLength
+            ? body.ReplaceLineEndings(" ")
+            : body[..MaxPreviewLength].ReplaceLineEndings(" ") + "…";
+    }
 
     public bool IsBodyXml
     {

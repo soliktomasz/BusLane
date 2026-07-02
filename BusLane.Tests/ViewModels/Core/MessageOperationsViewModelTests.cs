@@ -496,6 +496,165 @@ public class MessageOperationsViewModelTests
         sut.CanLoadNextPage.Should().BeFalse();
     }
 
+    [Fact]
+    public void MessageSearchText_WhenBodyIsPreviewOnly_SearchesPreviewNotHiddenBody()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        sut.Messages.Add(new MessageInfo(
+            "msg-1",
+            null,
+            null,
+            "visible preview",
+            DateTimeOffset.UtcNow,
+            null,
+            1,
+            0,
+            null,
+            new Dictionary<string, object>(),
+            IsBodyPreviewOnly: true));
+
+        // Act
+        sut.MessageSearchText = "hidden-tail";
+
+        // Assert
+        sut.FilteredMessages.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task EnsureFullBodyLoadedAsync_WhenMessageIsPreviewOnly_FetchesFullBodyBySequenceNumber()
+    {
+        // Arrange
+        var previewMessage = new MessageInfo(
+            "msg-1",
+            null,
+            null,
+            "preview",
+            DateTimeOffset.UtcNow,
+            null,
+            42,
+            0,
+            null,
+            new Dictionary<string, object>(),
+            IsBodyPreviewOnly: true);
+        var fullMessage = previewMessage with { Body = "preview hidden-tail", IsBodyPreviewOnly = false };
+
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                1,
+                42,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>(),
+                includeFullBody: true)
+            .Returns([fullMessage]);
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        sut.Messages.Add(previewMessage);
+        sut.FilteredMessages.Add(previewMessage);
+        sut.SelectMessage(previewMessage);
+
+        // Act
+        var result = await sut.EnsureFullBodyLoadedAsync(previewMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.IsBodyPreviewOnly.Should().BeFalse();
+        result.Body.Should().Be("preview hidden-tail");
+        sut.SelectedMessage.Should().Be(result);
+    }
+
+    [Fact]
+    public async Task EnsureFullBodyLoadedAsync_WhenSelectedPreviewHydrates_DoesNotReplaceVisibleRow()
+    {
+        // Arrange
+        var previewMessage = new MessageInfo(
+            "msg-1",
+            null,
+            null,
+            "preview",
+            DateTimeOffset.UtcNow,
+            null,
+            42,
+            0,
+            null,
+            new Dictionary<string, object>(),
+            IsBodyPreviewOnly: true);
+        var fullMessage = previewMessage with { Body = "full body", IsBodyPreviewOnly = false };
+
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                1,
+                42,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>(),
+                includeFullBody: true)
+            .Returns([fullMessage]);
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        sut.Messages.Add(previewMessage);
+        sut.FilteredMessages.Add(previewMessage);
+        sut.SelectMessage(previewMessage);
+
+        // Act
+        await sut.EnsureFullBodyLoadedAsync(previewMessage);
+
+        // Assert
+        sut.Messages.Should().ContainSingle().Which.Should().BeSameAs(previewMessage);
+        sut.FilteredMessages.Should().ContainSingle().Which.Should().BeSameAs(previewMessage);
+        sut.SelectedMessage.Should().Be(fullMessage);
+    }
+
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber, DateTimeOffset enqueuedTime)
     {
         return new MessageInfo(

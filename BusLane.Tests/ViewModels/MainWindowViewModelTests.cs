@@ -316,6 +316,60 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SelectQueueAsync_WhenChangingEntity_ClearsPreviousMessageState()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo("orders", 0, 0, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1)));
+        operations.PeekMessagesAsync(
+                "billing",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<MessageInfo>>([]));
+
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+
+        var staleMessage = new MessageInfo(
+            "stale",
+            null,
+            null,
+            "stale body",
+            DateTimeOffset.UtcNow,
+            null,
+            1,
+            0,
+            null,
+            new Dictionary<string, object>());
+        sut.CurrentMessageOps.Messages.Add(staleMessage);
+        sut.CurrentMessageOps.FilteredMessages.Add(staleMessage);
+        sut.CurrentMessageOps.SelectMessage(staleMessage);
+        sut.CurrentMessageOps.MessageSearchText = "stale";
+
+        var billing = new QueueInfo("billing", 0, 0, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+
+        // Act
+        await sut.SelectQueueCommand.ExecuteAsync(billing);
+
+        // Assert
+        sut.CurrentMessageOps.Messages.Should().BeEmpty();
+        sut.CurrentMessageOps.FilteredMessages.Should().BeEmpty();
+        sut.CurrentMessageOps.SelectedMessage.Should().BeNull();
+        sut.CurrentMessageOps.MessageSearchText.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
     {
         // Arrange

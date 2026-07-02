@@ -75,6 +75,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     private long _scopedKnownDeadLetterCount;
     private long? _nextFromSequenceNumber;
     private CancellationTokenSource? _messageFilterCts;
+    private readonly HashSet<long> _bodyLoadInProgress = [];
+    private readonly Dictionary<long, MessageInfo> _fullBodyCache = new();
     private const int MessageFilterDebounceMilliseconds = 150;
 
     public bool HasSelectedMessages => SelectedMessages.Count > 0;
@@ -231,7 +233,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return true;
 
         return (message.MessageId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-               (message.Body?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (message.BodyPreview?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                (message.CorrelationId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                (message.Subject?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                (message.DeadLetterReason?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false);
@@ -337,6 +339,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
             FilteredMessages.Clear();
             SelectedMessages.Clear();
             SelectedMessage = null;
+            _fullBodyCache.Clear();
             _nextFromSequenceNumber = null;
 
             // Load first page
@@ -611,6 +614,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         FilteredMessages.Clear();
         SelectedMessages.Clear();
         SelectedMessage = null;
+        _fullBodyCache.Clear();
 
         var pageMessages = _pageCache.GetPage(pageNumber);
 
@@ -623,6 +627,98 @@ public partial class MessageOperationsViewModel : ViewModelBase
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
+
+    partial void OnSelectedMessageChanged(MessageInfo? value)
+    {
+        if (value?.IsBodyPreviewOnly == true)
+        {
+            _ = EnsureFullBodyLoadedAsync(value);
+        }
+    }
+
+    public async Task<MessageInfo?> EnsureFullBodyLoadedAsync(MessageInfo? message)
+    {
+        if (message == null || !message.IsBodyPreviewOnly)
+        {
+            return message;
+        }
+
+        if (_fullBodyCache.TryGetValue(message.SequenceNumber, out var cachedMessage))
+        {
+            if (SelectedMessage?.SequenceNumber == message.SequenceNumber)
+            {
+                SelectedMessage = cachedMessage;
+            }
+
+            return cachedMessage;
+        }
+
+        var operations = _getOperations();
+        var entityName = _currentEntityName ?? _getEntityName();
+        if (operations == null || entityName == null)
+        {
+            _setStatus("Unable to load full message body");
+            return null;
+        }
+
+        if (!_bodyLoadInProgress.Add(message.SequenceNumber))
+        {
+            return message;
+        }
+
+        try
+        {
+            var messages = await operations.PeekMessagesAsync(
+                entityName,
+                _currentSubscription ?? _getSubscriptionName(),
+                1,
+                message.SequenceNumber,
+                _currentDeadLetter,
+                _currentRequiresSession || _getRequiresSession(),
+                ScopedSessionId,
+                includeFullBody: true);
+
+            var fullMessage = messages.FirstOrDefault(m => m.SequenceNumber == message.SequenceNumber);
+            if (fullMessage == null)
+            {
+                _setStatus("Unable to load full message body");
+                return null;
+            }
+
+            _fullBodyCache[message.SequenceNumber] = fullMessage;
+            if (SelectedMessage?.SequenceNumber == message.SequenceNumber)
+            {
+                SelectedMessage = fullMessage;
+            }
+
+            return fullMessage;
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to load full message body: {ex.Message}");
+            return null;
+        }
+        finally
+        {
+            _bodyLoadInProgress.Remove(message.SequenceNumber);
+        }
+    }
+
+    public async Task<List<MessageInfo>> EnsureFullBodiesLoadedAsync(IEnumerable<MessageInfo> messages)
+    {
+        var result = new List<MessageInfo>();
+
+        foreach (var message in messages)
+        {
+            var fullMessage = await EnsureFullBodyLoadedAsync(message);
+            if (fullMessage != null)
+            {
+                result.Add(fullMessage);
+            }
+        }
+
+        return result;
+    }
 
     public void OpenSessionScope(string sessionId, long knownTotalCount = 0, long knownDeadLetterCount = 0)
     {
@@ -640,6 +736,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         _scopedKnownDeadLetterCount = 0;
         _nextFromSequenceNumber = null;
         _pageCache.Clear();
+        _fullBodyCache.Clear();
         Pagination.Reset();
         Messages.Clear();
         FilteredMessages.Clear();
@@ -702,7 +799,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     public async Task CopyMessageBodyAsync(MessageInfo? message = null)
     {
-        var text = ResolveCopyMessageBody(message, FormattedMessageBody);
+        var fullMessage = await EnsureFullBodyLoadedAsync(message ?? SelectedMessage);
+        var text = ResolveCopyMessageBody(message != null ? fullMessage : null, FormattedMessageBody);
         if (text == null) return;
 
         if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
@@ -739,6 +837,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         _scopedKnownDeadLetterCount = 0;
         MessageSearchText = "";
         _pageCache.Clear();
+        _fullBodyCache.Clear();
         Pagination.Reset();
     }
 }

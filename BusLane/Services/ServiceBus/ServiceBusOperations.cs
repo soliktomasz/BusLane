@@ -92,30 +92,38 @@ internal static class ServiceBusOperations
     /// <summary>
     /// Maps a ServiceBusReceivedMessage to our MessageInfo model.
     /// </summary>
-    public static MessageInfo MapToMessageInfo(ServiceBusReceivedMessage m) => new(
-        m.MessageId,
-        m.CorrelationId,
-        m.ContentType,
-        m.Body.ToString(),
-        m.EnqueuedTime,
-        m.ScheduledEnqueueTime == default ? null : m.ScheduledEnqueueTime,
-        m.SequenceNumber,
-        m.DeliveryCount,
-        m.SessionId,
-        m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
-        m.Subject,
-        m.To,
-        m.ReplyTo,
-        m.ReplyToSessionId,
-        m.PartitionKey,
-        m.TimeToLive,
-        m.ExpiresAt,
-        m.LockToken,
-        m.LockedUntil,
-        m.DeadLetterSource,
-        m.DeadLetterReason,
-        m.DeadLetterErrorDescription
-    );
+    public static MessageInfo MapToMessageInfo(ServiceBusReceivedMessage m, bool includeFullBody = false)
+    {
+        var body = m.Body.ToString();
+        var isPreviewOnly = !includeFullBody && body.Length > MessageInfo.MaxPreviewLength;
+        var storedBody = isPreviewOnly ? MessageInfo.CreateBodyPreview(body) : body;
+
+        return new MessageInfo(
+            m.MessageId,
+            m.CorrelationId,
+            m.ContentType,
+            storedBody,
+            m.EnqueuedTime,
+            m.ScheduledEnqueueTime == default ? null : m.ScheduledEnqueueTime,
+            m.SequenceNumber,
+            m.DeliveryCount,
+            m.SessionId,
+            m.ApplicationProperties.ToDictionary(k => k.Key, v => v.Value),
+            m.Subject,
+            m.To,
+            m.ReplyTo,
+            m.ReplyToSessionId,
+            m.PartitionKey,
+            m.TimeToLive,
+            m.ExpiresAt,
+            m.LockToken,
+            m.LockedUntil,
+            m.DeadLetterSource,
+            m.DeadLetterReason,
+            m.DeadLetterErrorDescription,
+            isPreviewOnly
+        );
+    }
 
     public static SessionInspectorItem BuildSessionInspectorItem(
         SessionMessageSnapshot? activeSnapshot,
