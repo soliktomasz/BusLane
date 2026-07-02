@@ -449,20 +449,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
                 if (!gotNewMessages)
                 {
-                    var fallbackMessages = await LoadNextPageFromStartFallbackAsync(cachedSequenceNumbers);
-                    if (!fallbackMessages.Any())
-                    {
-                        Pagination.CanGoNext = false;
-                        _setStatus("No more messages");
-                        return;
-                    }
-
-                    _nextFromSequenceNumber = null;
-                    _pageCache.StorePage(nextPage, fallbackMessages);
-                    DisplayPage(nextPage);
-                    var fallbackHasMore = DetermineHasMoreMessages(nextPage, fallbackMessages.Count);
-                    UpdatePaginationState(nextPage, fallbackMessages.Count, fallbackHasMore);
-                    _setStatus($"Loaded page {nextPage}");
+                    Pagination.CanGoNext = false;
+                    _setStatus("No more messages");
                     return;
                 }
 
@@ -477,18 +465,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
             }
             else
             {
-                var fallbackMessages = await LoadNextPageFromStartFallbackAsync(_pageCache.GetCachedSequenceNumbers());
-                if (fallbackMessages.Any())
-                {
-                    _nextFromSequenceNumber = null;
-                    _pageCache.StorePage(nextPage, fallbackMessages);
-                    DisplayPage(nextPage);
-                    var fallbackHasMore = DetermineHasMoreMessages(nextPage, fallbackMessages.Count);
-                    UpdatePaginationState(nextPage, fallbackMessages.Count, fallbackHasMore);
-                    _setStatus($"Loaded page {nextPage}");
-                    return;
-                }
-
                 Pagination.CanGoNext = false;
                 _setStatus("No more messages");
             }
@@ -613,37 +589,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
         // Be optimistic. We verify the actual end when a next-page fetch produces
         // no unseen messages.
         return currentPageMessageCount > 0;
-    }
-
-    private async Task<IReadOnlyList<MessageInfo>> LoadNextPageFromStartFallbackAsync(HashSet<long> cachedSequenceNumbers)
-    {
-        var operations = _getOperations();
-        if (operations == null)
-        {
-            return new List<MessageInfo>().AsReadOnly();
-        }
-
-        var scanCount = _pageCache.GetTotalCachedMessages() + _preferencesService.MessagesPerPage;
-
-        var messages = await operations.PeekMessagesAsync(
-            _currentEntityName!,
-            _currentSubscription,
-            scanCount,
-            null,
-            _currentDeadLetter,
-            _currentRequiresSession,
-            ScopedSessionId);
-
-        var ordered = SortDescending
-            ? messages.OrderByDescending(m => m.EnqueuedTime)
-            : messages.OrderBy(m => m.EnqueuedTime);
-
-        var nextPage = ordered
-            .Where(m => !cachedSequenceNumbers.Contains(m.SequenceNumber))
-            .Take(_preferencesService.MessagesPerPage)
-            .ToList();
-
-        return nextPage.AsReadOnly();
     }
 
     private void DisplayPage(int pageNumber)

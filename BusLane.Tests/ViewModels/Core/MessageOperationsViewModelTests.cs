@@ -422,6 +422,80 @@ public class MessageOperationsViewModelTests
         sut.CanLoadPreviousPage.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task LoadNextPageAsync_WhenSequenceFetchReturnsEmpty_DoesNotRetryFromStart()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                Arg.Any<long?>(),
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var fromSequenceNumber = callInfo.ArgAt<long?>(3);
+                return fromSequenceNumber is null
+                    ? CreateMessages(1, 25)
+                    : Array.Empty<MessageInfo>();
+            });
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        await sut.LoadMessagesAsync();
+
+        // Act
+        await sut.LoadNextPageCommand.ExecuteAsync(null);
+
+        // Assert
+        await operations.Received(1).PeekMessagesAsync(
+            "orders",
+            null,
+            25,
+            null,
+            false,
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+        await operations.Received(1).PeekMessagesAsync(
+            "orders",
+            null,
+            25,
+            26,
+            false,
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+        await operations.DidNotReceive().PeekMessagesAsync(
+            "orders",
+            null,
+            50,
+            null,
+            false,
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+        sut.Pagination.CurrentPage.Should().Be(1);
+        sut.CanLoadNextPage.Should().BeFalse();
+    }
+
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber, DateTimeOffset enqueuedTime)
     {
         return new MessageInfo(
