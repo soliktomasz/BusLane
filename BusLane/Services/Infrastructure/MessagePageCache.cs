@@ -4,20 +4,33 @@ using BusLane.Models;
 
 public class MessagePageCache
 {
+    private const int DefaultMaxCachedPages = 5;
     private static readonly IReadOnlyList<MessageInfo> EmptyPage = [];
+    private readonly int _maxCachedPages;
     private readonly Dictionary<int, IReadOnlyList<MessageInfo>> _pages = new();
     private readonly Dictionary<long, int> _sequenceNumberRefs = new();
+    private readonly Queue<int> _pageOrder = new();
     private int _totalCachedMessages;
+
+    public MessagePageCache(int maxCachedPages = DefaultMaxCachedPages)
+    {
+        if (maxCachedPages < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxCachedPages), "Cache must retain at least one page.");
+        }
+
+        _maxCachedPages = maxCachedPages;
+    }
 
     public void StorePage(int pageNumber, IEnumerable<MessageInfo> messages)
     {
         if (_pages.TryGetValue(pageNumber, out var existingMessages))
         {
-            _totalCachedMessages -= existingMessages.Count;
-            foreach (var message in existingMessages)
-            {
-                RemoveSequenceNumber(message.SequenceNumber);
-            }
+            RemovePageReferences(existingMessages);
+        }
+        else
+        {
+            _pageOrder.Enqueue(pageNumber);
         }
 
         var pageMessages = messages.ToList().AsReadOnly();
@@ -28,6 +41,8 @@ public class MessagePageCache
         {
             AddSequenceNumber(message.SequenceNumber);
         }
+
+        EvictOldestPagesIfNeeded();
     }
 
     public IReadOnlyList<MessageInfo> GetPage(int pageNumber)
@@ -70,6 +85,7 @@ public class MessagePageCache
     {
         _pages.Clear();
         _sequenceNumberRefs.Clear();
+        _pageOrder.Clear();
         _totalCachedMessages = 0;
     }
 
@@ -87,6 +103,28 @@ public class MessagePageCache
     {
         _sequenceNumberRefs.TryGetValue(sequenceNumber, out var count);
         _sequenceNumberRefs[sequenceNumber] = count + 1;
+    }
+
+    private void EvictOldestPagesIfNeeded()
+    {
+        while (_pages.Count > _maxCachedPages && _pageOrder.TryDequeue(out var pageNumber))
+        {
+            if (!_pages.Remove(pageNumber, out var messages))
+            {
+                continue;
+            }
+
+            RemovePageReferences(messages);
+        }
+    }
+
+    private void RemovePageReferences(IReadOnlyList<MessageInfo> messages)
+    {
+        _totalCachedMessages -= messages.Count;
+        foreach (var message in messages)
+        {
+            RemoveSequenceNumber(message.SequenceNumber);
+        }
     }
 
     private void RemoveSequenceNumber(long sequenceNumber)

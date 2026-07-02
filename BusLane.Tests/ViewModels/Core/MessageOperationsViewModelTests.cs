@@ -364,6 +364,64 @@ public class MessageOperationsViewModelTests
         sut.Messages[0].SequenceNumber.Should().Be(501);
     }
 
+    [Fact]
+    public async Task LoadPreviousPage_WhenOlderPageEvicted_DisablesPreviousNavigation()
+    {
+        // Arrange
+        const int pageSize = 25;
+        const int pagesToLoad = 8;
+
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                Arg.Any<long?>(),
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var fromSequenceNumber = callInfo.ArgAt<long?>(3);
+                var startingSequenceNumber = fromSequenceNumber ?? 1;
+                return startingSequenceNumber <= pagesToLoad * pageSize
+                    ? CreateMessages(startingSequenceNumber, pageSize)
+                    : Array.Empty<MessageInfo>();
+            });
+
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(pageSize);
+
+        var logSink = Substitute.For<ILogSink>();
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            logSink,
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            _ => { });
+
+        await sut.LoadMessagesAsync();
+        for (var i = 2; i <= pagesToLoad; i++)
+        {
+            await sut.LoadNextPageCommand.ExecuteAsync(null);
+        }
+
+        // Act
+        while (sut.Pagination.CurrentPage > 4)
+        {
+            sut.LoadPreviousPageCommand.Execute(null);
+        }
+
+        // Assert
+        sut.Pagination.CurrentPage.Should().Be(4);
+        sut.CanLoadPreviousPage.Should().BeFalse();
+    }
+
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber, DateTimeOffset enqueuedTime)
     {
         return new MessageInfo(

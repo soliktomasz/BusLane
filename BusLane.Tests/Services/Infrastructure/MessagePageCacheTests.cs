@@ -54,6 +54,25 @@ public class MessagePageCacheTests
         sut.GetPage(1).Should().HaveCount(1);
         sut.GetPage(2).Should().HaveCount(1);
     }
+
+    [Fact]
+    public void StorePage_WhenCacheLimitExceeded_ShouldEvictOldestPage()
+    {
+        // Arrange
+        var sut = new MessagePageCache(maxCachedPages: 2);
+        sut.StorePage(1, [CreateMessage("1", "body1", 10)]);
+        sut.StorePage(2, [CreateMessage("2", "body2", 20)]);
+
+        // Act
+        sut.StorePage(3, [CreateMessage("3", "body3", 30)]);
+
+        // Assert
+        sut.HasPage(1).Should().BeFalse();
+        sut.HasPage(2).Should().BeTrue();
+        sut.HasPage(3).Should().BeTrue();
+        sut.GetTotalCachedMessages().Should().Be(2);
+        sut.GetCachedSequenceNumbers().Should().BeEquivalentTo([20, 30]);
+    }
     
     [Fact]
     public void HasPage_WhenPageCached_ShouldReturnTrue()

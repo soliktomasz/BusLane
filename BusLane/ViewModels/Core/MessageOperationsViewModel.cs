@@ -586,6 +586,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
                 currentPage,
                 _preferencesService.MessagesPerPage,
                 _knownTotalCount);
+            UpdatePreviousPageAvailability(currentPage);
             return;
         }
 
@@ -594,6 +595,12 @@ public partial class MessageOperationsViewModel : ViewModelBase
             _preferencesService.MessagesPerPage,
             currentPageMessageCount,
             hasMoreMessages);
+        UpdatePreviousPageAvailability(currentPage);
+    }
+
+    private void UpdatePreviousPageAvailability(int currentPage)
+    {
+        Pagination.CanGoPrevious = currentPage > 1 && _pageCache.HasPage(currentPage - 1);
     }
 
     private bool DetermineHasMoreMessages(int currentPage, int currentPageMessageCount)
