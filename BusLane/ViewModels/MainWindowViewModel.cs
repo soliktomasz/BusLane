@@ -1364,6 +1364,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         try
         {
             ActiveTab.Navigation.Clear();
+            ActiveTab.MessageOps.Clear();
+            ActiveTab.SessionInspector.Clear();
 
             if (ActiveTab.Mode == ConnectionMode.ConnectionString && ActiveTab.SavedConnection != null)
             {

@@ -597,7 +597,7 @@ public class MessageOperationsViewModelTests
     }
 
     [Fact]
-    public async Task EnsureFullBodyLoadedAsync_WhenSelectedPreviewHydrates_DoesNotReplaceVisibleRow()
+    public async Task EnsureFullBodyLoadedAsync_WhenSelectedPreviewHydrates_ReplacesVisibleRow()
     {
         // Arrange
         var previewMessage = new MessageInfo(
@@ -645,14 +645,15 @@ public class MessageOperationsViewModelTests
         sut.Messages.Add(previewMessage);
         sut.FilteredMessages.Add(previewMessage);
         sut.SelectMessage(previewMessage);
+        sut.FilteredMessages.CollectionChanged += (_, _) => sut.ClearSelectedMessage();
 
         // Act
         await sut.EnsureFullBodyLoadedAsync(previewMessage);
 
         // Assert
-        sut.Messages.Should().ContainSingle().Which.Should().BeSameAs(previewMessage);
-        sut.FilteredMessages.Should().ContainSingle().Which.Should().BeSameAs(previewMessage);
-        sut.SelectedMessage.Should().Be(fullMessage);
+        sut.Messages.Should().ContainSingle().Which.Should().BeSameAs(fullMessage);
+        sut.FilteredMessages.Should().ContainSingle().Which.Should().BeSameAs(fullMessage);
+        sut.SelectedMessage.Should().BeSameAs(fullMessage);
     }
 
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber, DateTimeOffset enqueuedTime)

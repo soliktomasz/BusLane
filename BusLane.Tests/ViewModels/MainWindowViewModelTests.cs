@@ -370,6 +370,63 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RefreshAsync_WhenActiveNamespaceTabClearsEntitySelection_ClearsPreviousMessageState()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var queue = new QueueInfo("orders", 0, 0, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+        var refreshedQueue = new QueueInfo("billing", 0, 0, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+        var staleMessage = new MessageInfo(
+            "stale",
+            null,
+            null,
+            "stale body",
+            DateTimeOffset.UtcNow,
+            null,
+            1,
+            0,
+            null,
+            new Dictionary<string, object>());
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync()
+            .Returns(
+                Task.FromResult<IEnumerable<QueueInfo>>([queue]),
+                Task.FromResult<IEnumerable<QueueInfo>>([refreshedQueue]));
+        operations.GetTopicsAsync().Returns(Task.FromResult<IEnumerable<TopicInfo>>([]));
+
+        var connection = SavedConnection.Create(
+            "Orders Namespace",
+            "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            ConnectionType.Namespace);
+        var tab = CreateTab("tab-1", preferences);
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+
+        tab.Navigation.SelectedQueue = queue;
+        tab.Navigation.SelectedEntity = queue;
+        tab.MessageOps.Messages.Add(staleMessage);
+        tab.MessageOps.FilteredMessages.Add(staleMessage);
+        tab.MessageOps.SelectMessage(staleMessage);
+        tab.MessageOps.MessageSearchText = "stale";
+
+        // Act
+        await sut.RefreshCommand.ExecuteAsync(null);
+
+        // Assert
+        tab.Navigation.SelectedEntity.Should().BeNull();
+        tab.Navigation.SelectedQueue.Should().BeNull();
+        tab.MessageOps.Messages.Should().BeEmpty();
+        tab.MessageOps.FilteredMessages.Should().BeEmpty();
+        tab.MessageOps.SelectedMessage.Should().BeNull();
+        tab.MessageOps.MessageSearchText.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
     {
         // Arrange

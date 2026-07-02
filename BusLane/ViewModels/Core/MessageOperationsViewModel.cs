@@ -645,7 +645,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
         if (_fullBodyCache.TryGetValue(message.SequenceNumber, out var cachedMessage))
         {
-            if (SelectedMessage?.SequenceNumber == message.SequenceNumber)
+            var wasSelected = SelectedMessage?.SequenceNumber == message.SequenceNumber;
+            ReplaceVisibleMessage(message, cachedMessage);
+
+            if (wasSelected)
             {
                 SelectedMessage = cachedMessage;
             }
@@ -686,7 +689,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
             }
 
             _fullBodyCache[message.SequenceNumber] = fullMessage;
-            if (SelectedMessage?.SequenceNumber == message.SequenceNumber)
+            var wasSelected = SelectedMessage?.SequenceNumber == message.SequenceNumber;
+            ReplaceVisibleMessage(message, fullMessage);
+
+            if (wasSelected)
             {
                 SelectedMessage = fullMessage;
             }
@@ -704,11 +710,33 @@ public partial class MessageOperationsViewModel : ViewModelBase
         }
     }
 
+    private void ReplaceVisibleMessage(MessageInfo previewMessage, MessageInfo fullMessage)
+    {
+        ReplaceMessageBySequenceNumber(Messages, previewMessage.SequenceNumber, fullMessage);
+        ReplaceMessageBySequenceNumber(FilteredMessages, previewMessage.SequenceNumber, fullMessage);
+        ReplaceMessageBySequenceNumber(SelectedMessages, previewMessage.SequenceNumber, fullMessage);
+    }
+
+    private static void ReplaceMessageBySequenceNumber(
+        ObservableCollection<MessageInfo> messages,
+        long sequenceNumber,
+        MessageInfo replacement)
+    {
+        for (var i = 0; i < messages.Count; i++)
+        {
+            if (messages[i].SequenceNumber == sequenceNumber)
+            {
+                messages[i] = replacement;
+                return;
+            }
+        }
+    }
+
     public async Task<List<MessageInfo>> EnsureFullBodiesLoadedAsync(IEnumerable<MessageInfo> messages)
     {
         var result = new List<MessageInfo>();
 
-        foreach (var message in messages)
+        foreach (var message in messages.ToList())
         {
             var fullMessage = await EnsureFullBodyLoadedAsync(message);
             if (fullMessage != null)
