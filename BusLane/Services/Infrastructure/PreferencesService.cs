@@ -17,6 +17,7 @@ public class PreferencesService : IPreferencesService
     public int DefaultMessageCount { get; set; } = 100;
     public int MessagesPerPage { get; set; } = 100;
     public bool ShowDeadLetterBadges { get; set; } = true;
+    public bool ShowTopicActionButtons { get; set; } = true;
     public bool EnableMessagePreview { get; set; } = true;
     public bool ShowNavigationPanel { get; set; } = true;
     public bool ShowTerminalPanel { get; set; }
@@ -63,6 +64,7 @@ public class PreferencesService : IPreferencesService
                     DefaultMessageCount = data.DefaultMessageCount > 0 ? data.DefaultMessageCount : DefaultMessageCount;
                     MessagesPerPage = data.MessagesPerPage > 0 ? data.MessagesPerPage : MessagesPerPage;
                     ShowDeadLetterBadges = data.ShowDeadLetterBadges;
+                    ShowTopicActionButtons = data.ShowTopicActionButtons;
                     EnableMessagePreview = data.EnableMessagePreview;
                     ShowNavigationPanel = data.ShowNavigationPanel;
                     ShowTerminalPanel = data.ShowTerminalPanel;
@@ -102,6 +104,7 @@ public class PreferencesService : IPreferencesService
                 DefaultMessageCount = DefaultMessageCount,
                 MessagesPerPage = MessagesPerPage,
                 ShowDeadLetterBadges = ShowDeadLetterBadges,
+                ShowTopicActionButtons = ShowTopicActionButtons,
                 EnableMessagePreview = EnableMessagePreview,
                 ShowNavigationPanel = ShowNavigationPanel,
                 ShowTerminalPanel = ShowTerminalPanel,
@@ -139,6 +142,7 @@ public class PreferencesService : IPreferencesService
         public int DefaultMessageCount { get; set; }
         public int MessagesPerPage { get; set; }
         public bool ShowDeadLetterBadges { get; set; }
+        public bool ShowTopicActionButtons { get; set; } = true;
         public bool EnableMessagePreview { get; set; }
         public bool ShowNavigationPanel { get; set; } = true;
         public bool ShowTerminalPanel { get; set; }

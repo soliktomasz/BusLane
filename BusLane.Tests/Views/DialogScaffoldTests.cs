@@ -47,6 +47,17 @@ public class DialogScaffoldTests
     }
 
     [Fact]
+    public void SettingsDialog_ExposesTopicActionButtonVisibilityToggle()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSettingsDialogPath());
+
+        // Assert
+        xaml.Should().Contain("Text=\"Topic action buttons\"");
+        xaml.Should().Contain("IsChecked=\"{Binding SettingsViewModel.ShowTopicActionButtons}\"");
+    }
+
+    [Fact]
     public void StatusPopupDialog_UsesShellStatusMessage()
     {
         // Arrange

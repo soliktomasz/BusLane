@@ -401,13 +401,15 @@
                                                             <ContextMenu>
                                                                 <MenuItem Header="Details"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
-                                                                          CommandParameter="{Binding}"/>
+                                                                          CommandParameter="{Binding}"
+                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
                                                                 <MenuItem Header="Send Message to Topic"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
                                                                           CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Create Subscription"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
-                                                                          CommandParameter="{Binding}"/>
+                                                                          CommandParameter="{Binding}"
+                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
                                                                 <MenuItem Header="Refresh Subscriptions"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.RefreshTopicCommand}"
                                                                           CommandParameter="{Binding}"/>
@@ -416,7 +418,8 @@
                                                                           CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Delete Topic"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.DeleteTopicRequestCommand}"
-                                                                          CommandParameter="{Binding}"/>
+                                                                          CommandParameter="{Binding}"
+                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
                                                                 <MenuItem Header="Copy Name"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.CopyTopicNameCommand}"
                                                                           CommandParameter="{Binding}"/>
@@ -455,6 +458,7 @@
                                                                     Command="{ReflectionBinding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     ToolTip.Tip="Create subscription"
+                                                                    IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"
                                                                     VerticalAlignment="Center">
                                                                 <LucideIcon Kind="Plus" Size="12"/>
                                                             </Button>

@@ -64,6 +64,18 @@ public class EntityTreeViewTests
         xaml.Should().Contain("OpenCreateSubscriptionDialogCommand");
     }
 
+    [Fact]
+    public void EntityTreeViews_BindTopicActionsToSettingsVisibility()
+    {
+        // Arrange
+        var connectionTree = File.ReadAllText(GetConnectionTreePath());
+        var azureTree = File.ReadAllText(GetAzureTreePath());
+
+        // Assert
+        AssertTopicActionVisibilityBindings(connectionTree);
+        AssertTopicActionVisibilityBindings(azureTree);
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -117,5 +129,14 @@ public class EntityTreeViewTests
             "Views",
             "Dialogs",
             "SubscriptionCreateDialog.axaml"));
+    }
+
+    private static void AssertTopicActionVisibilityBindings(string xaml)
+    {
+        xaml.Should().Contain("Header=\"Details\"");
+        xaml.Should().Contain("Header=\"Create Subscription\"");
+        xaml.Should().Contain("Header=\"Delete Topic\"");
+        xaml.Should().Contain("ToolTip.Tip=\"Create subscription\"");
+        xaml.Should().Contain("IsVisible=\"{Binding $parent[Window].DataContext.ShowTopicActionButtons}\"");
     }
 }
