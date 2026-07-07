@@ -79,6 +79,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public MessageBulkOperationsViewModel BulkOps { get; }
     public ExportOperationsViewModel ExportOps { get; }
     public ConfirmationDialogViewModel Confirmation { get; }
+    public EntityOperationsViewModel EntityOperations { get; }
     public AppLockViewModel AppLock { get; }
 
     // Dashboard components
@@ -340,6 +341,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
+        EntityOperations = new EntityOperationsViewModel(
+            () => ActiveTab?.Operations ?? _operations,
+            () => CurrentNavigation,
+            msg => StatusMessage = msg,
+            Confirmation,
+            OpenSendMessagePopup);
         AppLock = new AppLockViewModel(_appLockService, biometricAuthService, CompleteStartupAfterUnlockAsync);
 
         UpdateNotification = new UpdateNotificationViewModel(updateService);

@@ -1,6 +1,8 @@
 namespace BusLane.Tests.Services.ServiceBus;
 
 using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
+using BusLane.Models;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
 using NSubstitute;
@@ -54,6 +56,139 @@ public class ServiceBusOperationsTests
         // Assert
         act.Should().Throw<ArgumentException>()
             .WithParameterName("Name");
+    }
+
+    [Fact]
+    public void MapToSubscriptionRuleInfo_WithSqlFilter_MapsExpressionAndAction()
+    {
+        // Arrange
+        var rule = ServiceBusModelFactory.RuleProperties(
+            "important",
+            new SqlRuleFilter("sys.Label = 'important'"),
+            new SqlRuleAction("SET priority = 'high'"));
+
+        // Act
+        var info = ServiceBusOperations.MapToSubscriptionRuleInfo(rule);
+
+        // Assert
+        info.Name.Should().Be("important");
+        info.FilterType.Should().Be(SubscriptionRuleFilterType.Sql);
+        info.SqlExpression.Should().Be("sys.Label = 'important'");
+        info.DisplayExpression.Should().Be("sys.Label = 'important'");
+        info.ActionExpression.Should().Be("SET priority = 'high'");
+    }
+
+    [Fact]
+    public void MapToSubscriptionRuleInfo_WithCorrelationFilter_MapsProperties()
+    {
+        // Arrange
+        var filter = new CorrelationRuleFilter
+        {
+            Subject = "important",
+            CorrelationId = "corr-1"
+        };
+        filter.ApplicationProperties["tenant"] = "alpha";
+        var rule = ServiceBusModelFactory.RuleProperties("correlated", filter, null);
+
+        // Act
+        var info = ServiceBusOperations.MapToSubscriptionRuleInfo(rule);
+
+        // Assert
+        info.FilterType.Should().Be(SubscriptionRuleFilterType.Correlation);
+        info.DisplayExpression.Should().Contain("Subject = important");
+        info.DisplayExpression.Should().Contain("CorrelationId = corr-1");
+        info.DisplayExpression.Should().Contain("tenant = alpha");
+        info.CorrelationProperties.Should().Contain("Subject", "important");
+        info.CorrelationProperties.Should().Contain("CorrelationId", "corr-1");
+        info.CorrelationProperties.Should().Contain("tenant", "alpha");
+    }
+
+    [Fact]
+    public void MapToSubscriptionRuleInfo_WithTrueFilter_MapsDisplayExpression()
+    {
+        // Arrange
+        var rule = ServiceBusModelFactory.RuleProperties(RuleProperties.DefaultRuleName, new TrueRuleFilter(), null);
+
+        // Act
+        var info = ServiceBusOperations.MapToSubscriptionRuleInfo(rule);
+
+        // Assert
+        info.FilterType.Should().Be(SubscriptionRuleFilterType.True);
+        info.DisplayExpression.Should().Be("True");
+    }
+
+    [Fact]
+    public void BuildCreateRuleOptions_WithSqlFilter_MapsFilterAndAction()
+    {
+        // Arrange
+        var options = new SubscriptionRuleCreationOptions(
+            "important",
+            "sys.Label = 'important'",
+            ActionExpression: "SET priority = 'high'");
+
+        // Act
+        var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
+
+        // Assert
+        sdkOptions.Name.Should().Be("important");
+        sdkOptions.Filter.Should().BeOfType<SqlRuleFilter>()
+            .Which.SqlExpression.Should().Be("sys.Label = 'important'");
+        sdkOptions.Action.Should().BeOfType<SqlRuleAction>()
+            .Which.SqlExpression.Should().Be("SET priority = 'high'");
+    }
+
+    [Fact]
+    public void BuildCreateRuleOptions_WithCorrelationFilter_MapsProperties()
+    {
+        // Arrange
+        var options = new SubscriptionRuleCreationOptions(
+            "correlated",
+            FilterType: SubscriptionRuleFilterType.Correlation,
+            CorrelationProperties: new Dictionary<string, string>
+            {
+                ["Subject"] = "important",
+                ["CorrelationId"] = "corr-1",
+                ["tenant"] = "alpha"
+            });
+
+        // Act
+        var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
+
+        // Assert
+        var filter = sdkOptions.Filter.Should().BeOfType<CorrelationRuleFilter>().Subject;
+        filter.Subject.Should().Be("important");
+        filter.CorrelationId.Should().Be("corr-1");
+        filter.ApplicationProperties.Should().Contain("tenant", "alpha");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void BuildCreateRuleOptions_WithBlankName_Throws(string ruleName)
+    {
+        // Arrange
+        var options = new SubscriptionRuleCreationOptions(ruleName, "1 = 1");
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateRuleOptions(options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("Name");
+    }
+
+    [Fact]
+    public void BuildCreateRuleOptions_WithMissingSqlExpression_Throws()
+    {
+        // Arrange
+        var options = new SubscriptionRuleCreationOptions("important", "");
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateRuleOptions(options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("SqlExpression");
     }
 
     [Fact]

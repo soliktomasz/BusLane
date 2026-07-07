@@ -90,6 +90,70 @@ internal static class ServiceBusOperations
     }
 
     /// <summary>
+    /// Maps Azure SDK rule properties into the display model used by BusLane.
+    /// </summary>
+    public static SubscriptionRuleInfo MapToSubscriptionRuleInfo(RuleProperties rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+
+        var actionExpression = rule.Action is SqlRuleAction sqlAction
+            ? sqlAction.SqlExpression
+            : null;
+
+        return rule.Filter switch
+        {
+            TrueRuleFilter => new SubscriptionRuleInfo(
+                rule.Name,
+                SubscriptionRuleFilterType.True,
+                "True",
+                ActionExpression: actionExpression),
+
+            SqlRuleFilter sqlFilter => new SubscriptionRuleInfo(
+                rule.Name,
+                SubscriptionRuleFilterType.Sql,
+                sqlFilter.SqlExpression,
+                sqlFilter.SqlExpression,
+                actionExpression),
+
+            CorrelationRuleFilter correlationFilter => BuildCorrelationRuleInfo(rule.Name, correlationFilter, actionExpression),
+
+            _ => new SubscriptionRuleInfo(
+                rule.Name,
+                SubscriptionRuleFilterType.Sql,
+                rule.Filter.ToString() ?? string.Empty,
+                ActionExpression: actionExpression)
+        };
+    }
+
+    /// <summary>
+    /// Builds Azure SDK rule creation options from BusLane creation options.
+    /// </summary>
+    public static CreateRuleOptions BuildCreateRuleOptions(SubscriptionRuleCreationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Name))
+        {
+            throw new ArgumentException("Rule name is required.", nameof(SubscriptionRuleCreationOptions.Name));
+        }
+
+        RuleFilter filter = options.FilterType switch
+        {
+            SubscriptionRuleFilterType.True => new TrueRuleFilter(),
+            SubscriptionRuleFilterType.Sql => BuildSqlRuleFilter(options),
+            SubscriptionRuleFilterType.Correlation => BuildCorrelationRuleFilter(options),
+            _ => throw new ArgumentOutOfRangeException(nameof(options), options.FilterType, "Unsupported subscription rule filter type.")
+        };
+
+        var ruleOptions = new CreateRuleOptions(options.Name, filter);
+        if (!string.IsNullOrWhiteSpace(options.ActionExpression))
+        {
+            ruleOptions.Action = new SqlRuleAction(options.ActionExpression);
+        }
+
+        return ruleOptions;
+    }
+
+    /// <summary>
     /// Maps a ServiceBusReceivedMessage to our MessageInfo model.
     /// </summary>
     public static MessageInfo MapToMessageInfo(ServiceBusReceivedMessage m) => new(
@@ -597,6 +661,109 @@ internal static class ServiceBusOperations
         }
 
         return left.Value >= right.Value ? left : right;
+    }
+
+    private static SubscriptionRuleInfo BuildCorrelationRuleInfo(
+        string ruleName,
+        CorrelationRuleFilter filter,
+        string? actionExpression)
+    {
+        var properties = new Dictionary<string, string>(StringComparer.Ordinal);
+        AddIfPresent(properties, nameof(filter.CorrelationId), filter.CorrelationId);
+        AddIfPresent(properties, nameof(filter.MessageId), filter.MessageId);
+        AddIfPresent(properties, nameof(filter.To), filter.To);
+        AddIfPresent(properties, nameof(filter.ReplyTo), filter.ReplyTo);
+        AddIfPresent(properties, nameof(filter.Subject), filter.Subject);
+        AddIfPresent(properties, nameof(filter.SessionId), filter.SessionId);
+        AddIfPresent(properties, nameof(filter.ReplyToSessionId), filter.ReplyToSessionId);
+        AddIfPresent(properties, nameof(filter.ContentType), filter.ContentType);
+
+        foreach (var property in filter.ApplicationProperties)
+        {
+            if (property.Value != null)
+            {
+                properties[property.Key] = property.Value.ToString() ?? string.Empty;
+            }
+        }
+
+        var display = properties.Count == 0
+            ? "Correlation"
+            : string.Join(", ", properties.Select(static p => $"{p.Key} = {p.Value}"));
+
+        return new SubscriptionRuleInfo(
+            ruleName,
+            SubscriptionRuleFilterType.Correlation,
+            display,
+            ActionExpression: actionExpression,
+            CorrelationProperties: properties);
+    }
+
+    private static SqlRuleFilter BuildSqlRuleFilter(SubscriptionRuleCreationOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.SqlExpression))
+        {
+            throw new ArgumentException("SQL expression is required.", nameof(SubscriptionRuleCreationOptions.SqlExpression));
+        }
+
+        return new SqlRuleFilter(options.SqlExpression);
+    }
+
+    private static CorrelationRuleFilter BuildCorrelationRuleFilter(SubscriptionRuleCreationOptions options)
+    {
+        if (options.CorrelationProperties == null || options.CorrelationProperties.Count == 0)
+        {
+            throw new ArgumentException("At least one correlation property is required.", nameof(SubscriptionRuleCreationOptions.CorrelationProperties));
+        }
+
+        var filter = new CorrelationRuleFilter();
+        foreach (var (key, value) in options.CorrelationProperties)
+        {
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case nameof(CorrelationRuleFilter.CorrelationId):
+                    filter.CorrelationId = value;
+                    break;
+                case nameof(CorrelationRuleFilter.MessageId):
+                    filter.MessageId = value;
+                    break;
+                case nameof(CorrelationRuleFilter.To):
+                    filter.To = value;
+                    break;
+                case nameof(CorrelationRuleFilter.ReplyTo):
+                    filter.ReplyTo = value;
+                    break;
+                case nameof(CorrelationRuleFilter.Subject):
+                    filter.Subject = value;
+                    break;
+                case nameof(CorrelationRuleFilter.SessionId):
+                    filter.SessionId = value;
+                    break;
+                case nameof(CorrelationRuleFilter.ReplyToSessionId):
+                    filter.ReplyToSessionId = value;
+                    break;
+                case nameof(CorrelationRuleFilter.ContentType):
+                    filter.ContentType = value;
+                    break;
+                default:
+                    filter.ApplicationProperties[key] = value;
+                    break;
+            }
+        }
+
+        return filter;
+    }
+
+    private static void AddIfPresent(IDictionary<string, string> properties, string key, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            properties[key] = value;
+        }
     }
 
     /// <summary>

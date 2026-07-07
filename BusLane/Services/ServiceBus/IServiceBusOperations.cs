@@ -45,6 +45,15 @@ public interface IServiceBusOperations : IAsyncDisposable
         string subscriptionName,
         CancellationToken ct = default);
 
+    Task DeleteQueueAsync(string queueName, CancellationToken ct = default);
+    Task DeleteTopicAsync(string topicName, CancellationToken ct = default);
+    Task UpdateQueueAsync(string queueName, QueueUpdateOptions options, CancellationToken ct = default);
+    Task UpdateTopicAsync(string topicName, TopicUpdateOptions options, CancellationToken ct = default);
+    Task UpdateSubscriptionAsync(string topicName, string subscriptionName, SubscriptionUpdateOptions options, CancellationToken ct = default);
+    Task<IReadOnlyList<SubscriptionRuleInfo>> GetSubscriptionRulesAsync(string topicName, string subscriptionName, CancellationToken ct = default);
+    Task CreateSubscriptionRuleAsync(string topicName, string subscriptionName, SubscriptionRuleCreationOptions options, CancellationToken ct = default);
+    Task DeleteSubscriptionRuleAsync(string topicName, string subscriptionName, string ruleName, CancellationToken ct = default);
+
     // Message operations
     Task<IEnumerable<MessageInfo>> PeekMessagesAsync(
         string entityName,
