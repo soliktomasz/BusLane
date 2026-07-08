@@ -10,7 +10,7 @@
     <Border Background="{DynamicResource TabNavBackground}"
             BorderBrush="{DynamicResource BorderDefault}"
             BorderThickness="0,0,0,1"
-            Padding="12,8"
+            Padding="12,7"
             IsVisible="{Binding HasActiveTabs}">
         <Grid ColumnDefinitions="*,Auto">
             <!-- Tab List -->
@@ -119,7 +119,7 @@
                         ToolTip.Tip="Open new connection tab">
                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                         <LucideIcon Kind="Plus" Size="14"/>
-                        <TextBlock Text="New Tab" FontSize="11"/>
+                        <TextBlock Text="New" FontSize="11"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

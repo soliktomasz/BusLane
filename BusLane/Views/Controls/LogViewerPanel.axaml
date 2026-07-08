@@ -29,7 +29,9 @@
         <Style Selector="Border.log-entry">
             <Setter Property="Padding" Value="10,6"/>
             <Setter Property="Margin" Value="0,2"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
         </Style>
 
         <Style Selector="Border.log-entry.info">
@@ -108,14 +110,14 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Stretch"
                 Background="{DynamicResource CardBackground}"
-                BorderBrush="{DynamicResource BorderDefault}"
+                BorderBrush="{DynamicResource BorderStrong}"
                 BorderThickness="1,0,0,0"
                 BoxShadow="-8 0 24 0 #32000000">
             <Grid RowDefinitions="Auto,Auto,*">
 
                 <!-- Header -->
                 <Border Grid.Row="0"
-                        Background="{DynamicResource SurfaceSubtle}"
+                        Background="{DynamicResource LayerBackground}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="0,0,0,1"
                         Padding="12,8">

@@ -756,6 +756,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     {
         navigation.SelectedSubscription = sub;
         navigation.SelectedQueue = null;
+        navigation.SelectedTopic = null;
         navigation.SelectedEntity = sub;
         messageOps.ClearSessionScope();
         sessionInspector.Clear();

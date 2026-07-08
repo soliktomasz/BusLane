@@ -182,18 +182,6 @@
                         </Expander.Header>
 
                         <StackPanel Spacing="0">
-                            <Border Classes="entity-tree-loading"
-                                    IsVisible="{Binding IsLoading}"
-                                    Margin="4,2,4,2">
-                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                    <ProgressBar IsIndeterminate="True" Width="42" Height="2"/>
-                                    <TextBlock Text="Loading queues..."
-                                               FontSize="10"
-                                               Foreground="{DynamicResource SubtleForeground}"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-
                             <ListBox ItemsSource="{ReflectionBinding CurrentNavigation.FilteredQueues}"
                                      Classes="entity-list"
                                      Background="Transparent"
@@ -351,18 +339,6 @@
                         </Expander.Header>
 
                         <StackPanel Spacing="0">
-                            <Border Classes="entity-tree-loading"
-                                    IsVisible="{Binding IsLoading}"
-                                    Margin="4,2,4,2">
-                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                    <ProgressBar IsIndeterminate="True" Width="42" Height="2"/>
-                                    <TextBlock Text="Loading topics..."
-                                               FontSize="10"
-                                               Foreground="{DynamicResource SubtleForeground}"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-
                             <ListBox ItemsSource="{ReflectionBinding CurrentNavigation.FilteredTopics}"
                                      Classes="entity-list"
                                      Background="Transparent"
@@ -496,7 +472,7 @@
                                                             <DataTemplate x:DataType="models:SubscriptionInfo">
                                                                 <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
                                                                     <Button Grid.Column="0"
-                                                                            Classes="entity-tree-row"
+                                                                            Classes="entity-tree-row subscription-tree-row"
                                                                             Command="{ReflectionBinding $parent[Window].DataContext.SelectSubscriptionCommand}"
                                                                             CommandParameter="{Binding}"
                                                                             HorizontalAlignment="Stretch"

@@ -825,6 +825,46 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SelectSubscriptionAsync_ClearsSelectedTopic()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var subscription = new SubscriptionInfo("processor", "orders-topic", 0, 0, 0, null, false);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetTopicInfoAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(new TopicInfo("orders-topic", 1024, 1, null, TimeSpan.FromDays(14)));
+        operations.GetSubscriptionsAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<SubscriptionInfo>>([subscription]));
+        operations.PeekMessagesAsync(
+                "orders-topic",
+                "processor",
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<MessageInfo>>([]));
+
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateConnectedTopicTab("tab-1", preferences, operationsFactory, operations, "orders-topic");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        var topic = tab.Navigation.Topics.Single();
+        tab.Navigation.SelectedTopic = topic;
+
+        // Act
+        await sut.SelectSubscriptionCommand.ExecuteAsync(subscription);
+
+        // Assert
+        tab.Navigation.SelectedTopic.Should().BeNull();
+        tab.Navigation.SelectedSubscription.Should().Be(subscription);
+    }
+
+    [Fact]
     public async Task CreateSubscriptionAsync_WhenActiveTabChanges_UsesOriginalWorkspaceOperations()
     {
         // Arrange
