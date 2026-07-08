@@ -7,14 +7,17 @@
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
 
+    <!-- Height matches Border.sidebar-header so the dividers align at the corner -->
     <Border Background="{DynamicResource TabNavBackground}"
             BorderBrush="{DynamicResource BorderDefault}"
             BorderThickness="0,0,0,1"
-            Padding="12,7"
+            Height="64"
+            Padding="12,0"
             IsVisible="{Binding HasActiveTabs}">
         <Grid ColumnDefinitions="*,Auto">
             <!-- Tab List -->
             <ScrollViewer Grid.Column="0"
+                          VerticalAlignment="Center"
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding ConnectionTabs}">

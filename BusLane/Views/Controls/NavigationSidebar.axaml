@@ -19,7 +19,7 @@
               IsVisible="{Binding IsNavigationPanelVisible}">
             <Border Grid.Row="0" Classes="sidebar-header">
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <Viewbox Width="28" Height="28">
                             <Canvas Width="512" Height="512">
                                 <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#18181b"/>
