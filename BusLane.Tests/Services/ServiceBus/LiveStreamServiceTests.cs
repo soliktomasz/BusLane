@@ -12,7 +12,7 @@ public class LiveStreamServiceTests
         "Endpoint=sb://unit-test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
     [Fact]
-    public async Task StartQueueStreamAsync_PeekMode_ReturnsImmediatelyAndSetsStreamingState()
+    public async Task StartQueueStreamAsync_ReturnsImmediately_AndDoesNotReportStreamingBeforeFirstSuccessfulPeek()
     {
         // Arrange
         var preferences = Substitute.For<IPreferencesService>();
@@ -25,13 +25,13 @@ public class LiveStreamServiceTests
         await using var sut = new LiveStreamService(preferences);
 
         // Act
-        var startTask = sut.StartQueueStreamAsync(operations, "queue-a", peekOnly: true);
+        var startTask = sut.StartQueueStreamAsync(operations, "queue-a");
         var completedTask = await Task.WhenAny(startTask, Task.Delay(TimeSpan.FromSeconds(1)));
 
         // Assert
-        completedTask.Should().Be(startTask, "peek-mode startup should not wait for the streaming loop to finish");
+        completedTask.Should().Be(startTask, "startup should not wait for the streaming loop to finish");
         await startTask;
-        sut.IsStreaming.Should().BeTrue();
+        sut.IsStreaming.Should().BeFalse("streaming status should only turn on after the entity answers a peek");
 
         await sut.StopStreamAsync();
     }

@@ -313,11 +313,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             liveStreamService, alertService, notificationService,
             dashboardViewModel,
             () => ActiveTab?.Operations ?? _operations,
-            () => Navigation.Queues,
-            () => Navigation.Topics,
-            () => Navigation.TopicSubscriptions,
-            () => Navigation.SelectedQueue,
-            () => Navigation.SelectedSubscription,
+            () => CurrentNavigation.Queues,
+            () => CurrentNavigation.Topics,
+            () => CurrentNavigation.TopicSubscriptions,
+            () => CurrentNavigation.SelectedQueue,
+            () => CurrentNavigation.SelectedSubscription,
             msg => StatusMessage = msg);
 
         // Initialize refactored components

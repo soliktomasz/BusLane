@@ -41,7 +41,7 @@ public class LiveStreamViewModelTests
             CorrelationId: null,
             ContentType: "application/json",
             Body: $"{{\"id\":\"{messageId}\"}}",
-            ReceivedAt: DateTimeOffset.UtcNow,
+            EnqueuedAt: DateTimeOffset.UtcNow,
             EntityName: "orders",
             EntityType: "Queue",
             TopicName: null,
@@ -79,23 +79,21 @@ public class LiveStreamViewModelTests
             remove { }
         }
 
-        public Task StartQueueStreamAsync(IServiceBusOperations operations, string queueName, bool peekOnly = true, CancellationToken ct = default)
+        public Task StartQueueStreamAsync(IServiceBusOperations operations, string queueName, CancellationToken ct = default)
         {
             _ = operations;
             _ = queueName;
-            _ = peekOnly;
             ct.ThrowIfCancellationRequested();
             IsStreaming = true;
             StreamingStatusChanged?.Invoke(this, true);
             return Task.CompletedTask;
         }
 
-        public Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, bool peekOnly = true, CancellationToken ct = default)
+        public Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, CancellationToken ct = default)
         {
             _ = operations;
             _ = topicName;
             _ = subscriptionName;
-            _ = peekOnly;
             ct.ThrowIfCancellationRequested();
             IsStreaming = true;
             StreamingStatusChanged?.Invoke(this, true);
