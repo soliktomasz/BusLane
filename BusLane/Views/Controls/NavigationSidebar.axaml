@@ -32,7 +32,7 @@
                         </Viewbox>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="BusLane" Classes="heading"/>
-                            <TextBlock Text="Control rail" Classes="caption" FontSize="11"/>
+                            <TextBlock Text="Service Bus workspace" Classes="caption" FontSize="11"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -440,10 +440,12 @@
             <StackPanel Grid.Row="0" Spacing="12" HorizontalAlignment="Center" Margin="0,14">
                 <Viewbox Width="34" Height="34">
                     <Canvas Width="512" Height="512">
-                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#172033"/>
-                        <Rectangle Canvas.Left="104" Canvas.Top="148" Width="304" Height="44" RadiusX="22" RadiusY="22" Fill="#FFFFFF"/>
-                        <Rectangle Canvas.Left="104" Canvas.Top="234" Width="304" Height="44" RadiusX="22" RadiusY="22" Fill="#FFFFFF"/>
-                        <Rectangle Canvas.Left="104" Canvas.Top="320" Width="304" Height="44" RadiusX="22" RadiusY="22" Fill="#FFFFFF"/>
+                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#27231F"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#403A34"/>
+                        <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#403A34"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#6366F1"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#403A34"/>
+                        <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#403A34"/>
                     </Canvas>
                 </Viewbox>
                 <Button Classes="entity-pane-restore-command"

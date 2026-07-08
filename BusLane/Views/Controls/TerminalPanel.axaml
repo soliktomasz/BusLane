@@ -8,7 +8,7 @@
     <Border Classes="card terminal-panel" Padding="0">
         <Grid RowDefinitions="Auto,*,Auto">
             <Border Grid.Row="0"
-                    Background="{DynamicResource SurfaceSubtle}"
+                    Background="{DynamicResource LayerBackground}"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="0,0,0,1"
                     Padding="10,8">
@@ -90,6 +90,7 @@
             </ScrollViewer>
 
             <Border Grid.Row="2"
+                    Background="{DynamicResource SurfaceSubtle}"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="0,1,0,0"
                     Padding="10,8">

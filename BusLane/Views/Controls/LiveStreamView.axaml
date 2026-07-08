@@ -5,11 +5,11 @@
              x:Class="BusLane.Views.Controls.LiveStreamView"
              x:CompileBindings="False">
 
-    <Border Classes="card" Padding="0">
+    <Border Classes="pane-card" Padding="0">
         <Grid RowDefinitions="Auto,Auto,*">
             <!-- Header -->
             <Border Grid.Row="0"
-                    Background="{DynamicResource LayerBackground}"
+                    Background="{DynamicResource SurfaceSubtle}"
                     BorderBrush="{DynamicResource BorderMuted}"
                     BorderThickness="0,0,0,1"
                     Padding="20,16">
@@ -76,7 +76,11 @@
             </Border>
 
             <!-- Filter & Options Bar -->
-            <Border Grid.Row="1" Background="{DynamicResource SurfaceSubtle}" Padding="16,12">
+            <Border Grid.Row="1"
+                    Background="{DynamicResource LayerBackground}"
+                    BorderBrush="{DynamicResource BorderDefault}"
+                    BorderThickness="0,0,0,1"
+                    Padding="16,12">
                 <Grid ColumnDefinitions="*,Auto">
                     <!-- Search/Filter -->
                     <Border Grid.Column="0" Background="{DynamicResource InputBackground}" CornerRadius="6" Padding="8,8" Margin="0,0,12,0"
