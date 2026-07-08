@@ -179,6 +179,166 @@ public class ConnectionStringOperations : IConnectionStringOperations
         await AdminClient.DeleteSubscriptionAsync(topicName, subscriptionName, ct);
     }
 
+    public async Task DeleteQueueAsync(string queueName, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName);
+        await AdminClient.DeleteQueueAsync(queueName, ct);
+    }
+
+    public async Task DeleteTopicAsync(string topicName, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        await AdminClient.DeleteTopicAsync(topicName, ct);
+    }
+
+    public async Task UpdateQueueAsync(string queueName, QueueUpdateOptions options, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var queue = (await AdminClient.GetQueueAsync(queueName, ct)).Value;
+        if (options.LockDuration.HasValue)
+        {
+            queue.LockDuration = options.LockDuration.Value;
+        }
+
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            queue.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.DeadLetteringOnMessageExpiration.HasValue)
+        {
+            queue.DeadLetteringOnMessageExpiration = options.DeadLetteringOnMessageExpiration.Value;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            queue.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        await AdminClient.UpdateQueueAsync(queue, ct);
+    }
+
+    public async Task UpdateTopicAsync(string topicName, TopicUpdateOptions options, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var topic = (await AdminClient.GetTopicAsync(topicName, ct)).Value;
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            topic.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            topic.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        await AdminClient.UpdateTopicAsync(topic, ct);
+    }
+
+    public async Task UpdateSubscriptionAsync(
+        string topicName,
+        string subscriptionName,
+        SubscriptionUpdateOptions options,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var subscription = (await AdminClient.GetSubscriptionAsync(topicName, subscriptionName, ct)).Value;
+        if (options.LockDuration.HasValue)
+        {
+            subscription.LockDuration = options.LockDuration.Value;
+        }
+
+        if (options.MaxDeliveryCount.HasValue)
+        {
+            subscription.MaxDeliveryCount = options.MaxDeliveryCount.Value;
+        }
+
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            subscription.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.AutoDeleteOnIdle.HasValue)
+        {
+            subscription.AutoDeleteOnIdle = options.AutoDeleteOnIdle.Value;
+        }
+
+        if (options.ForwardTo != null)
+        {
+            subscription.ForwardTo = string.IsNullOrWhiteSpace(options.ForwardTo) ? null : options.ForwardTo;
+        }
+
+        if (options.ForwardDeadLetteredMessagesTo != null)
+        {
+            subscription.ForwardDeadLetteredMessagesTo = string.IsNullOrWhiteSpace(options.ForwardDeadLetteredMessagesTo)
+                ? null
+                : options.ForwardDeadLetteredMessagesTo;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            subscription.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        if (options.DeadLetteringOnMessageExpiration.HasValue)
+        {
+            subscription.DeadLetteringOnMessageExpiration = options.DeadLetteringOnMessageExpiration.Value;
+        }
+
+        await AdminClient.UpdateSubscriptionAsync(subscription, ct);
+    }
+
+    public async Task<IReadOnlyList<SubscriptionRuleInfo>> GetSubscriptionRulesAsync(
+        string topicName,
+        string subscriptionName,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+
+        var rules = new List<SubscriptionRuleInfo>();
+        await foreach (var rule in AdminClient.GetRulesAsync(topicName, subscriptionName, ct))
+        {
+            rules.Add(ServiceBusOperations.MapToSubscriptionRuleInfo(rule));
+        }
+
+        return rules;
+    }
+
+    public async Task CreateSubscriptionRuleAsync(
+        string topicName,
+        string subscriptionName,
+        SubscriptionRuleCreationOptions options,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
+        await AdminClient.CreateRuleAsync(topicName, subscriptionName, sdkOptions, ct);
+    }
+
+    public async Task DeleteSubscriptionRuleAsync(
+        string topicName,
+        string subscriptionName,
+        string ruleName,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleName);
+
+        await AdminClient.DeleteRuleAsync(topicName, subscriptionName, ruleName, ct);
+    }
+
     public async Task<NamespaceInfo?> GetNamespaceInfoAsync(CancellationToken ct = default)
     {
         try

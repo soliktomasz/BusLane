@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.EntityDetailDialog"
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
+
+    <Border Classes="modal-overlay"
+            IsVisible="{Binding EntityOperations.ShowEntityDetailDialog}">
+        <Border Background="{DynamicResource CardBackground}"
+                CornerRadius="14"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BoxShadow="0 12 32 0 #38000000"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                MinWidth="560"
+                MaxWidth="720"
+                MaxHeight="680"
+                ClipToBounds="True"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceSubtle}"
+                        CornerRadius="14,14,0,0"
+                        Padding="20,16">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="36" Height="36"
+                                CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrand}"
+                                Margin="0,0,12,0">
+                            <LucideIcon Kind="Info" Size="18"
+                                        Foreground="{DynamicResource AccentBrand}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding EntityOperations.EntityDetailTitle}"
+                                   Classes="heading"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Classes="icon"
+                                Command="{Binding EntityOperations.CloseEntityDetailDialogCommand}"
+                                ToolTip.Tip="Close">
+                            <LucideIcon Kind="X" Size="16"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding EntityOperations.EntityDetailRows}"
+                                  Margin="20,18,20,28">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource BorderDefault}"
+                                        BorderThickness="0,0,0,1"
+                                        Padding="0,10">
+                                    <Grid ColumnDefinitions="220,*">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Label}"
+                                                   Classes="caption"
+                                                   VerticalAlignment="Top"/>
+                                        <SelectableTextBlock Grid.Column="1"
+                                                             Text="{Binding Value}"
+                                                             TextWrapping="Wrap"
+                                                             FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                             FontSize="12"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>

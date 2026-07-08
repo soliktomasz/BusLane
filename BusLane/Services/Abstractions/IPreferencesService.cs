@@ -12,6 +12,7 @@ public interface IPreferencesService
     int DefaultMessageCount { get; set; }
     int MessagesPerPage { get; set; }
     bool ShowDeadLetterBadges { get; set; }
+    bool ShowTopicActionButtons { get; set; }
     bool EnableMessagePreview { get; set; }
     bool ShowNavigationPanel { get; set; }
     bool ShowTerminalPanel { get; set; }

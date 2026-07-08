@@ -70,6 +70,7 @@ public class PreferencesServiceTests : IDisposable
         var sut = new PreferencesService();
 
         // Assert
+        sut.ShowTopicActionButtons.Should().BeTrue();
         sut.ShowTerminalPanel.Should().BeFalse();
         sut.TerminalIsDocked.Should().BeTrue();
         sut.TerminalDockHeight.Should().Be(260);
@@ -117,5 +118,22 @@ public class PreferencesServiceTests : IDisposable
         // Assert
         reloaded.PinnedEntitiesJson.Should().Contain("workspace-a");
         reloaded.PinnedEntitiesJson.Should().Contain("orders");
+    }
+
+    [Fact]
+    public void SaveAndReload_ShouldRoundTripTopicActionButtonVisibility()
+    {
+        // Arrange
+        var sut = new PreferencesService
+        {
+            ShowTopicActionButtons = false
+        };
+
+        // Act
+        sut.Save();
+        var reloaded = new PreferencesService();
+
+        // Assert
+        reloaded.ShowTopicActionButtons.Should().BeFalse();
     }
 }

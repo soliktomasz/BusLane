@@ -158,6 +158,7 @@ public class NavigationStatePinningTests
         public int DefaultMessageCount { get; set; } = 100;
         public int MessagesPerPage { get; set; } = 100;
         public bool ShowDeadLetterBadges { get; set; } = true;
+        public bool ShowTopicActionButtons { get; set; } = true;
         public bool EnableMessagePreview { get; set; } = true;
         public bool ShowNavigationPanel { get; set; } = true;
         public bool ShowTerminalPanel { get; set; }

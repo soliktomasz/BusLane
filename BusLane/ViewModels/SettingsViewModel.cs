@@ -30,6 +30,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private int _defaultMessageCount = 100;
     [ObservableProperty] private int _messagesPerPage = 100;
     [ObservableProperty] private bool _showDeadLetterBadges = true;
+    [ObservableProperty] private bool _showTopicActionButtons = true;
     [ObservableProperty] private bool _enableMessagePreview = true;
     [ObservableProperty] private string _theme = "Light";
     [ObservableProperty] private bool _restoreTabsOnStartup = true;
@@ -138,6 +139,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             DefaultMessageCount = _preferencesService.DefaultMessageCount;
             MessagesPerPage = _preferencesService.MessagesPerPage;
             ShowDeadLetterBadges = _preferencesService.ShowDeadLetterBadges;
+            ShowTopicActionButtons = _preferencesService.ShowTopicActionButtons;
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
             RestoreTabsOnStartup = _preferencesService.RestoreTabsOnStartup;
@@ -167,6 +169,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         _preferencesService.DefaultMessageCount = DefaultMessageCount;
         _preferencesService.MessagesPerPage = MessagesPerPage;
         _preferencesService.ShowDeadLetterBadges = ShowDeadLetterBadges;
+        _preferencesService.ShowTopicActionButtons = ShowTopicActionButtons;
         _preferencesService.EnableMessagePreview = EnableMessagePreview;
         _preferencesService.Theme = themeToApply;
         _preferencesService.RestoreTabsOnStartup = RestoreTabsOnStartup;
@@ -213,6 +216,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         DefaultMessageCount = 100;
         MessagesPerPage = 100;
         ShowDeadLetterBadges = true;
+        ShowTopicActionButtons = true;
         EnableMessagePreview = true;
         Theme = "Light";
         RestoreTabsOnStartup = true;

@@ -1,5 +1,7 @@
 namespace BusLane.Tests.Views;
 
+using System.Xml.Linq;
+
 using FluentAssertions;
 
 public class EntityTreeViewTests
@@ -64,6 +66,18 @@ public class EntityTreeViewTests
         xaml.Should().Contain("OpenCreateSubscriptionDialogCommand");
     }
 
+    [Fact]
+    public void EntityTreeViews_BindTopicActionsToSettingsVisibility()
+    {
+        // Arrange
+        var connectionTree = File.ReadAllText(GetConnectionTreePath());
+        var azureTree = File.ReadAllText(GetAzureTreePath());
+
+        // Assert
+        AssertTopicActionVisibilityBindings(connectionTree);
+        AssertTopicActionVisibilityBindings(azureTree);
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -117,5 +131,46 @@ public class EntityTreeViewTests
             "Views",
             "Dialogs",
             "SubscriptionCreateDialog.axaml"));
+    }
+
+    private static void AssertTopicActionVisibilityBindings(string xaml)
+    {
+        var document = XDocument.Parse(xaml);
+        var menuItems = GetTopicMenuItems(document);
+
+        FindMenuItem(menuItems, "Details")
+            .Attribute("IsVisible")
+            .Should()
+            .BeNull();
+        FindMenuItem(menuItems, "Create Subscription")
+            .Attribute("IsVisible")
+            ?.Value
+            .Should()
+            .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
+        FindMenuItem(menuItems, "Delete Topic")
+            .Attribute("IsVisible")
+            ?.Value
+            .Should()
+            .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
+
+        document.Descendants()
+            .Single(element => element.Attribute("ToolTip.Tip")?.Value == "Create subscription")
+            .Attribute("IsVisible")
+            ?.Value
+            .Should()
+            .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
+    }
+
+    private static List<XElement> GetTopicMenuItems(XDocument document)
+    {
+        return document.Descendants()
+            .Where(element => element.Name.LocalName == "ContextMenu")
+            .Select(element => element.Elements().Where(child => child.Name.LocalName == "MenuItem").ToList())
+            .Single(items => items.Any(item => item.Attribute("Header")?.Value == "Create Subscription"));
+    }
+
+    private static XElement FindMenuItem(IEnumerable<XElement> menuItems, string header)
+    {
+        return menuItems.Single(element => element.Attribute("Header")?.Value == header);
     }
 }

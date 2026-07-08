@@ -11,10 +11,59 @@ using NSubstitute;
 public class SettingsViewModelTests
 {
     [Fact]
+    public void Constructor_LoadsTopicActionButtonPreference()
+    {
+        // Arrange
+        var preferences = CreatePreferences();
+        preferences.ShowTopicActionButtons.Returns(false);
+        var updateService = CreateUpdateService();
+
+        // Act
+        var sut = CreateSut(updateService, preferences);
+
+        // Assert
+        sut.ShowTopicActionButtons.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SaveSettingsCommand_SavesTopicActionButtonPreference()
+    {
+        // Arrange
+        var preferences = CreatePreferences();
+        var updateService = CreateUpdateService();
+        var sut = CreateSut(updateService, preferences);
+
+        // Act
+        sut.ShowTopicActionButtons = false;
+        sut.SaveSettingsCommand.Execute(null);
+
+        // Assert
+        preferences.ShowTopicActionButtons.Should().BeFalse();
+        preferences.Received(1).Save();
+    }
+
+    [Fact]
+    public void ResetToDefaultsCommand_RestoresTopicActionButtonVisibility()
+    {
+        // Arrange
+        var preferences = CreatePreferences();
+        preferences.ShowTopicActionButtons.Returns(false);
+        var updateService = CreateUpdateService();
+        var sut = CreateSut(updateService, preferences);
+        sut.ShowTopicActionButtons = false;
+
+        // Act
+        sut.ResetToDefaultsCommand.Execute(null);
+
+        // Assert
+        sut.ShowTopicActionButtons.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task CheckForUpdatesNowCommand_WhenUpdateAvailable_ShowsInstallOption()
     {
         // Arrange
-        var updateService = Substitute.For<IUpdateService>();
+        var updateService = CreateUpdateService();
         updateService.CanSelfUpdate.Returns(true);
         updateService.Status.Returns(UpdateStatus.Idle);
         updateService.StatusMessage.Returns("Ready to check for updates.");
@@ -40,7 +89,7 @@ public class SettingsViewModelTests
     public async Task InstallUpdateCommand_WhenUpdateAvailable_DownloadsUpdate()
     {
         // Arrange
-        var updateService = Substitute.For<IUpdateService>();
+        var updateService = CreateUpdateService();
         updateService.CanSelfUpdate.Returns(true);
         updateService.Status.Returns(UpdateStatus.UpdateAvailable);
         updateService.AvailableRelease.Returns(new ReleaseInfo { Version = "1.2.3" });
@@ -59,7 +108,7 @@ public class SettingsViewModelTests
     public async Task InstallUpdateCommand_WhenReadyToRestart_InstallsUpdate()
     {
         // Arrange
-        var updateService = Substitute.For<IUpdateService>();
+        var updateService = CreateUpdateService();
         updateService.CanSelfUpdate.Returns(true);
         updateService.Status.Returns(UpdateStatus.ReadyToRestart);
         updateService.AvailableRelease.Returns(new ReleaseInfo { Version = "1.2.3", IsReadyToRestart = true });
@@ -78,7 +127,7 @@ public class SettingsViewModelTests
     public async Task InstallUpdateCommand_WhenDownloadFails_ShowsErrorAndResetsInstallingState()
     {
         // Arrange
-        var updateService = Substitute.For<IUpdateService>();
+        var updateService = CreateUpdateService();
         updateService.CanSelfUpdate.Returns(true);
         updateService.Status.Returns(UpdateStatus.UpdateAvailable);
         updateService.AvailableRelease.Returns(new ReleaseInfo { Version = "1.2.3" });
@@ -99,7 +148,7 @@ public class SettingsViewModelTests
     public void Dispose_WhenStatusChangedRaisedAfterDispose_DoesNotRefreshCachedStatus()
     {
         // Arrange
-        var updateService = Substitute.For<IUpdateService>();
+        var updateService = CreateUpdateService();
         updateService.CanSelfUpdate.Returns(true);
         updateService.Status.Returns(UpdateStatus.Idle);
         updateService.StatusMessage.Returns("Ready to check for updates.");
@@ -118,17 +167,9 @@ public class SettingsViewModelTests
         updateService.DidNotReceive().InstallUpdateAsync();
     }
 
-    private static SettingsViewModel CreateSut(IUpdateService updateService)
+    private static SettingsViewModel CreateSut(IUpdateService updateService, IPreferencesService? preferences = null)
     {
-        var preferences = Substitute.For<IPreferencesService>();
-        preferences.Theme.Returns("System");
-        preferences.DefaultMessageCount.Returns(100);
-        preferences.MessagesPerPage.Returns(100);
-        preferences.AutoRefreshIntervalSeconds.Returns(30);
-        preferences.AutoCheckForUpdates.Returns(true);
-        preferences.ShowDeadLetterBadges.Returns(true);
-        preferences.EnableMessagePreview.Returns(true);
-        preferences.RestoreTabsOnStartup.Returns(true);
+        preferences ??= CreatePreferences();
 
         var appLockService = Substitute.For<IAppLockService>();
         var biometricAuthService = Substitute.For<IBiometricAuthService>();
@@ -140,5 +181,25 @@ public class SettingsViewModelTests
             biometricAuthService,
             _ => Task.CompletedTask,
             updateService: updateService);
+    }
+
+    private static IPreferencesService CreatePreferences()
+    {
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.Theme.Returns("System");
+        preferences.DefaultMessageCount.Returns(100);
+        preferences.MessagesPerPage.Returns(100);
+        preferences.AutoRefreshIntervalSeconds.Returns(30);
+        preferences.AutoCheckForUpdates.Returns(true);
+        preferences.ShowDeadLetterBadges.Returns(true);
+        preferences.EnableMessagePreview.Returns(true);
+        preferences.RestoreTabsOnStartup.Returns(true);
+        preferences.ShowTopicActionButtons.Returns(true);
+        return preferences;
+    }
+
+    private static IUpdateService CreateUpdateService()
+    {
+        return Substitute.For<IUpdateService>();
     }
 }

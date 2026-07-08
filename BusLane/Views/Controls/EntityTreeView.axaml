@@ -230,6 +230,34 @@
 
                                                 <Border Grid.Column="1"
                                                         Classes="entity-tree-row-surface">
+                                                    <Border.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="Details"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueDetailsCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Send Message"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.SendQueueMessageCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Refresh"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshQueueCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Purge Active Messages"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeQueueActiveCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Purge Dead Letters"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeQueueDeadLettersCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Edit Properties"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueEditCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Delete Queue"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteQueueRequestCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Copy Name"
+                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.CopyQueueNameCommand}"
+                                                                      CommandParameter="{Binding}"/>
+                                                        </ContextMenu>
+                                                    </Border.ContextMenu>
                                                     <Border.Background>
                                                         <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                             <Binding Path="."/>
@@ -371,6 +399,33 @@
 
                                                     <Border Grid.Column="1"
                                                             Classes="entity-tree-row-surface">
+                                                        <Border.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Details"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
+                                                                          CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Send Message to Topic"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
+                                                                          CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Create Subscription"
+                                                                          Command="{Binding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
+                                                                          CommandParameter="{Binding}"
+                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
+                                                                <MenuItem Header="Refresh Subscriptions"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshTopicCommand}"
+                                                                          CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Edit Properties"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicEditCommand}"
+                                                                          CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Delete Topic"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteTopicRequestCommand}"
+                                                                          CommandParameter="{Binding}"
+                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
+                                                                <MenuItem Header="Copy Name"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.CopyTopicNameCommand}"
+                                                                          CommandParameter="{Binding}"/>
+                                                            </ContextMenu>
+                                                        </Border.ContextMenu>
                                                         <Border.Background>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                 <Binding Path="."/>
@@ -404,6 +459,7 @@
                                                                     Command="{Binding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     ToolTip.Tip="Create subscription"
+                                                                    IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"
                                                                     VerticalAlignment="Center">
                                                                 <LucideIcon Kind="Plus" Size="12"/>
                                                             </Button>
@@ -466,6 +522,34 @@
 
                                                                             <Border Grid.Column="1"
                                                                                     Classes="entity-tree-row-surface">
+                                                                                <Border.ContextMenu>
+                                                                                    <ContextMenu>
+                                                                                        <MenuItem Header="Details"
+                                                                                                  Command="{Binding $parent[Window].DataContext.OpenSubscriptionDetailDialogCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Manage Filters/Rules"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionRulesDialogCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Purge Active Messages"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeSubscriptionActiveCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Purge Dead Letters"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeSubscriptionDeadLettersCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Refresh"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshSubscriptionCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Edit Properties"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionEditCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Delete Subscription"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteSubscriptionRequestCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Copy Path"
+                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.CopySubscriptionPathCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                    </ContextMenu>
+                                                                                </Border.ContextMenu>
                                                                                 <Border.Background>
                                                                                     <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                                         <Binding Path="."/>

@@ -79,6 +79,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public MessageBulkOperationsViewModel BulkOps { get; }
     public ExportOperationsViewModel ExportOps { get; }
     public ConfirmationDialogViewModel Confirmation { get; }
+    public EntityOperationsViewModel EntityOperations { get; }
     public AppLockViewModel AppLock { get; }
 
     // Dashboard components
@@ -210,6 +211,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
+    public bool ShowTopicActionButtons => _preferencesService.ShowTopicActionButtons;
     public bool EnableMessagePreview => _preferencesService.EnableMessagePreview;
     public bool IsNavigationPanelVisible => _preferencesService.ShowNavigationPanel;
 
@@ -340,6 +342,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
+        EntityOperations = new EntityOperationsViewModel(
+            () => ActiveTab?.Operations ?? _operations,
+            () => CurrentNavigation,
+            msg => StatusMessage = msg,
+            Confirmation,
+            OpenSendMessagePopup);
         AppLock = new AppLockViewModel(_appLockService, biometricAuthService, CompleteStartupAfterUnlockAsync);
 
         UpdateNotification = new UpdateNotificationViewModel(updateService);
@@ -501,6 +509,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public void NotifySettingsChanged()
     {
         OnPropertyChanged(nameof(ShowDeadLetterBadges));
+        OnPropertyChanged(nameof(ShowTopicActionButtons));
         OnPropertyChanged(nameof(EnableMessagePreview));
         UpdateAutoRefreshTimer();
     }

@@ -97,6 +97,21 @@
                                                           OnContent="" OffContent=""
                                                           VerticalAlignment="Center"/>
                                         </Grid>
+
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                        <!-- Topic Action Buttons -->
+                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="Topic action buttons" FontWeight="Medium" FontSize="13"/>
+                                                <TextBlock Text="Show topic details, delete, and subscription actions"
+                                                           Classes="caption" FontSize="12"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding SettingsViewModel.ShowTopicActionButtons}"
+                                                          OnContent="" OffContent=""
+                                                          VerticalAlignment="Center"/>
+                                        </Grid>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

@@ -19,6 +19,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     private readonly string _namespaceId;
     private readonly TokenCredential _credential;
     private readonly Func<ServiceBusNamespaceResource> _getNamespaceResource;
+    private readonly Lazy<ServiceBusAdministrationClient> _adminClient;
     private readonly Lazy<ServiceBusClient> _client;
     private bool _disposed;
 
@@ -39,11 +40,13 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         _namespaceId = namespaceId;
         _credential = credential;
         _getNamespaceResource = getNamespaceResource;
+        _adminClient = new Lazy<ServiceBusAdministrationClient>(() => new ServiceBusAdministrationClient(_endpoint, _credential));
         _client = new Lazy<ServiceBusClient>(() => new ServiceBusClient(_endpoint, _credential));
         Log.Debug("AzureCredentialOperations initialized for endpoint {Endpoint}", _endpoint);
     }
 
     public ServiceBusClient GetClient() => _client.Value;
+    private ServiceBusAdministrationClient AdminClient => _adminClient.Value;
 
     public async Task<IEnumerable<QueueInfo>> GetQueuesAsync(CancellationToken ct = default)
     {
@@ -188,8 +191,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         var ns = _getNamespaceResource();
         _ = await ns.GetServiceBusTopicAsync(topicName, ct);
         var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
-        var adminClient = new ServiceBusAdministrationClient(_endpoint, _credential);
-        await adminClient.CreateSubscriptionAsync(sdkOptions, ct);
+        await AdminClient.CreateSubscriptionAsync(sdkOptions, ct);
     }
 
     public async Task DeleteSubscriptionAsync(
@@ -204,6 +206,179 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         var topic = await ns.GetServiceBusTopicAsync(topicName, ct);
         var subscription = await topic.Value.GetServiceBusSubscriptionAsync(subscriptionName, ct);
         await subscription.Value.DeleteAsync(WaitUntil.Completed, ct);
+    }
+
+    public async Task DeleteQueueAsync(string queueName, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName);
+
+        var ns = _getNamespaceResource();
+        var queue = await ns.GetServiceBusQueueAsync(queueName, ct);
+        await queue.Value.DeleteAsync(WaitUntil.Completed, ct);
+    }
+
+    public async Task DeleteTopicAsync(string topicName, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+
+        var ns = _getNamespaceResource();
+        var topic = await ns.GetServiceBusTopicAsync(topicName, ct);
+        await topic.Value.DeleteAsync(WaitUntil.Completed, ct);
+    }
+
+    public async Task UpdateQueueAsync(string queueName, QueueUpdateOptions options, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var ns = _getNamespaceResource();
+        var queue = (await ns.GetServiceBusQueueAsync(queueName, ct)).Value;
+        var data = queue.Data;
+        if (options.LockDuration.HasValue)
+        {
+            data.LockDuration = options.LockDuration.Value;
+        }
+
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            data.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.DeadLetteringOnMessageExpiration.HasValue)
+        {
+            data.DeadLetteringOnMessageExpiration = options.DeadLetteringOnMessageExpiration.Value;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            data.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        await queue.UpdateAsync(WaitUntil.Completed, data, ct);
+    }
+
+    public async Task UpdateTopicAsync(string topicName, TopicUpdateOptions options, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var ns = _getNamespaceResource();
+        var topic = (await ns.GetServiceBusTopicAsync(topicName, ct)).Value;
+        var data = topic.Data;
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            data.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            data.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        await topic.UpdateAsync(WaitUntil.Completed, data, ct);
+    }
+
+    public async Task UpdateSubscriptionAsync(
+        string topicName,
+        string subscriptionName,
+        SubscriptionUpdateOptions options,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var ns = _getNamespaceResource();
+        var topic = (await ns.GetServiceBusTopicAsync(topicName, ct)).Value;
+        var subscription = (await topic.GetServiceBusSubscriptionAsync(subscriptionName, ct)).Value;
+        var data = subscription.Data;
+        if (options.LockDuration.HasValue)
+        {
+            data.LockDuration = options.LockDuration.Value;
+        }
+
+        if (options.MaxDeliveryCount.HasValue)
+        {
+            data.MaxDeliveryCount = options.MaxDeliveryCount.Value;
+        }
+
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            data.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.AutoDeleteOnIdle.HasValue)
+        {
+            data.AutoDeleteOnIdle = options.AutoDeleteOnIdle.Value;
+        }
+
+        if (options.ForwardTo != null)
+        {
+            data.ForwardTo = string.IsNullOrWhiteSpace(options.ForwardTo) ? null : options.ForwardTo;
+        }
+
+        if (options.ForwardDeadLetteredMessagesTo != null)
+        {
+            data.ForwardDeadLetteredMessagesTo = string.IsNullOrWhiteSpace(options.ForwardDeadLetteredMessagesTo)
+                ? null
+                : options.ForwardDeadLetteredMessagesTo;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            data.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        if (options.DeadLetteringOnMessageExpiration.HasValue)
+        {
+            data.DeadLetteringOnMessageExpiration = options.DeadLetteringOnMessageExpiration.Value;
+        }
+
+        await subscription.UpdateAsync(WaitUntil.Completed, data, ct);
+    }
+
+    public async Task<IReadOnlyList<SubscriptionRuleInfo>> GetSubscriptionRulesAsync(
+        string topicName,
+        string subscriptionName,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+
+        var rules = new List<SubscriptionRuleInfo>();
+        await foreach (var rule in AdminClient.GetRulesAsync(topicName, subscriptionName, ct))
+        {
+            rules.Add(ServiceBusOperations.MapToSubscriptionRuleInfo(rule));
+        }
+
+        return rules;
+    }
+
+    public async Task CreateSubscriptionRuleAsync(
+        string topicName,
+        string subscriptionName,
+        SubscriptionRuleCreationOptions options,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentNullException.ThrowIfNull(options);
+
+        var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
+        await AdminClient.CreateRuleAsync(topicName, subscriptionName, sdkOptions, ct);
+    }
+
+    public async Task DeleteSubscriptionRuleAsync(
+        string topicName,
+        string subscriptionName,
+        string ruleName,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleName);
+
+        await AdminClient.DeleteRuleAsync(topicName, subscriptionName, ruleName, ct);
     }
 
     public async Task<IEnumerable<MessageInfo>> PeekMessagesAsync(

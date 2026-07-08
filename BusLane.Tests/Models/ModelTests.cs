@@ -246,6 +246,40 @@ public class SubscriptionInfoTests
     }
 }
 
+public class SubscriptionRuleCreationOptionsTests
+{
+    [Fact]
+    public void SubscriptionRuleCreationOptions_DefaultsToSqlFilter()
+    {
+        // Arrange & Act
+        var options = new SubscriptionRuleCreationOptions("important", "sys.Label = 'important'");
+
+        // Assert
+        options.Name.Should().Be("important");
+        options.FilterType.Should().Be(SubscriptionRuleFilterType.Sql);
+        options.SqlExpression.Should().Be("sys.Label = 'important'");
+    }
+
+    [Fact]
+    public void SubscriptionRuleInfo_WithSameValues_AreEqual()
+    {
+        // Arrange
+        var first = new SubscriptionRuleInfo(
+            "important",
+            SubscriptionRuleFilterType.Sql,
+            "sys.Label = 'important'",
+            "sys.Label = 'important'");
+        var second = new SubscriptionRuleInfo(
+            "important",
+            SubscriptionRuleFilterType.Sql,
+            "sys.Label = 'important'",
+            "sys.Label = 'important'");
+
+        // Assert
+        first.Should().Be(second);
+    }
+}
+
 public class SavedConnectionTests
 {
     [Fact]
