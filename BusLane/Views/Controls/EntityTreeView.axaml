@@ -403,8 +403,7 @@
                                                             <ContextMenu>
                                                                 <MenuItem Header="Details"
                                                                           Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
-                                                                          CommandParameter="{Binding}"
-                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
+                                                                          CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Send Message to Topic"
                                                                           Command="{Binding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
                                                                           CommandParameter="{Binding}"/>

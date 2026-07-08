@@ -401,8 +401,7 @@
                                                             <ContextMenu>
                                                                 <MenuItem Header="Details"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
-                                                                          CommandParameter="{Binding}"
-                                                                          IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"/>
+                                                                          CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Send Message to Topic"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
                                                                           CommandParameter="{Binding}"/>

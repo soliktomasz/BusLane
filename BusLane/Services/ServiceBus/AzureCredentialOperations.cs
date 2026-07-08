@@ -191,8 +191,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         var ns = _getNamespaceResource();
         _ = await ns.GetServiceBusTopicAsync(topicName, ct);
         var sdkOptions = ServiceBusOperations.BuildCreateSubscriptionOptions(topicName, options);
-        var adminClient = new ServiceBusAdministrationClient(_endpoint, _credential);
-        await adminClient.CreateSubscriptionAsync(sdkOptions, ct);
+        await AdminClient.CreateSubscriptionAsync(sdkOptions, ct);
     }
 
     public async Task DeleteSubscriptionAsync(
@@ -363,6 +362,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentNullException.ThrowIfNull(options);
 
         var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
         await AdminClient.CreateRuleAsync(topicName, subscriptionName, sdkOptions, ct);

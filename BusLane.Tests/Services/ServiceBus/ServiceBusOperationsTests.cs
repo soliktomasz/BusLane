@@ -104,6 +104,26 @@ public class ServiceBusOperationsTests
     }
 
     [Fact]
+    public void MapToSubscriptionRuleInfo_WithApplicationPropertyMatchingReservedField_PreservesReservedField()
+    {
+        // Arrange
+        var filter = new CorrelationRuleFilter
+        {
+            Subject = "reserved"
+        };
+        filter.ApplicationProperties["Subject"] = "application";
+        var rule = ServiceBusModelFactory.RuleProperties("correlated", filter, null);
+
+        // Act
+        var info = ServiceBusOperations.MapToSubscriptionRuleInfo(rule);
+
+        // Assert
+        info.DisplayExpression.Should().Contain("Subject = reserved");
+        info.DisplayExpression.Should().NotContain("Subject = application");
+        info.CorrelationProperties.Should().Contain("Subject", "reserved");
+    }
+
+    [Fact]
     public void MapToSubscriptionRuleInfo_WithTrueFilter_MapsDisplayExpression()
     {
         // Arrange

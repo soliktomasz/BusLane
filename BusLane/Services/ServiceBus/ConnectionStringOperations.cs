@@ -320,6 +320,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        ArgumentNullException.ThrowIfNull(options);
 
         var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
         await AdminClient.CreateRuleAsync(topicName, subscriptionName, sdkOptions, ct);

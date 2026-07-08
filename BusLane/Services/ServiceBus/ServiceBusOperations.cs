@@ -682,7 +682,7 @@ internal static class ServiceBusOperations
         {
             if (property.Value != null)
             {
-                properties[property.Key] = property.Value.ToString() ?? string.Empty;
+                properties.TryAdd(property.Key, property.Value.ToString() ?? string.Empty);
             }
         }
 

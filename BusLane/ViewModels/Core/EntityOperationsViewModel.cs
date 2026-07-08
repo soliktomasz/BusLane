@@ -1,10 +1,12 @@
 namespace BusLane.ViewModels.Core;
 
 using System.Collections.ObjectModel;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Input.Platform;
+
 using BusLane.Models;
 using BusLane.Services.ServiceBus;
+
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -746,10 +748,14 @@ public partial class EntityOperationsViewModel : ViewModelBase
         topic.SubscriptionCount = subscriptions.Count;
         topic.SubscriptionsLoaded = true;
 
-        navigation.TopicSubscriptions.Clear();
-        foreach (var subscription in subscriptions)
+        if (navigation.SelectedTopic == topic ||
+            string.Equals(navigation.CurrentEntityName, topic.Name, StringComparison.OrdinalIgnoreCase))
         {
-            navigation.TopicSubscriptions.Add(subscription);
+            navigation.TopicSubscriptions.Clear();
+            foreach (var subscription in subscriptions)
+            {
+                navigation.TopicSubscriptions.Add(subscription);
+            }
         }
     }
 
@@ -780,10 +786,17 @@ public partial class EntityOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.UpdateQueueAsync(queue.Name, new QueueUpdateOptions(lockDuration, ttl));
-        _setStatusMessage($"Queue '{queue.Name}' updated");
-        CloseEntityEditDialog();
-        await RefreshQueueAsync(queue);
+        try
+        {
+            await operations.UpdateQueueAsync(queue.Name, new QueueUpdateOptions(lockDuration, ttl));
+            _setStatusMessage($"Queue '{queue.Name}' updated");
+            CloseEntityEditDialog();
+            await RefreshQueueAsync(queue);
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Unable to update queue: {ex.Message}");
+        }
     }
 
     private async Task SaveTopicEditAsync(IServiceBusOperations operations, TopicInfo topic)
@@ -794,9 +807,17 @@ public partial class EntityOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.UpdateTopicAsync(topic.Name, new TopicUpdateOptions(ttl));
-        _setStatusMessage($"Topic '{topic.Name}' updated");
-        CloseEntityEditDialog();
+        try
+        {
+            await operations.UpdateTopicAsync(topic.Name, new TopicUpdateOptions(ttl));
+            await RefreshTopicInfoAsync(operations, topic);
+            _setStatusMessage($"Topic '{topic.Name}' updated");
+            CloseEntityEditDialog();
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Unable to update topic: {ex.Message}");
+        }
     }
 
     private async Task SaveSubscriptionEditAsync(IServiceBusOperations operations, SubscriptionInfo subscription)
@@ -838,10 +859,52 @@ public partial class EntityOperationsViewModel : ViewModelBase
             autoDelete,
             EditForwardTo,
             EditForwardDeadLetteredMessagesTo);
-        await operations.UpdateSubscriptionAsync(subscription.TopicName, subscription.Name, options);
-        _setStatusMessage($"Subscription '{subscription.Name}' updated");
-        CloseEntityEditDialog();
-        await RefreshSubscriptionAsync(subscription);
+        try
+        {
+            await operations.UpdateSubscriptionAsync(subscription.TopicName, subscription.Name, options);
+            _setStatusMessage($"Subscription '{subscription.Name}' updated");
+            CloseEntityEditDialog();
+            await RefreshSubscriptionAsync(subscription);
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Unable to update subscription: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshTopicInfoAsync(IServiceBusOperations operations, TopicInfo topic)
+    {
+        var navigation = _getNavigation();
+        if (navigation == null)
+        {
+            return;
+        }
+
+        var refreshed = await operations.GetTopicInfoAsync(topic.Name);
+        if (refreshed == null)
+        {
+            return;
+        }
+
+        foreach (var subscription in topic.Subscriptions)
+        {
+            refreshed.Subscriptions.Add(subscription);
+        }
+
+        refreshed.SubscriptionsLoaded = topic.SubscriptionsLoaded;
+        refreshed.IsExpanded = topic.IsExpanded;
+
+        var index = navigation.Topics.IndexOf(topic);
+        if (index >= 0)
+        {
+            navigation.Topics[index] = refreshed;
+        }
+
+        if (navigation.SelectedTopic == topic || navigation.SelectedEntity == topic)
+        {
+            navigation.SelectedTopic = refreshed;
+            navigation.SelectedEntity = refreshed;
+        }
     }
 
     private TimeSpan? ParseTimeSpan(string value, string label, bool required)

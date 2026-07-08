@@ -1,7 +1,7 @@
 namespace BusLane.Services.ServiceBus;
 
-using BusLane.Models;
 using Azure.Messaging.ServiceBus;
+using BusLane.Models;
 
 /// <summary>
 /// Unified interface for all Service Bus operations.
@@ -45,13 +45,69 @@ public interface IServiceBusOperations : IAsyncDisposable
         string subscriptionName,
         CancellationToken ct = default);
 
+    /// <summary>
+    /// Deletes a queue by name.
+    /// </summary>
+    /// <param name="queueName">Name of the queue to delete.</param>
+    /// <param name="ct">Cancellation token for the delete operation.</param>
     Task DeleteQueueAsync(string queueName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes a topic by name.
+    /// </summary>
+    /// <param name="topicName">Name of the topic to delete.</param>
+    /// <param name="ct">Cancellation token for the delete operation.</param>
     Task DeleteTopicAsync(string topicName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Updates queue properties.
+    /// </summary>
+    /// <param name="queueName">Name of the queue to update.</param>
+    /// <param name="options">Queue update options.</param>
+    /// <param name="ct">Cancellation token for the update operation.</param>
     Task UpdateQueueAsync(string queueName, QueueUpdateOptions options, CancellationToken ct = default);
+
+    /// <summary>
+    /// Updates topic properties.
+    /// </summary>
+    /// <param name="topicName">Name of the topic to update.</param>
+    /// <param name="options">Topic update options.</param>
+    /// <param name="ct">Cancellation token for the update operation.</param>
     Task UpdateTopicAsync(string topicName, TopicUpdateOptions options, CancellationToken ct = default);
+
+    /// <summary>
+    /// Updates subscription properties.
+    /// </summary>
+    /// <param name="topicName">Name of the topic that owns the subscription.</param>
+    /// <param name="subscriptionName">Name of the subscription to update.</param>
+    /// <param name="options">Subscription update options.</param>
+    /// <param name="ct">Cancellation token for the update operation.</param>
     Task UpdateSubscriptionAsync(string topicName, string subscriptionName, SubscriptionUpdateOptions options, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets rules for a subscription.
+    /// </summary>
+    /// <param name="topicName">Name of the topic that owns the subscription.</param>
+    /// <param name="subscriptionName">Name of the subscription whose rules should be loaded.</param>
+    /// <param name="ct">Cancellation token for the load operation.</param>
     Task<IReadOnlyList<SubscriptionRuleInfo>> GetSubscriptionRulesAsync(string topicName, string subscriptionName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Creates a rule on the specified subscription.
+    /// </summary>
+    /// <param name="topicName">Name of the topic that owns the subscription.</param>
+    /// <param name="subscriptionName">Name of the subscription that will own the rule.</param>
+    /// <param name="options">Subscription rule creation options.</param>
+    /// <param name="ct">Cancellation token for the create operation.</param>
     Task CreateSubscriptionRuleAsync(string topicName, string subscriptionName, SubscriptionRuleCreationOptions options, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes a rule from the specified subscription.
+    /// </summary>
+    /// <param name="topicName">Name of the topic that owns the subscription.</param>
+    /// <param name="subscriptionName">Name of the subscription that owns the rule.</param>
+    /// <param name="ruleName">Name of the rule to delete.</param>
+    /// <param name="ct">Cancellation token for the delete operation.</param>
     Task DeleteSubscriptionRuleAsync(string topicName, string subscriptionName, string ruleName, CancellationToken ct = default);
 
     // Message operations
