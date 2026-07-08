@@ -10,24 +10,25 @@ using CommunityToolkit.Mvvm.ComponentModel;
 public partial class ExportOperationsViewModel : ViewModelBase
 {
     private readonly Func<NavigationState> _getNavigation;
-    private readonly IFileDialogService? _fileDialogService;
+    private readonly Func<IFileDialogService?> _getFileDialogService;
     private readonly Action<string> _setStatus;
 
     [ObservableProperty] private bool _isExporting;
 
     public ExportOperationsViewModel(
         Func<NavigationState> getNavigation,
-        IFileDialogService? fileDialogService,
+        Func<IFileDialogService?> getFileDialogService,
         Action<string> setStatus)
     {
         _getNavigation = getNavigation;
-        _fileDialogService = fileDialogService;
+        _getFileDialogService = getFileDialogService;
         _setStatus = setStatus;
     }
 
     public async Task ExportMessageAsync(MessageInfo message)
     {
-        if (_fileDialogService == null)
+        var fileDialogService = _getFileDialogService();
+        if (fileDialogService == null)
         {
             _setStatus("File dialog service not available");
             return;
@@ -39,7 +40,7 @@ public partial class ExportOperationsViewModel : ViewModelBase
         {
             var safeName = string.Join("_", (message.MessageId ?? "message").Split(Path.GetInvalidFileNameChars()));
             var defaultFileName = $"Message_{safeName}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
-            var filePath = await _fileDialogService.SaveFileAsync("Export Message", defaultFileName, new[] {
+            var filePath = await fileDialogService.SaveFileAsync("Export Message", defaultFileName, new[] {
                 new Avalonia.Platform.Storage.FilePickerFileType("JSON Files")
                 {
                     Patterns = new[] { "*.json" },

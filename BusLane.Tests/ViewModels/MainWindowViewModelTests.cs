@@ -977,6 +977,53 @@ public class MainWindowViewModelTests
         tab.MessageOps.SelectedMessage.Should().BeNull();
     }
 
+    [Fact]
+    public async Task ExportMessageAsync_AfterFileDialogServiceIsSet_UsesDialogService()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var exportPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.json");
+        var fileDialogService = Substitute.For<IFileDialogService>();
+        fileDialogService.SaveFileAsync(
+                "Export Message",
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<Avalonia.Platform.Storage.FilePickerFileType>>())
+            .Returns(exportPath);
+
+        sut.SetFileDialogService(fileDialogService);
+        var message = new MessageInfo(
+            "msg-1",
+            "corr-1",
+            "application/json",
+            "{\"ok\":true}",
+            DateTimeOffset.UtcNow,
+            null,
+            42,
+            0,
+            null,
+            new Dictionary<string, object>());
+
+        try
+        {
+            // Act
+            await sut.ExportMessageCommand.ExecuteAsync(message);
+
+            // Assert
+            await fileDialogService.Received(1).SaveFileAsync(
+                "Export Message",
+                Arg.Is<string>(name => name.StartsWith("Message_msg-1_", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)),
+                Arg.Any<IReadOnlyList<Avalonia.Platform.Storage.FilePickerFileType>>());
+            File.Exists(exportPath).Should().BeTrue();
+            sut.StatusMessage.Should().Be($"Exported message to {Path.GetFileName(exportPath)}");
+        }
+        finally
+        {
+            if (File.Exists(exportPath))
+                File.Delete(exportPath);
+        }
+    }
+
     private static MainWindowViewModel CreateSut(
         TestPreferencesService preferences,
         IAzureAuthService? auth = null,

@@ -338,7 +338,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         ExportOps = new ExportOperationsViewModel(
             () => Navigation,
-            _fileDialogService,
+            () => _fileDialogService,
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
