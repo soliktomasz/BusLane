@@ -70,6 +70,7 @@ public class PreferencesServiceTests : IDisposable
         var sut = new PreferencesService();
 
         // Assert
+        sut.HasSeenIntroduction.Should().BeFalse();
         sut.ShowTopicActionButtons.Should().BeTrue();
         sut.ShowTerminalPanel.Should().BeFalse();
         sut.TerminalIsDocked.Should().BeTrue();
@@ -135,5 +136,22 @@ public class PreferencesServiceTests : IDisposable
 
         // Assert
         reloaded.ShowTopicActionButtons.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SaveAndReload_ShouldRoundTripIntroductionPreference()
+    {
+        // Arrange
+        var sut = new PreferencesService
+        {
+            HasSeenIntroduction = true
+        };
+
+        // Act
+        sut.Save();
+        var reloaded = new PreferencesService();
+
+        // Assert
+        reloaded.HasSeenIntroduction.Should().BeTrue();
     }
 }

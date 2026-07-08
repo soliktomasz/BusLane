@@ -73,6 +73,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public NamespaceSelectionViewModel NamespaceSelection { get; }
     public UpdateNotificationViewModel UpdateNotification { get; }
     public CommandPaletteViewModel CommandPalette { get; } = new();
+    public IRelayCommand ShowIntroductionSplashCommand { get; }
 
     // Refactored components
     public TabManagementViewModel Tabs { get; }
@@ -165,6 +166,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // UI State
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _showIntroductionSplash;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]
     [NotifyPropertyChangedFor(nameof(ShellStatusSummary))]
@@ -257,6 +259,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _versionService = versionService;
         _alertService = alertService;
         _preferencesService = preferencesService;
+        _showIntroductionSplash = !preferencesService.HasSeenIntroduction;
+        ShowIntroductionSplashCommand = new RelayCommand(() => ShowIntroductionSplash = true);
         _keyboardShortcutService = keyboardShortcutService;
         _updateService = updateService;
         _diagnosticBundleService = diagnosticBundleService;
@@ -512,6 +516,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(ShowTopicActionButtons));
         OnPropertyChanged(nameof(EnableMessagePreview));
         UpdateAutoRefreshTimer();
+    }
+
+    [RelayCommand]
+    private void DismissIntroductionSplash()
+    {
+        _preferencesService.HasSeenIntroduction = true;
+        _preferencesService.Save();
+        ShowIntroductionSplash = false;
     }
 
     #region Initialization & Subscriptions

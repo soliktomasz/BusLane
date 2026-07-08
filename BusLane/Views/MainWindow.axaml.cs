@@ -217,7 +217,7 @@ public partial class MainWindow : Window
         }
 
         // Don't process other shortcuts if a dialog is open
-        if (vm.CommandPalette.IsOpen || vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.Confirmation.ShowConfirmDialog)
+        if (vm.ShowIntroductionSplash || vm.CommandPalette.IsOpen || vm.ShowKeyboardShortcuts || vm.ShowSettings || vm.ShowSendMessagePopup || vm.Confirmation.ShowConfirmDialog)
             return;
 
         // Dispatch via action map

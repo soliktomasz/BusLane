@@ -31,6 +31,7 @@ public class PreferencesService : IPreferencesService
     public bool RestoreTabsOnStartup { get; set; } = true;
     public string OpenTabsJson { get; set; } = "[]";
     public string PinnedEntitiesJson { get; set; } = "[]";
+    public bool HasSeenIntroduction { get; set; }
 
     // Privacy
     public bool EnableTelemetry { get; set; }
@@ -76,6 +77,7 @@ public class PreferencesService : IPreferencesService
                     RestoreTabsOnStartup = data.RestoreTabsOnStartup;
                     OpenTabsJson = data.OpenTabsJson ?? "[]";
                     PinnedEntitiesJson = data.PinnedEntitiesJson ?? "[]";
+                    HasSeenIntroduction = data.HasSeenIntroduction;
                     EnableTelemetry = data.EnableTelemetry;
                     AutoCheckForUpdates = data.AutoCheckForUpdates;
                     SkippedUpdateVersion = data.SkippedUpdateVersion;
@@ -116,6 +118,7 @@ public class PreferencesService : IPreferencesService
                 RestoreTabsOnStartup = RestoreTabsOnStartup,
                 OpenTabsJson = OpenTabsJson,
                 PinnedEntitiesJson = PinnedEntitiesJson,
+                HasSeenIntroduction = HasSeenIntroduction,
                 EnableTelemetry = EnableTelemetry,
                 AutoCheckForUpdates = AutoCheckForUpdates,
                 SkippedUpdateVersion = SkippedUpdateVersion,
@@ -154,6 +157,7 @@ public class PreferencesService : IPreferencesService
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string? OpenTabsJson { get; set; }
         public string? PinnedEntitiesJson { get; set; }
+        public bool HasSeenIntroduction { get; set; }
         public bool EnableTelemetry { get; set; }
         public bool AutoCheckForUpdates { get; set; } = true;
         public string? SkippedUpdateVersion { get; set; }
