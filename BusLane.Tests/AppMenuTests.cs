@@ -14,6 +14,7 @@ public class AppMenuTests
         // Assert
         xaml.Should().Contain("<NativeMenu.Menu>");
         xaml.Should().Contain("<NativeMenuItem Header=\"About BusLane\" Click=\"AboutMenuItem_OnClick\"/>");
+        xaml.Should().Contain("<NativeMenuItem Header=\"Show Introduction\" Click=\"ShowIntroductionMenuItem_OnClick\"/>");
         xaml.Should().Contain("<NativeMenuItem Header=\"Check for Updates...\" Click=\"CheckForUpdatesMenuItem_OnClick\"/>");
     }
 
@@ -24,11 +25,12 @@ public class AppMenuTests
         EventHandler onToggleFullscreenClick = (_, _) => { };
         EventHandler onShowLogViewerClick = (_, _) => { };
         EventHandler onShowTerminalClick = (_, _) => { };
+        EventHandler onShowIntroductionClick = (_, _) => { };
         EventHandler onCheckForUpdatesClick = (_, _) => { };
         EventHandler onAboutClick = (_, _) => { };
 
         // Act
-        var menu = App.CreateMacMenu(onToggleFullscreenClick, onShowLogViewerClick, onShowTerminalClick, onCheckForUpdatesClick, onAboutClick);
+        var menu = App.CreateMacMenu(onToggleFullscreenClick, onShowLogViewerClick, onShowTerminalClick, onShowIntroductionClick, onCheckForUpdatesClick, onAboutClick);
 
         // Assert
         menu.Items.Should().HaveCount(2);
@@ -53,13 +55,17 @@ public class AppMenuTests
         var helpItem = menu.Items[1].Should().BeOfType<NativeMenuItem>().Subject;
         helpItem.Header.Should().Be("Help");
         helpItem.Menu.Should().NotBeNull();
-        helpItem.Menu!.Items.Should().HaveCount(2);
+        helpItem.Menu!.Items.Should().HaveCount(3);
 
         var aboutItem = helpItem.Menu.Items[0].Should().BeOfType<NativeMenuItem>().Subject;
         aboutItem.Header.Should().Be("About BusLane");
         aboutItem.HasClickHandlers.Should().BeTrue();
 
-        var checkForUpdatesItem = helpItem.Menu.Items[1].Should().BeOfType<NativeMenuItem>().Subject;
+        var showIntroductionItem = helpItem.Menu.Items[1].Should().BeOfType<NativeMenuItem>().Subject;
+        showIntroductionItem.Header.Should().Be("Show Introduction");
+        showIntroductionItem.HasClickHandlers.Should().BeTrue();
+
+        var checkForUpdatesItem = helpItem.Menu.Items[2].Should().BeOfType<NativeMenuItem>().Subject;
         checkForUpdatesItem.Header.Should().Be("Check for Updates...");
         checkForUpdatesItem.HasClickHandlers.Should().BeTrue();
     }

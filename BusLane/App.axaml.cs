@@ -117,6 +117,7 @@ public partial class App : Application
             (_, _) => ToggleFullscreen(mainWindow),
             (_, _) => ShowLogViewer(viewModel),
             (_, _) => ShowTerminal(viewModel),
+            (_, _) => viewModel.ShowIntroductionSplashCommand.Execute(null),
             async (sender, _) => await RunCheckForUpdatesMenuActionAsync(
                 sender as NativeMenuItem,
                 CheckForUpdatesFromMenuAsync),
@@ -128,6 +129,7 @@ public partial class App : Application
         EventHandler onToggleFullscreenClick,
         EventHandler onShowLogViewerClick,
         EventHandler onShowTerminalClick,
+        EventHandler onShowIntroductionClick,
         EventHandler onCheckForUpdatesClick,
         EventHandler onAboutClick)
     {
@@ -148,11 +150,15 @@ public partial class App : Application
         var aboutItem = new NativeMenuItem("About BusLane");
         aboutItem.Click += onAboutClick;
 
+        var showIntroductionItem = new NativeMenuItem("Show Introduction");
+        showIntroductionItem.Click += onShowIntroductionClick;
+
         var checkForUpdatesItem = new NativeMenuItem("Check for Updates...");
         checkForUpdatesItem.Click += onCheckForUpdatesClick;
 
         var helpMenu = new NativeMenu();
         helpMenu.Add(aboutItem);
+        helpMenu.Add(showIntroductionItem);
         helpMenu.Add(checkForUpdatesItem);
 
         var rootMenu = new NativeMenu();
@@ -239,6 +245,14 @@ public partial class App : Application
             return;
 
         await ShowAboutDialogAsync(MainWindow);
+    }
+
+    private void ShowIntroductionMenuItem_OnClick(object? sender, EventArgs args)
+    {
+        if (MainWindow?.DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.ShowIntroductionSplashCommand.Execute(null);
+        }
     }
 
     private async void CheckForUpdatesMenuItem_OnClick(object? sender, EventArgs args)

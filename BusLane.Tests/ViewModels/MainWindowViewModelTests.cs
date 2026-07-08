@@ -27,6 +27,66 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 public class MainWindowViewModelTests
 {
     [Fact]
+    public void IntroductionSplash_WithNewPreferences_IsVisible()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+
+        // Assert
+        sut.ShowIntroductionSplash.Should().BeTrue();
+    }
+
+    [Fact]
+    public void DismissIntroductionSplash_SavesPreferenceAndHidesSplash()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+
+        // Act
+        sut.DismissIntroductionSplashCommand.Execute(null);
+
+        // Assert
+        sut.ShowIntroductionSplash.Should().BeFalse();
+        preferences.HasSeenIntroduction.Should().BeTrue();
+        preferences.SaveCount.Should().Be(1);
+    }
+
+    [Fact]
+    public void IntroductionSplash_WithSeenPreferences_IsHidden()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService
+        {
+            HasSeenIntroduction = true
+        };
+        using var sut = CreateSut(preferences);
+
+        // Assert
+        sut.ShowIntroductionSplash.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShowIntroductionSplashCommand_WithSeenPreferences_ShowsSplashAgainWithoutChangingPreference()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService
+        {
+            HasSeenIntroduction = true
+        };
+        using var sut = CreateSut(preferences);
+
+        // Act
+        sut.ShowIntroductionSplashCommand.Execute(null);
+
+        // Assert
+        sut.ShowIntroductionSplash.Should().BeTrue();
+        preferences.HasSeenIntroduction.Should().BeTrue();
+        preferences.SaveCount.Should().Be(0);
+    }
+
+    [Fact]
     public void HideEntityPane_WithActiveTab_HidesPaneAndPersistsSessionJson()
     {
         // Arrange
@@ -1216,10 +1276,12 @@ public class MainWindowViewModelTests
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string OpenTabsJson { get; set; } = "[]";
         public string PinnedEntitiesJson { get; set; } = "[]";
+        public bool HasSeenIntroduction { get; set; }
         public bool EnableTelemetry { get; set; }
         public bool AutoCheckForUpdates { get; set; } = true;
         public string? SkippedUpdateVersion { get; set; }
         public DateTime? UpdateRemindLaterDate { get; set; }
+        public int SaveCount { get; private set; }
 
         public event EventHandler? PreferencesChanged
         {
@@ -1229,6 +1291,7 @@ public class MainWindowViewModelTests
 
         public void Save()
         {
+            SaveCount++;
         }
 
         public void Load()
