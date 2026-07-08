@@ -5,7 +5,7 @@ public record LiveStreamMessage(
     string? CorrelationId,
     string? ContentType,
     string Body,
-    DateTimeOffset ReceivedAt,
+    DateTimeOffset EnqueuedAt,
     string EntityName,
     string EntityType, // "Queue" or "Subscription"
     string? TopicName, // Only for subscriptions

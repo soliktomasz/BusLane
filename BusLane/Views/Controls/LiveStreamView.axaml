@@ -1,6 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Controls.LiveStreamView"
              x:CompileBindings="False">
@@ -28,7 +27,8 @@
                             <Border CornerRadius="4" Padding="8,4"
                                     Background="{Binding IsStreaming, Converter={StaticResource BoolToColorConverter}}"
                                     BorderThickness="1"
-                                    BorderBrush="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}">
+                                    BorderBrush="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}"
+                                    ToolTip.Tip="Peek-based monitoring: the entity is polled about once per second, so messages consumed by other receivers between polls may not appear. Timestamps show when each message was enqueued.">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <Ellipse Width="8" Height="8"
                                              Fill="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}"/>
@@ -110,7 +110,6 @@
                     <!-- Options -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
                         <CheckBox Content="Auto-scroll" IsChecked="{Binding AutoScroll}"/>
-                        <CheckBox Content="Peek mode (non-destructive)" IsChecked="{Binding IsPeekMode}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -144,17 +143,19 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Not streaming state - Entity Selection - Fluent 2 empty state -->
-                <Border IsVisible="{Binding !IsStreaming}"
-                        VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Classes="empty-state"
-                        MinWidth="400">
-                    <StackPanel Spacing="16" HorizontalAlignment="Center">
-                        <Border Background="{DynamicResource SurfaceBrand}" 
-                                CornerRadius="12" 
-                                Padding="16"
+                <!-- Not streaming state - Entity Selection -->
+                <Grid IsVisible="{Binding ShowEntitySelector}"
+                      RowDefinitions="Auto,*,Auto"
+                      MaxWidth="640"
+                      Margin="24,20">
+
+                    <!-- Header -->
+                    <StackPanel Grid.Row="0" Spacing="8" Margin="0,4,0,16">
+                        <Border Background="{DynamicResource SurfaceBrand}"
+                                CornerRadius="12"
+                                Padding="14"
                                 HorizontalAlignment="Center">
-                            <LucideIcon Kind="Radio" Size="32"
+                            <LucideIcon Kind="Radio" Size="28"
                                       Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
                         <TextBlock Text="Select an entity to stream"
@@ -162,18 +163,22 @@
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="Choose a queue or topic subscription to start receiving live messages"
                                    Classes="subtitle"
-                                   HorizontalAlignment="Center" 
-                                   TextWrapping="Wrap" 
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
                                    TextAlignment="Center"/>
+                    </StackPanel>
 
-                        <!-- Entity selector -->
-                        <StackPanel Spacing="12" IsVisible="{Binding HasEntities}">
-                            <!-- Queues section - Fluent 2 compliant -->
+                    <!-- Entity selector -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  IsVisible="{Binding HasEntities}">
+                        <StackPanel Spacing="16" Margin="0,0,4,0">
+                            <!-- Queues section -->
                             <StackPanel Spacing="8" IsVisible="{Binding AvailableQueues.Count}">
                                 <TextBlock Text="Queues" Classes="field-group-header"/>
                                 <ListBox ItemsSource="{Binding AvailableQueues}"
                                          SelectedItem="{Binding SelectedStreamEntity}"
-                                         MaxHeight="150"
                                          Background="{DynamicResource CardBackground}"
                                          BorderBrush="{DynamicResource BorderDefault}"
                                          BorderThickness="1"
@@ -195,10 +200,10 @@
                                 </ListBox>
                             </StackPanel>
 
-                            <!-- Topics section - Fluent 2 compliant -->
+                            <!-- Topics section -->
                             <StackPanel Spacing="8" IsVisible="{Binding AvailableTopics.Count}">
                                 <TextBlock Text="Topics &amp; Subscriptions" Classes="field-group-header"/>
-                                <ItemsControl ItemsSource="{Binding AvailableTopics}" MaxHeight="200">
+                                <ItemsControl ItemsSource="{Binding AvailableTopics}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="models:TopicInfo">
                                             <StackPanel Spacing="4" Margin="0,0,0,8">
@@ -209,7 +214,7 @@
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
                                                 </StackPanel>
                                                 <ListBox ItemsSource="{Binding Subscriptions}"
-                                                         SelectedItem="{Binding $parent[UserControl].((vm:LiveStreamViewModel)DataContext).SelectedStreamEntity}"
+                                                         SelectedItem="{Binding $parent[UserControl].DataContext.SelectedStreamEntity}"
                                                          Background="{DynamicResource CardBackground}"
                                                          BorderBrush="{DynamicResource BorderDefault}"
                                                          BorderThickness="1"
@@ -234,7 +239,7 @@
                                                 <Border Classes="infobar" Margin="24,0,0,0" IsVisible="{Binding !Subscriptions.Count}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <LucideIcon Kind="Bell" Size="14" Foreground="{DynamicResource AccentBrand}"/>
-                                                        <TextBlock Text="Expand topic in sidebar to load subscriptions"
+                                                        <TextBlock Text="{Binding DisplayStatus}"
                                                                    FontSize="11" Foreground="{DynamicResource SubtleForeground}"/>
                                                     </StackPanel>
                                                 </Border>
@@ -243,30 +248,35 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
-
-                            <!-- Start streaming button -->
-                            <Button Classes="primary"
-                                    Content="Start Streaming"
-                                    Command="{Binding StartStreamForSelectedEntityCommand}"
-                                    HorizontalAlignment="Center"
-                                    Padding="24,10"
-                                    Margin="0,8,0,0"
-                                    IsEnabled="{Binding SelectedStreamEntity, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                         </StackPanel>
+                    </ScrollViewer>
 
-                        <!-- No entities available - Fluent 2 infobar style -->
-                        <Border Classes="infobar-error" IsVisible="{Binding !HasEntities}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <LucideIcon Kind="TriangleAlert" Size="16" Foreground="{DynamicResource TextDanger}"/>
-                                <TextBlock Text="No queues or topics available. Please connect to a namespace first."
-                                           Classes="body"
-                                           Foreground="{DynamicResource TextDanger}"
-                                           TextWrapping="Wrap" 
-                                           TextAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </Border>
+                    <!-- No entities available -->
+                    <Border Grid.Row="1"
+                            Classes="infobar-error"
+                            IsVisible="{Binding !HasEntities}"
+                            VerticalAlignment="Top">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <LucideIcon Kind="TriangleAlert" Size="16" Foreground="{DynamicResource TextDanger}"/>
+                            <TextBlock Text="No queues or topics available. Please connect to a namespace first."
+                                       Classes="body"
+                                       Foreground="{DynamicResource TextDanger}"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Start streaming button -->
+                    <Button Grid.Row="2"
+                            Classes="primary"
+                            Content="Start Streaming"
+                            Command="{Binding StartStreamForSelectedEntityCommand}"
+                            HorizontalAlignment="Center"
+                            Padding="24,10"
+                            Margin="0,16,0,0"
+                            IsVisible="{Binding HasEntities}"
+                            IsEnabled="{Binding SelectedStreamEntity, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                </Grid>
 
                 <!-- Messages list - Fluent 2 compliant -->
                 <ListBox ItemsSource="{Binding FilteredMessages}"
@@ -291,7 +301,7 @@
                                         </Border>
                                     </StackPanel>
                                     <TextBlock Grid.Row="0" Grid.Column="1"
-                                               Text="{Binding ReceivedAt, StringFormat='{}{0:HH:mm:ss.fff}'}"
+                                               Text="{Binding EnqueuedAt, StringFormat='{}{0:HH:mm:ss.fff}'}"
                                                Classes="caption"/>
 
                                     <!-- Body preview -->

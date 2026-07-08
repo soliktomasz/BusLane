@@ -16,15 +16,15 @@ public interface ILiveStreamService : IAsyncDisposable
 
     /// <summary>
     /// Start streaming messages from a queue using a ServiceBusClient from pooled operations.
-    /// This is the recommended method as it uses the connection pool.
+    /// Streaming is peek-based and never receives messages, so it cannot affect delivery counts.
     /// </summary>
-    Task StartQueueStreamAsync(IServiceBusOperations operations, string queueName, bool peekOnly = true, CancellationToken ct = default);
+    Task StartQueueStreamAsync(IServiceBusOperations operations, string queueName, CancellationToken ct = default);
 
     /// <summary>
     /// Start streaming messages from a topic subscription using a ServiceBusClient from pooled operations.
-    /// This is the recommended method as it uses the connection pool.
+    /// Streaming is peek-based and never receives messages, so it cannot affect delivery counts.
     /// </summary>
-    Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, bool peekOnly = true, CancellationToken ct = default);
+    Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, CancellationToken ct = default);
 
     /// <summary>
     /// Stop the current stream

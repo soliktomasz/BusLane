@@ -21,12 +21,15 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private readonly List<LiveStreamMessage> _messageBuffer = [];
     private int _isFlushScheduled;
 
-    [ObservableProperty] private bool _isStreaming;
-    [ObservableProperty] private bool _isPeekMode = true;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEntitySelector))]
+    private bool _isStreaming;
     [ObservableProperty] private string? _currentEntityName;
     [ObservableProperty] private string? _currentEntityType;
     [ObservableProperty] private string? _errorMessage;
-    [ObservableProperty] private bool _isConnecting;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEntitySelector))]
+    private bool _isConnecting;
     [ObservableProperty] private int _messageCount;
     [ObservableProperty] private LiveStreamMessage? _selectedMessage;
     [ObservableProperty] private bool _autoScroll = true;
@@ -34,6 +37,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
     [ObservableProperty] private object? _selectedStreamEntity;
     [ObservableProperty] private bool _hasEntities;
+
+    public bool ShowEntitySelector => !IsStreaming && !IsConnecting;
 
     public ObservableCollection<LiveStreamMessage> Messages { get; } = [];
     public ObservableCollection<LiveStreamMessage> FilteredMessages { get; } = [];
@@ -139,7 +144,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             CurrentEntityName = queueName;
             CurrentEntityType = "Queue";
 
-            await _liveStreamService.StartQueueStreamAsync(operations, queueName, IsPeekMode);
+            await _liveStreamService.StartQueueStreamAsync(operations, queueName);
         }
         catch (Exception ex)
         {
@@ -166,7 +171,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             CurrentEntityName = $"{args.topicName}/{args.subscriptionName}";
             CurrentEntityType = "Subscription";
 
-            await _liveStreamService.StartSubscriptionStreamAsync(operations, args.topicName, args.subscriptionName, IsPeekMode);
+            await _liveStreamService.StartSubscriptionStreamAsync(operations, args.topicName, args.subscriptionName);
         }
         catch (Exception ex)
         {
@@ -237,6 +242,45 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         }
 
         HasEntities = AvailableQueues.Count > 0 || AvailableTopics.Count > 0;
+
+        _ = LoadMissingSubscriptionsAsync();
+    }
+
+    /// <summary>
+    /// Loads subscriptions for topics that haven't been expanded in the sidebar yet,
+    /// so they can be selected for streaming directly from this panel.
+    /// </summary>
+    private async Task LoadMissingSubscriptionsAsync()
+    {
+        var operations = _getOperations();
+        if (operations == null) return;
+
+        foreach (var topic in AvailableTopics.Where(t => !t.SubscriptionsLoaded && !t.IsLoadingSubscriptions).ToList())
+        {
+            RunOnUiThread(() => topic.IsLoadingSubscriptions = true);
+            try
+            {
+                var subs = (await operations.GetSubscriptionsAsync(topic.Name)).ToList();
+                RunOnUiThread(() =>
+                {
+                    topic.Subscriptions.Clear();
+                    foreach (var sub in subs)
+                    {
+                        topic.Subscriptions.Add(sub);
+                    }
+                    topic.SubscriptionCount = subs.Count;
+                    topic.SubscriptionsLoaded = true;
+                });
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "Failed to load subscriptions for topic {TopicName}", topic.Name);
+            }
+            finally
+            {
+                RunOnUiThread(() => topic.IsLoadingSubscriptions = false);
+            }
+        }
     }
 
     [RelayCommand]

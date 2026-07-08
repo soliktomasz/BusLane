@@ -677,11 +677,11 @@ public class LiveStreamMessageTests
     public void LiveStreamMessage_WithSameValues_AreEqual()
     {
         // Arrange
-        var receivedAt = DateTimeOffset.UtcNow;
+        var enqueuedAt = DateTimeOffset.UtcNow;
         var props = new Dictionary<string, object> { { "key", "value" } };
 
-        var msg1 = new LiveStreamMessage("msg-1", "corr-1", "application/json", "body", receivedAt, "queue1", "Queue", null, 1, null, props);
-        var msg2 = new LiveStreamMessage("msg-1", "corr-1", "application/json", "body", receivedAt, "queue1", "Queue", null, 1, null, props);
+        var msg1 = new LiveStreamMessage("msg-1", "corr-1", "application/json", "body", enqueuedAt, "queue1", "Queue", null, 1, null, props);
+        var msg2 = new LiveStreamMessage("msg-1", "corr-1", "application/json", "body", enqueuedAt, "queue1", "Queue", null, 1, null, props);
 
         // Assert
         msg1.Should().Be(msg2);
@@ -769,7 +769,7 @@ public class LiveStreamMessageTests
     public void LiveStreamMessage_ContainsAllProperties()
     {
         // Arrange
-        var receivedAt = DateTimeOffset.UtcNow;
+        var enqueuedAt = DateTimeOffset.UtcNow;
         var props = new Dictionary<string, object> { { "custom", "value" }, { "number", 42 } };
 
         // Act
@@ -778,7 +778,7 @@ public class LiveStreamMessageTests
             CorrelationId: "corr-456",
             ContentType: "application/json",
             Body: "{ \"test\": true }",
-            ReceivedAt: receivedAt,
+            EnqueuedAt: enqueuedAt,
             EntityName: "my-queue",
             EntityType: "Queue",
             TopicName: null,
@@ -792,7 +792,7 @@ public class LiveStreamMessageTests
         msg.CorrelationId.Should().Be("corr-456");
         msg.ContentType.Should().Be("application/json");
         msg.Body.Should().Be("{ \"test\": true }");
-        msg.ReceivedAt.Should().Be(receivedAt);
+        msg.EnqueuedAt.Should().Be(enqueuedAt);
         msg.EntityName.Should().Be("my-queue");
         msg.EntityType.Should().Be("Queue");
         msg.SequenceNumber.Should().Be(100);

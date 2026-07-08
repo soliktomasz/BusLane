@@ -13,7 +13,6 @@ public class LiveStreamService : ILiveStreamService
     private Subject<LiveStreamMessage> _messageSubject = new();
     private readonly object _subjectLock = new();
     private readonly IPreferencesService _preferencesService;
-    private ServiceBusProcessor? _processor;
     private ServiceBusReceiver? _peekReceiver;
     private CancellationTokenSource? _peekCts;
     private Task? _peekStreamTask;
@@ -69,7 +68,7 @@ public class LiveStreamService : ILiveStreamService
         }
     }
 
-    public async Task StartQueueStreamAsync(IServiceBusOperations operations, string queueName, bool peekOnly = true, CancellationToken ct = default)
+    public async Task StartQueueStreamAsync(IServiceBusOperations operations, string queueName, CancellationToken ct = default)
     {
         await StopStreamAsync();
 
@@ -77,16 +76,7 @@ public class LiveStreamService : ILiveStreamService
 
         try
         {
-            if (peekOnly)
-            {
-                await StartPeekStreamAsync(operations.GetClient(), queueName, null, ct);
-            }
-            else
-            {
-                await StartProcessorStreamAsync(operations.GetClient(), queueName, null);
-            }
-
-            SetStreamingStatus(true);
+            await StartPeekStreamAsync(operations.GetClient(), queueName, null, ct);
         }
         catch (Exception ex)
         {
@@ -95,29 +85,18 @@ public class LiveStreamService : ILiveStreamService
         }
     }
 
-    public async Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, bool peekOnly = true, CancellationToken ct = default)
+    public async Task StartSubscriptionStreamAsync(IServiceBusOperations operations, string topicName, string subscriptionName, CancellationToken ct = default)
     {
         await StopStreamAsync();
 
         _currentEntityName = subscriptionName;
 
-        Log.Information("Starting live stream for subscription {TopicName}/{SubscriptionName} (PeekOnly: {PeekOnly})",
-            topicName, subscriptionName, peekOnly);
+        Log.Information("Starting live stream for subscription {TopicName}/{SubscriptionName}",
+            topicName, subscriptionName);
 
         try
         {
-            if (peekOnly)
-            {
-                await StartPeekStreamAsync(operations.GetClient(), topicName, subscriptionName, ct);
-            }
-            else
-            {
-                await StartProcessorStreamAsync(operations.GetClient(), topicName, subscriptionName);
-            }
-
-            SetStreamingStatus(true);
-            Log.Debug("Live stream started successfully for subscription {TopicName}/{SubscriptionName}",
-                topicName, subscriptionName);
+            await StartPeekStreamAsync(operations.GetClient(), topicName, subscriptionName, ct);
         }
         catch (Exception ex)
         {
@@ -164,6 +143,14 @@ public class LiveStreamService : ILiveStreamService
 
                     var messages = await peekReceiver.PeekMessagesAsync(DefaultPeekBatchSize, lastSequenceNumber + 1, linkedCts.Token);
 
+                    // Only report "streaming" once the entity has answered a peek,
+                    // so bad entity names or missing permissions never show as live.
+                    // Skip if stop has begun, so a late peek response cannot flip the status back on.
+                    if (!peekCts.Token.IsCancellationRequested)
+                    {
+                        SetStreamingStatus(true);
+                    }
+
                     foreach (var msg in messages)
                     {
                         if (msg.SequenceNumber > lastSequenceNumber)
@@ -175,7 +162,7 @@ public class LiveStreamService : ILiveStreamService
                                 msg.CorrelationId,
                                 msg.ContentType,
                                 CreateStreamBody(msg.Body),
-                                DateTimeOffset.UtcNow,
+                                msg.EnqueuedTime,
                                 subscriptionName ?? entityName,
                                 subscriptionName != null ? "Subscription" : "Queue",
                                 subscriptionName != null ? entityName : null,
@@ -220,53 +207,6 @@ public class LiveStreamService : ILiveStreamService
         }, peekCts.Token);
 
         return Task.CompletedTask;
-    }
-
-    private async Task StartProcessorStreamAsync(ServiceBusClient client, string entityName, string? subscriptionName)
-    {
-        var options = new ServiceBusProcessorOptions
-        {
-            AutoCompleteMessages = false,
-            MaxConcurrentCalls = 1,
-            ReceiveMode = ServiceBusReceiveMode.PeekLock
-        };
-
-        _processor = subscriptionName != null
-            ? client.CreateProcessor(entityName, subscriptionName, options)
-            : client.CreateProcessor(entityName, options);
-
-        _processor.ProcessMessageAsync += async args =>
-        {
-            var msg = args.Message;
-            
-            var liveMessage = new LiveStreamMessage(
-                msg.MessageId,
-                msg.CorrelationId,
-                msg.ContentType,
-                CreateStreamBody(msg.Body),
-                DateTimeOffset.UtcNow,
-                subscriptionName ?? entityName,
-                subscriptionName != null ? "Subscription" : "Queue",
-                subscriptionName != null ? entityName : null,
-                msg.SequenceNumber,
-                msg.SessionId,
-                msg.ApplicationProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-            );
-            
-            EmitMessage(liveMessage);
-            
-            // Abandon message so it can be received again (we're just monitoring)
-            await args.AbandonMessageAsync(args.Message);
-        };
-
-        _processor.ProcessErrorAsync += args =>
-        {
-            Log.Error(args.Exception, "Live stream processor error for entity {EntityPath}", args.EntityPath);
-            StreamError?.Invoke(this, args.Exception);
-            return Task.CompletedTask;
-        };
-
-        await _processor.StartProcessingAsync();
     }
 
     internal static string CreateStreamBody(BinaryData body)
@@ -334,8 +274,6 @@ public class LiveStreamService : ILiveStreamService
             Log.Information("Stopping live stream for {EntityName}", _currentEntityName);
         }
 
-        SetStreamingStatus(false);
-
         _peekCts?.Cancel();
 
         if (_peekStreamTask != null)
@@ -355,6 +293,9 @@ public class LiveStreamService : ILiveStreamService
             _peekStreamTask = null;
         }
 
+        // Set after the loop task has been awaited so a late peek response cannot flip the status back on.
+        SetStreamingStatus(false);
+
         _peekCts?.Dispose();
         _peekCts = null;
 
@@ -369,13 +310,6 @@ public class LiveStreamService : ILiveStreamService
                 Log.Warning(ex, "Error disposing peek receiver");
             }
             _peekReceiver = null;
-        }
-
-        if (_processor != null)
-        {
-            await _processor.StopProcessingAsync();
-            await _processor.DisposeAsync();
-            _processor = null;
         }
 
         Log.Debug("Live stream resources cleaned up");
