@@ -136,37 +136,51 @@ public class EntityTreeViewTests
     private static void AssertTopicActionVisibilityBindings(string xaml)
     {
         var document = XDocument.Parse(xaml);
-        var menuItems = GetTopicMenuItems(document);
+        var topicMenuItems = GetMenuItems(document, "Create Subscription");
+        var subscriptionMenuItems = GetMenuItems(document, "Delete Subscription");
 
-        FindMenuItem(menuItems, "Details")
+        FindMenuItem(topicMenuItems, "Details")
             .Attribute("IsVisible")
             .Should()
             .BeNull();
-        FindMenuItem(menuItems, "Create Subscription")
+        FindMenuItem(topicMenuItems, "Create Subscription")
             .Attribute("IsVisible")
-            ?.Value
             .Should()
-            .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
-        FindMenuItem(menuItems, "Delete Topic")
+            .BeNull();
+        FindMenuItem(topicMenuItems, "Delete Topic")
             .Attribute("IsVisible")
-            ?.Value
             .Should()
-            .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
+            .BeNull();
+        FindMenuItem(subscriptionMenuItems, "Details")
+            .Attribute("IsVisible")
+            .Should()
+            .BeNull();
+        FindMenuItem(subscriptionMenuItems, "Delete Subscription")
+            .Attribute("IsVisible")
+            .Should()
+            .BeNull();
 
+        AssertInlineActionVisibilityBinding(document, "Create subscription");
+        AssertInlineActionVisibilityBinding(document, "Subscription details");
+        AssertInlineActionVisibilityBinding(document, "Delete subscription");
+    }
+
+    private static void AssertInlineActionVisibilityBinding(XDocument document, string tooltip)
+    {
         document.Descendants()
-            .Single(element => element.Attribute("ToolTip.Tip")?.Value == "Create subscription")
+            .Single(element => element.Attribute("ToolTip.Tip")?.Value == tooltip)
             .Attribute("IsVisible")
             ?.Value
             .Should()
             .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
     }
 
-    private static List<XElement> GetTopicMenuItems(XDocument document)
+    private static List<XElement> GetMenuItems(XDocument document, string itemHeader)
     {
         return document.Descendants()
             .Where(element => element.Name.LocalName == "ContextMenu")
             .Select(element => element.Elements().Where(child => child.Name.LocalName == "MenuItem").ToList())
-            .Single(items => items.Any(item => item.Attribute("Header")?.Value == "Create Subscription"));
+            .Single(items => items.Any(item => item.Attribute("Header")?.Value == itemHeader));
     }
 
     private static XElement FindMenuItem(IEnumerable<XElement> menuItems, string header)
