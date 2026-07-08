@@ -25,7 +25,7 @@
                                 <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#18181b"/>
                                 <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
                                 <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#6366f1"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#4F46E5"/>
                                 <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
                                 <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#27272a"/>
                             </Canvas>
@@ -440,12 +440,12 @@
             <StackPanel Grid.Row="0" Spacing="12" HorizontalAlignment="Center" Margin="0,14">
                 <Viewbox Width="34" Height="34">
                     <Canvas Width="512" Height="512">
-                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#27231F"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#403A34"/>
-                        <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#403A34"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#6366F1"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#403A34"/>
-                        <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#403A34"/>
+                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#27272A"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#3F3F46"/>
+                        <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#3F3F46"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#4F46E5"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#3F3F46"/>
+                        <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#3F3F46"/>
                     </Canvas>
                 </Viewbox>
                 <Button Classes="entity-pane-restore-command"

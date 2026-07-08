@@ -3,8 +3,8 @@
 
     <Styles.Resources>
         <ResourceDictionary>
-            <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #6366F1</BoxShadows>
-            <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #BE123C</BoxShadows>
+            <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4F46E5</BoxShadows>
+            <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #E11D48</BoxShadows>
             <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
         </ResourceDictionary>
     </Styles.Resources>
