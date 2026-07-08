@@ -283,27 +283,6 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
     </Style>
 
-    <!-- ListBox for custom item templates (no default item selection styling) -->
-    <Style Selector="ListBox.entity-list">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-    </Style>
-
-    <Style Selector="ListBox.entity-list ListBoxItem">
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Margin" Value="0"/>
-        <Setter Property="Background" Value="Transparent"/>
-    </Style>
-
-    <Style Selector="ListBox.entity-list ListBoxItem:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
-    </Style>
-
-    <Style Selector="ListBox.entity-list ListBoxItem:selected /template/ ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
-    </Style>
-
     <Style Selector="ListBoxItem">
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="CornerRadius" Value="8"/>
@@ -325,6 +304,54 @@
 
     <Style Selector="ListBoxItem:focus-visible /template/ ContentPresenter">
         <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+
+    <!-- ListBox for custom item templates (no default item selection styling).
+         Declared after the generic ListBoxItem styles so these transparent
+         overrides win — otherwise the generic hover paints the whole item
+         (e.g. an entire topic including its subscriptions). -->
+    <Style Selector="ListBox.entity-list">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:pointerover">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:selected">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:selected:pointerover">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:selected:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:focus-visible">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="ListBox.entity-list ListBoxItem:focus-visible /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
     </Style>
 
     <!-- TabControl - Fluent 2 -->
@@ -918,12 +945,18 @@
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
 
+    <!-- Row hover goes on the button's own presenter: the row surface Border
+         binds its Background locally (selection converter), so styles can
+         never override it. The surface is Transparent when unselected, so
+         this shows through for exactly one row. -->
     <Style Selector="Button.entity-tree-row:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="CornerRadius" Value="8"/>
     </Style>
 
     <Style Selector="Button.entity-tree-row:pressed /template/ ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="CornerRadius" Value="8"/>
     </Style>
 
     <Style Selector="Button.entity-tree-row:focus-visible /template/ ContentPresenter">
@@ -985,10 +1018,30 @@
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
     <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ Border#ToggleButtonBackground">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="8"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-node /template/ Border#ExpanderContent">

@@ -78,6 +78,58 @@ public class EntityTreeViewTests
         AssertTopicActionVisibilityBindings(azureTree);
     }
 
+    [Fact]
+    public void EntityTreeViews_DoNotShowGlobalLoadingIndicatorsInsideEntityGroups()
+    {
+        // Arrange
+        var connectionTree = XDocument.Parse(File.ReadAllText(GetConnectionTreePath()));
+        var azureTree = XDocument.Parse(File.ReadAllText(GetAzureTreePath()));
+
+        // Assert
+        AssertEntityGroupLoadingDoesNotBindToGlobalLoading(connectionTree);
+        AssertEntityGroupLoadingDoesNotBindToGlobalLoading(azureTree);
+    }
+
+    [Fact]
+    public void AppStyles_EntityListItemsSuppressSelectionChrome()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetStylesPath());
+
+        // Assert
+        xaml.Should().Contain("<Style Selector=\"ListBox.entity-list ListBoxItem:pointerover\">");
+        xaml.Should().Contain("<Style Selector=\"ListBox.entity-list ListBoxItem:selected\">");
+        xaml.Should().Contain("<Style Selector=\"ListBox.entity-list ListBoxItem:selected:pointerover\">");
+        xaml.Should().Contain("<Style Selector=\"ListBox.entity-list ListBoxItem:focus-visible\">");
+        xaml.Should().Contain("ListBox.entity-list ListBoxItem:pointerover /template/ ContentPresenter");
+        xaml.Should().Contain("ListBox.entity-list ListBoxItem:selected /template/ ContentPresenter");
+        xaml.Should().Contain("ListBox.entity-list ListBoxItem:selected:pointerover /template/ ContentPresenter");
+        xaml.Should().Contain("ListBox.entity-list ListBoxItem:focus-visible /template/ ContentPresenter");
+    }
+
+    [Fact]
+    public void EntityTreeViews_HighlightOnlySubscriptionRowsOnHover()
+    {
+        // Arrange
+        var connectionTree = XDocument.Parse(File.ReadAllText(GetConnectionTreePath()));
+        var azureTree = XDocument.Parse(File.ReadAllText(GetAzureTreePath()));
+        var styles = File.ReadAllText(GetStylesPath());
+
+        // Assert
+        AssertSubscriptionButtonsUseHoverClass(connectionTree, "SelectSubscriptionForConnectionCommand");
+        AssertSubscriptionButtonsUseHoverClass(azureTree, "SelectSubscriptionCommand");
+        styles.Should().Contain("Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground");
+        styles.Should().Contain("Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ Border#ToggleButtonBackground");
+        styles.Should().Contain("Button.entity-tree-row:pointerover /template/ ContentPresenter");
+        // Hover must not target the row surface Border: its Background is locally
+        // bound to the selection converter, which always beats style setters.
+        styles.Should().NotContain(":pointerover Border.entity-tree-row-surface");
+        // The generic ListBoxItem hover must precede the entity-list transparent
+        // overrides, otherwise it wins and highlights the whole item.
+        styles.IndexOf("<Style Selector=\"ListBoxItem:pointerover /template/ ContentPresenter\">", StringComparison.Ordinal)
+            .Should().BeLessThan(styles.IndexOf("<Style Selector=\"ListBox.entity-list ListBoxItem:pointerover\">", StringComparison.Ordinal));
+    }
+
     private static string GetStylesPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -163,6 +215,26 @@ public class EntityTreeViewTests
         AssertInlineActionVisibilityBinding(document, "Create subscription");
         AssertInlineActionVisibilityBinding(document, "Subscription details");
         AssertInlineActionVisibilityBinding(document, "Delete subscription");
+    }
+
+    private static void AssertEntityGroupLoadingDoesNotBindToGlobalLoading(XDocument document)
+    {
+        document.Descendants()
+            .Where(element => element.Attribute("Classes")?.Value == "entity-tree-loading")
+            .Where(element => element.Attribute("IsVisible")?.Value == "{Binding IsLoading}")
+            .Should()
+            .BeEmpty();
+    }
+
+    private static void AssertSubscriptionButtonsUseHoverClass(XDocument document, string commandName)
+    {
+        var buttonsWithoutHoverClass = document.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Where(element => element.Attribute("Command")?.Value?.Contains(commandName, StringComparison.Ordinal) == true)
+            .Where(element => element.Attribute("Classes")?.Value != "entity-tree-row subscription-tree-row")
+            .ToList();
+
+        buttonsWithoutHoverClass.Should().BeEmpty();
     }
 
     private static void AssertInlineActionVisibilityBinding(XDocument document, string tooltip)

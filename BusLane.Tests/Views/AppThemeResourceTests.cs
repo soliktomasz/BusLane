@@ -1,5 +1,7 @@
 namespace BusLane.Tests.Views;
 
+using System.Xml.Linq;
+
 using FluentAssertions;
 
 public class AppThemeResourceTests
@@ -38,6 +40,27 @@ public class AppThemeResourceTests
         // Assert
         xaml.Should().Contain("<Setter Property=\"MinWidth\" Value=\"36\"/>");
         xaml.Should().Contain("<Setter Property=\"MinHeight\" Value=\"36\"/>");
+    }
+
+    [Fact]
+    public void AppStyles_BoxShadowSettersUseConcreteValues()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetStylesPath()));
+
+        // Act
+        var invalidSetters = document.Descendants()
+            .Where(element => element.Name.LocalName == "Setter")
+            .Where(element => element.Attribute("Property")?.Value == "BoxShadow")
+            .Where(element =>
+            {
+                var value = element.Attribute("Value")?.Value;
+                return string.IsNullOrWhiteSpace(value) || value == "{x:Null}";
+            })
+            .ToList();
+
+        // Assert
+        invalidSetters.Should().BeEmpty();
     }
 
     private static string GetAppPath()
