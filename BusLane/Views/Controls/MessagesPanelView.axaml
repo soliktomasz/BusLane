@@ -116,6 +116,23 @@
                                                     <TextBlock Text="Receive locked"/>
                                                 </StackPanel>
                                             </Button>
+                                            <StackPanel Spacing="6" Margin="0,4">
+                                                <TextBox Text="{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}"
+                                                         PlaceholderText="Sequence numbers"/>
+                                                <Button Classes="subtle small"
+                                                        Command="{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}"
+                                                        HorizontalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Left">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <LucideIcon Kind="ArchiveRestore" Size="13"/>
+                                                        <TextBlock Text="Receive deferred"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <TextBlock Text="{Binding CurrentMessageOps.LockedMessageValidationMessage}"
+                                                           Foreground="{DynamicResource TextDanger}"
+                                                           IsVisible="{Binding CurrentMessageOps.LockedMessageValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                           TextWrapping="Wrap"/>
+                                            </StackPanel>
                                             <Border Height="1"
                                                     Margin="4,4"
                                                     Background="{DynamicResource BorderMuted}"/>
@@ -209,16 +226,14 @@
                     <Border Grid.Row="2"
                             Classes="message-search-surface"
                             IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
-                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
-                            <LucideIcon Grid.Row="0"
-                                      Grid.Column="0"
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                            <LucideIcon Grid.Column="0"
                                       Kind="Search"
                                       Size="16"
                                       Foreground="{DynamicResource MutedForeground}"
                                       Margin="4,0,8,0"
                                       VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="0"
-                                     Grid.Column="1"
+                            <TextBox Grid.Column="1"
                                      x:Name="MessageSearchTextBox"
                                      Text="{Binding CurrentMessageOps.MessageSearchText, Mode=TwoWay}"
                                      PlaceholderText="Search by message ID, body, correlation ID, subject..."
@@ -228,8 +243,7 @@
                                      FontSize="13"
                                      VerticalAlignment="Center"
                                      VerticalContentAlignment="Center"/>
-                            <Button Grid.Row="0"
-                                    Grid.Column="2"
+                            <Button Grid.Column="2"
                                     Classes="subtle small"
                                     Command="{Binding ClearMessageSearchCommand}"
                                     IsVisible="{Binding CurrentMessageOps.MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -237,25 +251,6 @@
                                     ToolTip.Tip="Clear search">
                                 <LucideIcon Kind="X" Size="12"/>
                             </Button>
-                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Spacing="6">
-                                <TextBox Text="{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}"
-                                         Width="150"
-                                         PlaceholderText="Seq numbers"/>
-                                <Button Classes="subtle small"
-                                        Command="{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}"
-                                        Padding="8,6">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <LucideIcon Kind="ArchiveRestore" Size="12"/>
-                                        <TextBlock Text="Deferred"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                            <TextBlock Grid.Row="1"
-                                       Grid.Column="1"
-                                       Grid.ColumnSpan="3"
-                                       Text="{Binding CurrentMessageOps.LockedMessageValidationMessage}"
-                                       Foreground="{DynamicResource TextDanger}"
-                                       IsVisible="{Binding CurrentMessageOps.LockedMessageValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </Grid>
                     </Border>
                     <Border Grid.Row="3"

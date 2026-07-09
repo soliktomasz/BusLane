@@ -30,6 +30,14 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
+        <Style Selector="Border.pager-navigation-group">
+            <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        </Style>
+
         <Style Selector="Button.pager-nav">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
@@ -72,6 +80,7 @@
         <Grid ColumnDefinitions="*,Auto">
             <!-- Range summary -->
             <StackPanel Grid.Column="0"
+                        Classes="pager-range-summary"
                         Orientation="Horizontal"
                         Spacing="5"
                         VerticalAlignment="Center">
@@ -89,30 +98,31 @@
             </StackPanel>
 
             <!-- Pager controls -->
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        Spacing="6"
-                        VerticalAlignment="Center">
-                <Button Classes="pager-nav"
-                        Command="{Binding LoadPreviousPageCommand}"
-                        IsEnabled="{Binding Pagination.CanGoPrevious}"
-                        AutomationProperties.Name="Previous page"
-                        ToolTip.Tip="Previous page">
-                    <LucideIcon Kind="ChevronLeft" Size="15"/>
-                </Button>
+            <Border Grid.Column="1"
+                    Classes="pager-navigation-group"
+                    VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Classes="pager-nav"
+                            Command="{Binding LoadPreviousPageCommand}"
+                            IsEnabled="{Binding Pagination.CanGoPrevious}"
+                            AutomationProperties.Name="Previous page"
+                            ToolTip.Tip="Previous page">
+                        <LucideIcon Kind="ChevronLeft" Size="15"/>
+                    </Button>
 
-                <Border Classes="pager-badge">
-                    <TextBlock Text="{Binding Pagination.PageLabel}"/>
-                </Border>
+                    <Border Classes="pager-badge">
+                        <TextBlock Text="{Binding Pagination.PageLabel}"/>
+                    </Border>
 
-                <Button Classes="pager-nav"
-                        Command="{Binding LoadNextPageCommand}"
-                        IsEnabled="{Binding Pagination.CanGoNext}"
-                        AutomationProperties.Name="Next page"
-                        ToolTip.Tip="Next page">
-                    <LucideIcon Kind="ChevronRight" Size="15"/>
-                </Button>
-            </StackPanel>
+                    <Button Classes="pager-nav"
+                            Command="{Binding LoadNextPageCommand}"
+                            IsEnabled="{Binding Pagination.CanGoNext}"
+                            AutomationProperties.Name="Next page"
+                            ToolTip.Tip="Next page">
+                        <LucideIcon Kind="ChevronRight" Size="15"/>
+                    </Button>
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </UserControl>

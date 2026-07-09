@@ -109,6 +109,53 @@ public class MessagesPanelViewTests
         ]);
     }
 
+    [Fact]
+    public void MessagesPanel_MovesDeferredReceiveIntoOverflowMenu()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetMessagesPanelPath()));
+
+        var overflowButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" &&
+                               element.Attribute("ToolTip.Tip")?.Value == "More message actions");
+
+        var searchSurface = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" &&
+                               element.Attribute("Classes")?.Value == "message-search-surface" &&
+                               element.Descendants().Any(child =>
+                                   child.Attributes().Any(attribute =>
+                                       attribute.Name.LocalName == "Name" &&
+                                       attribute.Value == "MessageSearchTextBox")));
+
+        // Assert
+        overflowButton.Descendants()
+            .Single(element => element.Name.LocalName == "TextBox" &&
+                               element.Attribute("Text")?.Value == "{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}");
+
+        overflowButton.Descendants()
+            .Single(element => element.Name.LocalName == "Button" &&
+                               element.Attribute("Command")?.Value == "{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}");
+
+        overflowButton.Descendants()
+            .Single(element => element.Name.LocalName == "TextBlock" &&
+                               element.Attribute("Text")?.Value == "{Binding CurrentMessageOps.LockedMessageValidationMessage}");
+
+        searchSurface.Descendants()
+            .Select(element => element.Attribute("Text")?.Value)
+            .Should()
+            .NotContain("{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}");
+
+        searchSurface.Descendants()
+            .Select(element => element.Attribute("Command")?.Value)
+            .Should()
+            .NotContain("{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}");
+
+        searchSurface.Descendants()
+            .Select(element => element.Attribute("Text")?.Value)
+            .Should()
+            .NotContain("{Binding CurrentMessageOps.LockedMessageValidationMessage}");
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(
