@@ -135,6 +135,100 @@ public class SendMessageViewModelTests
     }
 
     [Fact]
+    public async Task SendAsync_WithScheduledEnqueueTime_UsesScheduleApiAndRecordsSequenceNumber()
+    {
+        // Arrange
+        var scheduledAt = DateTimeOffset.UtcNow.AddHours(1);
+        _operations.ScheduleMessageAsync(
+                "queue",
+                Arg.Any<string>(),
+                Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(42);
+        var store = Substitute.For<IScheduledMessageStore>();
+        var sut = CreateSut(store);
+        sut.Body = "{\"id\":1}";
+        sut.ScheduledEnqueueTimeText = scheduledAt.ToString("O");
+
+        // Act
+        await sut.SendCommand.ExecuteAsync(null);
+
+        // Assert
+        await _operations.Received(1).ScheduleMessageAsync(
+            "queue",
+            "{\"id\":1}",
+            Arg.Any<IDictionary<string, object>>(),
+            Arg.Is<DateTimeOffset>(value => value == scheduledAt),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>());
+        await _operations.DidNotReceiveWithAnyArgs().SendMessageAsync(default!, default!, default);
+        await store.Received(1).AddAsync(Arg.Is<ScheduledMessageIndexEntry>(entry =>
+            entry.EntityName == "queue" &&
+            entry.SequenceNumber == 42 &&
+            entry.ScheduledEnqueueTime == scheduledAt &&
+            entry.BodyPreview == "{\"id\":1}"));
+        _statusMessage.Should().Be("Message scheduled successfully (sequence 42)");
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenScheduledIndexWriteFails_StillReportsScheduledMessage()
+    {
+        // Arrange
+        var scheduledAt = DateTimeOffset.UtcNow.AddHours(1);
+        _operations.ScheduleMessageAsync(
+                "queue",
+                Arg.Any<string>(),
+                Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(42);
+        var store = Substitute.For<IScheduledMessageStore>();
+        store.AddAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
+            .Returns(_ => throw new IOException("disk full"));
+        var sut = CreateSut(store);
+        sut.Body = "{\"id\":1}";
+        sut.ScheduledEnqueueTimeText = scheduledAt.ToString("O");
+
+        // Act
+        await sut.SendCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.ErrorMessage.Should().BeNull();
+        _closed.Should().BeTrue();
+        _statusMessage.Should().Be("Message scheduled successfully (sequence 42)");
+    }
+
+    [Fact]
     public void DuplicateSavedMessage_CopiesTemplateWithNewName()
     {
         // Arrange
@@ -185,13 +279,14 @@ public class SendMessageViewModelTests
         template.Category.Should().Be("Orders");
     }
 
-    private SendMessageViewModel CreateSut()
+    private SendMessageViewModel CreateSut(IScheduledMessageStore? scheduledMessageStore = null)
     {
         return new SendMessageViewModel(
             _operations,
             "queue",
             () => _closed = true,
             message => _statusMessage = message,
-            savedMessagesPath: _savedMessagesPath);
+            savedMessagesPath: _savedMessagesPath,
+            scheduledMessageStore: scheduledMessageStore);
     }
 }

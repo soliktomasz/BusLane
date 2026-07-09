@@ -2,6 +2,7 @@ namespace BusLane.ViewModels;
 
 using System.Collections.ObjectModel;
 using Avalonia.Input.Platform;
+using Avalonia.Platform.Storage;
 using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
@@ -56,6 +57,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly IBiometricAuthService _biometricAuthService;
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
+    private readonly IScheduledMessageStore? _scheduledMessageStore;
+    private readonly INamespaceTopologyService? _namespaceTopologyService;
     private readonly SemaphoreSlim _startupInitializationGate = new(1, 1);
     private bool _startupInitialized;
 
@@ -249,6 +252,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         ILogSink logSink,
         ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
+        IScheduledMessageStore? scheduledMessageStore = null,
+        INamespaceTopologyService? namespaceTopologyService = null,
         IFileDialogService? fileDialogService = null)
     {
         _auth = auth;
@@ -268,6 +273,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _biometricAuthService = biometricAuthService;
         _logSink = logSink;
         _fileDialogService = fileDialogService;
+        _scheduledMessageStore = scheduledMessageStore;
+        _namespaceTopologyService = namespaceTopologyService;
 
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
@@ -1175,6 +1182,122 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     #endregion
 
+    #region Namespace Topology
+
+    private static readonly FilePickerFileType TopologyJsonFileType = new("JSON Files")
+    {
+        Patterns = ["*.json"],
+        MimeTypes = ["application/json"]
+    };
+
+    [RelayCommand]
+    private async Task ExportNamespaceTopologyAsync(CancellationToken ct = default)
+    {
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (operations == null || _namespaceTopologyService == null || _fileDialogService == null)
+        {
+            StatusMessage = "Topology export requires an active connection and file dialog support";
+            return;
+        }
+
+        var defaultName = $"BusLane_Topology_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+        var filePath = await _fileDialogService.SaveFileAsync("Export Namespace Topology", defaultName, [TopologyJsonFileType]);
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            StatusMessage = "Exporting namespace topology...";
+            var document = await _namespaceTopologyService.ExportAsync(operations, ct);
+            await File.WriteAllTextAsync(filePath, NamespaceTopologySerializer.Serialize(document), ct);
+            StatusMessage = $"Exported namespace topology to {Path.GetFileName(filePath)}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Unable to export topology: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportNamespaceTopologyAsync(CancellationToken ct = default)
+    {
+        var operations = ActiveTab?.Operations ?? _operations;
+        if (operations == null || _namespaceTopologyService == null || _fileDialogService == null)
+        {
+            StatusMessage = "Topology import requires an active connection and file dialog support";
+            return;
+        }
+
+        var filePath = await _fileDialogService.OpenFileAsync("Import Namespace Topology", [TopologyJsonFileType]);
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            StatusMessage = "Comparing namespace topology...";
+            var document = NamespaceTopologySerializer.Deserialize(await File.ReadAllTextAsync(filePath, ct));
+            var plan = await _namespaceTopologyService.BuildImportPlanAsync(operations, document, ct);
+            var changeCount = plan.Actions.Count(a => a.ActionType != TopologyImportActionType.Skip);
+            if (changeCount == 0)
+            {
+                StatusMessage = "Topology import dry-run found no changes";
+                return;
+            }
+
+            var summary = string.Join(Environment.NewLine, plan.Actions
+                .Where(a => a.ActionType != TopologyImportActionType.Skip)
+                .Take(12)
+                .Select(a => $"- {a.Description}"));
+            if (changeCount > 12)
+            {
+                summary += Environment.NewLine + $"- ...and {changeCount - 12} more action(s)";
+            }
+
+            Confirmation.ShowConfirmation(
+                "Apply Topology Import",
+                $"Dry-run found {changeCount} non-destructive action(s):{Environment.NewLine}{summary}",
+                "Apply",
+                async () =>
+                {
+                    IsLoading = true;
+                    try
+                    {
+                        await _namespaceTopologyService.ApplyImportPlanAsync(operations, document, plan, ct);
+                        StatusMessage = $"Applied {changeCount} topology action(s)";
+                        await RefreshActiveTabAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        StatusMessage = $"Unable to apply topology import: {ex.Message}";
+                    }
+                    finally
+                    {
+                        IsLoading = false;
+                    }
+                });
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Unable to import topology: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    #endregion
+
     #region Send Message
 
     [RelayCommand]
@@ -1189,7 +1312,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             entityName,
             CloseSendMessagePopup,
             msg => StatusMessage = msg,
-            _fileDialogService);
+            _fileDialogService,
+            scheduledMessageStore: _scheduledMessageStore);
 
         ShowSendMessagePopup = true;
     }
@@ -1258,7 +1382,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             entityName,
             CloseSendMessagePopup,
             status => StatusMessage = status,
-            _fileDialogService);
+            _fileDialogService,
+            scheduledMessageStore: _scheduledMessageStore);
 
         SendMessageViewModel.PopulateFromMessage(msg);
         ShowSendMessagePopup = true;

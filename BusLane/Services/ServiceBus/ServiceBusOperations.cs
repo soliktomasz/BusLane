@@ -25,6 +25,9 @@ public record ServiceBusOperationOptions
     /// <summary>Timeout for receiving messages during delete operations.</summary>
     public TimeSpan DeleteReceiveTimeout { get; init; } = TimeSpan.FromSeconds(5);
 
+    /// <summary>Timeout for receiving peek-lock messages.</summary>
+    public TimeSpan ReceiveTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
     /// <summary>Number of consecutive empty batches before stopping an operation.</summary>
     public int MaxEmptyBatches { get; init; } = 3;
 
@@ -56,6 +59,7 @@ internal static class ServiceBusOperations
     public static TimeSpan PurgeReceiveTimeout => Options.PurgeReceiveTimeout;
     public static int DeleteBatchSize => Options.DeleteBatchSize;
     public static TimeSpan DeleteReceiveTimeout => Options.DeleteReceiveTimeout;
+    public static TimeSpan ReceiveTimeout => Options.ReceiveTimeout;
     public static int MaxEmptyBatches => Options.MaxEmptyBatches;
     public static int ResendBatchSize => Options.ResendBatchSize;
 
@@ -68,6 +72,96 @@ internal static class ServiceBusOperations
         DateTimeOffset? LastActivityAt,
         DateTimeOffset? LockedUntil,
         string? State);
+
+    /// <summary>
+    /// Builds Azure SDK queue creation options from BusLane creation options.
+    /// </summary>
+    public static CreateQueueOptions BuildCreateQueueOptions(QueueCreationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Name))
+        {
+            throw new ArgumentException("Queue name is required.", nameof(QueueCreationOptions.Name));
+        }
+
+        var sdkOptions = new CreateQueueOptions(options.Name)
+        {
+            RequiresSession = options.RequiresSession
+        };
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            sdkOptions.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.LockDuration.HasValue)
+        {
+            sdkOptions.LockDuration = options.LockDuration.Value;
+        }
+
+        if (options.DuplicateDetectionHistoryTimeWindow.HasValue)
+        {
+            sdkOptions.RequiresDuplicateDetection = true;
+            sdkOptions.DuplicateDetectionHistoryTimeWindow = options.DuplicateDetectionHistoryTimeWindow.Value;
+        }
+
+        if (options.MaxSizeInMegabytes.HasValue)
+        {
+            sdkOptions.MaxSizeInMegabytes = options.MaxSizeInMegabytes.Value;
+        }
+
+        if (options.EnablePartitioning.HasValue)
+        {
+            sdkOptions.EnablePartitioning = options.EnablePartitioning.Value;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            sdkOptions.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        return sdkOptions;
+    }
+
+    /// <summary>
+    /// Builds Azure SDK topic creation options from BusLane creation options.
+    /// </summary>
+    public static CreateTopicOptions BuildCreateTopicOptions(TopicCreationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Name))
+        {
+            throw new ArgumentException("Topic name is required.", nameof(TopicCreationOptions.Name));
+        }
+
+        var sdkOptions = new CreateTopicOptions(options.Name);
+        if (options.DefaultMessageTimeToLive.HasValue)
+        {
+            sdkOptions.DefaultMessageTimeToLive = options.DefaultMessageTimeToLive.Value;
+        }
+
+        if (options.DuplicateDetectionHistoryTimeWindow.HasValue)
+        {
+            sdkOptions.RequiresDuplicateDetection = true;
+            sdkOptions.DuplicateDetectionHistoryTimeWindow = options.DuplicateDetectionHistoryTimeWindow.Value;
+        }
+
+        if (options.MaxSizeInMegabytes.HasValue)
+        {
+            sdkOptions.MaxSizeInMegabytes = options.MaxSizeInMegabytes.Value;
+        }
+
+        if (options.EnablePartitioning.HasValue)
+        {
+            sdkOptions.EnablePartitioning = options.EnablePartitioning.Value;
+        }
+
+        if (options.EnableBatchedOperations.HasValue)
+        {
+            sdkOptions.EnableBatchedOperations = options.EnableBatchedOperations.Value;
+        }
+
+        return sdkOptions;
+    }
 
     /// <summary>
     /// Builds Azure SDK subscription creation options from BusLane creation options.
@@ -252,6 +346,202 @@ internal static class ServiceBusOperations
         return subscription != null
             ? client.CreateReceiver(entityName, subscription, options)
             : client.CreateReceiver(entityName, options);
+    }
+
+    public static async Task<IReadOnlyList<ReceivedMessageInfo>> ReceiveMessagesAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        int count,
+        bool deadLetter,
+        bool requiresSession,
+        string? sessionId,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrWhiteSpace(entityName);
+        if (count <= 0)
+        {
+            return [];
+        }
+
+        if (requiresSession)
+        {
+            var sessionReceiver = string.IsNullOrWhiteSpace(sessionId)
+                ? await AcceptNextSessionReceiverAsync(client, entityName, subscription, deadLetter, ct)
+                : await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter, ct);
+
+            try
+            {
+                var sessionMessages = await sessionReceiver.ReceiveMessagesAsync(
+                    count,
+                    maxWaitTime: ReceiveTimeout,
+                    cancellationToken: ct);
+                if (sessionMessages.Count == 0)
+                {
+                    await sessionReceiver.DisposeAsync();
+                    return [];
+                }
+
+                var lease = new SessionReceiverLease(sessionReceiver, sessionMessages.Count);
+                return sessionMessages
+                    .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter, requiresSession, sessionReceiver.SessionId, lease))
+                    .ToList();
+            }
+            catch
+            {
+                await sessionReceiver.DisposeAsync();
+                throw;
+            }
+        }
+
+        await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter);
+        var messages = await receiver.ReceiveMessagesAsync(
+            count,
+            maxWaitTime: ReceiveTimeout,
+            cancellationToken: ct);
+        return messages
+            .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter, requiresSession, null))
+            .ToList();
+    }
+
+    public static async Task<IReadOnlyList<ReceivedMessageInfo>> ReceiveDeferredMessagesAsync(
+        ServiceBusClient client,
+        string entityName,
+        string? subscription,
+        IEnumerable<long> sequenceNumbers,
+        bool requiresSession,
+        string? sessionId,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrWhiteSpace(entityName);
+        var sequenceList = sequenceNumbers.Distinct().ToList();
+        if (sequenceList.Count == 0)
+        {
+            return [];
+        }
+
+        if (requiresSession)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+            var sessionReceiver = await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter: false, ct);
+            try
+            {
+                var deferredSessionMessages = await sessionReceiver.ReceiveDeferredMessagesAsync(sequenceList, ct);
+                if (deferredSessionMessages.Count == 0)
+                {
+                    await sessionReceiver.DisposeAsync();
+                    return [];
+                }
+
+                var lease = new SessionReceiverLease(sessionReceiver, deferredSessionMessages.Count);
+                return deferredSessionMessages
+                    .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter: false, requiresSession, sessionId, lease))
+                    .ToList();
+            }
+            catch
+            {
+                await sessionReceiver.DisposeAsync();
+                throw;
+            }
+        }
+
+        await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter: false);
+        var deferredMessages = await receiver.ReceiveDeferredMessagesAsync(sequenceList, ct);
+        return deferredMessages
+            .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter: false, requiresSession, null))
+            .ToList();
+    }
+
+    public static async Task CompleteMessageAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
+    {
+        await SettleMessageAsync(client, message, receiver => receiver.CompleteMessageAsync(message.ReceivedMessage, ct), ct);
+    }
+
+    public static async Task AbandonMessageAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
+    {
+        await SettleMessageAsync(client, message, receiver => receiver.AbandonMessageAsync(message.ReceivedMessage, cancellationToken: ct), ct);
+    }
+
+    public static async Task DeadLetterMessageAsync(
+        ServiceBusClient client,
+        ReceivedMessageInfo message,
+        string? reason,
+        string? description,
+        CancellationToken ct)
+    {
+        await SettleMessageAsync(client, message, receiver => receiver.DeadLetterMessageAsync(message.ReceivedMessage, reason, description, ct), ct);
+    }
+
+    public static async Task DeferMessageAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
+    {
+        await SettleMessageAsync(client, message, receiver => receiver.DeferMessageAsync(message.ReceivedMessage, cancellationToken: ct), ct);
+    }
+
+    public static async Task<DateTimeOffset> RenewMessageLockAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
+    {
+        if (message.SessionReceiverLease != null)
+        {
+            await message.SessionReceiverLease.Receiver.RenewMessageLockAsync(message.ReceivedMessage, ct);
+            return message.ReceivedMessage.LockedUntil;
+        }
+
+        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
+        await receiver.RenewMessageLockAsync(message.ReceivedMessage, ct);
+        return message.ReceivedMessage.LockedUntil;
+    }
+
+    public static ReceivedMessageInfo ToReceivedMessageInfo(
+        ServiceBusReceivedMessage message,
+        string entityName,
+        string? subscription,
+        bool deadLetter,
+        bool requiresSession,
+        string? sessionId,
+        SessionReceiverLease? sessionReceiverLease = null) =>
+        new(MapToMessageInfo(message), message, entityName, subscription, deadLetter, requiresSession, sessionId)
+        {
+            SessionReceiverLease = sessionReceiverLease
+        };
+
+    private static async Task SettleMessageAsync(
+        ServiceBusClient client,
+        ReceivedMessageInfo message,
+        Func<ServiceBusReceiver, Task> settle,
+        CancellationToken ct)
+    {
+        if (message.SessionReceiverLease != null)
+        {
+            await settle(message.SessionReceiverLease.Receiver);
+            await message.SessionReceiverLease.ReleaseSettlementAsync();
+            return;
+        }
+
+        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
+        await settle(receiver);
+    }
+
+    private static async Task<ServiceBusReceiver> CreateSettlementReceiverAsync(
+        ServiceBusClient client,
+        ReceivedMessageInfo message,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(message);
+        if (message.RequiresSession)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(message.SessionId);
+            return await AcceptSessionReceiverAsync(
+                client,
+                message.EntityName,
+                message.SubscriptionName,
+                message.SessionId,
+                message.DeadLetter,
+                ct);
+        }
+
+        return CreateReceiver(client, message.EntityName, message.SubscriptionName, message.DeadLetter);
     }
 
     /// <summary>

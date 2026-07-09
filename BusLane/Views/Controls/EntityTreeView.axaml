@@ -19,7 +19,7 @@
             <Border DockPanel.Dock="Top"
                     Classes="pane-search-surface">
                 <StackPanel Spacing="12">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10">
                         <Border Grid.Column="0" Classes="metric-icon-surface">
                             <LucideIcon Kind="PanelsTopLeft"
                                         Size="16"
@@ -33,12 +33,40 @@
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="2"
                                 Classes="icon-button"
+                                Command="{Binding EntityOperations.OpenCreateQueueDialogCommand}"
+                                ToolTip.Tip="Create queue"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="ListPlus" Size="15"/>
+                        </Button>
+                        <Button Grid.Column="3"
+                                Classes="icon-button"
+                                Command="{Binding EntityOperations.OpenCreateTopicDialogCommand}"
+                                ToolTip.Tip="Create topic"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="MessageSquarePlus" Size="15"/>
+                        </Button>
+                        <Button Grid.Column="4"
+                                Classes="icon-button"
+                                Command="{Binding ExportNamespaceTopologyCommand}"
+                                ToolTip.Tip="Export namespace topology"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="Download" Size="15"/>
+                        </Button>
+                        <Button Grid.Column="5"
+                                Classes="icon-button"
+                                Command="{Binding ImportNamespaceTopologyCommand}"
+                                ToolTip.Tip="Import namespace topology"
+                                VerticalAlignment="Center">
+                            <LucideIcon Kind="Upload" Size="15"/>
+                        </Button>
+                        <Button Grid.Column="6"
+                                Classes="icon-button"
                                 Command="{Binding ToggleSelectedEntityPinCommand}"
                                 ToolTip.Tip="Pin selected entity"
                                 VerticalAlignment="Center">
                             <LucideIcon Kind="Pin" Size="15"/>
                         </Button>
-                        <Button Grid.Column="3"
+                        <Button Grid.Column="7"
                                 Classes="icon-button"
                                 Command="{Binding HideEntityPaneCommand}"
                                 ToolTip.Tip="Hide entity pane"

@@ -12,6 +12,92 @@ using Xunit;
 public class ServiceBusOperationsTests
 {
     [Fact]
+    public void BuildCreateQueueOptions_WithAdvancedOptions_MapsSupportedSettings()
+    {
+        // Arrange
+        var options = new QueueCreationOptions(
+            "orders",
+            RequiresSession: true,
+            DefaultMessageTimeToLive: TimeSpan.FromDays(3),
+            LockDuration: TimeSpan.FromSeconds(45),
+            DuplicateDetectionHistoryTimeWindow: TimeSpan.FromMinutes(10),
+            MaxSizeInMegabytes: 2048,
+            EnablePartitioning: true,
+            EnableBatchedOperations: false);
+
+        // Act
+        var sdkOptions = ServiceBusOperations.BuildCreateQueueOptions(options);
+
+        // Assert
+        sdkOptions.Name.Should().Be("orders");
+        sdkOptions.RequiresSession.Should().BeTrue();
+        sdkOptions.DefaultMessageTimeToLive.Should().Be(TimeSpan.FromDays(3));
+        sdkOptions.LockDuration.Should().Be(TimeSpan.FromSeconds(45));
+        sdkOptions.RequiresDuplicateDetection.Should().BeTrue();
+        sdkOptions.DuplicateDetectionHistoryTimeWindow.Should().Be(TimeSpan.FromMinutes(10));
+        sdkOptions.MaxSizeInMegabytes.Should().Be(2048);
+        sdkOptions.EnablePartitioning.Should().BeTrue();
+        sdkOptions.EnableBatchedOperations.Should().BeFalse();
+    }
+
+    [Fact]
+    public void BuildCreateTopicOptions_WithAdvancedOptions_MapsSupportedSettings()
+    {
+        // Arrange
+        var options = new TopicCreationOptions(
+            "events",
+            DefaultMessageTimeToLive: TimeSpan.FromDays(5),
+            DuplicateDetectionHistoryTimeWindow: TimeSpan.FromMinutes(20),
+            MaxSizeInMegabytes: 1024,
+            EnablePartitioning: true,
+            EnableBatchedOperations: false);
+
+        // Act
+        var sdkOptions = ServiceBusOperations.BuildCreateTopicOptions(options);
+
+        // Assert
+        sdkOptions.Name.Should().Be("events");
+        sdkOptions.DefaultMessageTimeToLive.Should().Be(TimeSpan.FromDays(5));
+        sdkOptions.RequiresDuplicateDetection.Should().BeTrue();
+        sdkOptions.DuplicateDetectionHistoryTimeWindow.Should().Be(TimeSpan.FromMinutes(20));
+        sdkOptions.MaxSizeInMegabytes.Should().Be(1024);
+        sdkOptions.EnablePartitioning.Should().BeTrue();
+        sdkOptions.EnableBatchedOperations.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void BuildCreateQueueOptions_WithBlankName_Throws(string queueName)
+    {
+        // Arrange
+        var options = new QueueCreationOptions(queueName);
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateQueueOptions(options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("Name");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void BuildCreateTopicOptions_WithBlankName_Throws(string topicName)
+    {
+        // Arrange
+        var options = new TopicCreationOptions(topicName);
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateTopicOptions(options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("Name");
+    }
+
+    [Fact]
     public void BuildCreateSubscriptionOptions_WithSessionOption_MapsTopicNameSubscriptionNameAndRequiresSession()
     {
         // Arrange

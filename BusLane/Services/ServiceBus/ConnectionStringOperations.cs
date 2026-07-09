@@ -171,6 +171,18 @@ public class ConnectionStringOperations : IConnectionStringOperations
         await AdminClient.CreateSubscriptionAsync(sdkOptions, ct);
     }
 
+    public async Task CreateQueueAsync(QueueCreationOptions options, CancellationToken ct = default)
+    {
+        var sdkOptions = ServiceBusOperations.BuildCreateQueueOptions(options);
+        await AdminClient.CreateQueueAsync(sdkOptions, ct);
+    }
+
+    public async Task CreateTopicAsync(TopicCreationOptions options, CancellationToken ct = default)
+    {
+        var sdkOptions = ServiceBusOperations.BuildCreateTopicOptions(options);
+        await AdminClient.CreateTopicAsync(sdkOptions, ct);
+    }
+
     public async Task DeleteSubscriptionAsync(
         string topicName,
         string subscriptionName,
@@ -404,6 +416,76 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
         await sender.SendMessageAsync(msg, ct);
     }
+
+    public async Task<long> ScheduleMessageAsync(
+        string entityName,
+        string body,
+        IDictionary<string, object>? properties,
+        DateTimeOffset scheduledEnqueueTime,
+        string? contentType = null,
+        string? correlationId = null,
+        string? messageId = null,
+        string? sessionId = null,
+        string? subject = null,
+        string? to = null,
+        string? replyTo = null,
+        string? replyToSessionId = null,
+        string? partitionKey = null,
+        TimeSpan? timeToLive = null,
+        CancellationToken ct = default)
+    {
+        await using var sender = GetClient().CreateSender(entityName);
+        var msg = new ServiceBusMessage(body);
+        ServiceBusOperations.ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
+            subject, to, replyTo, replyToSessionId, partitionKey, timeToLive, null, properties);
+        return await sender.ScheduleMessageAsync(msg, scheduledEnqueueTime, ct);
+    }
+
+    public async Task CancelScheduledMessageAsync(string entityName, long sequenceNumber, CancellationToken ct = default)
+    {
+        await using var sender = GetClient().CreateSender(entityName);
+        await sender.CancelScheduledMessageAsync(sequenceNumber, ct);
+    }
+
+    public async Task<IReadOnlyList<ReceivedMessageInfo>> ReceiveMessagesAsync(
+        string entityName,
+        string? subscription,
+        int count,
+        bool deadLetter,
+        bool requiresSession = false,
+        string? sessionId = null,
+        CancellationToken ct = default)
+    {
+        return await ServiceBusOperations.ReceiveMessagesAsync(
+            GetClient(), entityName, subscription, count, deadLetter, requiresSession, sessionId, ct);
+    }
+
+    public async Task<IReadOnlyList<ReceivedMessageInfo>> ReceiveDeferredMessagesAsync(
+        string entityName,
+        string? subscription,
+        IEnumerable<long> sequenceNumbers,
+        bool requiresSession = false,
+        string? sessionId = null,
+        CancellationToken ct = default)
+    {
+        return await ServiceBusOperations.ReceiveDeferredMessagesAsync(
+            GetClient(), entityName, subscription, sequenceNumbers, requiresSession, sessionId, ct);
+    }
+
+    public async Task CompleteMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
+        await ServiceBusOperations.CompleteMessageAsync(GetClient(), message, ct);
+
+    public async Task AbandonMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
+        await ServiceBusOperations.AbandonMessageAsync(GetClient(), message, ct);
+
+    public async Task DeadLetterMessageAsync(ReceivedMessageInfo message, string? reason = null, string? description = null, CancellationToken ct = default) =>
+        await ServiceBusOperations.DeadLetterMessageAsync(GetClient(), message, reason, description, ct);
+
+    public async Task DeferMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
+        await ServiceBusOperations.DeferMessageAsync(GetClient(), message, ct);
+
+    public async Task<DateTimeOffset> RenewMessageLockAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
+        await ServiceBusOperations.RenewMessageLockAsync(GetClient(), message, ct);
 
     public async Task PurgeMessagesAsync(string entityName, string? subscription, bool deadLetter, CancellationToken ct = default)
     {

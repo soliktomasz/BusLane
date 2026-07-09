@@ -44,6 +44,12 @@ public partial class EntityOperationsViewModel : ViewModelBase
     [ObservableProperty] private string _editForwardDeadLetteredMessagesTo = string.Empty;
     [ObservableProperty] private string? _entityEditValidationMessage;
     [ObservableProperty] private bool _isUpdatingEntity;
+    [ObservableProperty] private bool _showCreateQueueDialog;
+    [ObservableProperty] private bool _showCreateTopicDialog;
+    [ObservableProperty] private string _createEntityName = string.Empty;
+    [ObservableProperty] private bool _createQueueRequiresSession;
+    [ObservableProperty] private string? _createEntityValidationMessage;
+    [ObservableProperty] private bool _isCreatingEntity;
 
     private QueueInfo? _editingQueue;
     private TopicInfo? _editingTopic;
@@ -185,6 +191,114 @@ public partial class EntityOperationsViewModel : ViewModelBase
     {
         ShowEntityEditDialog = false;
         ResetEditState();
+    }
+
+    [RelayCommand]
+    private void OpenCreateQueueDialog()
+    {
+        ResetCreateState();
+        ShowCreateTopicDialog = false;
+        ShowCreateQueueDialog = true;
+    }
+
+    [RelayCommand]
+    private void OpenCreateTopicDialog()
+    {
+        ResetCreateState();
+        ShowCreateQueueDialog = false;
+        ShowCreateTopicDialog = true;
+    }
+
+    [RelayCommand]
+    private void CloseCreateEntityDialog()
+    {
+        ShowCreateQueueDialog = false;
+        ShowCreateTopicDialog = false;
+        ResetCreateState();
+    }
+
+    [RelayCommand]
+    private async Task CreateQueueAsync()
+    {
+        var operations = _getOperations();
+        var navigation = _getNavigation();
+        if (operations == null || navigation == null)
+        {
+            SetNoActiveConnectionStatus();
+            return;
+        }
+
+        CreateEntityValidationMessage = null;
+        if (string.IsNullOrWhiteSpace(CreateEntityName))
+        {
+            CreateEntityValidationMessage = "Queue name is required";
+            return;
+        }
+
+        IsCreatingEntity = true;
+        try
+        {
+            var name = CreateEntityName.Trim();
+            await operations.CreateQueueAsync(new QueueCreationOptions(name, CreateQueueRequiresSession));
+            var queue = await operations.GetQueueInfoAsync(name) ??
+                new QueueInfo(name, 0, 0, 0, 0, 0, null, CreateQueueRequiresSession, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+            navigation.Queues.Add(queue);
+            navigation.SelectedQueue = queue;
+            navigation.SelectedEntity = queue;
+            _setStatusMessage($"Queue '{name}' created");
+            ShowCreateQueueDialog = false;
+            ResetCreateState();
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Unable to create queue: {ex.Message}");
+        }
+        finally
+        {
+            IsCreatingEntity = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task CreateTopicAsync()
+    {
+        var operations = _getOperations();
+        var navigation = _getNavigation();
+        if (operations == null || navigation == null)
+        {
+            SetNoActiveConnectionStatus();
+            return;
+        }
+
+        CreateEntityValidationMessage = null;
+        if (string.IsNullOrWhiteSpace(CreateEntityName))
+        {
+            CreateEntityValidationMessage = "Topic name is required";
+            return;
+        }
+
+        IsCreatingEntity = true;
+        try
+        {
+            var name = CreateEntityName.Trim();
+            await operations.CreateTopicAsync(new TopicCreationOptions(name));
+            var topic = await operations.GetTopicInfoAsync(name) ??
+                new TopicInfo(name, 0, 0, null, TimeSpan.FromDays(14));
+            navigation.Topics.Add(topic);
+            navigation.SelectedTopic = topic;
+            navigation.SelectedEntity = topic;
+            _setStatusMessage($"Topic '{name}' created");
+            ShowCreateTopicDialog = false;
+            ResetCreateState();
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Unable to create topic: {ex.Message}");
+        }
+        finally
+        {
+            IsCreatingEntity = false;
+        }
     }
 
     [RelayCommand]
@@ -943,6 +1057,13 @@ public partial class EntityOperationsViewModel : ViewModelBase
         EditForwardTo = string.Empty;
         EditForwardDeadLetteredMessagesTo = string.Empty;
         EntityEditValidationMessage = null;
+    }
+
+    private void ResetCreateState()
+    {
+        CreateEntityName = string.Empty;
+        CreateQueueRequiresSession = false;
+        CreateEntityValidationMessage = null;
     }
 
     private void AddDetail(string label, object? value)

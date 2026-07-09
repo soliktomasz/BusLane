@@ -133,6 +133,8 @@ class Program
             var auth = sp.GetRequiredService<IAzureAuthService>();
             return new ServiceBusOperationsFactory(() => auth.ArmClient);
         });
+        services.AddSingleton<INamespaceTopologyService, NamespaceTopologyService>();
+        services.AddSingleton<IScheduledMessageStore, ScheduledMessageStore>();
         services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
         services.AddSingleton<IConnectionBackupService, ConnectionBackupService>();
@@ -185,7 +187,9 @@ class Program
             sp.GetRequiredService<IBiometricAuthService>(),
             sp.GetRequiredService<ILogSink>(),
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
-            sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>()
+            sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>(),
+            sp.GetRequiredService<IScheduledMessageStore>(),
+            sp.GetRequiredService<INamespaceTopologyService>()
         ));
 
     }

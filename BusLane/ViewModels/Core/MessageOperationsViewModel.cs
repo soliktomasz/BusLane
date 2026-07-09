@@ -55,6 +55,9 @@ public partial class MessageOperationsViewModel : ViewModelBase
     private bool _sortDescending = true;
 
     [ObservableProperty] private string _messageSearchText = "";
+    [ObservableProperty] private string _deferredSequenceNumbersText = "";
+    [ObservableProperty] private ReceivedMessageInfo? _selectedLockedMessage;
+    [ObservableProperty] private string? _lockedMessageValidationMessage;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSessionScoped))]
     [NotifyPropertyChangedFor(nameof(SessionScopeLabel))]
@@ -63,6 +66,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public ObservableCollection<MessageInfo> Messages { get; } = [];
     public ObservableCollection<MessageInfo> FilteredMessages { get; } = [];
     public ObservableCollection<MessageInfo> SelectedMessages { get; } = [];
+    public ObservableCollection<ReceivedMessageInfo> LockedMessages { get; } = [];
 
     public PaginationState Pagination { get; } = new();
     private readonly MessagePageCache _pageCache = new();
@@ -294,6 +298,201 @@ public partial class MessageOperationsViewModel : ViewModelBase
             ? (_getShowDeadLetter() ? _scopedKnownDeadLetterCount : _scopedKnownActiveCount)
             : _getKnownMessageCount();
         await LoadFirstPageAsync(entityName, _getSubscriptionName(), _getShowDeadLetter(), _getRequiresSession(), knownCount);
+    }
+
+    [RelayCommand]
+    public async Task ReceiveLockedMessagesAsync()
+    {
+        if (IsLoadingMessages)
+        {
+            return;
+        }
+
+        var operations = _getOperations();
+        var entityName = _getEntityName();
+        if (operations == null || entityName == null)
+        {
+            return;
+        }
+
+        IsLoadingMessages = true;
+        LockedMessageValidationMessage = null;
+        try
+        {
+            var messages = await operations.ReceiveMessagesAsync(
+                entityName,
+                _getSubscriptionName(),
+                _preferencesService.MessagesPerPage,
+                _getShowDeadLetter(),
+                _getRequiresSession(),
+                ScopedSessionId);
+            ReplaceLockedMessages(messages);
+            _setStatus($"Received {messages.Count} locked message(s)");
+        }
+        catch (Exception ex)
+        {
+            LockedMessageValidationMessage = ex.Message;
+            _setStatus($"Error receiving locked messages: {ex.Message}");
+        }
+        finally
+        {
+            IsLoadingMessages = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task ReceiveDeferredMessagesAsync()
+    {
+        if (IsLoadingMessages)
+        {
+            return;
+        }
+
+        var operations = _getOperations();
+        var entityName = _getEntityName();
+        if (operations == null || entityName == null)
+        {
+            return;
+        }
+
+        if (!TryParseSequenceNumbers(DeferredSequenceNumbersText, out var sequenceNumbers))
+        {
+            LockedMessageValidationMessage = "Enter one or more sequence numbers";
+            return;
+        }
+
+        IsLoadingMessages = true;
+        LockedMessageValidationMessage = null;
+        try
+        {
+            var messages = await operations.ReceiveDeferredMessagesAsync(
+                entityName,
+                _getSubscriptionName(),
+                sequenceNumbers,
+                _getRequiresSession(),
+                ScopedSessionId);
+            ReplaceLockedMessages(messages);
+            _setStatus($"Received {messages.Count} deferred message(s)");
+        }
+        catch (Exception ex)
+        {
+            LockedMessageValidationMessage = ex.Message;
+            _setStatus($"Error receiving deferred messages: {ex.Message}");
+        }
+        finally
+        {
+            IsLoadingMessages = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task CompleteLockedMessageAsync(ReceivedMessageInfo? message = null)
+    {
+        var target = message ?? SelectedLockedMessage;
+        var operations = _getOperations();
+        if (operations == null || target == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await operations.CompleteMessageAsync(target);
+            RemoveLockedMessage(target);
+            _setStatus("Message completed");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to complete message: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    public async Task AbandonLockedMessageAsync(ReceivedMessageInfo? message = null)
+    {
+        var target = message ?? SelectedLockedMessage;
+        var operations = _getOperations();
+        if (operations == null || target == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await operations.AbandonMessageAsync(target);
+            RemoveLockedMessage(target);
+            _setStatus("Message abandoned");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to abandon message: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    public async Task DeadLetterLockedMessageAsync(ReceivedMessageInfo? message = null)
+    {
+        var target = message ?? SelectedLockedMessage;
+        var operations = _getOperations();
+        if (operations == null || target == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await operations.DeadLetterMessageAsync(target, "Dead-lettered from BusLane");
+            RemoveLockedMessage(target);
+            _setStatus("Message dead-lettered");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to dead-letter message: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    public async Task DeferLockedMessageAsync(ReceivedMessageInfo? message = null)
+    {
+        var target = message ?? SelectedLockedMessage;
+        var operations = _getOperations();
+        if (operations == null || target == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await operations.DeferMessageAsync(target);
+            RemoveLockedMessage(target);
+            _setStatus($"Message deferred at sequence {target.Message.SequenceNumber}");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to defer message: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    public async Task RenewLockedMessageAsync(ReceivedMessageInfo? message = null)
+    {
+        var target = message ?? SelectedLockedMessage;
+        var operations = _getOperations();
+        if (operations == null || target == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var lockedUntil = await operations.RenewMessageLockAsync(target);
+            ReplaceLockedMessage(target, target.WithLockedUntil(lockedUntil));
+            _setStatus("Message lock renewed");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to renew message lock: {ex.Message}");
+        }
     }
 
     public async Task LoadFirstPageAsync(
@@ -668,6 +867,59 @@ public partial class MessageOperationsViewModel : ViewModelBase
         }
 
         ApplyMessageFilter();
+    }
+
+    private void ReplaceLockedMessages(IReadOnlyList<ReceivedMessageInfo> messages)
+    {
+        LockedMessages.Clear();
+        foreach (var message in messages)
+        {
+            LockedMessages.Add(message);
+        }
+
+        SelectedLockedMessage = LockedMessages.FirstOrDefault();
+    }
+
+    private void RemoveLockedMessage(ReceivedMessageInfo message)
+    {
+        LockedMessages.Remove(message);
+        if (SelectedLockedMessage == message)
+        {
+            SelectedLockedMessage = LockedMessages.FirstOrDefault();
+        }
+    }
+
+    private void ReplaceLockedMessage(ReceivedMessageInfo oldMessage, ReceivedMessageInfo newMessage)
+    {
+        var index = LockedMessages.IndexOf(oldMessage);
+        if (index < 0)
+        {
+            return;
+        }
+
+        LockedMessages[index] = newMessage;
+        if (SelectedLockedMessage == oldMessage)
+        {
+            SelectedLockedMessage = newMessage;
+        }
+    }
+
+    private static bool TryParseSequenceNumbers(string text, out IReadOnlyList<long> sequenceNumbers)
+    {
+        var values = new List<long>();
+        foreach (var token in text.Split([',', '\n', '\r', '\t', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!long.TryParse(token, out var sequenceNumber) || sequenceNumber < 0)
+            {
+                sequenceNumbers = [];
+                return false;
+            }
+
+            values.Add(sequenceNumber);
+        }
+
+        sequenceNumbers = values.Distinct().ToList();
+        return sequenceNumbers.Count > 0;
     }
 
     public void SelectMessage(MessageInfo message) => SelectedMessage = message;
