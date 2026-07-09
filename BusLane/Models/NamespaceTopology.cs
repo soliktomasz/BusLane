@@ -9,6 +9,9 @@ public record NamespaceTopologyDocument(
     IReadOnlyList<QueueTopology> Queues,
     IReadOnlyList<TopicTopology> Topics);
 
+/// <summary>
+/// Desired queue settings captured in a namespace topology document.
+/// </summary>
 public record QueueTopology(
     string Name,
     bool RequiresSession,
@@ -17,12 +20,18 @@ public record QueueTopology(
     bool? DeadLetteringOnMessageExpiration,
     bool? EnableBatchedOperations);
 
+/// <summary>
+/// Desired topic settings and subscriptions captured in a namespace topology document.
+/// </summary>
 public record TopicTopology(
     string Name,
     TimeSpan DefaultMessageTimeToLive,
     bool? EnableBatchedOperations,
     IReadOnlyList<SubscriptionTopology> Subscriptions);
 
+/// <summary>
+/// Desired subscription settings, forwarding paths, and rules captured in a namespace topology document.
+/// </summary>
 public record SubscriptionTopology(
     string Name,
     bool RequiresSession,
@@ -36,6 +45,9 @@ public record SubscriptionTopology(
     bool? DeadLetteringOnMessageExpiration,
     IReadOnlyList<RuleTopology> Rules);
 
+/// <summary>
+/// Desired subscription rule filter and action captured in a namespace topology document.
+/// </summary>
 public record RuleTopology(
     string Name,
     SubscriptionRuleFilterType FilterType,

@@ -181,14 +181,16 @@
                     <Border Grid.Row="2"
                             Classes="message-search-surface"
                             IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
-                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-                            <LucideIcon Grid.Column="0"
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
+                            <LucideIcon Grid.Row="0"
+                                      Grid.Column="0"
                                       Kind="Search"
                                       Size="16"
                                       Foreground="{DynamicResource MutedForeground}"
                                       Margin="4,0,8,0"
                                       VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="1"
+                            <TextBox Grid.Row="0"
+                                     Grid.Column="1"
                                      x:Name="MessageSearchTextBox"
                                      Text="{Binding CurrentMessageOps.MessageSearchText, Mode=TwoWay}"
                                      PlaceholderText="Search by message ID, body, correlation ID, subject..."
@@ -198,7 +200,8 @@
                                      FontSize="13"
                                      VerticalAlignment="Center"
                                      VerticalContentAlignment="Center"/>
-                            <Button Grid.Column="2"
+                            <Button Grid.Row="0"
+                                    Grid.Column="2"
                                     Classes="subtle small"
                                     Command="{Binding ClearMessageSearchCommand}"
                                     IsVisible="{Binding CurrentMessageOps.MessageSearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -206,7 +209,7 @@
                                     ToolTip.Tip="Clear search">
                                 <LucideIcon Kind="X" Size="12"/>
                             </Button>
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Spacing="6">
                                 <TextBox Text="{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}"
                                          Width="150"
                                          PlaceholderText="Seq numbers"/>
@@ -219,6 +222,12 @@
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="1"
+                                       Grid.ColumnSpan="3"
+                                       Text="{Binding CurrentMessageOps.LockedMessageValidationMessage}"
+                                       Foreground="{DynamicResource TextDanger}"
+                                       IsVisible="{Binding CurrentMessageOps.LockedMessageValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </Grid>
                     </Border>
                     <Border Grid.Row="3"
@@ -240,18 +249,27 @@
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                                                 <Button Classes="primary small"
                                                         Content="Complete"
+                                                        IsEnabled="{Binding CanSettle}"
                                                         Command="{Binding $parent[Window].DataContext.CurrentMessageOps.CompleteLockedMessageCommand}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Classes="subtle small"
                                                         Content="Abandon"
+                                                        IsEnabled="{Binding CanSettle}"
                                                         Command="{Binding $parent[Window].DataContext.CurrentMessageOps.AbandonLockedMessageCommand}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Classes="subtle small"
                                                         Content="Defer"
+                                                        IsEnabled="{Binding CanSettle}"
                                                         Command="{Binding $parent[Window].DataContext.CurrentMessageOps.DeferLockedMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="subtle small"
+                                                        Content="Renew"
+                                                        IsEnabled="{Binding CanSettle}"
+                                                        Command="{Binding $parent[Window].DataContext.CurrentMessageOps.RenewLockedMessageCommand}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Classes="danger-subtle small"
                                                         Content="DLQ"
+                                                        IsEnabled="{Binding CanSettle}"
                                                         Command="{Binding $parent[Window].DataContext.CurrentMessageOps.DeadLetterLockedMessageCommand}"
                                                         CommandParameter="{Binding}"/>
                                             </StackPanel>

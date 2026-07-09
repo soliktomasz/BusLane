@@ -81,6 +81,22 @@ public class ServiceBusOperationsTests
             .WithParameterName("Name");
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void BuildCreateTopicOptions_WithBlankName_Throws(string topicName)
+    {
+        // Arrange
+        var options = new TopicCreationOptions(topicName);
+
+        // Act
+        var act = () => ServiceBusOperations.BuildCreateTopicOptions(options);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("Name");
+    }
+
     [Fact]
     public void BuildCreateSubscriptionOptions_WithSessionOption_MapsTopicNameSubscriptionNameAndRequiresSession()
     {

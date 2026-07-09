@@ -3,10 +3,35 @@ namespace BusLane.Services.ServiceBus;
 using System.Text.Json;
 using BusLane.Models;
 
+/// <summary>
+/// Exports, compares, and applies non-destructive Service Bus namespace topology documents.
+/// </summary>
 public interface INamespaceTopologyService
 {
+    /// <summary>
+    /// Exports queues, topics, subscriptions, and rules from the connected namespace.
+    /// </summary>
+    /// <param name="operations">Service Bus operations used to inspect the namespace.</param>
+    /// <param name="ct">Cancellation token for the export operation.</param>
+    /// <returns>A portable namespace topology document.</returns>
     Task<NamespaceTopologyDocument> ExportAsync(IServiceBusOperations operations, CancellationToken ct = default);
+
+    /// <summary>
+    /// Builds a non-destructive import plan by comparing a document with the connected namespace.
+    /// </summary>
+    /// <param name="operations">Service Bus operations used to inspect current entities.</param>
+    /// <param name="document">Topology document to compare.</param>
+    /// <param name="ct">Cancellation token for the comparison operation.</param>
+    /// <returns>Import plan containing create, update, and skip actions.</returns>
     Task<TopologyImportPlan> BuildImportPlanAsync(IServiceBusOperations operations, NamespaceTopologyDocument document, CancellationToken ct = default);
+
+    /// <summary>
+    /// Applies the create and update actions from an import plan.
+    /// </summary>
+    /// <param name="operations">Service Bus operations used to mutate namespace entities.</param>
+    /// <param name="document">Topology document that contains desired entity settings.</param>
+    /// <param name="plan">Plan produced by <see cref="BuildImportPlanAsync"/>.</param>
+    /// <param name="ct">Cancellation token for the apply operation.</param>
     Task ApplyImportPlanAsync(IServiceBusOperations operations, NamespaceTopologyDocument document, TopologyImportPlan plan, CancellationToken ct = default);
 }
 
@@ -42,6 +67,9 @@ public static class NamespaceTopologySerializer
     }
 }
 
+/// <summary>
+/// Default namespace topology service implementation.
+/// </summary>
 public class NamespaceTopologyService : INamespaceTopologyService
 {
     private readonly Func<DateTimeOffset> _nowProvider;
@@ -51,6 +79,7 @@ public class NamespaceTopologyService : INamespaceTopologyService
         _nowProvider = nowProvider ?? (() => DateTimeOffset.UtcNow);
     }
 
+    /// <inheritdoc />
     public async Task<NamespaceTopologyDocument> ExportAsync(IServiceBusOperations operations, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(operations);
@@ -111,6 +140,7 @@ public class NamespaceTopologyService : INamespaceTopologyService
             topics);
     }
 
+    /// <inheritdoc />
     public async Task<TopologyImportPlan> BuildImportPlanAsync(
         IServiceBusOperations operations,
         NamespaceTopologyDocument document,
@@ -193,6 +223,7 @@ public class NamespaceTopologyService : INamespaceTopologyService
         return new TopologyImportPlan(actions);
     }
 
+    /// <inheritdoc />
     public async Task ApplyImportPlanAsync(
         IServiceBusOperations operations,
         NamespaceTopologyDocument document,
@@ -238,6 +269,8 @@ public class NamespaceTopologyService : INamespaceTopologyService
                         await operations.CreateSubscriptionRuleAsync(topic.Name, subscription.Name, ToRuleCreationOptions(rule), ct);
                         break;
                     }
+                default:
+                    throw new InvalidOperationException($"Unsupported topology import action '{action.ActionType}'.");
             }
         }
     }
@@ -251,8 +284,8 @@ public class NamespaceTopologyService : INamespaceTopologyService
         existing.MaxDeliveryCount != desired.MaxDeliveryCount ||
         existing.DefaultMessageTimeToLive != desired.DefaultMessageTimeToLive ||
         existing.AutoDeleteOnIdle != desired.AutoDeleteOnIdle ||
-        existing.ForwardTo != desired.ForwardTo ||
-        existing.ForwardDeadLetteredMessagesTo != desired.ForwardDeadLetteredMessagesTo ||
+        !string.Equals(existing.ForwardTo, desired.ForwardTo, StringComparison.OrdinalIgnoreCase) ||
+        !string.Equals(existing.ForwardDeadLetteredMessagesTo, desired.ForwardDeadLetteredMessagesTo, StringComparison.OrdinalIgnoreCase) ||
         existing.EnableBatchedOperations != desired.EnableBatchedOperations ||
         existing.DeadLetteringOnMessageExpiration != desired.DeadLetteringOnMessageExpiration;
 

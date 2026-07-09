@@ -229,6 +229,95 @@ public class MessageOperationsViewModelTests
     }
 
     [Fact]
+    public async Task ReceiveDeferredMessagesAsync_WhenAlreadyLoading_DoesNotStartSecondReceive()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var receiveCompletion = new TaskCompletionSource<IReadOnlyList<ReceivedMessageInfo>>();
+        operations.ReceiveDeferredMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<IEnumerable<long>>(),
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(_ => receiveCompletion.Task);
+        var sut = CreateSut(operations, () => "orders", () => null, () => false, () => false);
+        sut.DeferredSequenceNumbersText = "42";
+
+        // Act
+        var firstReceive = sut.ReceiveDeferredMessagesAsync();
+        await Task.Yield();
+        await sut.ReceiveDeferredMessagesAsync();
+        receiveCompletion.SetResult([]);
+        await firstReceive;
+
+        // Assert
+        await operations.Received(1).ReceiveDeferredMessagesAsync(
+            "orders",
+            null,
+            Arg.Any<IEnumerable<long>>(),
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CompleteLockedMessageCommand_WhenOperationFails_KeepsMessageAndSetsStatus()
+    {
+        // Arrange
+        var status = string.Empty;
+        var operations = Substitute.For<IServiceBusOperations>();
+        var received = CreateReceivedMessage("msg-1", 10);
+        operations.ReceiveMessagesAsync("orders", null, 25, false, false, null, Arg.Any<CancellationToken>())
+            .Returns([received]);
+        operations.CompleteMessageAsync(received, Arg.Any<CancellationToken>())
+            .Returns(_ => throw new InvalidOperationException("settlement failed"));
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            Substitute.For<ILogSink>(),
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 0,
+            message => status = message);
+        await sut.ReceiveLockedMessagesCommand.ExecuteAsync(null);
+
+        // Act
+        await sut.CompleteLockedMessageCommand.ExecuteAsync(received);
+
+        // Assert
+        sut.LockedMessages.Should().Contain(received);
+        status.Should().Be("Unable to complete message: settlement failed");
+    }
+
+    [Fact]
+    public async Task RenewLockedMessageCommand_WhenSuccessful_RefreshesLockedUntil()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var received = CreateReceivedMessage("msg-1", 10);
+        var renewedUntil = DateTimeOffset.UtcNow.AddMinutes(5);
+        operations.ReceiveMessagesAsync("orders", null, 25, false, false, null, Arg.Any<CancellationToken>())
+            .Returns([received]);
+        operations.RenewMessageLockAsync(received, Arg.Any<CancellationToken>())
+            .Returns(renewedUntil);
+        var sut = CreateSut(operations, () => "orders", () => null, () => false, () => false);
+        await sut.ReceiveLockedMessagesCommand.ExecuteAsync(null);
+
+        // Act
+        await sut.RenewLockedMessageCommand.ExecuteAsync(received);
+
+        // Assert
+        sut.LockedMessages.Should().ContainSingle()
+            .Which.LockedUntil.Should().Be(renewedUntil);
+    }
+
+    [Fact]
     public void ClearSessionScope_RemovesActiveSessionSelection()
     {
         // Arrange

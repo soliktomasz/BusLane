@@ -14,6 +14,7 @@ public interface IScheduledMessageStore
 public class ScheduledMessageStore : IScheduledMessageStore
 {
     private readonly string _path;
+    private readonly SemaphoreSlim _mutationLock = new(1, 1);
 
     public ScheduledMessageStore(string? path = null)
     {
@@ -32,6 +33,10 @@ public class ScheduledMessageStore : IScheduledMessageStore
             var json = await File.ReadAllTextAsync(_path, ct);
             return Deserialize<List<ScheduledMessageIndexEntry>>(json) ?? [];
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch
         {
             return [];
@@ -41,19 +46,36 @@ public class ScheduledMessageStore : IScheduledMessageStore
     public async Task AddAsync(ScheduledMessageIndexEntry entry, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        var entries = (await LoadAsync(ct)).ToList();
-        entries.RemoveAll(e => string.Equals(e.EntityName, entry.EntityName, StringComparison.OrdinalIgnoreCase) &&
-                               e.SequenceNumber == entry.SequenceNumber);
-        entries.Add(entry);
-        await SaveAsync(entries, ct);
+        await _mutationLock.WaitAsync(ct);
+        try
+        {
+            var entries = (await LoadAsync(ct)).ToList();
+            entries.RemoveAll(e => string.Equals(e.EntityName, entry.EntityName, StringComparison.OrdinalIgnoreCase) &&
+                                   e.SequenceNumber == entry.SequenceNumber);
+            entries.Add(entry);
+            await SaveAsync(entries, ct);
+        }
+        finally
+        {
+            _mutationLock.Release();
+        }
     }
 
     public async Task RemoveAsync(string entityName, long sequenceNumber, CancellationToken ct = default)
     {
-        var entries = (await LoadAsync(ct)).ToList();
-        entries.RemoveAll(e => string.Equals(e.EntityName, entityName, StringComparison.OrdinalIgnoreCase) &&
-                               e.SequenceNumber == sequenceNumber);
-        await SaveAsync(entries, ct);
+        ArgumentException.ThrowIfNullOrWhiteSpace(entityName);
+        await _mutationLock.WaitAsync(ct);
+        try
+        {
+            var entries = (await LoadAsync(ct)).ToList();
+            entries.RemoveAll(e => string.Equals(e.EntityName, entityName, StringComparison.OrdinalIgnoreCase) &&
+                                   e.SequenceNumber == sequenceNumber);
+            await SaveAsync(entries, ct);
+        }
+        finally
+        {
+            _mutationLock.Release();
+        }
     }
 
     private async Task SaveAsync(IReadOnlyList<ScheduledMessageIndexEntry> entries, CancellationToken ct)
@@ -65,6 +87,6 @@ public class ScheduledMessageStore : IScheduledMessageStore
             Directory.CreateDirectory(directory);
         }
 
-        await File.WriteAllTextAsync(_path, json, ct);
+        await Task.Run(() => AppPaths.CreateSecureFile(_path, json), ct);
     }
 }

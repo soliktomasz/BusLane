@@ -191,6 +191,44 @@ public class SendMessageViewModelTests
     }
 
     [Fact]
+    public async Task SendAsync_WhenScheduledIndexWriteFails_StillReportsScheduledMessage()
+    {
+        // Arrange
+        var scheduledAt = DateTimeOffset.UtcNow.AddHours(1);
+        _operations.ScheduleMessageAsync(
+                "queue",
+                Arg.Any<string>(),
+                Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(42);
+        var store = Substitute.For<IScheduledMessageStore>();
+        store.AddAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
+            .Returns(_ => throw new IOException("disk full"));
+        var sut = CreateSut(store);
+        sut.Body = "{\"id\":1}";
+        sut.ScheduledEnqueueTimeText = scheduledAt.ToString("O");
+
+        // Act
+        await sut.SendCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.ErrorMessage.Should().BeNull();
+        _closed.Should().BeTrue();
+        _statusMessage.Should().Be("Message scheduled successfully (sequence 42)");
+    }
+
+    [Fact]
     public void DuplicateSavedMessage_CopiesTemplateWithNewName()
     {
         // Arrange

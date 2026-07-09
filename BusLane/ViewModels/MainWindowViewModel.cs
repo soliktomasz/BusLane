@@ -1191,7 +1191,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     };
 
     [RelayCommand]
-    private async Task ExportNamespaceTopologyAsync()
+    private async Task ExportNamespaceTopologyAsync(CancellationToken ct = default)
     {
         var operations = ActiveTab?.Operations ?? _operations;
         if (operations == null || _namespaceTopologyService == null || _fileDialogService == null)
@@ -1211,8 +1211,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             IsLoading = true;
             StatusMessage = "Exporting namespace topology...";
-            var document = await _namespaceTopologyService.ExportAsync(operations);
-            await File.WriteAllTextAsync(filePath, NamespaceTopologySerializer.Serialize(document));
+            var document = await _namespaceTopologyService.ExportAsync(operations, ct);
+            await File.WriteAllTextAsync(filePath, NamespaceTopologySerializer.Serialize(document), ct);
             StatusMessage = $"Exported namespace topology to {Path.GetFileName(filePath)}";
         }
         catch (Exception ex)
@@ -1226,7 +1226,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private async Task ImportNamespaceTopologyAsync()
+    private async Task ImportNamespaceTopologyAsync(CancellationToken ct = default)
     {
         var operations = ActiveTab?.Operations ?? _operations;
         if (operations == null || _namespaceTopologyService == null || _fileDialogService == null)
@@ -1245,8 +1245,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             IsLoading = true;
             StatusMessage = "Comparing namespace topology...";
-            var document = NamespaceTopologySerializer.Deserialize(await File.ReadAllTextAsync(filePath));
-            var plan = await _namespaceTopologyService.BuildImportPlanAsync(operations, document);
+            var document = NamespaceTopologySerializer.Deserialize(await File.ReadAllTextAsync(filePath, ct));
+            var plan = await _namespaceTopologyService.BuildImportPlanAsync(operations, document, ct);
             var changeCount = plan.Actions.Count(a => a.ActionType != TopologyImportActionType.Skip);
             if (changeCount == 0)
             {
@@ -1272,7 +1272,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                     IsLoading = true;
                     try
                     {
-                        await _namespaceTopologyService.ApplyImportPlanAsync(operations, document, plan);
+                        await _namespaceTopologyService.ApplyImportPlanAsync(operations, document, plan, ct);
                         StatusMessage = $"Applied {changeCount} topology action(s)";
                         await RefreshActiveTabAsync();
                     }

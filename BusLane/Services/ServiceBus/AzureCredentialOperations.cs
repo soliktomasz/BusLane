@@ -505,7 +505,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     public async Task DeferMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
         await ServiceBusOperations.DeferMessageAsync(GetClient(), message, ct);
 
-    public async Task RenewMessageLockAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
+    public async Task<DateTimeOffset> RenewMessageLockAsync(ReceivedMessageInfo message, CancellationToken ct = default) =>
         await ServiceBusOperations.RenewMessageLockAsync(GetClient(), message, ct);
 
     public async Task PurgeMessagesAsync(string entityName, string? subscription, bool deadLetter, CancellationToken ct = default)

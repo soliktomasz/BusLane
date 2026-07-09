@@ -28,7 +28,7 @@
                           IsChecked="{Binding EntityOperations.CreateQueueRequiresSession}"/>
                 <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
                            Foreground="{DynamicResource TextDanger}"
-                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage}"/>
+                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="8">
@@ -63,7 +63,7 @@
                 </StackPanel>
                 <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
                            Foreground="{DynamicResource TextDanger}"
-                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage}"/>
+                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="8">

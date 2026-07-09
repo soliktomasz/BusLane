@@ -197,6 +197,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
     private void OpenCreateQueueDialog()
     {
         ResetCreateState();
+        ShowCreateTopicDialog = false;
         ShowCreateQueueDialog = true;
     }
 
@@ -204,6 +205,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
     private void OpenCreateTopicDialog()
     {
         ResetCreateState();
+        ShowCreateQueueDialog = false;
         ShowCreateTopicDialog = true;
     }
 
@@ -226,6 +228,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
             return;
         }
 
+        CreateEntityValidationMessage = null;
         if (string.IsNullOrWhiteSpace(CreateEntityName))
         {
             CreateEntityValidationMessage = "Queue name is required";
@@ -267,6 +270,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
             return;
         }
 
+        CreateEntityValidationMessage = null;
         if (string.IsNullOrWhiteSpace(CreateEntityName))
         {
             CreateEntityValidationMessage = "Topic name is required";

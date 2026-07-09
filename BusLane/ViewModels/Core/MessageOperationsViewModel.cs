@@ -343,6 +343,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
     [RelayCommand]
     public async Task ReceiveDeferredMessagesAsync()
     {
+        if (IsLoadingMessages)
+        {
+            return;
+        }
+
         var operations = _getOperations();
         var entityName = _getEntityName();
         if (operations == null || entityName == null)
@@ -390,9 +395,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.CompleteMessageAsync(target);
-        RemoveLockedMessage(target);
-        _setStatus("Message completed");
+        try
+        {
+            await operations.CompleteMessageAsync(target);
+            RemoveLockedMessage(target);
+            _setStatus("Message completed");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to complete message: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -405,9 +417,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.AbandonMessageAsync(target);
-        RemoveLockedMessage(target);
-        _setStatus("Message abandoned");
+        try
+        {
+            await operations.AbandonMessageAsync(target);
+            RemoveLockedMessage(target);
+            _setStatus("Message abandoned");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to abandon message: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -420,9 +439,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.DeadLetterMessageAsync(target, "Dead-lettered from BusLane");
-        RemoveLockedMessage(target);
-        _setStatus("Message dead-lettered");
+        try
+        {
+            await operations.DeadLetterMessageAsync(target, "Dead-lettered from BusLane");
+            RemoveLockedMessage(target);
+            _setStatus("Message dead-lettered");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to dead-letter message: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -435,9 +461,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.DeferMessageAsync(target);
-        RemoveLockedMessage(target);
-        _setStatus($"Message deferred at sequence {target.Message.SequenceNumber}");
+        try
+        {
+            await operations.DeferMessageAsync(target);
+            RemoveLockedMessage(target);
+            _setStatus($"Message deferred at sequence {target.Message.SequenceNumber}");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to defer message: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -450,8 +483,16 @@ public partial class MessageOperationsViewModel : ViewModelBase
             return;
         }
 
-        await operations.RenewMessageLockAsync(target);
-        _setStatus("Message lock renewed");
+        try
+        {
+            var lockedUntil = await operations.RenewMessageLockAsync(target);
+            ReplaceLockedMessage(target, target.WithLockedUntil(lockedUntil));
+            _setStatus("Message lock renewed");
+        }
+        catch (Exception ex)
+        {
+            _setStatus($"Unable to renew message lock: {ex.Message}");
+        }
     }
 
     public async Task LoadFirstPageAsync(
@@ -845,6 +886,21 @@ public partial class MessageOperationsViewModel : ViewModelBase
         if (SelectedLockedMessage == message)
         {
             SelectedLockedMessage = LockedMessages.FirstOrDefault();
+        }
+    }
+
+    private void ReplaceLockedMessage(ReceivedMessageInfo oldMessage, ReceivedMessageInfo newMessage)
+    {
+        var index = LockedMessages.IndexOf(oldMessage);
+        if (index < 0)
+        {
+            return;
+        }
+
+        LockedMessages[index] = newMessage;
+        if (SelectedLockedMessage == oldMessage)
+        {
+            SelectedLockedMessage = newMessage;
         }
     }
 

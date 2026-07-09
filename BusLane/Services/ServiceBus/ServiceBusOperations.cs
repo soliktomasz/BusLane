@@ -25,6 +25,9 @@ public record ServiceBusOperationOptions
     /// <summary>Timeout for receiving messages during delete operations.</summary>
     public TimeSpan DeleteReceiveTimeout { get; init; } = TimeSpan.FromSeconds(5);
 
+    /// <summary>Timeout for receiving peek-lock messages.</summary>
+    public TimeSpan ReceiveTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
     /// <summary>Number of consecutive empty batches before stopping an operation.</summary>
     public int MaxEmptyBatches { get; init; } = 3;
 
@@ -56,6 +59,7 @@ internal static class ServiceBusOperations
     public static TimeSpan PurgeReceiveTimeout => Options.PurgeReceiveTimeout;
     public static int DeleteBatchSize => Options.DeleteBatchSize;
     public static TimeSpan DeleteReceiveTimeout => Options.DeleteReceiveTimeout;
+    public static TimeSpan ReceiveTimeout => Options.ReceiveTimeout;
     public static int MaxEmptyBatches => Options.MaxEmptyBatches;
     public static int ResendBatchSize => Options.ResendBatchSize;
 
@@ -363,23 +367,38 @@ internal static class ServiceBusOperations
 
         if (requiresSession)
         {
-            await using var sessionReceiver = string.IsNullOrWhiteSpace(sessionId)
+            var sessionReceiver = string.IsNullOrWhiteSpace(sessionId)
                 ? await AcceptNextSessionReceiverAsync(client, entityName, subscription, deadLetter, ct)
                 : await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter, ct);
 
-            var sessionMessages = await sessionReceiver.ReceiveMessagesAsync(
-                count,
-                maxWaitTime: TimeSpan.FromSeconds(5),
-                cancellationToken: ct);
-            return sessionMessages
-                .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter, requiresSession, sessionReceiver.SessionId))
-                .ToList();
+            try
+            {
+                var sessionMessages = await sessionReceiver.ReceiveMessagesAsync(
+                    count,
+                    maxWaitTime: ReceiveTimeout,
+                    cancellationToken: ct);
+                if (sessionMessages.Count == 0)
+                {
+                    await sessionReceiver.DisposeAsync();
+                    return [];
+                }
+
+                var lease = new SessionReceiverLease(sessionReceiver, sessionMessages.Count);
+                return sessionMessages
+                    .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter, requiresSession, sessionReceiver.SessionId, lease))
+                    .ToList();
+            }
+            catch
+            {
+                await sessionReceiver.DisposeAsync();
+                throw;
+            }
         }
 
         await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter);
         var messages = await receiver.ReceiveMessagesAsync(
             count,
-            maxWaitTime: TimeSpan.FromSeconds(5),
+            maxWaitTime: ReceiveTimeout,
             cancellationToken: ct);
         return messages
             .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter, requiresSession, null))
@@ -406,11 +425,26 @@ internal static class ServiceBusOperations
         if (requiresSession)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
-            await using var sessionReceiver = await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter: false, ct);
-            var deferredSessionMessages = await sessionReceiver.ReceiveDeferredMessagesAsync(sequenceList, ct);
-            return deferredSessionMessages
-                .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter: false, requiresSession, sessionId))
-                .ToList();
+            var sessionReceiver = await AcceptSessionReceiverAsync(client, entityName, subscription, sessionId, deadLetter: false, ct);
+            try
+            {
+                var deferredSessionMessages = await sessionReceiver.ReceiveDeferredMessagesAsync(sequenceList, ct);
+                if (deferredSessionMessages.Count == 0)
+                {
+                    await sessionReceiver.DisposeAsync();
+                    return [];
+                }
+
+                var lease = new SessionReceiverLease(sessionReceiver, deferredSessionMessages.Count);
+                return deferredSessionMessages
+                    .Select(message => ToReceivedMessageInfo(message, entityName, subscription, deadLetter: false, requiresSession, sessionId, lease))
+                    .ToList();
+            }
+            catch
+            {
+                await sessionReceiver.DisposeAsync();
+                throw;
+            }
         }
 
         await using var receiver = CreateReceiver(client, entityName, subscription, deadLetter: false);
@@ -422,14 +456,12 @@ internal static class ServiceBusOperations
 
     public static async Task CompleteMessageAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
     {
-        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
-        await receiver.CompleteMessageAsync(message.ReceivedMessage, ct);
+        await SettleMessageAsync(client, message, receiver => receiver.CompleteMessageAsync(message.ReceivedMessage, ct), ct);
     }
 
     public static async Task AbandonMessageAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
     {
-        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
-        await receiver.AbandonMessageAsync(message.ReceivedMessage, cancellationToken: ct);
+        await SettleMessageAsync(client, message, receiver => receiver.AbandonMessageAsync(message.ReceivedMessage, cancellationToken: ct), ct);
     }
 
     public static async Task DeadLetterMessageAsync(
@@ -439,20 +471,25 @@ internal static class ServiceBusOperations
         string? description,
         CancellationToken ct)
     {
-        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
-        await receiver.DeadLetterMessageAsync(message.ReceivedMessage, reason, description, ct);
+        await SettleMessageAsync(client, message, receiver => receiver.DeadLetterMessageAsync(message.ReceivedMessage, reason, description, ct), ct);
     }
 
     public static async Task DeferMessageAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
     {
-        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
-        await receiver.DeferMessageAsync(message.ReceivedMessage, cancellationToken: ct);
+        await SettleMessageAsync(client, message, receiver => receiver.DeferMessageAsync(message.ReceivedMessage, cancellationToken: ct), ct);
     }
 
-    public static async Task RenewMessageLockAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
+    public static async Task<DateTimeOffset> RenewMessageLockAsync(ServiceBusClient client, ReceivedMessageInfo message, CancellationToken ct)
     {
+        if (message.SessionReceiverLease != null)
+        {
+            await message.SessionReceiverLease.Receiver.RenewMessageLockAsync(message.ReceivedMessage, ct);
+            return message.ReceivedMessage.LockedUntil;
+        }
+
         await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
         await receiver.RenewMessageLockAsync(message.ReceivedMessage, ct);
+        return message.ReceivedMessage.LockedUntil;
     }
 
     public static ReceivedMessageInfo ToReceivedMessageInfo(
@@ -461,8 +498,29 @@ internal static class ServiceBusOperations
         string? subscription,
         bool deadLetter,
         bool requiresSession,
-        string? sessionId) =>
-        new(MapToMessageInfo(message), message, entityName, subscription, deadLetter, requiresSession, sessionId);
+        string? sessionId,
+        SessionReceiverLease? sessionReceiverLease = null) =>
+        new(MapToMessageInfo(message), message, entityName, subscription, deadLetter, requiresSession, sessionId)
+        {
+            SessionReceiverLease = sessionReceiverLease
+        };
+
+    private static async Task SettleMessageAsync(
+        ServiceBusClient client,
+        ReceivedMessageInfo message,
+        Func<ServiceBusReceiver, Task> settle,
+        CancellationToken ct)
+    {
+        if (message.SessionReceiverLease != null)
+        {
+            await settle(message.SessionReceiverLease.Receiver);
+            await message.SessionReceiverLease.ReleaseSettlementAsync();
+            return;
+        }
+
+        await using var receiver = await CreateSettlementReceiverAsync(client, message, ct);
+        await settle(receiver);
+    }
 
     private static async Task<ServiceBusReceiver> CreateSettlementReceiverAsync(
         ServiceBusClient client,

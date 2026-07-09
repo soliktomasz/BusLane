@@ -11,6 +11,7 @@ using BusLane.Services.Templates;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Serilog;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public partial class SendMessageViewModel : ViewModelBase
@@ -165,14 +166,21 @@ public partial class SendMessageViewModel : ViewModelBase
 
                 if (_scheduledMessageStore != null)
                 {
-                    await _scheduledMessageStore.AddAsync(new ScheduledMessageIndexEntry(
-                        _entityName,
-                        SubscriptionName: null,
-                        sequenceNumber,
-                        messageToSend.ScheduledEnqueueTime.Value,
-                        messageToSend.MessageId,
-                        BuildBodyPreview(messageToSend.Body),
-                        DateTimeOffset.UtcNow));
+                    try
+                    {
+                        await _scheduledMessageStore.AddAsync(new ScheduledMessageIndexEntry(
+                            _entityName,
+                            SubscriptionName: null,
+                            sequenceNumber,
+                            messageToSend.ScheduledEnqueueTime.Value,
+                            messageToSend.MessageId,
+                            BuildBodyPreview(messageToSend.Body),
+                            DateTimeOffset.UtcNow));
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Failed to update scheduled message index for {EntityName}", _entityName);
+                    }
                 }
 
                 _onStatusUpdate($"Message scheduled successfully (sequence {sequenceNumber})");

@@ -342,6 +342,76 @@ public class EntityOperationsViewModelTests
     }
 
     [Fact]
+    public void OpenCreateDialogs_MakeDialogStateMutuallyExclusive()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation);
+
+        // Act
+        _sut.OpenCreateQueueDialogCommand.Execute(null);
+        _sut.OpenCreateTopicDialogCommand.Execute(null);
+
+        // Assert
+        _sut.ShowCreateQueueDialog.Should().BeFalse();
+        _sut.ShowCreateTopicDialog.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateQueueCommand_WhenCreateFails_ClearsStaleValidationAndResetsCreatingState()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.CreateQueueAsync(Arg.Any<QueueCreationOptions>(), Arg.Any<CancellationToken>())
+            .Returns(_ => throw new InvalidOperationException("network down"));
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var statusMessage = string.Empty;
+        var _sut = CreateSut(operations, navigation, confirmation, message => statusMessage = message);
+
+        // Act
+        _sut.OpenCreateQueueDialogCommand.Execute(null);
+        _sut.CreateEntityName = " ";
+        await _sut.CreateQueueCommand.ExecuteAsync(null);
+        _sut.CreateEntityName = "orders";
+        await _sut.CreateQueueCommand.ExecuteAsync(null);
+
+        // Assert
+        _sut.CreateEntityValidationMessage.Should().BeNull();
+        _sut.IsCreatingEntity.Should().BeFalse();
+        statusMessage.Should().Be("Unable to create queue: network down");
+        _sut.ShowCreateQueueDialog.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateTopicCommand_WhenCreateFails_ClearsStaleValidationAndResetsCreatingState()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.CreateTopicAsync(Arg.Any<TopicCreationOptions>(), Arg.Any<CancellationToken>())
+            .Returns(_ => throw new InvalidOperationException("network down"));
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var statusMessage = string.Empty;
+        var _sut = CreateSut(operations, navigation, confirmation, message => statusMessage = message);
+
+        // Act
+        _sut.OpenCreateTopicDialogCommand.Execute(null);
+        _sut.CreateEntityName = " ";
+        await _sut.CreateTopicCommand.ExecuteAsync(null);
+        _sut.CreateEntityName = "events";
+        await _sut.CreateTopicCommand.ExecuteAsync(null);
+
+        // Assert
+        _sut.CreateEntityValidationMessage.Should().BeNull();
+        _sut.IsCreatingEntity.Should().BeFalse();
+        statusMessage.Should().Be("Unable to create topic: network down");
+        _sut.ShowCreateTopicDialog.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task CreateQueueCommand_WhenSuccessful_AddsAndSelectsQueue()
     {
         // Arrange
