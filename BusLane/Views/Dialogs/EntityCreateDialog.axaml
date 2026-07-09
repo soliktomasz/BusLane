@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Dialogs.EntityCreateDialog"
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
+    <Grid>
+    <Grid IsVisible="{Binding EntityOperations.ShowCreateQueueDialog}">
+        <Border Background="{DynamicResource ModalOverlay}"/>
+        <Border Classes="modal-card"
+                MaxWidth="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Create queue" Classes="heading"/>
+                    <Button Grid.Column="1"
+                            Classes="icon-button"
+                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}">
+                        <LucideIcon Kind="X" Size="16"/>
+                    </Button>
+                </Grid>
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Name" Classes="field-label"/>
+                    <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"/>
+                </StackPanel>
+                <CheckBox Content="Requires session"
+                          IsChecked="{Binding EntityOperations.CreateQueueRequiresSession}"/>
+                <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
+                           Foreground="{DynamicResource TextDanger}"
+                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage}"/>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Content="Cancel"
+                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"/>
+                    <Button Content="Create"
+                            Classes="primary"
+                            Command="{Binding EntityOperations.CreateQueueCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+
+    <Grid IsVisible="{Binding EntityOperations.ShowCreateTopicDialog}">
+        <Border Background="{DynamicResource ModalOverlay}"/>
+        <Border Classes="modal-card"
+                MaxWidth="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Create topic" Classes="heading"/>
+                    <Button Grid.Column="1"
+                            Classes="icon-button"
+                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}">
+                        <LucideIcon Kind="X" Size="16"/>
+                    </Button>
+                </Grid>
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Name" Classes="field-label"/>
+                    <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
+                           Foreground="{DynamicResource TextDanger}"
+                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage}"/>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Content="Cancel"
+                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"/>
+                    <Button Content="Create"
+                            Classes="primary"
+                            Command="{Binding EntityOperations.CreateTopicCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+    </Grid>
+</UserControl>

@@ -65,6 +65,49 @@ public class MessageOperationsViewModelTests
             new Dictionary<string, object>());
     }
 
+    private static ReceivedMessageInfo CreateReceivedMessage(string id, long sequenceNumber)
+    {
+        var sdkMessage = Azure.Messaging.ServiceBus.ServiceBusModelFactory.ServiceBusReceivedMessage(
+            messageId: id,
+            sequenceNumber: sequenceNumber,
+            body: BinaryData.FromString("body"),
+            lockedUntil: DateTimeOffset.UtcNow.AddMinutes(1));
+        var message = new MessageInfo(
+            id,
+            null,
+            null,
+            "body",
+            DateTimeOffset.UtcNow,
+            null,
+            sequenceNumber,
+            0,
+            null,
+            new Dictionary<string, object>(),
+            LockedUntil: sdkMessage.LockedUntil);
+        return new ReceivedMessageInfo(message, sdkMessage, "orders", null, false, false, null);
+    }
+
+    private static MessageOperationsViewModel CreateSut(
+        IServiceBusOperations operations,
+        Func<string?> getEntityName,
+        Func<string?> getSubscriptionName,
+        Func<bool> getRequiresSession,
+        Func<bool> getShowDeadLetter)
+    {
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+        return new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            Substitute.For<ILogSink>(),
+            getEntityName,
+            getSubscriptionName,
+            getRequiresSession,
+            getShowDeadLetter,
+            () => 0,
+            _ => { });
+    }
+
     [Fact]
     public void ResolveCopyMessageBody_WithoutMessage_ReturnsFormattedMessageBody()
     {
@@ -121,6 +164,68 @@ public class MessageOperationsViewModelTests
             true,
             "session-a",
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReceiveLockedMessagesCommand_LoadsReceivedMessagesIntoLockedCollection()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var received = CreateReceivedMessage("msg-1", 10);
+        operations.ReceiveMessagesAsync("orders", null, 25, false, false, null, Arg.Any<CancellationToken>())
+            .Returns([received]);
+        var sut = CreateSut(operations, () => "orders", () => null, () => false, () => false);
+
+        // Act
+        await sut.ReceiveLockedMessagesCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.LockedMessages.Should().ContainSingle().Which.Message.MessageId.Should().Be("msg-1");
+        sut.SelectedLockedMessage.Should().Be(received);
+    }
+
+    [Fact]
+    public async Task CompleteLockedMessageCommand_RemovesSettledMessage()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var received = CreateReceivedMessage("msg-1", 10);
+        operations.ReceiveMessagesAsync("orders", null, 25, false, false, null, Arg.Any<CancellationToken>())
+            .Returns([received]);
+        var sut = CreateSut(operations, () => "orders", () => null, () => false, () => false);
+        await sut.ReceiveLockedMessagesCommand.ExecuteAsync(null);
+
+        // Act
+        await sut.CompleteLockedMessageCommand.ExecuteAsync(received);
+
+        // Assert
+        await operations.Received(1).CompleteMessageAsync(received, Arg.Any<CancellationToken>());
+        sut.LockedMessages.Should().BeEmpty();
+        sut.SelectedLockedMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ReceiveDeferredMessagesCommand_WithSequenceText_ParsesNumbersAndLoadsMessages()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var received = CreateReceivedMessage("msg-42", 42);
+        operations.ReceiveDeferredMessagesAsync(
+                "orders",
+                null,
+                Arg.Is<IEnumerable<long>>(s => s.SequenceEqual(new[] { 40L, 42L })),
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns([received]);
+        var sut = CreateSut(operations, () => "orders", () => null, () => false, () => false);
+        sut.DeferredSequenceNumbersText = "40, 42";
+
+        // Act
+        await sut.ReceiveDeferredMessagesCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.LockedMessages.Should().ContainSingle().Which.Message.SequenceNumber.Should().Be(42);
     }
 
     [Fact]

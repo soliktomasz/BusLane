@@ -24,6 +24,20 @@ public interface IServiceBusOperations : IAsyncDisposable
     Task<IEnumerable<SubscriptionInfo>> GetSubscriptionsAsync(string topicName, CancellationToken ct = default);
 
     /// <summary>
+    /// Creates a queue.
+    /// </summary>
+    /// <param name="options">Queue creation options.</param>
+    /// <param name="ct">Cancellation token for the create operation.</param>
+    Task CreateQueueAsync(QueueCreationOptions options, CancellationToken ct = default);
+
+    /// <summary>
+    /// Creates a topic.
+    /// </summary>
+    /// <param name="options">Topic creation options.</param>
+    /// <param name="ct">Cancellation token for the create operation.</param>
+    Task CreateTopicAsync(TopicCreationOptions options, CancellationToken ct = default);
+
+    /// <summary>
     /// Creates a subscription on the specified topic.
     /// </summary>
     /// <param name="topicName">Name of the topic that will own the subscription.</param>
@@ -142,6 +156,51 @@ public interface IServiceBusOperations : IAsyncDisposable
         TimeSpan? timeToLive = null,
         DateTimeOffset? scheduledEnqueueTime = null,
         CancellationToken ct = default);
+
+    Task<long> ScheduleMessageAsync(
+        string entityName,
+        string body,
+        IDictionary<string, object>? properties,
+        DateTimeOffset scheduledEnqueueTime,
+        string? contentType = null,
+        string? correlationId = null,
+        string? messageId = null,
+        string? sessionId = null,
+        string? subject = null,
+        string? to = null,
+        string? replyTo = null,
+        string? replyToSessionId = null,
+        string? partitionKey = null,
+        TimeSpan? timeToLive = null,
+        CancellationToken ct = default);
+
+    Task CancelScheduledMessageAsync(
+        string entityName,
+        long sequenceNumber,
+        CancellationToken ct = default);
+
+    Task<IReadOnlyList<ReceivedMessageInfo>> ReceiveMessagesAsync(
+        string entityName,
+        string? subscription,
+        int count,
+        bool deadLetter,
+        bool requiresSession = false,
+        string? sessionId = null,
+        CancellationToken ct = default);
+
+    Task<IReadOnlyList<ReceivedMessageInfo>> ReceiveDeferredMessagesAsync(
+        string entityName,
+        string? subscription,
+        IEnumerable<long> sequenceNumbers,
+        bool requiresSession = false,
+        string? sessionId = null,
+        CancellationToken ct = default);
+
+    Task CompleteMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default);
+    Task AbandonMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default);
+    Task DeadLetterMessageAsync(ReceivedMessageInfo message, string? reason = null, string? description = null, CancellationToken ct = default);
+    Task DeferMessageAsync(ReceivedMessageInfo message, CancellationToken ct = default);
+    Task RenewMessageLockAsync(ReceivedMessageInfo message, CancellationToken ct = default);
 
     Task PurgeMessagesAsync(
         string entityName,

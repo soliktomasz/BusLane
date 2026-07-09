@@ -10,7 +10,8 @@ Progress audit: the February 2026 roadmap was stale. Several Q1/Q2 items have si
 
 - Multi-connection tab workflow with session restore
 - Queue/topic/subscription browsing with DLQ support
-- Message operations: peek, send, filter/search, bulk actions, export/import
+- Message operations: peek, receive-lock settlement, deferred receive, send/schedule, filter/search, bulk actions, export/import
+- Namespace topology export, dry-run compare, and non-destructive import/clone service support
 - Live stream, charts, alerts, and namespace dashboard
 - Connection library with encrypted storage
 - Keyboard shortcuts and improved desktop UX (including app menu/About)
@@ -75,6 +76,7 @@ These are intentionally unscheduled until core 1.0 goals are complete.
 - [ ] Azure Event Hubs support
 - [ ] Azure Storage Queues support
 - [ ] Message scheduling calendar and replay tooling
+- [x] Local scheduled-message index for messages scheduled through BusLane
 - [ ] Shared team profiles/connection bundles (secure)
 - [ ] AI-assisted search/triage helpers
 

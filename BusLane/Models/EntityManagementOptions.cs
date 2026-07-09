@@ -11,6 +11,30 @@ public enum SubscriptionRuleFilterType
 }
 
 /// <summary>
+/// Options used when creating a Service Bus queue.
+/// </summary>
+public record QueueCreationOptions(
+    string Name,
+    bool RequiresSession = false,
+    TimeSpan? DefaultMessageTimeToLive = null,
+    TimeSpan? LockDuration = null,
+    TimeSpan? DuplicateDetectionHistoryTimeWindow = null,
+    long? MaxSizeInMegabytes = null,
+    bool? EnablePartitioning = null,
+    bool? EnableBatchedOperations = null);
+
+/// <summary>
+/// Options used when creating a Service Bus topic.
+/// </summary>
+public record TopicCreationOptions(
+    string Name,
+    TimeSpan? DefaultMessageTimeToLive = null,
+    TimeSpan? DuplicateDetectionHistoryTimeWindow = null,
+    long? MaxSizeInMegabytes = null,
+    bool? EnablePartitioning = null,
+    bool? EnableBatchedOperations = null);
+
+/// <summary>
 /// Optional queue properties to update.
 /// </summary>
 public record QueueUpdateOptions(

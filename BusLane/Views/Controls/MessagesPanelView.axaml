@@ -17,7 +17,7 @@
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
             <Border Grid.Row="0" Classes="message-command-bar">
-                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
                     <!-- Title and Actions Row -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
@@ -94,6 +94,14 @@
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <LucideIcon Kind="RefreshCw" Size="12"/>
                                     <TextBlock Text="Refresh"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="secondary small"
+                                    Command="{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}"
+                                    Padding="8,8">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <LucideIcon Kind="LockKeyhole" Size="12"/>
+                                    <TextBlock Text="Receive"/>
                                 </StackPanel>
                             </Button>
                             <Border Width="1" Background="{DynamicResource BorderDefault}" Margin="4,4"/>
@@ -173,7 +181,7 @@
                     <Border Grid.Row="2"
                             Classes="message-search-surface"
                             IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                             <LucideIcon Grid.Column="0"
                                       Kind="Search"
                                       Size="16"
@@ -198,7 +206,60 @@
                                     ToolTip.Tip="Clear search">
                                 <LucideIcon Kind="X" Size="12"/>
                             </Button>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                                <TextBox Text="{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}"
+                                         Width="150"
+                                         PlaceholderText="Seq numbers"/>
+                                <Button Classes="subtle small"
+                                        Command="{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}"
+                                        Padding="8,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <LucideIcon Kind="ArchiveRestore" Size="12"/>
+                                        <TextBlock Text="Deferred"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
+                    </Border>
+                    <Border Grid.Row="3"
+                            Classes="message-search-surface"
+                            IsVisible="{Binding CurrentMessageOps.LockedMessages.Count}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Locked messages" Classes="body-strong"/>
+                            <ItemsControl ItemsSource="{Binding CurrentMessageOps.LockedMessages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:ReceivedMessageInfo">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,2">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Message.MessageId}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Message.SequenceNumber, StringFormat='Seq {0}'}"
+                                                           Foreground="{DynamicResource SubtleForeground}"/>
+                                                <TextBlock Text="{Binding LockedUntil, StringFormat='Lock until {0:HH:mm:ss}'}"
+                                                           Foreground="{DynamicResource SubtleForeground}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                <Button Classes="primary small"
+                                                        Content="Complete"
+                                                        Command="{Binding $parent[Window].DataContext.CurrentMessageOps.CompleteLockedMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="subtle small"
+                                                        Content="Abandon"
+                                                        Command="{Binding $parent[Window].DataContext.CurrentMessageOps.AbandonLockedMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="subtle small"
+                                                        Content="Defer"
+                                                        Command="{Binding $parent[Window].DataContext.CurrentMessageOps.DeferLockedMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Classes="danger-subtle small"
+                                                        Content="DLQ"
+                                                        Command="{Binding $parent[Window].DataContext.CurrentMessageOps.DeadLetterLockedMessageCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>

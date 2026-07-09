@@ -286,6 +286,7 @@
         <dialogs:ConfirmDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:EntityDetailDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:EntityEditDialog Grid.Column="0" Grid.ColumnSpan="2"/>
+        <dialogs:EntityCreateDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SubscriptionCreateDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SubscriptionDetailDialog Grid.Column="0" Grid.ColumnSpan="2"/>
         <dialogs:SubscriptionRulesDialog Grid.Column="0" Grid.ColumnSpan="2"/>

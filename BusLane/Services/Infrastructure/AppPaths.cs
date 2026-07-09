@@ -137,6 +137,11 @@ internal static class AppPaths
     public static string NamespaceInboxReviews => Path.Combine(AppDataFolder, "namespace-inbox-reviews.json");
 
     /// <summary>
+    /// Path to the local index of messages scheduled through BusLane.
+    /// </summary>
+    public static string ScheduledMessages => Path.Combine(AppDataFolder, "scheduled-messages.json");
+
+    /// <summary>
     /// Directory used for diagnostic bundle exports.
     /// </summary>
     public static string DiagnosticBundles => Path.Combine(AppDataFolder, "diagnostics");

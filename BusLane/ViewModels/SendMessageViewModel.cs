@@ -21,6 +21,7 @@ public partial class SendMessageViewModel : ViewModelBase
     private readonly Action _onClose;
     private readonly Action<string> _onStatusUpdate;
     private readonly string _savedMessagesPath;
+    private readonly IScheduledMessageStore? _scheduledMessageStore;
 
     private static readonly string DefaultSavedMessagesPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -69,7 +70,8 @@ public partial class SendMessageViewModel : ViewModelBase
         Action onClose,
         Action<string> onStatusUpdate,
         IFileDialogService? fileDialogService = null,
-        string? savedMessagesPath = null)
+        string? savedMessagesPath = null,
+        IScheduledMessageStore? scheduledMessageStore = null)
     {
         _operations = operations;
         _fileDialogService = fileDialogService;
@@ -77,6 +79,7 @@ public partial class SendMessageViewModel : ViewModelBase
         _onClose = onClose;
         _onStatusUpdate = onStatusUpdate;
         _savedMessagesPath = savedMessagesPath ?? DefaultSavedMessagesPath;
+        _scheduledMessageStore = scheduledMessageStore;
 
         LoadSavedMessages();
     }
@@ -141,24 +144,60 @@ public partial class SendMessageViewModel : ViewModelBase
                 properties[prop.Key] = prop.Value;
             }
 
-            await _operations.SendMessageAsync(
-                _entityName,
-                messageToSend.Body,
-                properties,
-                messageToSend.ContentType,
-                messageToSend.CorrelationId,
-                messageToSend.MessageId,
-                messageToSend.SessionId,
-                messageToSend.Subject,
-                messageToSend.To,
-                messageToSend.ReplyTo,
-                messageToSend.ReplyToSessionId,
-                messageToSend.PartitionKey,
-                messageToSend.TimeToLive,
-                messageToSend.ScheduledEnqueueTime
-            );
+            if (messageToSend.ScheduledEnqueueTime.HasValue)
+            {
+                var sequenceNumber = await _operations.ScheduleMessageAsync(
+                    _entityName,
+                    messageToSend.Body,
+                    properties,
+                    messageToSend.ScheduledEnqueueTime.Value,
+                    messageToSend.ContentType,
+                    messageToSend.CorrelationId,
+                    messageToSend.MessageId,
+                    messageToSend.SessionId,
+                    messageToSend.Subject,
+                    messageToSend.To,
+                    messageToSend.ReplyTo,
+                    messageToSend.ReplyToSessionId,
+                    messageToSend.PartitionKey,
+                    messageToSend.TimeToLive
+                );
 
-            _onStatusUpdate("Message sent successfully");
+                if (_scheduledMessageStore != null)
+                {
+                    await _scheduledMessageStore.AddAsync(new ScheduledMessageIndexEntry(
+                        _entityName,
+                        SubscriptionName: null,
+                        sequenceNumber,
+                        messageToSend.ScheduledEnqueueTime.Value,
+                        messageToSend.MessageId,
+                        BuildBodyPreview(messageToSend.Body),
+                        DateTimeOffset.UtcNow));
+                }
+
+                _onStatusUpdate($"Message scheduled successfully (sequence {sequenceNumber})");
+            }
+            else
+            {
+                await _operations.SendMessageAsync(
+                    _entityName,
+                    messageToSend.Body,
+                    properties,
+                    messageToSend.ContentType,
+                    messageToSend.CorrelationId,
+                    messageToSend.MessageId,
+                    messageToSend.SessionId,
+                    messageToSend.Subject,
+                    messageToSend.To,
+                    messageToSend.ReplyTo,
+                    messageToSend.ReplyToSessionId,
+                    messageToSend.PartitionKey,
+                    messageToSend.TimeToLive,
+                    null
+                );
+
+                _onStatusUpdate("Message sent successfully");
+            }
             _onClose();
         }
         catch (Exception ex)
@@ -720,6 +759,14 @@ public partial class SendMessageViewModel : ViewModelBase
         }
 
         return DateTimeOffset.TryParse(ScheduledEnqueueTimeText, out var scheduledTime) ? scheduledTime : null;
+    }
+
+    private static string BuildBodyPreview(string body)
+    {
+        const int maxPreviewLength = 200;
+        return body.Length <= maxPreviewLength
+            ? body
+            : body[..maxPreviewLength];
     }
 
     private void RefreshTemplateTokenValues(SavedMessage message)
