@@ -1,5 +1,7 @@
 namespace BusLane.Tests.Views;
 
+using System.Xml.Linq;
+
 using FluentAssertions;
 
 public class MessagesPanelViewTests
@@ -65,6 +67,48 @@ public class MessagesPanelViewTests
         xaml.Should().NotContain("message-tab-underline");
     }
 
+    [Fact]
+    public void MessagesPanel_CollapsesSecondaryMessageActionsIntoOverflow()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetMessagesPanelPath()));
+
+        // Assert
+        var overflowButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" &&
+                               element.Attribute("ToolTip.Tip")?.Value == "More message actions");
+
+        overflowButton.Descendants()
+            .Single(element => element.Name.LocalName == "Flyout")
+            .Attribute("Placement")
+            ?.Value
+            .Should()
+            .Be("BottomEdgeAlignedRight");
+
+        overflowButton.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => element.Attribute("Command")?.Value)
+            .Should()
+            .Contain([
+                "{Binding ToggleSortOrderCommand}",
+                "{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}",
+                "{Binding PurgeMessagesCommand}"
+            ]);
+
+        var topActionTooltips = GetTopActionTooltips(document);
+
+        topActionTooltips.Should().Contain([
+            "Toggle multi-select mode (⌘M / Ctrl+M)",
+            "Refresh messages",
+            "More message actions"
+        ]);
+        topActionTooltips.Should().NotContain([
+            "Toggle sort order",
+            "Receive locked messages",
+            "Purge messages"
+        ]);
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -77,6 +121,19 @@ public class MessagesPanelViewTests
             "Views",
             "Controls",
             "MessagesPanelView.axaml"));
+    }
+
+    private static IEnumerable<string> GetTopActionTooltips(XDocument document)
+    {
+        return document.Descendants()
+            .Where(element => element.Name.LocalName == "StackPanel" &&
+                              element.Attribute("Orientation")?.Value == "Horizontal" &&
+                              element.Attribute("IsVisible")?.Value.Contains("CurrentNavigation.IsSessionInspectorTabSelected", StringComparison.Ordinal) == true)
+            .First()
+            .Elements()
+            .Select(element => element.Attribute("ToolTip.Tip")?.Value)
+            .Where(value => value is not null)
+            .Select(value => value!);
     }
 
     private static int CountOccurrences(string text, string value)

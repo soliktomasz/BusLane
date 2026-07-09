@@ -41,6 +41,43 @@ public class EntityTreeViewTests
     }
 
     [Fact]
+    public void EntityTreeView_CollapsesGlobalOperationsIntoHeaderFlyout()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetConnectionTreePath()));
+
+        // Assert
+        var overflowButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" &&
+                               element.Attribute("ToolTip.Tip")?.Value == "More entity actions");
+
+        overflowButton.Descendants()
+            .Single(element => element.Name.LocalName == "Flyout")
+            .Attribute("Placement")
+            ?.Value
+            .Should()
+            .Be("BottomEdgeAlignedRight");
+
+        overflowButton.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => element.Attribute("Command")?.Value)
+            .Should()
+            .Contain([
+                "{Binding EntityOperations.OpenCreateQueueDialogCommand}",
+                "{Binding EntityOperations.OpenCreateTopicDialogCommand}",
+                "{Binding ExportNamespaceTopologyCommand}",
+                "{Binding ImportNamespaceTopologyCommand}"
+            ]);
+
+        GetHeaderTooltips(document).Should().NotContain([
+            "Create queue",
+            "Create topic",
+            "Export namespace topology",
+            "Import namespace topology"
+        ]);
+    }
+
+    [Fact]
     public void EntityTreeView_ExposesCreateSubscriptionActionAndDialog()
     {
         // Arrange
@@ -76,6 +113,24 @@ public class EntityTreeViewTests
         // Assert
         AssertTopicActionVisibilityBindings(connectionTree);
         AssertTopicActionVisibilityBindings(azureTree);
+    }
+
+    [Fact]
+    public void EntityTreeViews_ExposeAzurePortalActionsInContextMenus()
+    {
+        // Arrange
+        var connectionTree = File.ReadAllText(GetConnectionTreePath());
+        var azureTree = File.ReadAllText(GetAzureTreePath());
+
+        // Assert
+        CountOccurrences(connectionTree, "Header=\"Open in Azure Portal\"").Should().Be(3);
+        CountOccurrences(azureTree, "Header=\"Open in Azure Portal\"").Should().Be(3);
+        connectionTree.Should().Contain("EntityOperations.OpenQueueInAzurePortalCommand");
+        connectionTree.Should().Contain("EntityOperations.OpenTopicInAzurePortalCommand");
+        connectionTree.Should().Contain("EntityOperations.OpenSubscriptionInAzurePortalCommand");
+        azureTree.Should().Contain("EntityOperations.OpenQueueInAzurePortalCommand");
+        azureTree.Should().Contain("EntityOperations.OpenTopicInAzurePortalCommand");
+        azureTree.Should().Contain("EntityOperations.OpenSubscriptionInAzurePortalCommand");
     }
 
     [Fact]
@@ -247,6 +302,18 @@ public class EntityTreeViewTests
             .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
     }
 
+    private static IEnumerable<string> GetHeaderTooltips(XDocument document)
+    {
+        return document.Descendants()
+            .Where(element => element.Name.LocalName == "Grid" &&
+                              element.Attribute("ColumnDefinitions")?.Value.StartsWith("Auto,*", StringComparison.Ordinal) == true)
+            .First()
+            .Elements()
+            .Select(element => element.Attribute("ToolTip.Tip")?.Value)
+            .Where(value => value is not null)
+            .Select(value => value!);
+    }
+
     private static List<XElement> GetMenuItems(XDocument document, string itemHeader)
     {
         return document.Descendants()
@@ -258,5 +325,19 @@ public class EntityTreeViewTests
     private static XElement FindMenuItem(IEnumerable<XElement> menuItems, string header)
     {
         return menuItems.Single(element => element.Attribute("Header")?.Value == header);
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 }

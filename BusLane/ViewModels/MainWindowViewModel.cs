@@ -356,7 +356,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         EntityOperations = new EntityOperationsViewModel(
             () => ActiveTab?.Operations ?? _operations,
             () => CurrentNavigation,
-            msg => StatusMessage = msg,
+            SetWorkspaceStatusMessage,
             Confirmation,
             OpenSendMessagePopup);
         AppLock = new AppLockViewModel(_appLockService, biometricAuthService, CompleteStartupAfterUnlockAsync);
@@ -452,6 +452,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         SessionInspector.Clear();
         FeaturePanels.CloseAll();
         return Task.CompletedTask;
+    }
+
+    private void SetWorkspaceStatusMessage(string message)
+    {
+        if (ActiveTab != null)
+        {
+            ActiveTab.StatusMessage = message;
+        }
+        else
+        {
+            StatusMessage = message;
+        }
     }
 
     private void InitializeAutoRefreshTimer()

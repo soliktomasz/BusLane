@@ -1,6 +1,7 @@
 namespace BusLane.ViewModels.Core;
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using BusLane.Models;
 using BusLane.Services.ServiceBus;
@@ -19,12 +20,14 @@ public partial class EntityOperationsViewModel : ViewModelBase
     private const string CreateLockDurationDefault = "00:01:00";
     private const string CreateDuplicateDetectionHistoryTimeWindowDefault = "00:01:00";
     private const string CreateMaxSizeInMegabytesDefault = "1024";
+    private const string ServiceBusNamespacesPortalUrl = "https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.ServiceBus%2Fnamespaces";
 
     private readonly Func<IServiceBusOperations?> _getOperations;
     private readonly Func<NavigationState?> _getNavigation;
     private readonly Action<string> _setStatusMessage;
     private readonly ConfirmationDialogViewModel _confirmation;
     private readonly Action? _openSendMessage;
+    private readonly Action<string> _openExternalUrl;
 
     [ObservableProperty] private bool _showSubscriptionRulesDialog;
     [ObservableProperty] private SubscriptionInfo? _rulesSubscription;
@@ -75,13 +78,15 @@ public partial class EntityOperationsViewModel : ViewModelBase
         Func<NavigationState?> getNavigation,
         Action<string> setStatusMessage,
         ConfirmationDialogViewModel confirmation,
-        Action? openSendMessage = null)
+        Action? openSendMessage = null,
+        Action<string>? openExternalUrl = null)
     {
         _getOperations = getOperations;
         _getNavigation = getNavigation;
         _setStatusMessage = setStatusMessage;
         _confirmation = confirmation;
         _openSendMessage = openSendMessage;
+        _openExternalUrl = openExternalUrl ?? OpenExternalUrl;
     }
 
     [RelayCommand]
@@ -433,6 +438,45 @@ public partial class EntityOperationsViewModel : ViewModelBase
         {
             await CopyTextAsync($"{subscription.TopicName}/{subscription.Name}", "Subscription path copied");
         }
+    }
+
+    [RelayCommand]
+    private void OpenQueueInAzurePortal(QueueInfo? queue)
+    {
+        if (queue == null)
+        {
+            return;
+        }
+
+        OpenEntityInAzurePortal(
+            BuildPortalResourceId("queues", queue.Name),
+            $"Opened queue '{queue.Name}' in Azure Portal");
+    }
+
+    [RelayCommand]
+    private void OpenTopicInAzurePortal(TopicInfo? topic)
+    {
+        if (topic == null)
+        {
+            return;
+        }
+
+        OpenEntityInAzurePortal(
+            BuildPortalResourceId("topics", topic.Name),
+            $"Opened topic '{topic.Name}' in Azure Portal");
+    }
+
+    [RelayCommand]
+    private void OpenSubscriptionInAzurePortal(SubscriptionInfo? subscription)
+    {
+        if (subscription == null)
+        {
+            return;
+        }
+
+        OpenEntityInAzurePortal(
+            BuildPortalResourceId("topics", subscription.TopicName, "subscriptions", subscription.Name),
+            $"Opened subscription '{subscription.TopicName}/{subscription.Name}' in Azure Portal");
     }
 
     [RelayCommand]
@@ -958,6 +1002,69 @@ public partial class EntityOperationsViewModel : ViewModelBase
         }
 
         _setStatusMessage("Clipboard is not available");
+    }
+
+    private string? GetNamespacePortalResourceId()
+    {
+        return string.IsNullOrWhiteSpace(_getNavigation()?.SelectedNamespace?.Id)
+            ? null
+            : _getNavigation()!.SelectedNamespace!.Id.TrimEnd('/');
+    }
+
+    private string? BuildPortalResourceId(params string[] pathSegments)
+    {
+        var namespaceId = GetNamespacePortalResourceId();
+        if (namespaceId == null)
+        {
+            return null;
+        }
+
+        return $"{namespaceId}/{string.Join("/", pathSegments.Select(Uri.EscapeDataString))}";
+    }
+
+    private void OpenEntityInAzurePortal(string? resourceId, string successMessage)
+    {
+        if (string.IsNullOrWhiteSpace(resourceId))
+        {
+            OpenAzurePortalFallback();
+            return;
+        }
+
+        var url = $"https://portal.azure.com/#@/resource{resourceId}";
+
+        try
+        {
+            _openExternalUrl(url);
+            _setStatusMessage(successMessage);
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Failed to open Azure Portal: {ex.Message}");
+        }
+    }
+
+    private void OpenAzurePortalFallback()
+    {
+        try
+        {
+            _openExternalUrl(ServiceBusNamespacesPortalUrl);
+            _setStatusMessage("Opened Azure Portal. Select the namespace manually because this workspace has no Azure resource id.");
+        }
+        catch (Exception ex)
+        {
+            _setStatusMessage($"Failed to open Azure Portal: {ex.Message}");
+        }
+    }
+
+    private static void OpenExternalUrl(string url)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        };
+
+        Process.Start(psi);
     }
 
     private async Task SaveQueueEditAsync(IServiceBusOperations operations, QueueInfo queue)

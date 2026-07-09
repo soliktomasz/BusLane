@@ -733,16 +733,108 @@ public class EntityOperationsViewModelTests
         await operations.Received(1).DeleteSubscriptionAsync("orders-topic", "processor", Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public void OpenQueueInAzurePortalCommand_WithNamespaceResourceId_OpensQueuePortalUrl()
+    {
+        // Arrange
+        var openedUrls = new List<string>();
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = CreateAzureNavigation();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation, openExternalUrl: openedUrls.Add);
+        var queue = new QueueInfo("orders", 0, 0, 0, 0, 0, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+
+        // Act
+        _sut.OpenQueueInAzurePortalCommand.Execute(queue);
+
+        // Assert
+        openedUrls.Should().Equal("https://portal.azure.com/#@/resource/subscriptions/sub-1/resourceGroups/rg-prod/providers/Microsoft.ServiceBus/namespaces/bus-prod/queues/orders");
+    }
+
+    [Fact]
+    public void OpenTopicInAzurePortalCommand_WithNamespaceResourceId_OpensTopicPortalUrl()
+    {
+        // Arrange
+        var openedUrls = new List<string>();
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = CreateAzureNavigation();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation, openExternalUrl: openedUrls.Add);
+        var topic = new TopicInfo("orders-topic", 0, 0, null, TimeSpan.FromDays(14));
+
+        // Act
+        _sut.OpenTopicInAzurePortalCommand.Execute(topic);
+
+        // Assert
+        openedUrls.Should().Equal("https://portal.azure.com/#@/resource/subscriptions/sub-1/resourceGroups/rg-prod/providers/Microsoft.ServiceBus/namespaces/bus-prod/topics/orders-topic");
+    }
+
+    [Fact]
+    public void OpenSubscriptionInAzurePortalCommand_WithNamespaceResourceId_OpensSubscriptionPortalUrl()
+    {
+        // Arrange
+        var openedUrls = new List<string>();
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = CreateAzureNavigation();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation, openExternalUrl: openedUrls.Add);
+        var subscription = new SubscriptionInfo("processor", "orders-topic", 0, 0, 0, null, false);
+
+        // Act
+        _sut.OpenSubscriptionInAzurePortalCommand.Execute(subscription);
+
+        // Assert
+        openedUrls.Should().Equal("https://portal.azure.com/#@/resource/subscriptions/sub-1/resourceGroups/rg-prod/providers/Microsoft.ServiceBus/namespaces/bus-prod/topics/orders-topic/subscriptions/processor");
+    }
+
+    [Fact]
+    public void OpenQueueInAzurePortalCommand_WithoutNamespaceResourceId_OpensServiceBusPortalFallback()
+    {
+        // Arrange
+        var openedUrls = new List<string>();
+        var statusMessages = new List<string>();
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation, statusMessages.Add, openedUrls.Add);
+        var queue = new QueueInfo("orders", 0, 0, 0, 0, 0, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+
+        // Act
+        _sut.OpenQueueInAzurePortalCommand.Execute(queue);
+
+        // Assert
+        openedUrls.Should().Equal("https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.ServiceBus%2Fnamespaces");
+        statusMessages.Should().Equal("Opened Azure Portal. Select the namespace manually because this workspace has no Azure resource id.");
+    }
+
     private static EntityOperationsViewModel CreateSut(
         IServiceBusOperations operations,
         NavigationState navigation,
         ConfirmationDialogViewModel confirmation,
-        Action<string>? setStatusMessage = null)
+        Action<string>? setStatusMessage = null,
+        Action<string>? openExternalUrl = null)
     {
         return new EntityOperationsViewModel(
             () => operations,
             () => navigation,
             setStatusMessage ?? (_ => { }),
-            confirmation);
+            confirmation,
+            openExternalUrl: openExternalUrl);
+    }
+
+    private static NavigationState CreateAzureNavigation()
+    {
+        var navigation = new NavigationState
+        {
+            SelectedNamespace = new ServiceBusNamespace(
+                "/subscriptions/sub-1/resourceGroups/rg-prod/providers/Microsoft.ServiceBus/namespaces/bus-prod",
+                "bus-prod",
+                "rg-prod",
+                "sub-1",
+                "West Europe",
+                "bus-prod.servicebus.windows.net")
+        };
+
+        return navigation;
     }
 }
