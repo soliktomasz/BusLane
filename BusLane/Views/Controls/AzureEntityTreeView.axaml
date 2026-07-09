@@ -222,6 +222,9 @@
                                                             <MenuItem Header="Details"
                                                                       Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenQueueDetailsCommand}"
                                                                       CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Open in Azure Portal"
+                                                                      Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenQueueInAzurePortalCommand}"
+                                                                      CommandParameter="{Binding}"/>
                                                             <MenuItem Header="Send Message"
                                                                       Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.SendQueueMessageCommand}"
                                                                       CommandParameter="{Binding}"/>
@@ -378,6 +381,9 @@
                                                                 <MenuItem Header="Details"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
                                                                           CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Open in Azure Portal"
+                                                                          Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenTopicInAzurePortalCommand}"
+                                                                          CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Send Message to Topic"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
                                                                           CommandParameter="{Binding}"/>
@@ -498,6 +504,9 @@
                                                                                     <ContextMenu>
                                                                                         <MenuItem Header="Details"
                                                                                                   Command="{ReflectionBinding $parent[Window].DataContext.OpenSubscriptionDetailDialogCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Open in Azure Portal"
+                                                                                                  Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenSubscriptionInAzurePortalCommand}"
                                                                                                   CommandParameter="{Binding}"/>
                                                                                         <MenuItem Header="Manage Filters/Rules"
                                                                                                   Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.OpenSubscriptionRulesDialogCommand}"

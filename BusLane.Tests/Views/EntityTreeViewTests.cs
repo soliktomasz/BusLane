@@ -116,6 +116,24 @@ public class EntityTreeViewTests
     }
 
     [Fact]
+    public void EntityTreeViews_ExposeAzurePortalActionsInContextMenus()
+    {
+        // Arrange
+        var connectionTree = File.ReadAllText(GetConnectionTreePath());
+        var azureTree = File.ReadAllText(GetAzureTreePath());
+
+        // Assert
+        CountOccurrences(connectionTree, "Header=\"Open in Azure Portal\"").Should().Be(3);
+        CountOccurrences(azureTree, "Header=\"Open in Azure Portal\"").Should().Be(3);
+        connectionTree.Should().Contain("EntityOperations.OpenQueueInAzurePortalCommand");
+        connectionTree.Should().Contain("EntityOperations.OpenTopicInAzurePortalCommand");
+        connectionTree.Should().Contain("EntityOperations.OpenSubscriptionInAzurePortalCommand");
+        azureTree.Should().Contain("EntityOperations.OpenQueueInAzurePortalCommand");
+        azureTree.Should().Contain("EntityOperations.OpenTopicInAzurePortalCommand");
+        azureTree.Should().Contain("EntityOperations.OpenSubscriptionInAzurePortalCommand");
+    }
+
+    [Fact]
     public void EntityTreeViews_DoNotShowGlobalLoadingIndicatorsInsideEntityGroups()
     {
         // Arrange
@@ -307,5 +325,19 @@ public class EntityTreeViewTests
     private static XElement FindMenuItem(IEnumerable<XElement> menuItems, string header)
     {
         return menuItems.Single(element => element.Attribute("Header")?.Value == header);
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 }
