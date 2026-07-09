@@ -31,6 +31,50 @@ public class NavigationStatePinningTests
     }
 
     [Fact]
+    public void TogglePin_SelectedEntity_RaisesSelectedPinStateChanged()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var sut = new NavigationState(preferences);
+        sut.SetPinScope("workspace-a");
+        var queue = CreateQueue("orders");
+        sut.SelectedEntity = queue;
+        var changedProperties = new List<string?>();
+        sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        // Act
+        sut.TogglePin(queue);
+
+        // Assert
+        sut.IsSelectedEntityPinned.Should().BeTrue();
+        changedProperties.Should().Contain(nameof(NavigationState.IsSelectedEntityPinned));
+    }
+
+    [Fact]
+    public void SelectedEntity_WhenPinned_RaisesSelectedPinStateChanged()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService
+        {
+            PinnedEntitiesJson = """
+                [{"WorkspaceId":"workspace-a","Type":"Queue","Name":"orders","TopicName":null}]
+                """
+        };
+        var sut = new NavigationState(preferences);
+        sut.SetPinScope("workspace-a");
+        var queue = CreateQueue("orders");
+        var changedProperties = new List<string?>();
+        sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        // Act
+        sut.SelectedEntity = queue;
+
+        // Assert
+        sut.IsSelectedEntityPinned.Should().BeTrue();
+        changedProperties.Should().Contain(nameof(NavigationState.IsSelectedEntityPinned));
+    }
+
+    [Fact]
     public void TogglePin_PinnedQueue_RemovesScopedPinAndPersistsJson()
     {
         // Arrange

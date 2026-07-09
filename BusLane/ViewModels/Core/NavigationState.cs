@@ -194,6 +194,12 @@ public partial class NavigationState : ViewModelBase
         OnCurrentEntitySelectionChanged();
     }
 
+    partial void OnSelectedEntityChanged(object? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(IsSelectedEntityPinned));
+    }
+
     /// <summary>
     /// Clears all navigation state.
     /// </summary>
