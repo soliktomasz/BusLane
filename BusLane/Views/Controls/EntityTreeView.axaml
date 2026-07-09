@@ -19,7 +19,7 @@
             <Border DockPanel.Dock="Top"
                     Classes="pane-search-surface">
                 <StackPanel Spacing="12">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
                         <Border Grid.Column="0" Classes="metric-icon-surface">
                             <LucideIcon Kind="PanelsTopLeft"
                                         Size="16"
@@ -33,40 +33,63 @@
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="2"
                                 Classes="icon-button"
-                                Command="{Binding EntityOperations.OpenCreateQueueDialogCommand}"
-                                ToolTip.Tip="Create queue"
+                                ToolTip.Tip="More entity actions"
                                 VerticalAlignment="Center">
-                            <LucideIcon Kind="ListPlus" Size="15"/>
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedRight">
+                                    <StackPanel Spacing="4" MinWidth="190">
+                                        <Button Classes="subtle small"
+                                                Command="{Binding EntityOperations.OpenCreateQueueDialogCommand}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <LucideIcon Kind="ListPlus" Size="13"/>
+                                                <TextBlock Text="Create queue"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="subtle small"
+                                                Command="{Binding EntityOperations.OpenCreateTopicDialogCommand}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <LucideIcon Kind="MessageSquarePlus" Size="13"/>
+                                                <TextBlock Text="Create topic"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Border Height="1"
+                                                Margin="4,4"
+                                                Background="{DynamicResource BorderMuted}"/>
+                                        <Button Classes="subtle small"
+                                                Command="{Binding ExportNamespaceTopologyCommand}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <LucideIcon Kind="Download" Size="13"/>
+                                                <TextBlock Text="Export topology"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="subtle small"
+                                                Command="{Binding ImportNamespaceTopologyCommand}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <LucideIcon Kind="Upload" Size="13"/>
+                                                <TextBlock Text="Import topology"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <LucideIcon Kind="Ellipsis" Size="15"/>
                         </Button>
                         <Button Grid.Column="3"
-                                Classes="icon-button"
-                                Command="{Binding EntityOperations.OpenCreateTopicDialogCommand}"
-                                ToolTip.Tip="Create topic"
-                                VerticalAlignment="Center">
-                            <LucideIcon Kind="MessageSquarePlus" Size="15"/>
-                        </Button>
-                        <Button Grid.Column="4"
-                                Classes="icon-button"
-                                Command="{Binding ExportNamespaceTopologyCommand}"
-                                ToolTip.Tip="Export namespace topology"
-                                VerticalAlignment="Center">
-                            <LucideIcon Kind="Download" Size="15"/>
-                        </Button>
-                        <Button Grid.Column="5"
-                                Classes="icon-button"
-                                Command="{Binding ImportNamespaceTopologyCommand}"
-                                ToolTip.Tip="Import namespace topology"
-                                VerticalAlignment="Center">
-                            <LucideIcon Kind="Upload" Size="15"/>
-                        </Button>
-                        <Button Grid.Column="6"
                                 Classes="icon-button"
                                 Command="{Binding ToggleSelectedEntityPinCommand}"
                                 ToolTip.Tip="Pin selected entity"
                                 VerticalAlignment="Center">
                             <LucideIcon Kind="Pin" Size="15"/>
                         </Button>
-                        <Button Grid.Column="7"
+                        <Button Grid.Column="4"
                                 Classes="icon-button"
                                 Command="{Binding HideEntityPaneCommand}"
                                 ToolTip.Tip="Hide entity pane"

@@ -56,9 +56,9 @@
                                     Orientation="Horizontal"
                                     Spacing="6"
                                     IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
-                            <Button Classes="primary"
+                            <Button Classes="primary small"
                                     Command="{Binding OpenSendMessagePopupCommand}"
-                                    Padding="14,8"
+                                    Padding="12,7"
                                     VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <LucideIcon Kind="Send" Size="14"/>
@@ -83,34 +83,57 @@
                                     <TextBlock Text="Select"/>
                                 </StackPanel>
                             </ToggleButton>
-                            <Button Classes="subtle small"
-                                    Content="{Binding CurrentMessageOps.SortButtonText}"
-                                    Command="{Binding ToggleSortOrderCommand}"
-                                    ToolTip.Tip="Toggle sort order"
-                                    Padding="8,8"/>
-                            <Button Classes="subtle small"
+                            <Button Classes="secondary small"
                                     Command="{Binding LoadMessagesCommand}"
-                                    Padding="8,8">
-                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    ToolTip.Tip="Refresh messages"
+                                    Padding="10,7">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
                                     <LucideIcon Kind="RefreshCw" Size="12"/>
                                     <TextBlock Text="Refresh"/>
                                 </StackPanel>
                             </Button>
                             <Button Classes="secondary small"
-                                    Command="{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}"
-                                    Padding="8,8">
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <LucideIcon Kind="LockKeyhole" Size="12"/>
-                                    <TextBlock Text="Receive"/>
-                                </StackPanel>
-                            </Button>
-                            <Border Width="1" Background="{DynamicResource BorderDefault}" Margin="4,4"/>
-                            <Button Classes="danger-subtle small"
-                                    Command="{Binding PurgeMessagesCommand}"
-                                    Padding="8,8">
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <LucideIcon Kind="Trash2" Size="12"/>
-                                    <TextBlock Text="Purge"/>
+                                    ToolTip.Tip="More message actions"
+                                    Padding="10,7">
+                                <Button.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedRight">
+                                        <StackPanel Spacing="4" MinWidth="190">
+                                            <Button Classes="subtle small"
+                                                    Command="{Binding ToggleSortOrderCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="ArrowDownUp" Size="13"/>
+                                                    <TextBlock Text="{Binding CurrentMessageOps.SortButtonText}"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="subtle small"
+                                                    Command="{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="LockKeyhole" Size="13"/>
+                                                    <TextBlock Text="Receive locked"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Border Height="1"
+                                                    Margin="4,4"
+                                                    Background="{DynamicResource BorderMuted}"/>
+                                            <Button Classes="danger-subtle small"
+                                                    Command="{Binding PurgeMessagesCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="Trash2" Size="13"/>
+                                                    <TextBlock Text="Purge messages"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="Ellipsis" Size="12"/>
+                                    <TextBlock Text="More"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -126,9 +149,11 @@
                                          Converter="{x:Static BoolConverters.Not}"/>
                             </MultiBinding>
                         </Border.IsVisible>
-                        <StackPanel Spacing="8">
-                            <!-- Selection info row -->
-                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Spacing="8"
+                                        VerticalAlignment="Center">
                                 <Border Classes="badge-info" Padding="8,4">
                                     <TextBlock Text="{Binding CurrentMessageOps.SelectedMessagesCount, StringFormat='{}{0} selected'}"
                                                FontWeight="SemiBold"
@@ -143,11 +168,14 @@
                                         Command="{Binding DeselectAllMessagesCommand}"
                                         Padding="8,4"/>
                             </StackPanel>
-                            <!-- Action buttons row -->
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Button Classes="primary small"
+
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="6"
+                                        HorizontalAlignment="Right">
+                                <Button Classes="secondary small"
                                         Command="{Binding BulkResendMessagesCommand}"
-                                        Padding="12,6"
+                                        Padding="10,6"
                                         ToolTip.Tip="Resend selected messages">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="Send" Size="12"/>
@@ -157,7 +185,7 @@
                                 <Button Classes="secondary small"
                                         Command="{Binding ResubmitDeadLetterMessagesAsyncCommand}"
                                         IsVisible="{Binding CurrentNavigation.ShowDeadLetter}"
-                                        Padding="12,6"
+                                        Padding="10,6"
                                         ToolTip.Tip="Resubmit selected messages from dead letter queue">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="RefreshCw" Size="12"/>
@@ -166,7 +194,7 @@
                                 </Button>
                                 <Button Classes="danger-outline small"
                                         Command="{Binding BulkDeleteMessagesAsyncCommand}"
-                                        Padding="12,6"
+                                        Padding="10,6"
                                         ToolTip.Tip="Delete selected messages">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="Trash2" Size="12"/>
@@ -174,7 +202,7 @@
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
-                        </StackPanel>
+                        </Grid>
                     </Border>
 
                     <!-- Search Row -->
