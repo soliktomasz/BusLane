@@ -5,76 +5,226 @@
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
     <Grid>
-    <Grid IsVisible="{Binding EntityOperations.ShowCreateQueueDialog}">
-        <Border Background="{DynamicResource ModalOverlay}"/>
-        <Border Classes="modal-card"
-                MaxWidth="420"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-            <StackPanel Spacing="16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Create queue" Classes="heading"/>
-                    <Button Grid.Column="1"
-                            Classes="icon-button"
-                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}">
-                        <LucideIcon Kind="X" Size="16"/>
-                    </Button>
-                </Grid>
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Name" Classes="field-label"/>
-                    <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"/>
-                </StackPanel>
-                <CheckBox Content="Requires session"
-                          IsChecked="{Binding EntityOperations.CreateQueueRequiresSession}"/>
-                <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
-                           Foreground="{DynamicResource TextDanger}"
-                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Spacing="8">
-                    <Button Content="Cancel"
-                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"/>
-                    <Button Content="Create"
-                            Classes="primary"
-                            Command="{Binding EntityOperations.CreateQueueCommand}"/>
-                </StackPanel>
-            </StackPanel>
-        </Border>
-    </Grid>
+        <Border Classes="modal-overlay"
+                IsVisible="{Binding EntityOperations.ShowCreateQueueDialog}">
+            <Border Classes="modal modal-medium"
+                    Width="560"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="0">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Classes="dialog-header">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0"
+                                    Width="36" Height="36"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    Margin="0,0,12,0">
+                                <LucideIcon Kind="ListPlus" Size="18"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Grid.Column="1"
+                                       Text="Create queue"
+                                       Classes="heading"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="2"
+                                    Classes="icon"
+                                    Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"
+                                    ToolTip.Tip="Close">
+                                <LucideIcon Kind="X" Size="16"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
-    <Grid IsVisible="{Binding EntityOperations.ShowCreateTopicDialog}">
-        <Border Background="{DynamicResource ModalOverlay}"/>
-        <Border Classes="modal-card"
-                MaxWidth="420"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-            <StackPanel Spacing="16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Create topic" Classes="heading"/>
-                    <Button Grid.Column="1"
-                            Classes="icon-button"
-                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}">
-                        <LucideIcon Kind="X" Size="16"/>
-                    </Button>
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel Spacing="16" Margin="24,20">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Queue name" Classes="field-label"/>
+                                <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"
+                                         PlaceholderText="orders"/>
+                            </StackPanel>
+
+                            <CheckBox Content="Requires session"
+                                      IsChecked="{Binding EntityOperations.CreateQueueRequiresSession, Mode=TwoWay}"/>
+
+                            <Expander Header="Advanced options">
+                                <StackPanel Spacing="12" Margin="0,12,0,0">
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <StackPanel Grid.Column="0" Spacing="6">
+                                            <TextBlock Text="Default message TTL" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateDefaultMessageTimeToLive, Mode=TwoWay}"
+                                                     PlaceholderText="Azure default"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="Lock duration" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateLockDuration, Mode=TwoWay}"
+                                                     PlaceholderText="Azure default"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <StackPanel Grid.Column="0" Spacing="6">
+                                            <TextBlock Text="Duplicate detection window" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateDuplicateDetectionHistoryTimeWindow, Mode=TwoWay}"
+                                                     PlaceholderText="Azure default"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="Max size MB" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateMaxSizeInMegabytes, Mode=TwoWay}"
+                                                     PlaceholderText="Azure default"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <CheckBox Grid.Column="0"
+                                                  Content="Enable partitioning"
+                                                  IsChecked="{Binding EntityOperations.CreateEnablePartitioning, Mode=TwoWay}"/>
+                                        <CheckBox Grid.Column="1"
+                                                  Content="Enable batched operations"
+                                                  IsChecked="{Binding EntityOperations.CreateEnableBatchedOperations, Mode=TwoWay}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Expander>
+
+                            <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
+                                       Foreground="{DynamicResource TextDanger}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding EntityOperations.CreateEntityValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Classes="dialog-footer">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <ProgressBar Grid.Column="0"
+                                         IsIndeterminate="True"
+                                         IsVisible="{Binding EntityOperations.IsCreatingEntity}"
+                                         Height="2"
+                                         VerticalAlignment="Center"/>
+                            <Button Grid.Column="1"
+                                    Classes="secondary small"
+                                    Content="Cancel"
+                                    Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"/>
+                            <Button Grid.Column="2"
+                                    Classes="primary small"
+                                    Command="{Binding EntityOperations.CreateQueueCommand}"
+                                    IsEnabled="{Binding EntityOperations.IsCreatingEntity, Converter={x:Static BoolConverters.Not}}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="Plus" Size="14"/>
+                                    <TextBlock Text="Create"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </Grid>
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Name" Classes="field-label"/>
-                    <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"/>
-                </StackPanel>
-                <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
-                           Foreground="{DynamicResource TextDanger}"
-                           IsVisible="{Binding EntityOperations.CreateEntityValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Spacing="8">
-                    <Button Content="Cancel"
-                            Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"/>
-                    <Button Content="Create"
-                            Classes="primary"
-                            Command="{Binding EntityOperations.CreateTopicCommand}"/>
-                </StackPanel>
-            </StackPanel>
+            </Border>
         </Border>
-    </Grid>
+
+        <Border Classes="modal-overlay"
+                IsVisible="{Binding EntityOperations.ShowCreateTopicDialog}">
+            <Border Classes="modal modal-medium"
+                    Width="560"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="0">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Classes="dialog-header">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0"
+                                    Width="36" Height="36"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource SurfaceBrand}"
+                                    Margin="0,0,12,0">
+                                <LucideIcon Kind="Megaphone" Size="18"
+                                            Foreground="{DynamicResource AccentBrand}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Grid.Column="1"
+                                       Text="Create topic"
+                                       Classes="heading"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="2"
+                                    Classes="icon"
+                                    Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"
+                                    ToolTip.Tip="Close">
+                                <LucideIcon Kind="X" Size="16"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel Spacing="16" Margin="24,20">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Topic name" Classes="field-label"/>
+                                <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"
+                                         PlaceholderText="events"/>
+                            </StackPanel>
+
+                            <Expander Header="Advanced options">
+                                <StackPanel Spacing="12" Margin="0,12,0,0">
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <StackPanel Grid.Column="0" Spacing="6">
+                                            <TextBlock Text="Default message TTL" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateDefaultMessageTimeToLive, Mode=TwoWay}"
+                                                     PlaceholderText="Azure default"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="Duplicate detection window" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateDuplicateDetectionHistoryTimeWindow, Mode=TwoWay}"
+                                                     PlaceholderText="Azure default"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Max size MB" Classes="field-label"/>
+                                        <TextBox Text="{Binding EntityOperations.CreateMaxSizeInMegabytes, Mode=TwoWay}"
+                                                 PlaceholderText="Azure default"/>
+                                    </StackPanel>
+
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <CheckBox Grid.Column="0"
+                                                  Content="Enable partitioning"
+                                                  IsChecked="{Binding EntityOperations.CreateEnablePartitioning, Mode=TwoWay}"/>
+                                        <CheckBox Grid.Column="1"
+                                                  Content="Enable batched operations"
+                                                  IsChecked="{Binding EntityOperations.CreateEnableBatchedOperations, Mode=TwoWay}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Expander>
+
+                            <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
+                                       Foreground="{DynamicResource TextDanger}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding EntityOperations.CreateEntityValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Classes="dialog-footer">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <ProgressBar Grid.Column="0"
+                                         IsIndeterminate="True"
+                                         IsVisible="{Binding EntityOperations.IsCreatingEntity}"
+                                         Height="2"
+                                         VerticalAlignment="Center"/>
+                            <Button Grid.Column="1"
+                                    Classes="secondary small"
+                                    Content="Cancel"
+                                    Command="{Binding EntityOperations.CloseCreateEntityDialogCommand}"/>
+                            <Button Grid.Column="2"
+                                    Classes="primary small"
+                                    Command="{Binding EntityOperations.CreateTopicCommand}"
+                                    IsEnabled="{Binding EntityOperations.IsCreatingEntity, Converter={x:Static BoolConverters.Not}}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="Plus" Size="14"/>
+                                    <TextBlock Text="Create"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
     </Grid>
 </UserControl>

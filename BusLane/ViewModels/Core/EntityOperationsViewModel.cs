@@ -48,6 +48,12 @@ public partial class EntityOperationsViewModel : ViewModelBase
     [ObservableProperty] private bool _showCreateTopicDialog;
     [ObservableProperty] private string _createEntityName = string.Empty;
     [ObservableProperty] private bool _createQueueRequiresSession;
+    [ObservableProperty] private string _createDefaultMessageTimeToLive = string.Empty;
+    [ObservableProperty] private string _createLockDuration = string.Empty;
+    [ObservableProperty] private string _createDuplicateDetectionHistoryTimeWindow = string.Empty;
+    [ObservableProperty] private string _createMaxSizeInMegabytes = string.Empty;
+    [ObservableProperty] private bool _createEnablePartitioning;
+    [ObservableProperty] private bool _createEnableBatchedOperations;
     [ObservableProperty] private string? _createEntityValidationMessage;
     [ObservableProperty] private bool _isCreatingEntity;
 
@@ -239,7 +245,40 @@ public partial class EntityOperationsViewModel : ViewModelBase
         try
         {
             var name = CreateEntityName.Trim();
-            await operations.CreateQueueAsync(new QueueCreationOptions(name, CreateQueueRequiresSession));
+            var defaultTtl = ParseCreateTimeSpan(CreateDefaultMessageTimeToLive, "Default message TTL");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var lockDuration = ParseCreateTimeSpan(CreateLockDuration, "Lock duration");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var duplicateDetectionWindow = ParseCreateTimeSpan(CreateDuplicateDetectionHistoryTimeWindow, "Duplicate detection window");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var maxSize = ParseCreatePositiveLong(CreateMaxSizeInMegabytes, "Max size");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var options = new QueueCreationOptions(
+                name,
+                CreateQueueRequiresSession,
+                defaultTtl,
+                lockDuration,
+                duplicateDetectionWindow,
+                maxSize,
+                CreateEnablePartitioning ? true : null,
+                CreateEnableBatchedOperations ? true : null);
+            await operations.CreateQueueAsync(options);
             var queue = await operations.GetQueueInfoAsync(name) ??
                 new QueueInfo(name, 0, 0, 0, 0, 0, null, CreateQueueRequiresSession, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
             navigation.Queues.Add(queue);
@@ -281,7 +320,32 @@ public partial class EntityOperationsViewModel : ViewModelBase
         try
         {
             var name = CreateEntityName.Trim();
-            await operations.CreateTopicAsync(new TopicCreationOptions(name));
+            var defaultTtl = ParseCreateTimeSpan(CreateDefaultMessageTimeToLive, "Default message TTL");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var duplicateDetectionWindow = ParseCreateTimeSpan(CreateDuplicateDetectionHistoryTimeWindow, "Duplicate detection window");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var maxSize = ParseCreatePositiveLong(CreateMaxSizeInMegabytes, "Max size");
+            if (CreateEntityValidationMessage != null)
+            {
+                return;
+            }
+
+            var options = new TopicCreationOptions(
+                name,
+                defaultTtl,
+                duplicateDetectionWindow,
+                maxSize,
+                CreateEnablePartitioning ? true : null,
+                CreateEnableBatchedOperations ? true : null);
+            await operations.CreateTopicAsync(options);
             var topic = await operations.GetTopicInfoAsync(name) ??
                 new TopicInfo(name, 0, 0, null, TimeSpan.FromDays(14));
             navigation.Topics.Add(topic);
@@ -1042,6 +1106,38 @@ public partial class EntityOperationsViewModel : ViewModelBase
         return null;
     }
 
+    private TimeSpan? ParseCreateTimeSpan(string value, string label)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (TimeSpan.TryParse(value, out var parsed))
+        {
+            return parsed;
+        }
+
+        CreateEntityValidationMessage = $"{label} must be a valid time span";
+        return null;
+    }
+
+    private long? ParseCreatePositiveLong(string value, string label)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (long.TryParse(value, out var parsed) && parsed > 0)
+        {
+            return parsed;
+        }
+
+        CreateEntityValidationMessage = $"{label} must be a positive number";
+        return null;
+    }
+
     private void ResetEditState()
     {
         _editingQueue = null;
@@ -1063,6 +1159,12 @@ public partial class EntityOperationsViewModel : ViewModelBase
     {
         CreateEntityName = string.Empty;
         CreateQueueRequiresSession = false;
+        CreateDefaultMessageTimeToLive = string.Empty;
+        CreateLockDuration = string.Empty;
+        CreateDuplicateDetectionHistoryTimeWindow = string.Empty;
+        CreateMaxSizeInMegabytes = string.Empty;
+        CreateEnablePartitioning = false;
+        CreateEnableBatchedOperations = false;
         CreateEntityValidationMessage = null;
     }
 
