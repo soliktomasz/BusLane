@@ -530,6 +530,28 @@ public class EntityOperationsViewModelTests
     }
 
     [Fact]
+    public async Task CreateQueueCommand_WithNeverExpiresLockDuration_ShowsValidationAndDoesNotCallService()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation);
+
+        // Act
+        _sut.OpenCreateQueueDialogCommand.Execute(null);
+        _sut.CreateEntityName = "orders";
+        _sut.CreateLockDuration = "Never expires";
+        await _sut.CreateQueueCommand.ExecuteAsync(null);
+
+        // Assert
+        _sut.CreateEntityValidationMessage.Should().Be("Lock duration must be a valid time span");
+        await operations.DidNotReceive().CreateQueueAsync(
+            Arg.Any<QueueCreationOptions>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task CreateTopicCommand_WhenSuccessful_AddsAndSelectsTopic()
     {
         // Arrange
@@ -614,6 +636,29 @@ public class EntityOperationsViewModelTests
                 options.MaxSizeInMegabytes == 1024 &&
                 options.EnablePartitioning == false &&
                 options.EnableBatchedOperations == true),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateTopicCommand_WithNeverExpiresDuplicateDetectionWindow_ShowsValidationAndDoesNotCallService()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation);
+
+        // Act
+        _sut.OpenCreateTopicDialogCommand.Execute(null);
+        _sut.CreateEntityName = "events";
+        _sut.CreateRequiresDuplicateDetection = true;
+        _sut.CreateDuplicateDetectionHistoryTimeWindow = "Never expires";
+        await _sut.CreateTopicCommand.ExecuteAsync(null);
+
+        // Assert
+        _sut.CreateEntityValidationMessage.Should().Be("Duplicate detection window must be a valid time span");
+        await operations.DidNotReceive().CreateTopicAsync(
+            Arg.Any<TopicCreationOptions>(),
             Arg.Any<CancellationToken>());
     }
 

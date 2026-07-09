@@ -251,7 +251,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
         try
         {
             var name = CreateEntityName.Trim();
-            var defaultTtl = ParseCreateTimeSpan(CreateDefaultMessageTimeToLive, "Default message TTL");
+            var defaultTtl = ParseCreateTimeSpan(CreateDefaultMessageTimeToLive, "Default message TTL", allowNeverExpires: true);
             if (CreateEntityValidationMessage != null)
             {
                 return;
@@ -328,7 +328,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
         try
         {
             var name = CreateEntityName.Trim();
-            var defaultTtl = ParseCreateTimeSpan(CreateDefaultMessageTimeToLive, "Default message TTL");
+            var defaultTtl = ParseCreateTimeSpan(CreateDefaultMessageTimeToLive, "Default message TTL", allowNeverExpires: true);
             if (CreateEntityValidationMessage != null)
             {
                 return;
@@ -1116,14 +1116,15 @@ public partial class EntityOperationsViewModel : ViewModelBase
         return null;
     }
 
-    private TimeSpan? ParseCreateTimeSpan(string value, string label)
+    private TimeSpan? ParseCreateTimeSpan(string value, string label, bool allowNeverExpires = false)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             return null;
         }
 
-        if (string.Equals(value.Trim(), CreateDefaultMessageTimeToLiveDefault, StringComparison.OrdinalIgnoreCase))
+        if (allowNeverExpires &&
+            string.Equals(value.Trim(), CreateDefaultMessageTimeToLiveDefault, StringComparison.OrdinalIgnoreCase))
         {
             return TimeSpan.MaxValue;
         }
