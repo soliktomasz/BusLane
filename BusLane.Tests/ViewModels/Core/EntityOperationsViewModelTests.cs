@@ -457,6 +457,7 @@ public class EntityOperationsViewModelTests
         _sut.CreateQueueRequiresSession = true;
         _sut.CreateDefaultMessageTimeToLive = "02:00:00";
         _sut.CreateLockDuration = "00:00:45";
+        _sut.CreateRequiresDuplicateDetection = true;
         _sut.CreateDuplicateDetectionHistoryTimeWindow = "00:10:00";
         _sut.CreateMaxSizeInMegabytes = "2048";
         _sut.CreateEnablePartitioning = true;
@@ -473,6 +474,35 @@ public class EntityOperationsViewModelTests
                 options.DuplicateDetectionHistoryTimeWindow == TimeSpan.FromMinutes(10) &&
                 options.MaxSizeInMegabytes == 2048 &&
                 options.EnablePartitioning == true &&
+                options.EnableBatchedOperations == true),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateQueueCommand_WithDefaultAdvancedOptions_PassesAzureDefaultsToService()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo("orders", 0, 0, 0, 0, 0, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1)));
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation);
+
+        // Act
+        _sut.OpenCreateQueueDialogCommand.Execute(null);
+        _sut.CreateEntityName = "orders";
+        await _sut.CreateQueueCommand.ExecuteAsync(null);
+
+        // Assert
+        await operations.Received(1).CreateQueueAsync(
+            Arg.Is<QueueCreationOptions>(options =>
+                options.Name == "orders" &&
+                options.DefaultMessageTimeToLive == TimeSpan.MaxValue &&
+                options.LockDuration == TimeSpan.FromMinutes(1) &&
+                options.DuplicateDetectionHistoryTimeWindow == null &&
+                options.MaxSizeInMegabytes == 1024 &&
+                options.EnablePartitioning == false &&
                 options.EnableBatchedOperations == true),
             Arg.Any<CancellationToken>());
     }
@@ -540,6 +570,7 @@ public class EntityOperationsViewModelTests
         _sut.OpenCreateTopicDialogCommand.Execute(null);
         _sut.CreateEntityName = "events";
         _sut.CreateDefaultMessageTimeToLive = "06:00:00";
+        _sut.CreateRequiresDuplicateDetection = true;
         _sut.CreateDuplicateDetectionHistoryTimeWindow = "00:20:00";
         _sut.CreateMaxSizeInMegabytes = "1024";
         _sut.CreateEnablePartitioning = true;
@@ -559,7 +590,7 @@ public class EntityOperationsViewModelTests
     }
 
     [Fact]
-    public async Task CreateTopicCommand_WithBlankAdvancedOptions_PassesNullOptionsToService()
+    public async Task CreateTopicCommand_WithDefaultAdvancedOptions_PassesAzureDefaultsToService()
     {
         // Arrange
         var operations = Substitute.For<IServiceBusOperations>();
@@ -578,12 +609,34 @@ public class EntityOperationsViewModelTests
         await operations.Received(1).CreateTopicAsync(
             Arg.Is<TopicCreationOptions>(options =>
                 options.Name == "events" &&
-                options.DefaultMessageTimeToLive == null &&
+                options.DefaultMessageTimeToLive == TimeSpan.MaxValue &&
                 options.DuplicateDetectionHistoryTimeWindow == null &&
-                options.MaxSizeInMegabytes == null &&
-                options.EnablePartitioning == null &&
-                options.EnableBatchedOperations == null),
+                options.MaxSizeInMegabytes == 1024 &&
+                options.EnablePartitioning == false &&
+                options.EnableBatchedOperations == true),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void OpenCreateDialogs_PrefillAzureDefaults()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var navigation = new NavigationState();
+        var confirmation = new ConfirmationDialogViewModel();
+        var _sut = CreateSut(operations, navigation, confirmation);
+
+        // Act
+        _sut.OpenCreateQueueDialogCommand.Execute(null);
+
+        // Assert
+        _sut.CreateDefaultMessageTimeToLive.Should().Be("Never expires");
+        _sut.CreateLockDuration.Should().Be("00:01:00");
+        _sut.CreateRequiresDuplicateDetection.Should().BeFalse();
+        _sut.CreateDuplicateDetectionHistoryTimeWindow.Should().Be("00:01:00");
+        _sut.CreateMaxSizeInMegabytes.Should().Be("1024");
+        _sut.CreateEnablePartitioning.Should().BeFalse();
+        _sut.CreateEnableBatchedOperations.Should().BeTrue();
     }
 
     [Fact]

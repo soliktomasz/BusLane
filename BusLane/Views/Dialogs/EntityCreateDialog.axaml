@@ -8,7 +8,7 @@
         <Border Classes="modal-overlay"
                 IsVisible="{Binding EntityOperations.ShowCreateQueueDialog}">
             <Border Classes="modal modal-medium"
-                    Width="560"
+                    Width="640"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Padding="0">
@@ -39,53 +39,81 @@
                     </Border>
 
                     <ScrollViewer Grid.Row="1">
-                        <StackPanel Spacing="16" Margin="24,20">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Queue name" Classes="field-label"/>
-                                <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"
-                                         PlaceholderText="orders"/>
-                            </StackPanel>
-
-                            <CheckBox Content="Requires session"
-                                      IsChecked="{Binding EntityOperations.CreateQueueRequiresSession, Mode=TwoWay}"/>
-
-                            <Expander Header="Advanced options">
-                                <StackPanel Spacing="12" Margin="0,12,0,0">
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                        <StackPanel Grid.Column="0" Spacing="6">
-                                            <TextBlock Text="Default message TTL" Classes="field-label"/>
-                                            <TextBox Text="{Binding EntityOperations.CreateDefaultMessageTimeToLive, Mode=TwoWay}"
-                                                     PlaceholderText="Azure default"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Spacing="6">
-                                            <TextBlock Text="Lock duration" Classes="field-label"/>
-                                            <TextBox Text="{Binding EntityOperations.CreateLockDuration, Mode=TwoWay}"
-                                                     PlaceholderText="Azure default"/>
-                                        </StackPanel>
+                        <StackPanel Spacing="14" Margin="24,20">
+                            <Border Classes="dialog-section-surface">
+                                <StackPanel Spacing="12">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Basics"
+                                                   Classes="form-section-title"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1"
+                                                Background="{DynamicResource SurfaceBrand}"
+                                                CornerRadius="12"
+                                                Padding="8,3">
+                                            <TextBlock Text="Queue"
+                                                       Classes="caption"
+                                                       Foreground="{DynamicResource AccentBrand}"/>
+                                        </Border>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                    <Grid ColumnDefinitions="*,220" ColumnSpacing="14">
                                         <StackPanel Grid.Column="0" Spacing="6">
-                                            <TextBlock Text="Duplicate detection window" Classes="field-label"/>
-                                            <TextBox Text="{Binding EntityOperations.CreateDuplicateDetectionHistoryTimeWindow, Mode=TwoWay}"
-                                                     PlaceholderText="Azure default"/>
+                                            <TextBlock Text="Queue name" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"
+                                                     PlaceholderText="orders"/>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Spacing="6">
-                                            <TextBlock Text="Max size MB" Classes="field-label"/>
-                                            <TextBox Text="{Binding EntityOperations.CreateMaxSizeInMegabytes, Mode=TwoWay}"
-                                                     PlaceholderText="Azure default"/>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                        <CheckBox Grid.Column="0"
-                                                  Content="Enable partitioning"
-                                                  IsChecked="{Binding EntityOperations.CreateEnablePartitioning, Mode=TwoWay}"/>
                                         <CheckBox Grid.Column="1"
-                                                  Content="Enable batched operations"
-                                                  IsChecked="{Binding EntityOperations.CreateEnableBatchedOperations, Mode=TwoWay}"/>
+                                                  Content="Requires session"
+                                                  VerticalAlignment="Bottom"
+                                                  IsChecked="{Binding EntityOperations.CreateQueueRequiresSession, Mode=TwoWay}"/>
                                     </Grid>
                                 </StackPanel>
+                            </Border>
+
+                            <Expander Header="Advanced options">
+                                <Border Classes="form-section" Margin="0,12,0,0">
+                                    <StackPanel Spacing="14">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="Default message TTL" Classes="field-label"/>
+                                                <TextBox Text="{Binding EntityOperations.CreateDefaultMessageTimeToLive, Mode=TwoWay}"/>
+                                                <TextBlock Text="Azure default: Never expires" Classes="field-hint"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="6">
+                                                <TextBlock Text="Lock duration" Classes="field-label"/>
+                                                <TextBox Text="{Binding EntityOperations.CreateLockDuration, Mode=TwoWay}"/>
+                                                <TextBlock Text="Azure default: 00:01:00" Classes="field-hint"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="Duplicate detection window" Classes="field-label"/>
+                                                <TextBox Text="{Binding EntityOperations.CreateDuplicateDetectionHistoryTimeWindow, Mode=TwoWay}"
+                                                         IsEnabled="{Binding EntityOperations.CreateRequiresDuplicateDetection}"/>
+                                                <TextBlock Text="Azure default: off, 00:01:00 when enabled" Classes="field-hint"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="6">
+                                                <TextBlock Text="Max size MB" Classes="field-label"/>
+                                                <TextBox Text="{Binding EntityOperations.CreateMaxSizeInMegabytes, Mode=TwoWay}"/>
+                                                <TextBlock Text="Azure default: 1024" Classes="field-hint"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                <CheckBox Content="Enable duplicate detection"
+                                                          IsChecked="{Binding EntityOperations.CreateRequiresDuplicateDetection, Mode=TwoWay}"/>
+                                                <CheckBox Content="Enable partitioning"
+                                                          IsChecked="{Binding EntityOperations.CreateEnablePartitioning, Mode=TwoWay}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <CheckBox Content="Enable batched operations"
+                                                          IsChecked="{Binding EntityOperations.CreateEnableBatchedOperations, Mode=TwoWay}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </Expander>
 
                             <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
@@ -124,7 +152,7 @@
         <Border Classes="modal-overlay"
                 IsVisible="{Binding EntityOperations.ShowCreateTopicDialog}">
             <Border Classes="modal modal-medium"
-                    Width="560"
+                    Width="640"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Padding="0">
@@ -155,43 +183,68 @@
                     </Border>
 
                     <ScrollViewer Grid.Row="1">
-                        <StackPanel Spacing="16" Margin="24,20">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Topic name" Classes="field-label"/>
-                                <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"
-                                         PlaceholderText="events"/>
-                            </StackPanel>
-
-                            <Expander Header="Advanced options">
-                                <StackPanel Spacing="12" Margin="0,12,0,0">
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                        <StackPanel Grid.Column="0" Spacing="6">
-                                            <TextBlock Text="Default message TTL" Classes="field-label"/>
-                                            <TextBox Text="{Binding EntityOperations.CreateDefaultMessageTimeToLive, Mode=TwoWay}"
-                                                     PlaceholderText="Azure default"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Spacing="6">
-                                            <TextBlock Text="Duplicate detection window" Classes="field-label"/>
-                                            <TextBox Text="{Binding EntityOperations.CreateDuplicateDetectionHistoryTimeWindow, Mode=TwoWay}"
-                                                     PlaceholderText="Azure default"/>
-                                        </StackPanel>
+                        <StackPanel Spacing="14" Margin="24,20">
+                            <Border Classes="dialog-section-surface">
+                                <StackPanel Spacing="12">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Basics"
+                                                   Classes="form-section-title"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1"
+                                                Background="{DynamicResource SurfaceBrand}"
+                                                CornerRadius="12"
+                                                Padding="8,3">
+                                            <TextBlock Text="Topic"
+                                                       Classes="caption"
+                                                       Foreground="{DynamicResource AccentBrand}"/>
+                                        </Border>
                                     </Grid>
 
                                     <StackPanel Spacing="6">
-                                        <TextBlock Text="Max size MB" Classes="field-label"/>
-                                        <TextBox Text="{Binding EntityOperations.CreateMaxSizeInMegabytes, Mode=TwoWay}"
-                                                 PlaceholderText="Azure default"/>
+                                        <TextBlock Text="Topic name" Classes="field-label"/>
+                                        <TextBox Text="{Binding EntityOperations.CreateEntityName, Mode=TwoWay}"
+                                                 PlaceholderText="events"/>
                                     </StackPanel>
-
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                        <CheckBox Grid.Column="0"
-                                                  Content="Enable partitioning"
-                                                  IsChecked="{Binding EntityOperations.CreateEnablePartitioning, Mode=TwoWay}"/>
-                                        <CheckBox Grid.Column="1"
-                                                  Content="Enable batched operations"
-                                                  IsChecked="{Binding EntityOperations.CreateEnableBatchedOperations, Mode=TwoWay}"/>
-                                    </Grid>
                                 </StackPanel>
+                            </Border>
+
+                            <Expander Header="Advanced options">
+                                <Border Classes="form-section" Margin="0,12,0,0">
+                                    <StackPanel Spacing="14">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="Default message TTL" Classes="field-label"/>
+                                                <TextBox Text="{Binding EntityOperations.CreateDefaultMessageTimeToLive, Mode=TwoWay}"/>
+                                                <TextBlock Text="Azure default: Never expires" Classes="field-hint"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="6">
+                                                <TextBlock Text="Duplicate detection window" Classes="field-label"/>
+                                                <TextBox Text="{Binding EntityOperations.CreateDuplicateDetectionHistoryTimeWindow, Mode=TwoWay}"
+                                                         IsEnabled="{Binding EntityOperations.CreateRequiresDuplicateDetection}"/>
+                                                <TextBlock Text="Azure default: off, 00:01:00 when enabled" Classes="field-hint"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="Max size MB" Classes="field-label"/>
+                                            <TextBox Text="{Binding EntityOperations.CreateMaxSizeInMegabytes, Mode=TwoWay}"/>
+                                            <TextBlock Text="Azure default: 1024" Classes="field-hint"/>
+                                        </StackPanel>
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                <CheckBox Content="Enable duplicate detection"
+                                                          IsChecked="{Binding EntityOperations.CreateRequiresDuplicateDetection, Mode=TwoWay}"/>
+                                                <CheckBox Content="Enable partitioning"
+                                                          IsChecked="{Binding EntityOperations.CreateEnablePartitioning, Mode=TwoWay}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <CheckBox Content="Enable batched operations"
+                                                          IsChecked="{Binding EntityOperations.CreateEnableBatchedOperations, Mode=TwoWay}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </Expander>
 
                             <TextBlock Text="{Binding EntityOperations.CreateEntityValidationMessage}"
