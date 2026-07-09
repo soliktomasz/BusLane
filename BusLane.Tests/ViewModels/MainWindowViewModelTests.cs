@@ -376,6 +376,62 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RefreshAsync_WithLoadedQueueMessages_ReloadsMessagesAfterEntitiesRefresh()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(new QueueInfo(
+                "orders",
+                12,
+                10,
+                2,
+                0,
+                1024,
+                DateTimeOffset.UtcNow,
+                false,
+                TimeSpan.FromDays(14),
+                TimeSpan.FromMinutes(1)));
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(
+                Task.FromResult<IEnumerable<MessageInfo>>([CreateMessage("old-message", 1)]),
+                Task.FromResult<IEnumerable<MessageInfo>>([CreateMessage("refreshed-message", 2)]));
+
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        await sut.LoadMessagesCommand.ExecuteAsync(null);
+
+        // Act
+        await sut.RefreshCommand.ExecuteAsync(null);
+
+        // Assert
+        tab.MessageOps.Messages.Should().ContainSingle(message => message.MessageId == "refreshed-message");
+        await operations.Received(2).PeekMessagesAsync(
+            "orders",
+            null,
+            preferences.MessagesPerPage,
+            null,
+            false,
+            false,
+            null,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
     {
         // Arrange
@@ -1253,6 +1309,21 @@ public class MainWindowViewModelTests
         var method = typeof(MainWindowViewModel).GetMethod("HandleAutoRefreshTickAsync", BindingFlags.Instance | BindingFlags.NonPublic);
         method.Should().NotBeNull();
         return (Task)method!.Invoke(sut, [])!;
+    }
+
+    private static MessageInfo CreateMessage(string messageId, long sequenceNumber)
+    {
+        return new MessageInfo(
+            messageId,
+            null,
+            null,
+            $"body-{messageId}",
+            DateTimeOffset.UtcNow,
+            null,
+            sequenceNumber,
+            0,
+            null,
+            new Dictionary<string, object>());
     }
 
     private sealed class TestPreferencesService : IPreferencesService

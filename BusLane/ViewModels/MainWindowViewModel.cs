@@ -1496,22 +1496,32 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// </summary>
     private async Task RefreshActiveTabAsync()
     {
-        if (ActiveTab == null) return;
+        var tab = ActiveTab;
+        if (tab == null) return;
 
         IsLoading = true;
         StatusMessage = "Refreshing...";
 
         try
         {
-            ActiveTab.Navigation.Clear();
+            tab.Navigation.Clear();
 
-            if (ActiveTab.Mode == ConnectionMode.ConnectionString && ActiveTab.SavedConnection != null)
+            if (tab.Mode == ConnectionMode.ConnectionString && tab.SavedConnection != null)
             {
-                await RefreshTabConnectionEntitiesAsync(ActiveTab);
+                await RefreshTabConnectionEntitiesAsync(tab);
             }
-            else if (ActiveTab.Mode == ConnectionMode.AzureAccount && ActiveTab.Namespace != null)
+            else if (tab.Mode == ConnectionMode.AzureAccount && tab.Namespace != null)
             {
-                await ActiveTab.RefreshNamespaceEntitiesAsync();
+                await tab.RefreshNamespaceEntitiesAsync();
+            }
+
+            if (tab.Navigation.CurrentEntityName == null)
+            {
+                tab.MessageOps.Clear();
+            }
+            else
+            {
+                await tab.MessageOps.LoadMessagesAsync();
             }
 
             StatusMessage = "Refreshed successfully";
