@@ -184,6 +184,23 @@ public class ConnectionStorageServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveConnectionAsync_WhenCalledConcurrently_PreservesEveryConnection()
+    {
+        // Arrange
+        var connections = Enumerable.Range(1, 40)
+            .Select(index => CreateTestConnection($"conn-{index}", $"Connection {index}"))
+            .ToList();
+
+        // Act
+        await Task.WhenAll(connections.Select(_sut.SaveConnectionAsync));
+        var freshService = new ConnectionStorageService(_encryptionService, _testStoragePath);
+        var persisted = await freshService.GetConnectionsAsync();
+
+        // Assert
+        persisted.Select(connection => connection.Id).Should().BeEquivalentTo(connections.Select(connection => connection.Id));
+    }
+
+    [Fact]
     public async Task GetConnectionsAsync_WithLegacyUnencryptedData_HandlesBackwardCompatibility()
     {
         // Arrange - Decryption returns unmodified string for unencrypted data

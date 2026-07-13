@@ -24,25 +24,21 @@ internal static class AppPaths
     /// <param name="content">The content to write to the file.</param>
     public static void CreateSecureFile(string path, string content)
     {
-        var dir = Path.GetDirectoryName(path);
-        if (dir != null && !Directory.Exists(dir))
+        AtomicFile.WriteAllText(path, content, static (temporaryPath, temporaryContent) =>
         {
-            Directory.CreateDirectory(dir);
-        }
-
-        if (OperatingSystem.IsWindows())
-        {
-            CreateSecureFileWindows(path, content);
-        }
-        else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-        {
-            CreateSecureFileUnix(path, content);
-        }
-        else
-        {
-            // Fallback: create file without special permissions for unknown platforms
-            File.WriteAllText(path, content);
-        }
+            if (OperatingSystem.IsWindows())
+            {
+                CreateSecureFileWindows(temporaryPath, temporaryContent);
+            }
+            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            {
+                CreateSecureFileUnix(temporaryPath, temporaryContent);
+            }
+            else
+            {
+                File.WriteAllText(temporaryPath, temporaryContent);
+            }
+        });
     }
 
     /// <summary>

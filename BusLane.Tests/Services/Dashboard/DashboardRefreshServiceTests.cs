@@ -223,6 +223,40 @@ public class DashboardRefreshServiceTests
 
         // Assert
         maxConcurrentSubscriptionCalls.Should().BeLessThanOrEqualTo(4);
+        await operations.Received(4).GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WithManyTopics_ProgressivelyCompletesCachedSnapshot()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var summaries = new List<NamespaceDashboardSummary>();
+        _sut.SummaryUpdated += (_, summary) => summaries.Add(summary);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 12)
+                .Select(index => new TopicInfo($"topic-{index}", 1, 1, null, TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                return Task.FromResult<IEnumerable<SubscriptionInfo>>(
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ]);
+            });
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+        await _sut.RefreshAsync("ns", operations);
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        summaries.Select(summary => summary.IsPartial).Should().Equal(true, true, false);
+        summaries[^1].TotalActiveMessages.Should().Be(12);
+        await operations.Received(12).GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

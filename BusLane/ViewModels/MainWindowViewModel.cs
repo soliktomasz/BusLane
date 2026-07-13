@@ -2,7 +2,6 @@ namespace BusLane.ViewModels;
 
 using System.Collections.ObjectModel;
 using Avalonia.Input.Platform;
-using Avalonia.Platform.Storage;
 using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
@@ -58,7 +57,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
     private readonly IScheduledMessageStore? _scheduledMessageStore;
-    private readonly INamespaceTopologyService? _namespaceTopologyService;
     private readonly SemaphoreSlim _startupInitializationGate = new(1, 1);
     private bool _startupInitialized;
 
@@ -85,6 +83,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     public ConfirmationDialogViewModel Confirmation { get; }
     public EntityOperationsViewModel EntityOperations { get; }
     public AppLockViewModel AppLock { get; }
+    public NamespaceTopologyOperationsViewModel TopologyOperations { get; }
 
     // Dashboard components
     public ViewModels.Dashboard.NamespaceDashboardViewModel NamespaceDashboard { get; }
@@ -274,7 +273,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _logSink = logSink;
         _fileDialogService = fileDialogService;
         _scheduledMessageStore = scheduledMessageStore;
-        _namespaceTopologyService = namespaceTopologyService;
 
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
@@ -353,6 +351,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             msg => StatusMessage = msg);
 
         Confirmation = new ConfirmationDialogViewModel();
+        TopologyOperations = new NamespaceTopologyOperationsViewModel(
+            () => ActiveTab?.Operations ?? _operations,
+            () => _fileDialogService,
+            namespaceTopologyService,
+            Confirmation,
+            message => StatusMessage = message,
+            loading => IsLoading = loading,
+            RefreshActiveTabAsync);
         EntityOperations = new EntityOperationsViewModel(
             () => ActiveTab?.Operations ?? _operations,
             () => CurrentNavigation,
@@ -1196,117 +1202,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     #region Namespace Topology
 
-    private static readonly FilePickerFileType TopologyJsonFileType = new("JSON Files")
-    {
-        Patterns = ["*.json"],
-        MimeTypes = ["application/json"]
-    };
+    [RelayCommand]
+    private Task ExportNamespaceTopologyAsync(CancellationToken ct = default) => TopologyOperations.ExportAsync(ct);
 
     [RelayCommand]
-    private async Task ExportNamespaceTopologyAsync(CancellationToken ct = default)
-    {
-        var operations = ActiveTab?.Operations ?? _operations;
-        if (operations == null || _namespaceTopologyService == null || _fileDialogService == null)
-        {
-            StatusMessage = "Topology export requires an active connection and file dialog support";
-            return;
-        }
-
-        var defaultName = $"BusLane_Topology_{DateTime.Now:yyyyMMdd_HHmmss}.json";
-        var filePath = await _fileDialogService.SaveFileAsync("Export Namespace Topology", defaultName, [TopologyJsonFileType]);
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            return;
-        }
-
-        try
-        {
-            IsLoading = true;
-            StatusMessage = "Exporting namespace topology...";
-            var document = await _namespaceTopologyService.ExportAsync(operations, ct);
-            await File.WriteAllTextAsync(filePath, NamespaceTopologySerializer.Serialize(document), ct);
-            StatusMessage = $"Exported namespace topology to {Path.GetFileName(filePath)}";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Unable to export topology: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task ImportNamespaceTopologyAsync(CancellationToken ct = default)
-    {
-        var operations = ActiveTab?.Operations ?? _operations;
-        if (operations == null || _namespaceTopologyService == null || _fileDialogService == null)
-        {
-            StatusMessage = "Topology import requires an active connection and file dialog support";
-            return;
-        }
-
-        var filePath = await _fileDialogService.OpenFileAsync("Import Namespace Topology", [TopologyJsonFileType]);
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            return;
-        }
-
-        try
-        {
-            IsLoading = true;
-            StatusMessage = "Comparing namespace topology...";
-            var document = NamespaceTopologySerializer.Deserialize(await File.ReadAllTextAsync(filePath, ct));
-            var plan = await _namespaceTopologyService.BuildImportPlanAsync(operations, document, ct);
-            var changeCount = plan.Actions.Count(a => a.ActionType != TopologyImportActionType.Skip);
-            if (changeCount == 0)
-            {
-                StatusMessage = "Topology import dry-run found no changes";
-                return;
-            }
-
-            var summary = string.Join(Environment.NewLine, plan.Actions
-                .Where(a => a.ActionType != TopologyImportActionType.Skip)
-                .Take(12)
-                .Select(a => $"- {a.Description}"));
-            if (changeCount > 12)
-            {
-                summary += Environment.NewLine + $"- ...and {changeCount - 12} more action(s)";
-            }
-
-            Confirmation.ShowConfirmation(
-                "Apply Topology Import",
-                $"Dry-run found {changeCount} non-destructive action(s):{Environment.NewLine}{summary}",
-                "Apply",
-                async () =>
-                {
-                    IsLoading = true;
-                    try
-                    {
-                        await _namespaceTopologyService.ApplyImportPlanAsync(operations, document, plan, ct);
-                        StatusMessage = $"Applied {changeCount} topology action(s)";
-                        await RefreshActiveTabAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        StatusMessage = $"Unable to apply topology import: {ex.Message}";
-                    }
-                    finally
-                    {
-                        IsLoading = false;
-                    }
-                });
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Unable to import topology: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
+    private Task ImportNamespaceTopologyAsync(CancellationToken ct = default) => TopologyOperations.ImportAsync(ct);
 
     #endregion
 
@@ -1533,85 +1433,24 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
     }
 
-    /// <summary>
-    /// Refreshes the active tab's entity list.
-    /// </summary>
     private async Task RefreshActiveTabAsync()
     {
         var tab = ActiveTab;
         if (tab == null) return;
 
         IsLoading = true;
-        StatusMessage = "Refreshing...";
-
         try
         {
-            tab.Navigation.Clear();
-
-            if (tab.Mode == ConnectionMode.ConnectionString && tab.SavedConnection != null)
-            {
-                await RefreshTabConnectionEntitiesAsync(tab);
-            }
-            else if (tab.Mode == ConnectionMode.AzureAccount && tab.Namespace != null)
-            {
-                await tab.RefreshNamespaceEntitiesAsync();
-            }
-
-            if (tab.Navigation.CurrentEntityName == null)
-            {
-                tab.MessageOps.Clear();
-            }
-            else
-            {
-                await tab.MessageOps.LoadMessagesAsync();
-            }
-
-            StatusMessage = "Refreshed successfully";
+            await tab.RefreshAsync();
+            StatusMessage = tab.StatusMessage;
         }
-        catch (Exception ex)
+        catch
         {
-            StatusMessage = $"Error refreshing: {ex.Message}";
+            StatusMessage = tab.StatusMessage;
         }
         finally
         {
             IsLoading = false;
-        }
-    }
-
-    /// <summary>
-    /// Refreshes entities for a tab connected via connection string.
-    /// </summary>
-    private async Task RefreshTabConnectionEntitiesAsync(ConnectionTabViewModel tab)
-    {
-        if (tab.Operations == null || tab.SavedConnection == null) return;
-
-        if (tab.SavedConnection.Type == ConnectionType.Namespace)
-        {
-            await tab.RefreshNamespaceEntitiesAsync();
-        }
-        else if (tab.SavedConnection.Type == ConnectionType.Queue && tab.SavedConnection.EntityName != null)
-        {
-            var queueInfo = await tab.Operations.GetQueueInfoAsync(tab.SavedConnection.EntityName);
-            if (queueInfo != null)
-            {
-                tab.Navigation.Queues.Add(queueInfo);
-                tab.Navigation.SelectedQueue = queueInfo;
-                tab.Navigation.SelectedEntity = queueInfo;
-            }
-        }
-        else if (tab.SavedConnection.Type == ConnectionType.Topic && tab.SavedConnection.EntityName != null)
-        {
-            var topicInfo = await tab.Operations.GetTopicInfoAsync(tab.SavedConnection.EntityName);
-            if (topicInfo != null)
-            {
-                tab.Navigation.Topics.Add(topicInfo);
-                tab.Navigation.SelectedTopic = topicInfo;
-                tab.Navigation.SelectedEntity = topicInfo;
-
-                var subs = await tab.Operations.GetSubscriptionsAsync(tab.SavedConnection.EntityName);
-                foreach (var sub in subs)
-                    tab.Navigation.TopicSubscriptions.Add(sub);
-            }
         }
     }
 

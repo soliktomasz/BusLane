@@ -17,7 +17,7 @@ public class ConnectionStorageService : IConnectionStorageService
 
     private readonly IEncryptionService _encryptionService;
     private readonly string _storagePath;
-    private readonly object _lock = new();
+    private readonly SemaphoreSlim _mutationGate = new(1, 1);
     private List<SavedConnection> _connections = [];
     private bool _loaded;
 
@@ -35,58 +35,76 @@ public class ConnectionStorageService : IConnectionStorageService
 
     public async Task<IEnumerable<SavedConnection>> GetConnectionsAsync()
     {
-        await LoadConnectionsAsync();
-        lock (_lock)
+        await _mutationGate.WaitAsync();
+        try
         {
+            await LoadConnectionsAsync();
             return _connections.ToList().AsReadOnly();
+        }
+        finally
+        {
+            _mutationGate.Release();
         }
     }
 
     public async Task SaveConnectionAsync(SavedConnection connection)
     {
-        await LoadConnectionsAsync();
-
-        lock (_lock)
+        await _mutationGate.WaitAsync();
+        try
         {
-            // Remove existing connection with same ID if exists
+            await LoadConnectionsAsync();
             _connections.RemoveAll(c => c.Id == connection.Id);
             _connections.Add(connection);
+            PersistConnections();
         }
-
-        await PersistConnectionsAsync();
+        finally
+        {
+            _mutationGate.Release();
+        }
     }
 
     public async Task DeleteConnectionAsync(string connectionId)
     {
-        await LoadConnectionsAsync();
-
-        lock (_lock)
+        await _mutationGate.WaitAsync();
+        try
         {
+            await LoadConnectionsAsync();
             _connections.RemoveAll(c => c.Id == connectionId);
+            PersistConnections();
         }
-
-        await PersistConnectionsAsync();
+        finally
+        {
+            _mutationGate.Release();
+        }
     }
 
     public async Task<SavedConnection?> GetConnectionAsync(string connectionId)
     {
-        await LoadConnectionsAsync();
-
-        lock (_lock)
+        await _mutationGate.WaitAsync();
+        try
         {
+            await LoadConnectionsAsync();
             return _connections.FirstOrDefault(c => c.Id == connectionId);
+        }
+        finally
+        {
+            _mutationGate.Release();
         }
     }
 
     public async Task ClearAllConnectionsAsync()
     {
-        lock (_lock)
+        await _mutationGate.WaitAsync();
+        try
         {
             _connections.Clear();
             _loaded = true;
+            PersistConnections();
         }
-
-        await PersistConnectionsAsync();
+        finally
+        {
+            _mutationGate.Release();
+        }
     }
 
     private async Task LoadConnectionsAsync()
@@ -98,11 +116,8 @@ public class ConnectionStorageService : IConnectionStorageService
 
         if (!File.Exists(_storagePath))
         {
-            lock (_lock)
-            {
-                _connections = [];
-                _loaded = true;
-            }
+            _connections = [];
+            _loaded = true;
             return;
         }
 
@@ -167,33 +182,24 @@ public class ConnectionStorageService : IConnectionStorageService
             loadedConnections = [];
         }
 
-        lock (_lock)
-        {
-            _connections = loadedConnections ?? [];
-            _loaded = true;
-        }
+        _connections = loadedConnections ?? [];
+        _loaded = true;
     }
 
-    private async Task PersistConnectionsAsync()
+    private void PersistConnections()
     {
-        List<StoredConnection> storedConnections;
-
-        lock (_lock)
-        {
-            // Convert to stored format with encrypted connection strings
-            storedConnections = _connections
-                .Select(conn => new StoredConnection(
-                    conn.Id,
-                    conn.Name,
-                    _encryptionService.Encrypt(conn.ConnectionString),
-                    conn.Type,
-                    conn.EntityName,
-                    conn.CreatedAt,
-                    conn.IsFavorite,
-                    conn.Environment
-                ))
-                .ToList();
-        }
+        var storedConnections = _connections
+            .Select(conn => new StoredConnection(
+                conn.Id,
+                conn.Name,
+                _encryptionService.Encrypt(conn.ConnectionString),
+                conn.Type,
+                conn.EntityName,
+                conn.CreatedAt,
+                conn.IsFavorite,
+                conn.Environment
+            ))
+            .ToList();
 
         var json = JsonSerializer.Serialize(storedConnections, JsonOptions);
         AppPaths.CreateSecureFile(_storagePath, json);

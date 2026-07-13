@@ -307,6 +307,56 @@ public partial class ConnectionTabViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Refreshes entities and messages for this tab while preserving its connection mode.
+    /// </summary>
+    public async Task RefreshAsync()
+    {
+        if (_operations == null)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        StatusMessage = "Refreshing...";
+        LogActivity(LogLevel.Info, $"Tab '{TabTitle}': refreshing");
+
+        try
+        {
+            if (Mode == ConnectionMode.ConnectionString && SavedConnection != null)
+            {
+                await LoadEntitiesAsync(SavedConnection);
+            }
+            else if (Mode == ConnectionMode.AzureAccount && Namespace != null)
+            {
+                Navigation.Clear();
+                await LoadNamespaceEntitiesAsync();
+            }
+
+            if (Navigation.CurrentEntityName == null)
+            {
+                MessageOps.Clear();
+            }
+            else
+            {
+                await MessageOps.LoadMessagesAsync();
+            }
+
+            StatusMessage = "Refreshed successfully";
+            LogActivity(LogLevel.Info, $"Tab '{TabTitle}': refresh completed");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error refreshing: {ex.Message}";
+            LogActivity(LogLevel.Error, $"Tab '{TabTitle}': refresh failed", ex.Message);
+            throw;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
     public async Task<ConnectionHealthReport> ProbeConnectionHealthAsync(CancellationToken ct = default)
     {
         if (_operations == null)

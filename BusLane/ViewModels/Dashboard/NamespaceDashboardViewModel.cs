@@ -37,6 +37,9 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     [ObservableProperty]
     private string? _currentNamespaceId;
 
+    [ObservableProperty]
+    private bool _isPartialSnapshot;
+
     // Metric Cards
     public MetricCardViewModel ActiveMessagesCard { get; }
     public MetricCardViewModel DeadLetterCard { get; }
@@ -231,15 +234,22 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
 
-        _summaryHistory.Add(summary);
-        PruneHistory();
+        IsPartialSnapshot = summary.IsPartial;
+        if (!summary.IsPartial)
+        {
+            _summaryHistory.Add(summary);
+            PruneHistory();
+        }
 
         ActiveMessagesCard.UpdateValue(summary.TotalActiveMessages);
         DeadLetterCard.UpdateValue(summary.TotalDeadLetterMessages);
         ScheduledCard.UpdateValue(summary.TotalScheduledMessages);
         SizeCard.UpdateValue(summary.TotalSizeInBytes / (1024.0 * 1024.0)); // Convert to MB
 
-        UpdateCharts();
+        if (!summary.IsPartial)
+        {
+            UpdateCharts();
+        }
     }
 
     private void OnTopEntitiesUpdated(object? sender, IReadOnlyList<TopEntityInfo> entities)

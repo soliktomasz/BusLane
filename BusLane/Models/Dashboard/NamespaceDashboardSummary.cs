@@ -9,5 +9,6 @@ public record NamespaceDashboardSummary(
     double DeadLetterGrowthPercentage,
     double ScheduledGrowthPercentage,
     double SizeGrowthPercentage,
-    DateTimeOffset Timestamp
+    DateTimeOffset Timestamp,
+    bool IsPartial = false
 );

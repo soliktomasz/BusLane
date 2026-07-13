@@ -114,7 +114,7 @@ public class DashboardPersistenceService : IDashboardPersistenceService
         }
 
         var json = Serialize(envelope);
-        File.WriteAllText(_filePath, json);
+        AtomicFile.WriteAllText(_filePath, json);
     }
 
     private sealed record DashboardEnvelope
