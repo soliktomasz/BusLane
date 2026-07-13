@@ -7,54 +7,24 @@ using Xunit;
 public class PreferencesServiceTests : IDisposable
 {
     private readonly string _preferencesPath;
-    private readonly string? _backupPath;
+    private readonly string _testDirectory;
 
     public PreferencesServiceTests()
     {
-        _preferencesPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BusLane",
-            "preferences.json");
-
-        if (File.Exists(_preferencesPath))
-        {
-            _backupPath = $"{_preferencesPath}.bak-{Guid.NewGuid():N}";
-            Directory.CreateDirectory(Path.GetDirectoryName(_backupPath)!);
-            File.Move(_preferencesPath, _backupPath);
-        }
-
-        if (File.Exists(_preferencesPath))
-        {
-            File.Delete(_preferencesPath);
-        }
+        _testDirectory = Directory.CreateTempSubdirectory("BusLane-PreferencesTests-").FullName;
+        _preferencesPath = Path.Combine(_testDirectory, "preferences.json");
     }
 
     public void Dispose()
     {
-        if (File.Exists(_preferencesPath))
-        {
-            try { File.Delete(_preferencesPath); } catch { }
-        }
-
-        if (!string.IsNullOrWhiteSpace(_backupPath) && File.Exists(_backupPath))
-        {
-            try
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(_preferencesPath)!);
-                File.Move(_backupPath, _preferencesPath);
-            }
-            catch
-            {
-                // Ignore restore issues in test cleanup.
-            }
-        }
+        try { Directory.Delete(_testDirectory, recursive: true); } catch { }
     }
 
     [Fact]
     public void MessagesPerPage_ShouldDefaultTo100()
     {
         // Arrange
-        var sut = new PreferencesService();
+        var sut = new PreferencesService(_preferencesPath);
         
         // Act
         var result = sut.MessagesPerPage;
@@ -67,7 +37,7 @@ public class PreferencesServiceTests : IDisposable
     public void TerminalPreferences_ShouldHaveExpectedDefaults()
     {
         // Arrange
-        var sut = new PreferencesService();
+        var sut = new PreferencesService(_preferencesPath);
 
         // Assert
         sut.HasSeenIntroduction.Should().BeFalse();
@@ -82,7 +52,7 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripTerminalPreferences()
     {
         // Arrange
-        var sut = new PreferencesService
+        var sut = new PreferencesService(_preferencesPath)
         {
             ShowTerminalPanel = true,
             TerminalIsDocked = false,
@@ -92,7 +62,7 @@ public class PreferencesServiceTests : IDisposable
 
         // Act
         sut.Save();
-        var reloaded = new PreferencesService();
+        var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
         reloaded.ShowTerminalPanel.Should().BeTrue();
@@ -105,7 +75,7 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripPinnedEntitiesJson()
     {
         // Arrange
-        var sut = new PreferencesService
+        var sut = new PreferencesService(_preferencesPath)
         {
             PinnedEntitiesJson = """
                 [{"WorkspaceId":"workspace-a","Type":"Queue","Name":"orders","TopicName":null}]
@@ -114,7 +84,7 @@ public class PreferencesServiceTests : IDisposable
 
         // Act
         sut.Save();
-        var reloaded = new PreferencesService();
+        var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
         reloaded.PinnedEntitiesJson.Should().Contain("workspace-a");
@@ -125,14 +95,14 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripTopicActionButtonVisibility()
     {
         // Arrange
-        var sut = new PreferencesService
+        var sut = new PreferencesService(_preferencesPath)
         {
             ShowTopicActionButtons = false
         };
 
         // Act
         sut.Save();
-        var reloaded = new PreferencesService();
+        var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
         reloaded.ShowTopicActionButtons.Should().BeFalse();
@@ -142,14 +112,14 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripIntroductionPreference()
     {
         // Arrange
-        var sut = new PreferencesService
+        var sut = new PreferencesService(_preferencesPath)
         {
             HasSeenIntroduction = true
         };
 
         // Act
         sut.Save();
-        var reloaded = new PreferencesService();
+        var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
         reloaded.HasSeenIntroduction.Should().BeTrue();

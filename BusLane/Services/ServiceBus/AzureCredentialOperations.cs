@@ -561,11 +561,13 @@ public class AzureCredentialOperations : IAzureCredentialOperations
 
     public async Task<int> DeleteMessagesAsync(
         string entityName, string? subscription, IEnumerable<long> sequenceNumbers,
-        bool deadLetter = false, CancellationToken ct = default)
+        bool deadLetter = false, CancellationToken ct = default,
+        bool requiresSession = false, string? sessionId = null)
     {
         var sequenceList = sequenceNumbers.ToList();
         Log.Debug("Deleting {Count} messages from {EntityName}", sequenceList.Count, entityName);
-        var deleted = await ServiceBusOperations.DeleteMessagesAsync(GetClient(), entityName, subscription, sequenceList, deadLetter, ct);
+        var deleted = await ServiceBusOperations.DeleteMessagesAsync(
+            GetClient(), entityName, subscription, sequenceList, deadLetter, ct, requiresSession, sessionId);
         Log.Information("Deleted {DeletedCount} messages from {EntityName}", deleted, entityName);
         return deleted;
     }
@@ -576,9 +578,10 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter = false,
         CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false)
     {
-        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct, progress);
+        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct, progress, requiresSession);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
@@ -614,9 +617,10 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         string? subscription,
         IEnumerable<MessageInfo> messages,
         CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false)
     {
-        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct, progress);
+        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct, progress, requiresSession);
     }
 
     public async Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default)

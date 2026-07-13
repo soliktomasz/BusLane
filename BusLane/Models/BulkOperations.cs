@@ -34,7 +34,7 @@ public enum BulkOperationCompletionStatus
 /// <summary>
 /// Stable identifier for a message in operation previews and results.
 /// </summary>
-public readonly record struct MessageIdentifier(long SequenceNumber, string? MessageId);
+public readonly record struct MessageIdentifier(long SequenceNumber, string? MessageId, string? SessionId = null);
 
 /// <summary>
 /// Entity, DLQ, session, and filter context for a bulk operation preview.

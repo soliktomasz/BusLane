@@ -436,6 +436,64 @@ public class ServiceBusOperationsTests
         results.Should().Equal("item-1", "item-2", "item-3", "item-4");
     }
 
+    [Fact]
+    public async Task ResubmitDeadLetterMessagesDetailedAsync_ReceivesFromDlqWithoutDeferredLookup()
+    {
+        // Arrange
+        var receivedMessages = new[]
+        {
+            ServiceBusModelFactory.ServiceBusReceivedMessage(BinaryData.FromString("other"), messageId: "other", sequenceNumber: 1),
+            ServiceBusModelFactory.ServiceBusReceivedMessage(BinaryData.FromString("target"), messageId: "target", sequenceNumber: 2)
+        };
+        var client = new RecordingServiceBusClient(receivedMessages);
+        var selectedMessage = new MessageInfo(
+            "target", null, "application/json", "target", DateTimeOffset.UtcNow, null,
+            2, 1, null, new Dictionary<string, object>());
+
+        // Act
+        var result = await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(
+            client,
+            "orders",
+            null,
+            [selectedMessage],
+            CancellationToken.None);
+
+        // Assert
+        result.SucceededCount.Should().Be(1);
+        client.CreatedReceiverOptions!.SubQueue.Should().Be(SubQueue.DeadLetter);
+        client.Receiver.DeferredReceiveWasCalled.Should().BeFalse();
+        client.Receiver.CompletedSequenceNumbers.Should().ContainSingle().Which.Should().Be(2);
+        client.Receiver.AbandonedSequenceNumbers.Should().ContainSingle().Which.Should().Be(1);
+        client.Sender.SentMessages.Should().ContainSingle(message => message.Body.ToString() == "target");
+    }
+
+    [Fact]
+    public async Task DeleteMessagesDetailedAsync_WhenSessionRequired_AcceptsSelectedSession()
+    {
+        // Arrange
+        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            BinaryData.FromString("target"),
+            messageId: "target",
+            sequenceNumber: 7,
+            sessionId: "session-a");
+        var client = new RecordingServiceBusClient([receivedMessage], allowSessionReceiver: true);
+
+        // Act
+        var result = await ServiceBusOperations.DeleteMessagesDetailedAsync(
+            client,
+            "orders",
+            null,
+            [new MessageIdentifier(7, "target", "session-a")],
+            deadLetter: false,
+            ct: CancellationToken.None,
+            requiresSession: true);
+
+        // Assert
+        result.SucceededCount.Should().Be(1);
+        client.AcceptedSessionId.Should().Be("session-a");
+        client.SessionReceiver.CompletedSequenceNumbers.Should().ContainSingle().Which.Should().Be(7);
+    }
+
     [Fact(Skip = "Integration test - requires Service Bus client setup. Functionality verified through manual testing.")]
     public async Task PeekMessagesAsync_WithSequenceNumber_ShouldCallPeekWithSequenceNumber()
     {
@@ -459,20 +517,28 @@ public class ServiceBusOperationsTests
         throw new NotImplementedException("This test requires Service Bus client infrastructure setup");
     }
 
-    private sealed class RecordingServiceBusClient(IReadOnlyList<ServiceBusReceivedMessage>? messages = null) : ServiceBusClient
+    private sealed class RecordingServiceBusClient(
+        IReadOnlyList<ServiceBusReceivedMessage>? messages = null,
+        bool allowSessionReceiver = false) : ServiceBusClient
     {
         private readonly IReadOnlyList<ServiceBusReceivedMessage> _messages = messages ?? [];
 
         public string? CreatedQueueName { get; private set; }
         public ServiceBusReceiverOptions? CreatedReceiverOptions { get; private set; }
         public bool SessionAcceptWasCalled { get; private set; }
+        public string? AcceptedSessionId { get; private set; }
+        public FakeReceiver Receiver { get; } = new(messages ?? []);
+        public FakeSessionReceiver SessionReceiver { get; } = new(messages ?? []);
+        public FakeSender Sender { get; } = new();
 
         public override ServiceBusReceiver CreateReceiver(string queueName, ServiceBusReceiverOptions options)
         {
             CreatedQueueName = queueName;
             CreatedReceiverOptions = options;
-            return new FakeReceiver(_messages);
+            return Receiver;
         }
+
+        public override ServiceBusSender CreateSender(string queueOrTopicName) => Sender;
 
         public override Task<ServiceBusSessionReceiver> AcceptNextSessionAsync(
             string queueName,
@@ -490,12 +556,24 @@ public class ServiceBusOperationsTests
             CancellationToken cancellationToken = default)
         {
             SessionAcceptWasCalled = true;
+            AcceptedSessionId = sessionId;
+            if (allowSessionReceiver)
+            {
+                return Task.FromResult<ServiceBusSessionReceiver>(SessionReceiver);
+            }
+
             throw new InvalidOperationException("Session receiver should not be used for dead-letter subqueues.");
         }
     }
 
     private sealed class FakeReceiver(IReadOnlyList<ServiceBusReceivedMessage> messages) : ServiceBusReceiver
     {
+        private bool _received;
+
+        public bool DeferredReceiveWasCalled { get; private set; }
+        public List<long> CompletedSequenceNumbers { get; } = [];
+        public List<long> AbandonedSequenceNumbers { get; } = [];
+
         public override Task<IReadOnlyList<ServiceBusReceivedMessage>> PeekMessagesAsync(
             int maxMessages,
             long? fromSequenceNumber,
@@ -508,10 +586,93 @@ public class ServiceBusOperationsTests
             return Task.FromResult(filteredMessages.Take(maxMessages).ToList().AsReadOnly() as IReadOnlyList<ServiceBusReceivedMessage>);
         }
 
+        public override Task<IReadOnlyList<ServiceBusReceivedMessage>> ReceiveMessagesAsync(
+            int maxMessages,
+            TimeSpan? maxWaitTime = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (_received)
+            {
+                return Task.FromResult<IReadOnlyList<ServiceBusReceivedMessage>>([]);
+            }
+
+            _received = true;
+            return Task.FromResult<IReadOnlyList<ServiceBusReceivedMessage>>(messages.Take(maxMessages).ToList());
+        }
+
+        public override Task<ServiceBusReceivedMessage> ReceiveDeferredMessageAsync(
+            long sequenceNumber,
+            CancellationToken cancellationToken = default)
+        {
+            DeferredReceiveWasCalled = true;
+            throw new InvalidOperationException("Deferred receive must not be used for ordinary DLQ messages.");
+        }
+
+        public override Task CompleteMessageAsync(
+            ServiceBusReceivedMessage message,
+            CancellationToken cancellationToken = default)
+        {
+            CompletedSequenceNumbers.Add(message.SequenceNumber);
+            return Task.CompletedTask;
+        }
+
+        public override Task AbandonMessageAsync(
+            ServiceBusReceivedMessage message,
+            IDictionary<string, object>? propertiesToModify = null,
+            CancellationToken cancellationToken = default)
+        {
+            AbandonedSequenceNumbers.Add(message.SequenceNumber);
+            return Task.CompletedTask;
+        }
+
         public override ValueTask DisposeAsync()
         {
             return ValueTask.CompletedTask;
         }
+    }
+
+    private sealed class FakeSessionReceiver(IReadOnlyList<ServiceBusReceivedMessage> messages) : ServiceBusSessionReceiver
+    {
+        private bool _received;
+
+        public List<long> CompletedSequenceNumbers { get; } = [];
+
+        public override Task<IReadOnlyList<ServiceBusReceivedMessage>> ReceiveMessagesAsync(
+            int maxMessages,
+            TimeSpan? maxWaitTime = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (_received)
+            {
+                return Task.FromResult<IReadOnlyList<ServiceBusReceivedMessage>>([]);
+            }
+
+            _received = true;
+            return Task.FromResult<IReadOnlyList<ServiceBusReceivedMessage>>(messages.Take(maxMessages).ToList());
+        }
+
+        public override Task CompleteMessageAsync(
+            ServiceBusReceivedMessage message,
+            CancellationToken cancellationToken = default)
+        {
+            CompletedSequenceNumbers.Add(message.SequenceNumber);
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class FakeSender : ServiceBusSender
+    {
+        public List<ServiceBusMessage> SentMessages { get; } = [];
+
+        public override Task SendMessageAsync(ServiceBusMessage message, CancellationToken cancellationToken = default)
+        {
+            SentMessages.Add(message);
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private static async Task<IReadOnlyList<TResult>> InvokeBoundedAdminProjectorAsync<TSource, TResult>(

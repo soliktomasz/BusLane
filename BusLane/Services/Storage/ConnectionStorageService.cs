@@ -16,14 +16,21 @@ public class ConnectionStorageService : IConnectionStorageService
     };
 
     private readonly IEncryptionService _encryptionService;
+    private readonly string _storagePath;
     private readonly object _lock = new();
     private List<SavedConnection> _connections = [];
     private bool _loaded;
 
-    public ConnectionStorageService(IEncryptionService encryptionService)
+    public ConnectionStorageService(IEncryptionService encryptionService, string? storagePath = null)
     {
         _encryptionService = encryptionService;
-        AppPaths.EnsureDirectoryExists();
+        _storagePath = storagePath ?? AppPaths.Connections;
+
+        var directory = Path.GetDirectoryName(_storagePath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
     }
 
     public async Task<IEnumerable<SavedConnection>> GetConnectionsAsync()
@@ -89,7 +96,7 @@ public class ConnectionStorageService : IConnectionStorageService
 
         List<SavedConnection>? loadedConnections = null;
 
-        if (!File.Exists(AppPaths.Connections))
+        if (!File.Exists(_storagePath))
         {
             lock (_lock)
             {
@@ -101,7 +108,7 @@ public class ConnectionStorageService : IConnectionStorageService
 
         try
         {
-            var json = await File.ReadAllTextAsync(AppPaths.Connections);
+            var json = await File.ReadAllTextAsync(_storagePath);
             try
             {
                 var storedConnections = DeserializeList<StoredConnection>(json, JsonOptions);
@@ -149,14 +156,14 @@ public class ConnectionStorageService : IConnectionStorageService
                 }
                 catch (Exception legacyEx)
                 {
-                    Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
+                    Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", _storagePath);
                     loadedConnections = [];
                 }
             }
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Failed to load connections from {Path}, starting with empty list", AppPaths.Connections);
+            Log.Warning(ex, "Failed to load connections from {Path}, starting with empty list", _storagePath);
             loadedConnections = [];
         }
 
@@ -189,6 +196,6 @@ public class ConnectionStorageService : IConnectionStorageService
         }
 
         var json = JsonSerializer.Serialize(storedConnections, JsonOptions);
-        AppPaths.CreateSecureFile(AppPaths.Connections, json);
+        AppPaths.CreateSecureFile(_storagePath, json);
     }
 }

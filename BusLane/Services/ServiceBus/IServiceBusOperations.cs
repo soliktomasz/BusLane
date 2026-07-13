@@ -299,7 +299,9 @@ public interface IServiceBusOperations : IAsyncDisposable
         string? subscription,
         IEnumerable<long> sequenceNumbers,
         bool deadLetter = false,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        bool requiresSession = false,
+        string? sessionId = null);
 
     Task<BulkOperationExecutionResult> DeleteMessagesDetailedAsync(
         string entityName,
@@ -307,7 +309,8 @@ public interface IServiceBusOperations : IAsyncDisposable
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter = false,
         CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null);
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false);
 
     Task<int> ResendMessagesAsync(
         string entityName,
@@ -331,7 +334,8 @@ public interface IServiceBusOperations : IAsyncDisposable
         string? subscription,
         IEnumerable<MessageInfo> messages,
         CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null);
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false);
 
     Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default);
 }

@@ -13,6 +13,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
 {
     private readonly string _connectionString;
     private readonly ServiceBusClientPool _clientPool;
+    private readonly bool _ownsClientPool;
     private readonly Lazy<ServiceBusAdministrationClient> _adminClient;
     private readonly Lazy<ServiceBusClient> _client;
     private bool _disposed;
@@ -21,6 +22,7 @@ public class ConnectionStringOperations : IConnectionStringOperations
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         _connectionString = connectionString;
+        _ownsClientPool = clientPool == null;
         _clientPool = clientPool ?? new ServiceBusClientPool();
         _adminClient = new Lazy<ServiceBusAdministrationClient>(() =>
             _clientPool.GetAdminClient(_connectionString));
@@ -514,9 +516,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
 
     public async Task<int> DeleteMessagesAsync(
         string entityName, string? subscription, IEnumerable<long> sequenceNumbers,
-        bool deadLetter = false, CancellationToken ct = default)
+        bool deadLetter = false, CancellationToken ct = default,
+        bool requiresSession = false, string? sessionId = null)
     {
-        return await ServiceBusOperations.DeleteMessagesAsync(GetClient(), entityName, subscription, sequenceNumbers, deadLetter, ct);
+        return await ServiceBusOperations.DeleteMessagesAsync(
+            GetClient(), entityName, subscription, sequenceNumbers, deadLetter, ct, requiresSession, sessionId);
     }
 
     public async Task<BulkOperationExecutionResult> DeleteMessagesDetailedAsync(
@@ -525,9 +529,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter = false,
         CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false)
     {
-        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct, progress);
+        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct, progress, requiresSession);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
@@ -563,9 +568,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string? subscription,
         IEnumerable<MessageInfo> messages,
         CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false)
     {
-        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct, progress);
+        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct, progress, requiresSession);
     }
 
     public async Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default)
@@ -635,7 +641,14 @@ public class ConnectionStringOperations : IConnectionStringOperations
         // Return the client to the pool instead of disposing directly
         if (_client.IsValueCreated)
         {
-            await _clientPool.ReturnClientAsync(_connectionString, _client.Value).ConfigureAwait(false);
+            if (_ownsClientPool)
+            {
+                await _clientPool.DisposeAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                await _clientPool.ReturnClientAsync(_connectionString, _client.Value).ConfigureAwait(false);
+            }
         }
 
         // ServiceBusAdministrationClient doesn't implement IAsyncDisposable

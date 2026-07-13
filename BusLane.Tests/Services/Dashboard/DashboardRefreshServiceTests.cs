@@ -225,6 +225,50 @@ public class DashboardRefreshServiceTests
         maxConcurrentSubscriptionCalls.Should().BeLessThanOrEqualTo(4);
     }
 
+    [Fact]
+    public async Task RefreshAsync_WhenNamespaceChanges_DoesNotPublishStaleOrMixedSnapshot()
+    {
+        // Arrange
+        var operationsA = Substitute.For<IServiceBusOperations>();
+        var operationsB = Substitute.For<IServiceBusOperations>();
+        var subscriptionStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSubscription = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var publishedSummaries = new List<NamespaceDashboardSummary>();
+        _sut.SummaryUpdated += (_, summary) => publishedSummaries.Add(summary);
+
+        operationsA.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([new QueueInfo("queue-a", 10, 10, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))]);
+        operationsA.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns([new TopicInfo("topic-a", 1, 1, null, TimeSpan.FromMinutes(1))]);
+        operationsA.GetSubscriptionsAsync("topic-a", Arg.Any<CancellationToken>())
+            .Returns(async _ =>
+            {
+                subscriptionStarted.TrySetResult();
+                await releaseSubscription.Task;
+                return (IEnumerable<SubscriptionInfo>)
+                [
+                    new SubscriptionInfo("sub-a", "topic-a", 100, 100, 0, null, false)
+                ];
+            });
+
+        operationsB.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([new QueueInfo("queue-b", 20, 20, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))]);
+        operationsB.GetTopicsAsync(Arg.Any<CancellationToken>()).Returns([]);
+
+        // Act
+        var refreshA = _sut.RefreshAsync("namespace-a", operationsA);
+        await subscriptionStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        var refreshB = _sut.RefreshAsync("namespace-b", operationsB);
+        releaseSubscription.TrySetResult();
+        await Task.WhenAll(refreshA, refreshB);
+
+        // Assert
+        publishedSummaries.Should().ContainSingle();
+        publishedSummaries[0].TotalActiveMessages.Should().Be(20);
+        await operationsA.Received(1).GetSubscriptionsAsync("topic-a", Arg.Any<CancellationToken>());
+        await operationsB.DidNotReceive().GetSubscriptionsAsync("topic-a", Arg.Any<CancellationToken>());
+    }
+
     private static void UpdateMaxValue(ref int target, int candidate)
     {
         while (true)
