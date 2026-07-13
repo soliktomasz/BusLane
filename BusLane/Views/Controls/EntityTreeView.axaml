@@ -155,6 +155,7 @@
                                     <Grid ColumnDefinitions="*,Auto" Margin="0,1">
                                         <Button Grid.Column="0"
                                                 Classes="entity-tree-row"
+                                                PointerPressed="OnEntityRowPointerPressed"
                                                 Command="{Binding $parent[Window].DataContext.SelectPinnedEntityCommand}"
                                                 CommandParameter="{Binding}"
                                                 HorizontalAlignment="Stretch"
@@ -247,6 +248,7 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:QueueInfo">
                                         <Button Classes="entity-tree-row"
+                                                PointerPressed="OnEntityRowPointerPressed"
                                                 Command="{Binding $parent[Window].DataContext.SelectQueueForConnectionCommand}"
                                                 CommandParameter="{Binding}"
                                                 HorizontalAlignment="Stretch"
@@ -532,6 +534,7 @@
                                                                 <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
                                                                     <Button Grid.Column="0"
                                                                             Classes="entity-tree-row subscription-tree-row"
+                                                                            PointerPressed="OnEntityRowPointerPressed"
                                                                             Command="{Binding $parent[Window].DataContext.SelectSubscriptionForConnectionCommand}"
                                                                             CommandParameter="{Binding}"
                                                                             HorizontalAlignment="Stretch"

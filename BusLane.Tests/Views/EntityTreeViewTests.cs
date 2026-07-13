@@ -41,6 +41,20 @@ public class EntityTreeViewTests
     }
 
     [Fact]
+    public void EntityTreeViews_SelectionRowsGuardSecondaryPointerActivation()
+    {
+        // Arrange
+        var connectionTree = XDocument.Parse(File.ReadAllText(GetConnectionTreePath()));
+        var azureTree = XDocument.Parse(File.ReadAllText(GetAzureTreePath()));
+
+        // Assert
+        AssertSelectionRowsGuardSecondaryPointerActivation(connectionTree);
+        AssertSelectionRowsGuardSecondaryPointerActivation(azureTree);
+        File.ReadAllText(GetConnectionTreeCodeBehindPath()).Should().Contain("Properties.IsLeftButtonPressed");
+        File.ReadAllText(GetAzureTreeCodeBehindPath()).Should().Contain("Properties.IsLeftButtonPressed");
+    }
+
+    [Fact]
     public void EntityTreeView_CollapsesGlobalOperationsIntoHeaderFlyout()
     {
         // Arrange
@@ -226,6 +240,10 @@ public class EntityTreeViewTests
             "AzureEntityTreeView.axaml"));
     }
 
+    private static string GetConnectionTreeCodeBehindPath() => GetConnectionTreePath() + ".cs";
+
+    private static string GetAzureTreeCodeBehindPath() => GetAzureTreePath() + ".cs";
+
     private static string GetSubscriptionCreateDialogPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -290,6 +308,22 @@ public class EntityTreeViewTests
             .ToList();
 
         buttonsWithoutHoverClass.Should().BeEmpty();
+    }
+
+    private static void AssertSelectionRowsGuardSecondaryPointerActivation(XDocument document)
+    {
+        var selectionButtons = document.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Where(element => element.Attribute("Command")?.Value?.Contains("Select", StringComparison.Ordinal) == true)
+            .Where(element => element.Attribute("Command")?.Value?.Contains("EntityCommand", StringComparison.Ordinal) == true ||
+                              element.Attribute("Command")?.Value?.Contains("Queue", StringComparison.Ordinal) == true ||
+                              element.Attribute("Command")?.Value?.Contains("Subscription", StringComparison.Ordinal) == true)
+            .ToList();
+
+        selectionButtons.Should().NotBeEmpty();
+        selectionButtons.Should().OnlyContain(element =>
+            element.Attribute("PointerPressed") != null &&
+            element.Attribute("PointerPressed")!.Value == "OnEntityRowPointerPressed");
     }
 
     private static void AssertInlineActionVisibilityBinding(XDocument document, string tooltip)

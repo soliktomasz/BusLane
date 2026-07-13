@@ -42,6 +42,24 @@ public class MessagesPanelViewTests
     }
 
     [Fact]
+    public void MessagesPanel_MessageRowsGuardSecondaryPointerSelection()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetMessagesPanelPath()));
+
+        // Act
+        var messageRows = document.Descendants()
+            .Where(element => element.Attribute("Classes")?.Value == "message-row")
+            .ToList();
+
+        // Assert
+        messageRows.Should().HaveCount(2);
+        messageRows.Should().OnlyContain(element =>
+            element.Attribute("PointerPressed") != null &&
+            element.Attribute("PointerPressed")!.Value == "OnMessageRowPointerPressed");
+    }
+
+    [Fact]
     public void MessagesPanel_DefinesOperatorEmptyStates()
     {
         // Arrange

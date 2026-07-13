@@ -32,6 +32,12 @@ public partial class AzureEntityTreeView : UserControl
     {
         if (sender is Grid grid && grid.DataContext is TopicInfo topic)
         {
+            if (!e.GetCurrentPoint(grid).Properties.IsLeftButtonPressed)
+            {
+                e.Handled = true;
+                return;
+            }
+
             var mainWindow = TopLevel.GetTopLevel(this);
             if (mainWindow?.DataContext is MainWindowViewModel vm)
             {
@@ -41,5 +47,12 @@ public partial class AzureEntityTreeView : UserControl
             }
         }
     }
-}
 
+    private void OnEntityRowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Control control && !e.GetCurrentPoint(control).Properties.IsLeftButtonPressed)
+        {
+            e.Handled = true;
+        }
+    }
+}

@@ -411,6 +411,7 @@
                                         </CheckBox>
                                     <Border Grid.Column="1"
                                             Classes="message-row"
+                                            PointerPressed="OnMessageRowPointerPressed"
                                             Margin="0,4">
                                         <Border.ContextMenu>
                                             <ContextMenu>
@@ -667,6 +668,7 @@
                                         </CheckBox>
                                     <Border Grid.Column="1"
                                             Classes="message-row"
+                                            PointerPressed="OnMessageRowPointerPressed"
                                             Margin="0,4">
                                         <Border.ContextMenu>
                                             <ContextMenu>
