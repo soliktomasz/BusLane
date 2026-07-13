@@ -1,9 +1,9 @@
 namespace BusLane.ViewModels.Core;
 
-using Avalonia.Platform.Storage;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
+using Avalonia.Platform.Storage;
 
 /// <summary>
 /// Coordinates namespace topology import and export UI workflows.
@@ -42,6 +42,11 @@ public sealed class NamespaceTopologyOperationsViewModel
         _refreshAsync = refreshAsync;
     }
 
+    /// <summary>
+    /// Exports current namespace topology to a user-selected JSON file.
+    /// </summary>
+    /// <param name="ct">Cancellation token for export and file operations.</param>
+    /// <returns>A task representing the export workflow.</returns>
     public async Task ExportAsync(CancellationToken ct = default)
     {
         var operations = _getOperations();
@@ -52,18 +57,18 @@ public sealed class NamespaceTopologyOperationsViewModel
             return;
         }
 
-        var defaultName = $"BusLane_Topology_{DateTime.Now:yyyyMMdd_HHmmss}.json";
-        var filePath = await fileDialogService.SaveFileAsync(
-            "Export Namespace Topology",
-            defaultName,
-            [TopologyJsonFileType]);
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            return;
-        }
-
         try
         {
+            var defaultName = $"BusLane_Topology_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var filePath = await fileDialogService.SaveFileAsync(
+                "Export Namespace Topology",
+                defaultName,
+                [TopologyJsonFileType]);
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return;
+            }
+
             _setLoading(true);
             _setStatusMessage("Exporting namespace topology...");
             var document = await _topologyService.ExportAsync(operations, ct);
@@ -80,6 +85,11 @@ public sealed class NamespaceTopologyOperationsViewModel
         }
     }
 
+    /// <summary>
+    /// Imports a user-selected topology JSON file and prepares a confirmed apply plan.
+    /// </summary>
+    /// <param name="ct">Cancellation token for import and topology operations.</param>
+    /// <returns>A task representing the import workflow.</returns>
     public async Task ImportAsync(CancellationToken ct = default)
     {
         var operations = _getOperations();
@@ -90,14 +100,14 @@ public sealed class NamespaceTopologyOperationsViewModel
             return;
         }
 
-        var filePath = await fileDialogService.OpenFileAsync("Import Namespace Topology", [TopologyJsonFileType]);
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            return;
-        }
-
         try
         {
+            var filePath = await fileDialogService.OpenFileAsync("Import Namespace Topology", [TopologyJsonFileType]);
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return;
+            }
+
             _setLoading(true);
             _setStatusMessage("Comparing namespace topology...");
             var document = NamespaceTopologySerializer.Deserialize(await File.ReadAllTextAsync(filePath, ct));
@@ -124,6 +134,12 @@ public sealed class NamespaceTopologyOperationsViewModel
                 "Apply",
                 async () =>
                 {
+                    if (!ReferenceEquals(_getOperations(), operations))
+                    {
+                        _setStatusMessage("Unable to apply topology import: active connection changed");
+                        return;
+                    }
+
                     _setLoading(true);
                     try
                     {

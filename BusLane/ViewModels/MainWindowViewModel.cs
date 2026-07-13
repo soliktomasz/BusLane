@@ -1444,9 +1444,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             await tab.RefreshAsync();
             StatusMessage = tab.StatusMessage;
         }
-        catch
+        catch (Exception ex)
         {
-            StatusMessage = tab.StatusMessage;
+            tab.StatusMessage = ex.Message;
+            StatusMessage = ex.Message;
         }
         finally
         {

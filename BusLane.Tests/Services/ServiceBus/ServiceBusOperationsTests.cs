@@ -456,7 +456,7 @@ public class ServiceBusOperationsTests
             "orders",
             null,
             [selectedMessage],
-            CancellationToken.None);
+            ct: CancellationToken.None);
 
         // Assert
         result.SucceededCount.Should().Be(1);
@@ -487,6 +487,35 @@ public class ServiceBusOperationsTests
             deadLetter: false,
             ct: CancellationToken.None,
             requiresSession: true);
+
+        // Assert
+        result.SucceededCount.Should().Be(1);
+        client.AcceptedSessionId.Should().Be("session-a");
+        client.SessionReceiver.CompletedSequenceNumbers.Should().ContainSingle().Which.Should().Be(7);
+    }
+
+    [Fact]
+    public async Task ResubmitDeadLetterMessagesDetailedAsync_WhenSessionRequired_AcceptsSelectedSession()
+    {
+        // Arrange
+        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            BinaryData.FromString("target"),
+            messageId: "target",
+            sequenceNumber: 7,
+            sessionId: "session-a");
+        var client = new RecordingServiceBusClient([receivedMessage], allowSessionReceiver: true);
+        var selectedMessage = new MessageInfo(
+            "target", null, "application/json", "target", DateTimeOffset.UtcNow, null,
+            7, 1, "session-a", new Dictionary<string, object>());
+
+        // Act
+        var result = await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(
+            client,
+            "orders",
+            null,
+            [selectedMessage],
+            requiresSession: true,
+            ct: CancellationToken.None);
 
         // Assert
         result.SucceededCount.Should().Be(1);

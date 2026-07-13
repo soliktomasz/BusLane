@@ -109,11 +109,11 @@ public class MetricsHistoryStoreTests : IDisposable
     {
         // Arrange
         var now = new DateTimeOffset(2026, 3, 7, 10, 0, 0, TimeSpan.Zero);
-        var sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
-        sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-2), "orders", "ActiveMessageCount", 10)]);
+        var _sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+        _sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-2), "orders", "ActiveMessageCount", 10)]);
 
         // Act
-        sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 20)]);
+        _sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 20)]);
 
         // Assert
         File.ReadAllLines(_storePath).Should().HaveCount(2);
@@ -132,14 +132,18 @@ public class MetricsHistoryStoreTests : IDisposable
         {
             new MetricSnapshot(now.AddMinutes(-2), "orders", "ActiveMessageCount", 10)
         }));
-        var sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+        var _sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
 
         // Act
-        sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 20)]);
+        _sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 20)]);
 
         // Assert
         File.ReadAllText(_storePath).TrimStart().Should().NotStartWith("[");
         File.ReadAllLines(_storePath).Should().HaveCount(2);
+        var reloaded = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+        reloaded.GetHistory("orders", "ActiveMessageCount", TimeSpan.FromHours(1))
+            .Select(snapshot => snapshot.Value)
+            .Should().Equal(10, 20);
     }
 
     [Fact]
@@ -147,8 +151,8 @@ public class MetricsHistoryStoreTests : IDisposable
     {
         // Arrange
         var now = new DateTimeOffset(2026, 3, 7, 10, 0, 0, TimeSpan.Zero);
-        var sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
-        sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 10)]);
+        var _sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+        _sut.RecordSnapshots([new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 10)]);
         File.AppendAllText(_storePath, "{\"timestamp\":");
 
         // Act
@@ -157,6 +161,56 @@ public class MetricsHistoryStoreTests : IDisposable
 
         // Assert
         history.Should().ContainSingle().Which.Value.Should().Be(10);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void GetHistory_WithExpiredPersistedSnapshots_FiltersAndRewritesHistory(bool useJsonArray)
+    {
+        // Arrange
+        var now = new DateTimeOffset(2026, 3, 7, 10, 0, 0, TimeSpan.Zero);
+        var snapshots = new[]
+        {
+            new MetricSnapshot(now.AddDays(-8), "orders", "ActiveMessageCount", 10),
+            new MetricSnapshot(now.AddMinutes(-5), "orders", "ActiveMessageCount", 20)
+        };
+        var content = useJsonArray
+            ? JsonSerializer.Serialize(snapshots)
+            : string.Join(Environment.NewLine, snapshots.Select(snapshot => JsonSerializer.Serialize(snapshot))) + Environment.NewLine;
+        File.WriteAllText(_storePath, content);
+        var _sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+
+        // Act
+        _sut.RecordSnapshots([new MetricSnapshot(now, "orders", "ActiveMessageCount", 30)]);
+
+        // Assert
+        _sut.GetHistory("orders", "ActiveMessageCount", TimeSpan.FromDays(30))
+            .Select(snapshot => snapshot.Value)
+            .Should().Equal(20, 30);
+        File.ReadLines(_storePath)
+            .Select(line => JsonDocument.Parse(line).RootElement.GetProperty("value").GetDouble())
+            .Should().Equal(20, 30);
+    }
+
+    [Fact]
+    public void GetHistory_WithMalformedNonFinalRecord_SurfacesDeserializationFailure()
+    {
+        // Arrange
+        var now = new DateTimeOffset(2026, 3, 7, 10, 0, 0, TimeSpan.Zero);
+        File.WriteAllLines(_storePath,
+        [
+            JsonSerializer.Serialize(new MetricSnapshot(now.AddMinutes(-2), "orders", "ActiveMessageCount", 10)),
+            "{malformed}",
+            JsonSerializer.Serialize(new MetricSnapshot(now.AddMinutes(-1), "orders", "ActiveMessageCount", 20))
+        ]);
+        var _sut = new MetricsHistoryStore(_storePath, TimeSpan.FromDays(7), () => now);
+
+        // Act
+        var act = () => _sut.GetHistory("orders", "ActiveMessageCount", TimeSpan.FromHours(1));
+
+        // Assert
+        act.Should().Throw<JsonException>();
     }
 
     public void Dispose()

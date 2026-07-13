@@ -260,6 +260,54 @@ public class DashboardRefreshServiceTests
     }
 
     [Fact]
+    public async Task RefreshAsync_WhenSubscriptionFetchFails_RetriesWithoutCachingEmptyBaseline()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var summaries = new List<NamespaceDashboardSummary>();
+        _sut.SummaryUpdated += (_, summary) => summaries.Add(summary);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns([new TopicInfo("topic-a", 1, 1, null, TimeSpan.FromMinutes(1))]);
+        operations.GetSubscriptionsAsync("topic-a", Arg.Any<CancellationToken>())
+            .Returns(
+                _ => throw new InvalidOperationException("temporary failure"),
+                _ => Task.FromResult<IEnumerable<SubscriptionInfo>>(
+                [
+                    new SubscriptionInfo("sub-a", "topic-a", 5, 5, 0, null, false)
+                ]));
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        summaries.Select(summary => summary.IsPartial).Should().Equal(true, false);
+        summaries.Select(summary => summary.TotalActiveMessages).Should().Equal(0, 5);
+        await operations.Received(2).GetSubscriptionsAsync("topic-a", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenNamespaceChangesWithoutOperations_DoesNotReusePreviousOperations()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var summaries = new List<NamespaceDashboardSummary>();
+        _sut.SummaryUpdated += (_, summary) => summaries.Add(summary);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([new QueueInfo("queue-a", 10, 10, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>()).Returns([]);
+
+        // Act
+        await _sut.RefreshAsync("namespace-a", operations);
+        await _sut.RefreshAsync("namespace-b");
+
+        // Assert
+        summaries.Select(summary => summary.TotalActiveMessages).Should().Equal(10, 0);
+        await operations.Received(1).GetQueuesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task RefreshAsync_WhenNamespaceChanges_DoesNotPublishStaleOrMixedSnapshot()
     {
         // Arrange

@@ -451,8 +451,8 @@ public class MainWindowViewModelTests
                 null,
                 Arg.Any<IEnumerable<MessageIdentifier>>(),
                 false,
-                Arg.Any<CancellationToken>(),
-                Arg.Any<IProgress<BulkOperationProgress>?>())
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                ct: Arg.Any<CancellationToken>())
             .Returns(new BulkOperationExecutionResult(
                 BulkOperationType.Delete,
                 RequestedCount: 1,

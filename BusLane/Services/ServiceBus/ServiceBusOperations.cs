@@ -31,6 +31,9 @@ public record ServiceBusOperationOptions
     /// <summary>Number of consecutive empty batches before stopping an operation.</summary>
     public int MaxEmptyBatches { get; init; } = 3;
 
+    /// <summary>Maximum number of messages scanned while locating selected messages.</summary>
+    public int MaxSelectedMessageScanCount { get; init; } = 1000;
+
     /// <summary>Number of messages to send per batch during resend operations.</summary>
     public int ResendBatchSize { get; init; } = 50;
 
@@ -61,6 +64,7 @@ internal static class ServiceBusOperations
     public static TimeSpan DeleteReceiveTimeout => Options.DeleteReceiveTimeout;
     public static TimeSpan ReceiveTimeout => Options.ReceiveTimeout;
     public static int MaxEmptyBatches => Options.MaxEmptyBatches;
+    public static int MaxSelectedMessageScanCount => Options.MaxSelectedMessageScanCount;
     public static int ResendBatchSize => Options.ResendBatchSize;
 
     internal static readonly TimeSpan SessionAcceptTimeout = TimeSpan.FromSeconds(5);
@@ -1065,9 +1069,9 @@ internal static class ServiceBusOperations
         string? subscription,
         IEnumerable<long> sequenceNumbers,
         bool deadLetter,
-        CancellationToken ct,
         bool requiresSession = false,
-        string? sessionId = null)
+        string? sessionId = null,
+        CancellationToken ct = default)
     {
         var result = await DeleteMessagesDetailedAsync(
             client,
@@ -1075,8 +1079,8 @@ internal static class ServiceBusOperations
             subscription,
             sequenceNumbers.Select(sequenceNumber => new MessageIdentifier(sequenceNumber, null, sessionId)),
             deadLetter,
-            ct,
-            requiresSession: requiresSession);
+            requiresSession: requiresSession,
+            ct: ct);
 
         return result.SucceededCount;
     }
@@ -1087,9 +1091,9 @@ internal static class ServiceBusOperations
         string? subscription,
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter,
-        CancellationToken ct,
         IProgress<BulkOperationProgress>? progress = null,
-        bool requiresSession = false)
+        bool requiresSession = false,
+        CancellationToken ct = default)
     {
         var requestedMessages = messages.ToList();
         requiresSession |= requestedMessages.Any(message => !string.IsNullOrWhiteSpace(message.SessionId));
@@ -1194,9 +1198,9 @@ internal static class ServiceBusOperations
         ServiceBusClient client,
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        var result = await ResendMessagesDetailedAsync(client, entityName, messages, ct);
+        var result = await ResendMessagesDetailedAsync(client, entityName, messages, ct: ct);
         return result.SucceededCount;
     }
 
@@ -1204,8 +1208,8 @@ internal static class ServiceBusOperations
         ServiceBusClient client,
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        CancellationToken ct = default)
     {
         await using var sender = client.CreateSender(entityName);
 
@@ -1304,9 +1308,9 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        var result = await ResubmitDeadLetterMessagesDetailedAsync(client, entityName, subscription, messages, ct);
+        var result = await ResubmitDeadLetterMessagesDetailedAsync(client, entityName, subscription, messages, ct: ct);
         return result.SucceededCount;
     }
 
@@ -1315,9 +1319,9 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct,
         IProgress<BulkOperationProgress>? progress = null,
-        bool requiresSession = false)
+        bool requiresSession = false,
+        CancellationToken ct = default)
     {
         var messageList = messages.ToList();
         var requestedMessages = messageList
@@ -1440,10 +1444,31 @@ internal static class ServiceBusOperations
         var remaining = requestedMessages.ToHashSet();
         var heldMessages = new List<ServiceBusReceivedMessage>();
         var consecutiveEmptyBatches = 0;
+        var scannedMessages = 0;
+
+        async Task ReleaseHeldMessagesAsync()
+        {
+            foreach (var heldMessage in heldMessages)
+            {
+                try
+                {
+                    await receiver.AbandonMessageAsync(heldMessage, cancellationToken: CancellationToken.None);
+                }
+                catch (ServiceBusException ex)
+                {
+                    Log.Debug(ex, "Failed to release held message {SequenceNumber}", heldMessage.SequenceNumber);
+                }
+            }
+
+            heldMessages.Clear();
+        }
 
         try
         {
-            while (remaining.Count > 0 && consecutiveEmptyBatches < MaxEmptyBatches && !ct.IsCancellationRequested)
+            while (remaining.Count > 0 &&
+                   consecutiveEmptyBatches < MaxEmptyBatches &&
+                   scannedMessages < MaxSelectedMessageScanCount &&
+                   !ct.IsCancellationRequested)
             {
                 var receivedMessages = await receiver.ReceiveMessagesAsync(DeleteBatchSize, DeleteReceiveTimeout, ct);
                 if (receivedMessages.Count == 0)
@@ -1453,6 +1478,7 @@ internal static class ServiceBusOperations
                 }
 
                 consecutiveEmptyBatches = 0;
+                scannedMessages += receivedMessages.Count;
                 foreach (var receivedMessage in receivedMessages)
                 {
                     MessageIdentifier? matchedIdentifier = null;
@@ -1496,21 +1522,16 @@ internal static class ServiceBusOperations
                         totalRequestedCount,
                         $"{completedVerb} {processedCount} of {totalRequestedCount} message(s)"));
                 }
+
+                if (heldMessages.Count >= DeleteBatchSize)
+                {
+                    await ReleaseHeldMessagesAsync();
+                }
             }
         }
         finally
         {
-            foreach (var heldMessage in heldMessages)
-            {
-                try
-                {
-                    await receiver.AbandonMessageAsync(heldMessage, cancellationToken: CancellationToken.None);
-                }
-                catch (ServiceBusException ex)
-                {
-                    Log.Debug(ex, "Failed to release held message {SequenceNumber}", heldMessage.SequenceNumber);
-                }
-            }
+            await ReleaseHeldMessagesAsync();
         }
     }
 
@@ -1524,9 +1545,13 @@ internal static class ServiceBusOperations
             To = deadLetterMessage.To,
             ReplyTo = deadLetterMessage.ReplyTo,
             ReplyToSessionId = deadLetterMessage.ReplyToSessionId,
-            SessionId = deadLetterMessage.SessionId,
-            PartitionKey = deadLetterMessage.PartitionKey
+            SessionId = deadLetterMessage.SessionId
         };
+
+        if (deadLetterMessage.PartitionKey != null)
+        {
+            message.PartitionKey = deadLetterMessage.PartitionKey;
+        }
 
         foreach (var property in deadLetterMessage.ApplicationProperties)
         {
@@ -1546,7 +1571,7 @@ internal static class ServiceBusOperations
         bool deadLetter,
         CancellationToken ct)
     {
-        _ = await PurgeMessagesDetailedAsync(client, entityName, subscription, deadLetter, ct);
+        _ = await PurgeMessagesDetailedAsync(client, entityName, subscription, deadLetter, ct: ct);
     }
 
     public static async Task<BulkOperationExecutionResult> PurgeMessagesDetailedAsync(
@@ -1554,8 +1579,8 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         bool deadLetter,
-        CancellationToken ct,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        CancellationToken ct = default)
     {
         var options = new ServiceBusReceiverOptions
         {

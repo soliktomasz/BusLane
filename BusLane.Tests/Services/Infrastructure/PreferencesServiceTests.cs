@@ -24,10 +24,10 @@ public class PreferencesServiceTests : IDisposable
     public void MessagesPerPage_ShouldDefaultTo100()
     {
         // Arrange
-        var sut = new PreferencesService(_preferencesPath);
+        var _sut = new PreferencesService(_preferencesPath);
         
         // Act
-        var result = sut.MessagesPerPage;
+        var result = _sut.MessagesPerPage;
         
         // Assert
         result.Should().Be(100);
@@ -37,22 +37,22 @@ public class PreferencesServiceTests : IDisposable
     public void TerminalPreferences_ShouldHaveExpectedDefaults()
     {
         // Arrange
-        var sut = new PreferencesService(_preferencesPath);
+        var _sut = new PreferencesService(_preferencesPath);
 
         // Assert
-        sut.HasSeenIntroduction.Should().BeFalse();
-        sut.ShowTopicActionButtons.Should().BeTrue();
-        sut.ShowTerminalPanel.Should().BeFalse();
-        sut.TerminalIsDocked.Should().BeTrue();
-        sut.TerminalDockHeight.Should().Be(260);
-        sut.TerminalWindowBoundsJson.Should().BeNull();
+        _sut.HasSeenIntroduction.Should().BeFalse();
+        _sut.ShowTopicActionButtons.Should().BeTrue();
+        _sut.ShowTerminalPanel.Should().BeFalse();
+        _sut.TerminalIsDocked.Should().BeTrue();
+        _sut.TerminalDockHeight.Should().Be(260);
+        _sut.TerminalWindowBoundsJson.Should().BeNull();
     }
 
     [Fact]
     public void SaveAndReload_ShouldRoundTripTerminalPreferences()
     {
         // Arrange
-        var sut = new PreferencesService(_preferencesPath)
+        var _sut = new PreferencesService(_preferencesPath)
         {
             ShowTerminalPanel = true,
             TerminalIsDocked = false,
@@ -61,7 +61,7 @@ public class PreferencesServiceTests : IDisposable
         };
 
         // Act
-        sut.Save();
+        _sut.Save();
         var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
@@ -75,7 +75,7 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripPinnedEntitiesJson()
     {
         // Arrange
-        var sut = new PreferencesService(_preferencesPath)
+        var _sut = new PreferencesService(_preferencesPath)
         {
             PinnedEntitiesJson = """
                 [{"WorkspaceId":"workspace-a","Type":"Queue","Name":"orders","TopicName":null}]
@@ -83,7 +83,7 @@ public class PreferencesServiceTests : IDisposable
         };
 
         // Act
-        sut.Save();
+        _sut.Save();
         var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
@@ -95,13 +95,13 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripTopicActionButtonVisibility()
     {
         // Arrange
-        var sut = new PreferencesService(_preferencesPath)
+        var _sut = new PreferencesService(_preferencesPath)
         {
             ShowTopicActionButtons = false
         };
 
         // Act
-        sut.Save();
+        _sut.Save();
         var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert
@@ -112,13 +112,13 @@ public class PreferencesServiceTests : IDisposable
     public void SaveAndReload_ShouldRoundTripIntroductionPreference()
     {
         // Arrange
-        var sut = new PreferencesService(_preferencesPath)
+        var _sut = new PreferencesService(_preferencesPath)
         {
             HasSeenIntroduction = true
         };
 
         // Act
-        sut.Save();
+        _sut.Save();
         var reloaded = new PreferencesService(_preferencesPath);
 
         // Assert

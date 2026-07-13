@@ -285,7 +285,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public void ClearMessageSearch() => MessageSearchText = "";
 
     [RelayCommand]
-    public async Task LoadMessagesAsync()
+    public async Task LoadMessagesAsync(CancellationToken ct = default)
     {
         if (IsLoadingMessages)
         {
@@ -298,7 +298,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
         var knownCount = IsSessionScoped
             ? (_getShowDeadLetter() ? _scopedKnownDeadLetterCount : _scopedKnownActiveCount)
             : _getKnownMessageCount();
-        await LoadFirstPageAsync(entityName, _getSubscriptionName(), _getShowDeadLetter(), _getRequiresSession(), knownCount);
+        await LoadFirstPageAsync(entityName, _getSubscriptionName(), _getShowDeadLetter(), _getRequiresSession(), knownCount, ct);
     }
 
     [RelayCommand]
@@ -501,7 +501,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
         string? subscription,
         bool deadLetter,
         bool requiresSession,
-        long knownTotalCount = 0)
+        long knownTotalCount = 0,
+        CancellationToken ct = default)
     {
         if (IsLoadingMessages)
         {
@@ -540,7 +541,7 @@ public partial class MessageOperationsViewModel : ViewModelBase
             _nextFromSequenceNumber = null;
 
             // Load first page
-            var page1Result = await LoadPageAsync(1, null);
+            var page1Result = await LoadPageAsync(1, null, ct);
             var page1Messages = page1Result.Messages;
             _nextFromSequenceNumber = page1Result.NextFromSequenceNumber;
 
@@ -562,6 +563,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
             {
                 _setStatus("No messages found");
             }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Azure.Messaging.ServiceBus.ServiceBusException sbEx) when (sbEx.Reason == Azure.Messaging.ServiceBus.ServiceBusFailureReason.MessagingEntityNotFound)
         {
@@ -730,7 +735,10 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     public bool CanLoadPreviousPage => Pagination.CanGoPrevious;
 
-    private async Task<PageLoadResult> LoadPageAsync(int pageNumber, long? fromSequenceNumber)
+    private async Task<PageLoadResult> LoadPageAsync(
+        int pageNumber,
+        long? fromSequenceNumber,
+        CancellationToken ct = default)
     {
         var operations = _getOperations();
         if (operations == null) return new PageLoadResult(new List<MessageInfo>().AsReadOnly(), fromSequenceNumber);
@@ -743,7 +751,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
             fromSequenceNumber,
             _currentDeadLetter,
             _currentRequiresSession,
-            ScopedSessionId)).ToList();
+            ScopedSessionId,
+            ct)).ToList();
 
         var nextFrom = fromSequenceNumber;
         if (messages.Count > 0)

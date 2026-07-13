@@ -508,19 +508,19 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string entityName,
         string? subscription,
         bool deadLetter,
-        CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        CancellationToken ct = default)
     {
-        return await ServiceBusOperations.PurgeMessagesDetailedAsync(GetClient(), entityName, subscription, deadLetter, ct, progress);
+        return await ServiceBusOperations.PurgeMessagesDetailedAsync(GetClient(), entityName, subscription, deadLetter, progress, ct);
     }
 
     public async Task<int> DeleteMessagesAsync(
         string entityName, string? subscription, IEnumerable<long> sequenceNumbers,
-        bool deadLetter = false, CancellationToken ct = default,
-        bool requiresSession = false, string? sessionId = null)
+        bool deadLetter = false, bool requiresSession = false,
+        string? sessionId = null, CancellationToken ct = default)
     {
         return await ServiceBusOperations.DeleteMessagesAsync(
-            GetClient(), entityName, subscription, sequenceNumbers, deadLetter, ct, requiresSession, sessionId);
+            GetClient(), entityName, subscription, sequenceNumbers, deadLetter, requiresSession, sessionId, ct);
     }
 
     public async Task<BulkOperationExecutionResult> DeleteMessagesDetailedAsync(
@@ -528,11 +528,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string? subscription,
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter = false,
-        CancellationToken ct = default,
         IProgress<BulkOperationProgress>? progress = null,
-        bool requiresSession = false)
+        bool requiresSession = false,
+        CancellationToken ct = default)
     {
-        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, ct, progress, requiresSession);
+        return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, progress, requiresSession, ct);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
@@ -547,10 +547,10 @@ public class ConnectionStringOperations : IConnectionStringOperations
     public async Task<BulkOperationExecutionResult> ResendMessagesDetailedAsync(
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        CancellationToken ct = default)
     {
-        return await ServiceBusOperations.ResendMessagesDetailedAsync(GetClient(), entityName, messages, ct, progress);
+        return await ServiceBusOperations.ResendMessagesDetailedAsync(GetClient(), entityName, messages, progress, ct);
     }
 
     public async Task<int> ResubmitDeadLetterMessagesAsync(
@@ -567,11 +567,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default,
         IProgress<BulkOperationProgress>? progress = null,
-        bool requiresSession = false)
+        bool requiresSession = false,
+        CancellationToken ct = default)
     {
-        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, ct, progress, requiresSession);
+        return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, progress, requiresSession, ct);
     }
 
     public async Task<ConnectionHealthReport> CheckConnectionHealthAsync(CancellationToken ct = default)
@@ -643,11 +643,11 @@ public class ConnectionStringOperations : IConnectionStringOperations
         {
             if (_ownsClientPool)
             {
-                await _clientPool.DisposeAsync().ConfigureAwait(false);
+                await _clientPool.DisposeAsync();
             }
             else
             {
-                await _clientPool.ReturnClientAsync(_connectionString, _client.Value).ConfigureAwait(false);
+                await _clientPool.ReturnClientAsync(_connectionString, _client.Value);
             }
         }
 

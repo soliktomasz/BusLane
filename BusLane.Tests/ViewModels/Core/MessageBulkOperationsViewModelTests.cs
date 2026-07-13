@@ -259,11 +259,11 @@ public class MessageBulkOperationsViewModelTests
                 null,
                 Arg.Any<IEnumerable<MessageIdentifier>>(),
                 false,
-                Arg.Any<CancellationToken>(),
-                Arg.Any<IProgress<BulkOperationProgress>?>())
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                ct: Arg.Any<CancellationToken>())
             .Returns(call =>
             {
-                call.ArgAt<IProgress<BulkOperationProgress>?>(5)?.Report(new BulkOperationProgress(
+                call.ArgAt<IProgress<BulkOperationProgress>?>(4)?.Report(new BulkOperationProgress(
                     BulkOperationType.Delete,
                     ProcessedCount: 1,
                     RequestedCount: 2,
@@ -329,9 +329,9 @@ public class MessageBulkOperationsViewModelTests
                 null,
                 Arg.Any<IEnumerable<MessageIdentifier>>(),
                 false,
-                Arg.Any<CancellationToken>(),
-                Arg.Any<IProgress<BulkOperationProgress>?>(),
-                true)
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                requiresSession: true,
+                ct: Arg.Any<CancellationToken>())
             .Returns(new BulkOperationExecutionResult(
                 BulkOperationType.Delete,
                 1,
@@ -364,9 +364,9 @@ public class MessageBulkOperationsViewModelTests
             Arg.Is<IEnumerable<MessageIdentifier>>(identifiers =>
                 identifiers!.Single() == new MessageIdentifier(101, "msg-1", "session-a")),
             false,
-            Arg.Any<CancellationToken>(),
-            Arg.Any<IProgress<BulkOperationProgress>?>(),
-            true);
+            progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+            requiresSession: true,
+            ct: Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -378,9 +378,9 @@ public class MessageBulkOperationsViewModelTests
                 "orders",
                 null,
                 Arg.Any<IEnumerable<MessageInfo>>(),
-                Arg.Any<CancellationToken>(),
-                Arg.Any<IProgress<BulkOperationProgress>?>(),
-                true)
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                requiresSession: true,
+                ct: Arg.Any<CancellationToken>())
             .Returns(new BulkOperationExecutionResult(
                 BulkOperationType.ResubmitDeadLetter,
                 1,
@@ -412,9 +412,9 @@ public class MessageBulkOperationsViewModelTests
             "orders",
             null,
             Arg.Any<IEnumerable<MessageInfo>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<IProgress<BulkOperationProgress>?>(),
-            true);
+            progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+            requiresSession: true,
+            ct: Arg.Any<CancellationToken>());
     }
 
     [Fact]

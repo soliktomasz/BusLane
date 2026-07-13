@@ -134,6 +134,7 @@ public class MetricsHistoryStore : IMetricsHistoryStore
 
     private List<MetricSnapshot> LoadInternal()
     {
+        var malformedNonFinalRecord = false;
         try
         {
             if (!File.Exists(_filePath))
@@ -145,34 +146,47 @@ public class MetricsHistoryStore : IMetricsHistoryStore
             if (json.AsSpan().TrimStart().StartsWith("["))
             {
                 _requiresRewrite = true;
-                return Deserialize<List<MetricSnapshot>>(json) ?? [];
+                var loadedSnapshots = Deserialize<List<MetricSnapshot>>(json) ?? [];
+                var loadedCount = loadedSnapshots.Count;
+                var retainedSnapshots = RemoveExpired(loadedSnapshots);
+                _requiresRewrite |= retainedSnapshots.Count != loadedCount;
+                return retainedSnapshots;
             }
 
             var snapshots = new List<MetricSnapshot>();
-            foreach (var line in File.ReadLines(_filePath))
+            var nonEmptyLines = File.ReadLines(_filePath)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
+            var cutoff = _nowProvider() - _retention;
+            for (var index = 0; index < nonEmptyLines.Count; index++)
             {
-                if (string.IsNullOrWhiteSpace(line))
-                {
-                    continue;
-                }
-
                 try
                 {
-                    var snapshot = Deserialize<MetricSnapshot>(line);
-                    if (snapshot != null)
+                    var snapshot = Deserialize<MetricSnapshot>(nonEmptyLines[index]);
+                    if (snapshot != null && snapshot.Timestamp >= cutoff)
                     {
                         snapshots.Add(snapshot);
                     }
+                    else if (snapshot != null)
+                    {
+                        _requiresRewrite = true;
+                    }
+                }
+                catch when (index == nonEmptyLines.Count - 1)
+                {
+                    // Ignore incomplete final record left by interrupted append.
+                    _requiresRewrite = true;
                 }
                 catch
                 {
-                    // Ignore incomplete final record left by interrupted append.
+                    malformedNonFinalRecord = true;
+                    throw;
                 }
             }
 
             return snapshots;
         }
-        catch
+        catch when (!malformedNonFinalRecord)
         {
             return [];
         }

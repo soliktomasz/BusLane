@@ -187,12 +187,12 @@ public class DashboardRefreshService : IDashboardRefreshService
         var results = await Task.WhenAll(topicsToRefresh.Select(async topic => new
         {
             topic.Name,
-            Subscriptions = await FetchSubscriptionsForTopicAsync(operations, topic.Name, gate, ct)
+            Result = await FetchSubscriptionsForTopicAsync(operations, topic.Name, gate, ct)
         }));
 
-        foreach (var result in results)
+        foreach (var result in results.Where(result => result.Result.Succeeded))
         {
-            cache.SubscriptionsByTopic[result.Name] = result.Subscriptions;
+            cache.SubscriptionsByTopic[result.Name] = result.Result.Subscriptions;
         }
 
         var subscriptions = topics
@@ -232,7 +232,7 @@ public class DashboardRefreshService : IDashboardRefreshService
         return selected;
     }
 
-    private async Task<List<SubscriptionInfo>> FetchSubscriptionsForTopicAsync(
+    private async Task<(bool Succeeded, List<SubscriptionInfo> Subscriptions)> FetchSubscriptionsForTopicAsync(
         IServiceBusOperations operations,
         string topicName,
         SemaphoreSlim gate,
@@ -243,12 +243,12 @@ public class DashboardRefreshService : IDashboardRefreshService
         {
             await gate.WaitAsync(ct);
             gateEntered = true;
-            return (await operations.GetSubscriptionsAsync(topicName, ct)).ToList();
+            return (true, (await operations.GetSubscriptionsAsync(topicName, ct)).ToList());
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             Log.Warning(ex, "Failed to fetch subscriptions for topic {TopicName}", topicName);
-            return [];
+            return (false, []);
         }
         finally
         {
@@ -411,7 +411,10 @@ public class DashboardRefreshService : IDashboardRefreshService
     {
         lock (_stateLock)
         {
-            var effectiveOperations = operations ?? _currentOperations;
+            var effectiveOperations = operations ??
+                                      (string.Equals(_currentNamespaceId, namespaceId, StringComparison.Ordinal)
+                                          ? _currentOperations
+                                          : null);
             var contextChanged = !string.Equals(_currentNamespaceId, namespaceId, StringComparison.Ordinal) ||
                                  !ReferenceEquals(_currentOperations, effectiveOperations) ||
                                  _refreshCts == null;
