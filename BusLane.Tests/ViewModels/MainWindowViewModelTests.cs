@@ -432,6 +432,61 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task BulkDeleteMessagesAsync_WhenMessageIsDeleted_RefreshesSelectedQueueCount()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var selectedMessage = CreateMessage("message-1", 1);
+
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>())
+            .Returns(
+                new QueueInfo("orders", 2, 2, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1)),
+                new QueueInfo("orders", 1, 1, 0, 0, 1024, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1)));
+        operations.DeleteMessagesDetailedAsync(
+                "orders",
+                null,
+                Arg.Any<IEnumerable<MessageIdentifier>>(),
+                false,
+                Arg.Any<CancellationToken>(),
+                Arg.Any<IProgress<BulkOperationProgress>?>())
+            .Returns(new BulkOperationExecutionResult(
+                BulkOperationType.Delete,
+                RequestedCount: 1,
+                SucceededCount: 1,
+                FailedIdentifiers: [],
+                Summary: "Deleted 1 of 1 message(s)"));
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<MessageInfo>>([CreateMessage("message-2", 2)]));
+
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, connectionName: "Orders", entityName: "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        tab.MessageOps.SelectedMessages.Add(selectedMessage);
+
+        // Act
+        sut.BulkDeleteMessagesAsyncCommand.Execute(null);
+        await sut.Confirmation.ExecuteConfirmDialogAsync();
+
+        // Assert
+        tab.Navigation.SelectedQueue!.ActiveMessageCount.Should().Be(1);
+        tab.Navigation.Queues.Should().ContainSingle(queue => queue.ActiveMessageCount == 1);
+        tab.MessageOps.Pagination.PageDetailText.Should().Be("of 1 messages");
+        await operations.Received(2).GetQueueInfoAsync("orders", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
     {
         // Arrange

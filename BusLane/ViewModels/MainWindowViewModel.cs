@@ -1458,10 +1458,28 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             BulkOps.GetBulkDeleteConfirmText(),
             async () =>
             {
-                await BulkOps.ExecuteBulkDeleteAsync(CurrentMessageOps.SelectedMessages);
+                var deletedCount = await BulkOps.ExecuteBulkDeleteAsync(CurrentMessageOps.SelectedMessages);
                 CurrentMessageOps.SelectedMessages.Clear();
+                if (deletedCount > 0)
+                {
+                    await RefreshCurrentEntityMetadataAsync();
+                }
                 await CurrentMessageOps.LoadMessagesAsync();
             });
+    }
+
+    private async Task RefreshCurrentEntityMetadataAsync()
+    {
+        if (CurrentNavigation.SelectedQueue is { } queue)
+        {
+            await EntityOperations.RefreshQueueCommand.ExecuteAsync(queue);
+            return;
+        }
+
+        if (CurrentNavigation.SelectedSubscription is { } subscription)
+        {
+            await EntityOperations.RefreshSubscriptionCommand.ExecuteAsync(subscription);
+        }
     }
 
     [RelayCommand]

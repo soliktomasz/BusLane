@@ -969,6 +969,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
         IServiceBusOperations operations,
         NavigationState navigation)
     {
+        var selectedSubscription = navigation.SelectedSubscription;
         var subscriptions = (await operations.GetSubscriptionsAsync(topic.Name)).ToList();
 
         topic.Subscriptions.Clear();
@@ -987,6 +988,18 @@ public partial class EntityOperationsViewModel : ViewModelBase
             foreach (var subscription in subscriptions)
             {
                 navigation.TopicSubscriptions.Add(subscription);
+            }
+        }
+
+        if (selectedSubscription != null &&
+            string.Equals(selectedSubscription.TopicName, topic.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            var refreshedSelection = subscriptions.FirstOrDefault(subscription =>
+                string.Equals(subscription.Name, selectedSubscription.Name, StringComparison.OrdinalIgnoreCase));
+            if (refreshedSelection != null)
+            {
+                navigation.SelectedSubscription = refreshedSelection;
+                navigation.SelectedEntity = refreshedSelection;
             }
         }
     }

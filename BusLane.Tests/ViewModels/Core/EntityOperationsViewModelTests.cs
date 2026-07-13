@@ -118,6 +118,35 @@ public class EntityOperationsViewModelTests
     }
 
     [Fact]
+    public async Task RefreshSubscriptionCommand_WhenSelected_ReplacesSelectedSubscriptionMetrics()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var original = new SubscriptionInfo("processor", "orders-topic", 2, 2, 0, null, false);
+        var refreshed = original with { MessageCount = 1, ActiveMessageCount = 1 };
+        var topic = new TopicInfo("orders-topic", 1024, 1, null, TimeSpan.FromDays(14));
+        topic.Subscriptions.Add(original);
+        var navigation = new NavigationState
+        {
+            SelectedSubscription = original,
+            SelectedEntity = original
+        };
+        navigation.Topics.Add(topic);
+        navigation.TopicSubscriptions.Add(original);
+        operations.GetSubscriptionsAsync("orders-topic", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IEnumerable<SubscriptionInfo>>([refreshed]));
+        var sut = CreateSut(operations, navigation, new ConfirmationDialogViewModel());
+
+        // Act
+        await sut.RefreshSubscriptionCommand.ExecuteAsync(original);
+
+        // Assert
+        navigation.SelectedSubscription.Should().BeSameAs(refreshed);
+        navigation.SelectedEntity.Should().BeSameAs(refreshed);
+        navigation.TopicSubscriptions.Should().ContainSingle().Which.Should().BeSameAs(refreshed);
+    }
+
+    [Fact]
     public async Task SaveEntityEditCommand_WhenTopicUpdateSucceeds_ReplacesStaleTopicInfo()
     {
         // Arrange
