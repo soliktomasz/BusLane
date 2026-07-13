@@ -243,8 +243,9 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     private void DebounceApplyMessageFilter()
     {
-        _messageFilterCts?.Cancel();
-        _messageFilterCts?.Dispose();
+        var previousCts = Interlocked.Exchange(ref _messageFilterCts, null);
+        previousCts?.Cancel();
+        previousCts?.Dispose();
 
         if (string.IsNullOrWhiteSpace(MessageSearchText))
         {

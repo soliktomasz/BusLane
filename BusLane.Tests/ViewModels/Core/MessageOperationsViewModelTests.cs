@@ -11,6 +11,29 @@ using NSubstitute;
 public class MessageOperationsViewModelTests
 {
     [Fact]
+    public void MessageSearchText_AfterClearing_DoesNotThrow()
+    {
+        // Arrange
+        var sut = CreateSut(
+            Substitute.For<IServiceBusOperations>(),
+            () => "orders",
+            () => null,
+            () => false,
+            () => false);
+
+        // Act
+        var act = () =>
+        {
+            sut.MessageSearchText = "first";
+            sut.MessageSearchText = string.Empty;
+            sut.MessageSearchText = "second";
+        };
+
+        // Assert
+        act.Should().NotThrow<ObjectDisposedException>();
+    }
+
+    [Fact]
     public void CompareMessageOrder_WhenEnqueuedTimeMatches_UsesSequenceNumberTiebreaker()
     {
         // Arrange
