@@ -109,6 +109,34 @@ public class MessagesPanelViewTests
         ]);
     }
 
+    [Fact]
+    public void MessagesPanel_SelectModeOffersFullMessageAndBodyOnlyExport()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetMessagesPanelPath()));
+
+        // Act
+        var exportButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" &&
+                               element.Attribute("ToolTip.Tip")?.Value == "Export selected messages");
+
+        var exportChoices = exportButton.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .ToList();
+
+        // Assert
+        exportButton.Attribute("IsEnabled")?.Value.Should().Be("{Binding CurrentMessageOps.HasSelectedMessages}");
+        exportChoices.Select(element => element.Attribute("Command")?.Value).Should().Contain([
+            "{Binding ExportSelectedMessagesCommand}",
+            "{Binding ExportSelectedMessageBodiesCommand}"
+        ]);
+        exportChoices.SelectMany(element => element.Descendants())
+            .Where(element => element.Name.LocalName == "TextBlock")
+            .Select(element => element.Attribute("Text")?.Value)
+            .Should()
+            .Contain(["Full message", "Body only"]);
+    }
+
     private static string GetMessagesPanelPath()
     {
         return Path.GetFullPath(Path.Combine(

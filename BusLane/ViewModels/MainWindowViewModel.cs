@@ -1484,6 +1484,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             });
     }
 
+    [RelayCommand]
+    private async Task ExportSelectedMessagesAsync()
+    {
+        await ExportOps.ExportSelectedMessagesAsync(CurrentMessageOps.SelectedMessages.ToList(), bodyOnly: false);
+    }
+
+    [RelayCommand]
+    private async Task ExportSelectedMessageBodiesAsync()
+    {
+        await ExportOps.ExportSelectedMessagesAsync(CurrentMessageOps.SelectedMessages.ToList(), bodyOnly: true);
+    }
+
     #endregion
 
     #region Refresh

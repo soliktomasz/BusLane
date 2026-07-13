@@ -1140,6 +1140,118 @@ public class MainWindowViewModelTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExportSelectedMessagesAsync_WithSelectedMessages_ExportsRequestedContent(bool bodyOnly)
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var exportPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.json");
+        var fileDialogService = Substitute.For<IFileDialogService>();
+        fileDialogService.SaveFileAsync(
+                "Export Selected Messages",
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<Avalonia.Platform.Storage.FilePickerFileType>>())
+            .Returns(exportPath);
+
+        sut.SetFileDialogService(fileDialogService);
+        var body = "{\r\n  \"ok\": true\r\n}";
+        sut.CurrentMessageOps.SelectedMessages.Add(new MessageInfo(
+            "msg-1",
+            "corr-1",
+            "application/json",
+            body,
+            DateTimeOffset.UtcNow,
+            null,
+            42,
+            0,
+            null,
+            new Dictionary<string, object> { ["source"] = "test" }));
+
+        try
+        {
+            // Act
+            if (bodyOnly)
+                await sut.ExportSelectedMessageBodiesCommand.ExecuteAsync(null);
+            else
+                await sut.ExportSelectedMessagesCommand.ExecuteAsync(null);
+
+            // Assert
+            var json = await File.ReadAllTextAsync(exportPath);
+            if (bodyOnly)
+            {
+                json.Should().Be(body);
+                json.Should().NotContain("\\r\\n");
+                json.Should().NotContain("\\u0022");
+            }
+            else
+            {
+                var container = System.Text.Json.JsonSerializer.Deserialize<MessageExportContainer>(json);
+                container.Should().NotBeNull();
+                container!.Messages.Should().ContainSingle(message =>
+                    message.MessageId == "msg-1" &&
+                    message.Body == body &&
+                    message.CustomProperties["source"] == "test");
+            }
+
+            sut.StatusMessage.Should().Be($"Exported 1 selected message(s) to {Path.GetFileName(exportPath)}");
+        }
+        finally
+        {
+            if (File.Exists(exportPath))
+                File.Delete(exportPath);
+        }
+    }
+
+    [Fact]
+    public async Task ExportSelectedMessageBodiesAsync_WithMultipleJsonBodies_ExportsJsonValuesWithoutStringEscaping()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var exportPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.json");
+        var fileDialogService = Substitute.For<IFileDialogService>();
+        fileDialogService.SaveFileAsync(
+                "Export Selected Messages",
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<Avalonia.Platform.Storage.FilePickerFileType>>())
+            .Returns(exportPath);
+
+        sut.SetFileDialogService(fileDialogService);
+        foreach (var (id, body) in new[]
+                 {
+                     ("msg-1", "{\r\n  \"id\": 1\r\n}"),
+                     ("msg-2", "{\r\n  \"id\": 2\r\n}")
+                 })
+        {
+            sut.CurrentMessageOps.SelectedMessages.Add(new MessageInfo(
+                id, null, "application/json", body, DateTimeOffset.UtcNow,
+                null, 0, 0, null, new Dictionary<string, object>()));
+        }
+
+        try
+        {
+            // Act
+            await sut.ExportSelectedMessageBodiesCommand.ExecuteAsync(null);
+
+            // Assert
+            var json = await File.ReadAllTextAsync(exportPath);
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+            document.RootElement.GetArrayLength().Should().Be(2);
+            document.RootElement[0].GetProperty("id").GetInt32().Should().Be(1);
+            document.RootElement[1].GetProperty("id").GetInt32().Should().Be(2);
+            json.Should().NotContain("\\r\\n");
+            json.Should().NotContain("\\u0022");
+        }
+        finally
+        {
+            if (File.Exists(exportPath))
+                File.Delete(exportPath);
+        }
+    }
+
     private static MainWindowViewModel CreateSut(
         TestPreferencesService preferences,
         IAzureAuthService? auth = null,
