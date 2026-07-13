@@ -204,7 +204,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         return Task.CompletedTask;
     }
 
-    private async Task LoadEntitiesAsync(SavedConnection connection)
+    private async Task LoadEntitiesAsync(SavedConnection connection, CancellationToken ct = default)
     {
         if (_operations == null) return;
 
@@ -212,12 +212,12 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
         if (connection.Type == ConnectionType.Namespace)
         {
-            await LoadNamespaceEntitiesAsync();
+            await LoadNamespaceEntitiesAsync(ct);
             LogActivity(LogLevel.Info, $"Tab '{TabTitle}': loaded namespace entities");
         }
         else if (connection.Type == ConnectionType.Queue && connection.EntityName != null)
         {
-            var queueInfo = await _operations.GetQueueInfoAsync(connection.EntityName);
+            var queueInfo = await _operations.GetQueueInfoAsync(connection.EntityName, ct);
             if (queueInfo != null)
             {
                 Navigation.Queues.Add(queueInfo);
@@ -228,14 +228,14 @@ public partial class ConnectionTabViewModel : ViewModelBase
         }
         else if (connection.Type == ConnectionType.Topic && connection.EntityName != null)
         {
-            var topicInfo = await _operations.GetTopicInfoAsync(connection.EntityName);
+            var topicInfo = await _operations.GetTopicInfoAsync(connection.EntityName, ct);
             if (topicInfo != null)
             {
                 Navigation.Topics.Add(topicInfo);
                 Navigation.SelectedTopic = topicInfo;
                 Navigation.SelectedEntity = topicInfo;
 
-                var subs = await _operations.GetSubscriptionsAsync(connection.EntityName);
+                var subs = await _operations.GetSubscriptionsAsync(connection.EntityName, ct);
                 foreach (var sub in subs)
                     Navigation.TopicSubscriptions.Add(sub);
 
@@ -244,18 +244,18 @@ public partial class ConnectionTabViewModel : ViewModelBase
         }
     }
 
-    private async Task LoadNamespaceEntitiesAsync()
+    private async Task LoadNamespaceEntitiesAsync(CancellationToken ct = default)
     {
         if (_operations == null) return;
 
         // Keep navigation namespace state in sync with the connected tab namespace.
         Navigation.SelectedNamespace = Namespace;
 
-        var queues = await _operations.GetQueuesAsync();
+        var queues = await _operations.GetQueuesAsync(ct);
         foreach (var queue in queues)
             Navigation.Queues.Add(queue);
 
-        var topics = await _operations.GetTopicsAsync();
+        var topics = await _operations.GetTopicsAsync(ct);
         foreach (var topic in topics)
             Navigation.Topics.Add(topic);
 
@@ -294,6 +294,56 @@ public partial class ConnectionTabViewModel : ViewModelBase
             LogActivity(
                 LogLevel.Info,
                 $"Tab '{TabTitle}': refresh completed with {Navigation.Queues.Count} queue(s) and {Navigation.Topics.Count} topic(s)");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error refreshing: {ex.Message}";
+            LogActivity(LogLevel.Error, $"Tab '{TabTitle}': refresh failed", ex.Message);
+            throw;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes entities and messages for this tab while preserving its connection mode.
+    /// </summary>
+    public async Task RefreshAsync(CancellationToken ct = default)
+    {
+        if (_operations == null)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        StatusMessage = "Refreshing...";
+        LogActivity(LogLevel.Info, $"Tab '{TabTitle}': refreshing");
+
+        try
+        {
+            if (Mode == ConnectionMode.ConnectionString && SavedConnection != null)
+            {
+                await LoadEntitiesAsync(SavedConnection, ct);
+            }
+            else if (Mode == ConnectionMode.AzureAccount && Namespace != null)
+            {
+                Navigation.Clear();
+                await LoadNamespaceEntitiesAsync(ct);
+            }
+
+            if (Navigation.CurrentEntityName == null)
+            {
+                MessageOps.Clear();
+            }
+            else
+            {
+                await MessageOps.LoadMessagesAsync(ct);
+            }
+
+            StatusMessage = "Refreshed successfully";
+            LogActivity(LogLevel.Info, $"Tab '{TabTitle}': refresh completed");
         }
         catch (Exception ex)
         {

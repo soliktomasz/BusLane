@@ -9,6 +9,7 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 /// </summary>
 public class PreferencesService : IPreferencesService
 {
+    private readonly string _preferencesPath;
 
     public bool ConfirmBeforeDelete { get; set; } = true;
     public bool ConfirmBeforePurge { get; set; } = true;
@@ -43,8 +44,9 @@ public class PreferencesService : IPreferencesService
 
     public event EventHandler? PreferencesChanged;
 
-    public PreferencesService()
+    public PreferencesService(string? preferencesPath = null)
     {
+        _preferencesPath = preferencesPath ?? AppPaths.Preferences;
         Load();
     }
 
@@ -52,9 +54,9 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            if (File.Exists(AppPaths.Preferences))
+            if (File.Exists(_preferencesPath))
             {
-                var json = File.ReadAllText(AppPaths.Preferences);
+                var json = File.ReadAllText(_preferencesPath);
                 var data = Deserialize<PreferencesData>(json);
                 if (data != null)
                 {
@@ -95,7 +97,11 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            AppPaths.EnsureDirectoryExists();
+            var directory = Path.GetDirectoryName(_preferencesPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
 
             var data = new PreferencesData
             {
@@ -126,7 +132,7 @@ public class PreferencesService : IPreferencesService
             };
 
             var json = Serialize(data);
-            AppPaths.CreateSecureFile(AppPaths.Preferences, json);
+            AppPaths.CreateSecureFile(_preferencesPath, json);
             
             PreferencesChanged?.Invoke(this, EventArgs.Empty);
         }

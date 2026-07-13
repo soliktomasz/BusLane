@@ -90,4 +90,18 @@ public class NamespaceDashboardViewModelTests
         vm.Inbox.Items.Should().ContainSingle();
         vm.Inbox.Items.Single().EntityName.Should().Be("orders");
     }
+
+    [Fact]
+    public void PartialSummary_ShowsProgressiveLoadingState()
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var summary = new NamespaceDashboardSummary(1, 0, 0, 1, 0, 0, 0, 0, DateTimeOffset.UtcNow, IsPartial: true);
+
+        // Act
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(this, summary);
+
+        // Assert
+        sut.IsPartialSnapshot.Should().BeTrue();
+    }
 }

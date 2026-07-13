@@ -201,6 +201,41 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
+    public async Task RefreshAsync_WithQueueConnection_ReloadsQueueInTab()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        preferencesService.MessagesPerPage.Returns(25);
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var original = new QueueInfo("orders", 1, 1, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+        var refreshed = original with { MessageCount = 5, ActiveMessageCount = 5 };
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(original, refreshed);
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                Arg.Any<long?>(),
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns([]);
+        var connection = CreateQueueConnection();
+        var sut = new ConnectionTabViewModel("test-id", "Test Tab", "test", preferencesService, CreateMockLogSink());
+        await sut.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        await sut.RefreshAsync();
+
+        // Assert
+        sut.Navigation.SelectedQueue.Should().Be(refreshed);
+        sut.StatusMessage.Should().Be("Refreshed successfully");
+        await operations.Received(2).GetQueueInfoAsync("orders", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task DisconnectAsync_ClearsSessionInspectorState()
     {
         // Arrange
@@ -706,4 +741,13 @@ public class ConnectionTabViewModelTests
         public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken) =>
             ValueTask.FromResult(new AccessToken("token", DateTimeOffset.UtcNow.AddHours(1)));
     }
+
+    private static SavedConnection CreateQueueConnection() => new()
+    {
+        Id = "queue-connection",
+        Name = "Orders",
+        ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=Test;SharedAccessKey=test",
+        Type = ConnectionType.Queue,
+        EntityName = "orders"
+    };
 }

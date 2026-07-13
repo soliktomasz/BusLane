@@ -187,6 +187,21 @@ public class MetricsServiceTests
     }
 
     [Fact]
+    public void RecordMetric_WhenFirstMetricIsRecordedConcurrently_StoresEachPointOnce()
+    {
+        // Arrange
+        const int pointCount = 500;
+
+        // Act
+        Parallel.For(0, pointCount, value => _sut.RecordMetric("queue", "concurrent", value));
+        var history = _sut.GetMetricHistory("queue", "concurrent", TimeSpan.FromMinutes(1));
+
+        // Assert
+        history.Should().HaveCount(pointCount);
+        history.Select(point => point.Value).Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
     public void GetEntityMetrics_ReturnsOrderedByTimestamp()
     {
         // Arrange

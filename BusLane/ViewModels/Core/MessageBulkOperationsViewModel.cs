@@ -266,14 +266,17 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         try
         {
             var identifiers = selectedMessages
-                .Select(m => new MessageIdentifier(m.SequenceNumber, m.MessageId))
+                .Select(m => new MessageIdentifier(m.SequenceNumber, m.MessageId, m.SessionId))
                 .ToList();
+            var requiresSession = _getNavigation().CurrentEntityRequiresSession ||
+                                  identifiers.Any(identifier => !string.IsNullOrWhiteSpace(identifier.SessionId));
             var result = await operations.DeleteMessagesDetailedAsync(
                 entityName,
                 subscription,
                 identifiers,
                 _getNavigation().ShowDeadLetter,
-                progress: CreateProgressReporter());
+                progress: CreateProgressReporter(),
+                requiresSession: requiresSession);
 
             _setStatus(result.FinalSummary);
             _logSink.Log(new LogEntry(
@@ -349,7 +352,9 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
                 entityName,
                 subscription,
                 messagesToResubmit,
-                progress: CreateProgressReporter());
+                progress: CreateProgressReporter(),
+                requiresSession: _getNavigation().CurrentEntityRequiresSession ||
+                                 messagesToResubmit.Any(message => !string.IsNullOrWhiteSpace(message.SessionId)));
 
             _setStatus(result.FinalSummary);
             _logSink.Log(new LogEntry(

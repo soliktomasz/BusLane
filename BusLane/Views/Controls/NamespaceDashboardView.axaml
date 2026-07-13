@@ -31,6 +31,9 @@
                                    Classes="heading"/>
                         <TextBlock Text="Use the inbox first, then skim the summary and supporting trends."
                                    Classes="caption"/>
+                        <TextBlock Text="Topic metrics loading progressively..."
+                                   Classes="caption"
+                                   IsVisible="{Binding IsPartialSnapshot}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2"

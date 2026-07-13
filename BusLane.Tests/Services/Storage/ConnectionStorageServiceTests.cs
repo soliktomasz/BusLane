@@ -10,6 +10,7 @@ public class ConnectionStorageServiceTests : IDisposable
 {
     private readonly IEncryptionService _encryptionService;
     private readonly ConnectionStorageService _sut;
+    private readonly string _testDirectory;
     private readonly string _testStoragePath;
 
     public ConnectionStorageServiceTests()
@@ -23,26 +24,17 @@ public class ConnectionStorageServiceTests : IDisposable
             .Returns(x =>
             {
                 var input = x.Arg<string>();
-                return input.StartsWith("ENC:") ? input[4..] : input;
+                return input!.StartsWith("ENC:") ? input[4..] : input;
             });
 
-        _sut = new ConnectionStorageService(_encryptionService);
-        
-        // Get the storage path for cleanup
-        _testStoragePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BusLane",
-            "connections.json"
-        );
+        _testDirectory = Directory.CreateTempSubdirectory("BusLane-ConnectionStorageTests-").FullName;
+        _testStoragePath = Path.Combine(_testDirectory, "connections.json");
+        _sut = new ConnectionStorageService(_encryptionService, _testStoragePath);
     }
 
     public void Dispose()
     {
-        // Clean up test file after tests
-        if (File.Exists(_testStoragePath))
-        {
-            try { File.Delete(_testStoragePath); } catch { }
-        }
+        try { Directory.Delete(_testDirectory, recursive: true); } catch { }
     }
 
     [Fact]
@@ -66,7 +58,7 @@ public class ConnectionStorageServiceTests : IDisposable
         await _sut.SaveConnectionAsync(connection);
 
         // Use a fresh instance to force loading from disk (simulates app restart)
-        var freshService = new ConnectionStorageService(_encryptionService);
+        var freshService = new ConnectionStorageService(_encryptionService, _testStoragePath);
 
         // Act
         var connections = await freshService.GetConnectionsAsync();
@@ -192,6 +184,23 @@ public class ConnectionStorageServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveConnectionAsync_WhenCalledConcurrently_PreservesEveryConnection()
+    {
+        // Arrange
+        var connections = Enumerable.Range(1, 40)
+            .Select(index => CreateTestConnection($"conn-{index}", $"Connection {index}"))
+            .ToList();
+
+        // Act
+        await Task.WhenAll(connections.Select(_sut.SaveConnectionAsync));
+        var freshService = new ConnectionStorageService(_encryptionService, _testStoragePath);
+        var persisted = await freshService.GetConnectionsAsync();
+
+        // Assert
+        persisted.Select(connection => connection.Id).Should().BeEquivalentTo(connections.Select(connection => connection.Id));
+    }
+
+    [Fact]
     public async Task GetConnectionsAsync_WithLegacyUnencryptedData_HandlesBackwardCompatibility()
     {
         // Arrange - Decryption returns unmodified string for unencrypted data
@@ -224,4 +233,3 @@ public class ConnectionStorageServiceTests : IDisposable
         };
     }
 }
-

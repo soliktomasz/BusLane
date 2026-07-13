@@ -31,6 +31,9 @@ public record ServiceBusOperationOptions
     /// <summary>Number of consecutive empty batches before stopping an operation.</summary>
     public int MaxEmptyBatches { get; init; } = 3;
 
+    /// <summary>Maximum number of messages scanned while locating selected messages.</summary>
+    public int MaxSelectedMessageScanCount { get; init; } = 1000;
+
     /// <summary>Number of messages to send per batch during resend operations.</summary>
     public int ResendBatchSize { get; init; } = 50;
 
@@ -61,6 +64,7 @@ internal static class ServiceBusOperations
     public static TimeSpan DeleteReceiveTimeout => Options.DeleteReceiveTimeout;
     public static TimeSpan ReceiveTimeout => Options.ReceiveTimeout;
     public static int MaxEmptyBatches => Options.MaxEmptyBatches;
+    public static int MaxSelectedMessageScanCount => Options.MaxSelectedMessageScanCount;
     public static int ResendBatchSize => Options.ResendBatchSize;
 
     internal static readonly TimeSpan SessionAcceptTimeout = TimeSpan.FromSeconds(5);
@@ -1065,15 +1069,18 @@ internal static class ServiceBusOperations
         string? subscription,
         IEnumerable<long> sequenceNumbers,
         bool deadLetter,
-        CancellationToken ct)
+        bool requiresSession = false,
+        string? sessionId = null,
+        CancellationToken ct = default)
     {
         var result = await DeleteMessagesDetailedAsync(
             client,
             entityName,
             subscription,
-            sequenceNumbers.Select(s => new MessageIdentifier(s, null)),
+            sequenceNumbers.Select(sequenceNumber => new MessageIdentifier(sequenceNumber, null, sessionId)),
             deadLetter,
-            ct);
+            requiresSession: requiresSession,
+            ct: ct);
 
         return result.SucceededCount;
     }
@@ -1084,89 +1091,101 @@ internal static class ServiceBusOperations
         string? subscription,
         IEnumerable<MessageIdentifier> messages,
         bool deadLetter,
-        CancellationToken ct,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false,
+        CancellationToken ct = default)
     {
-        var receiverOptions = new ServiceBusReceiverOptions 
-        { 
-            ReceiveMode = ServiceBusReceiveMode.PeekLock,
-            SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
-        };
-        
-        await using var receiver = subscription != null
-            ? client.CreateReceiver(entityName, subscription, receiverOptions)
-            : client.CreateReceiver(entityName, receiverOptions);
-
         var requestedMessages = messages.ToList();
-        var deletedCount = 0;
-        var sequenceSet = requestedMessages.Select(m => m.SequenceNumber).ToHashSet();
-        var failureExceptions = new Dictionary<long, ServiceBusException>();
-        var consecutiveEmptyBatches = 0;
+        requiresSession |= requestedMessages.Any(message => !string.IsNullOrWhiteSpace(message.SessionId));
+        var succeeded = new HashSet<MessageIdentifier>();
+        var failureExceptions = new Dictionary<MessageIdentifier, ServiceBusException>();
+        var explicitFailures = new Dictionary<MessageIdentifier, BulkOperationFailure>();
 
-        while (sequenceSet.Count > 0 && consecutiveEmptyBatches < MaxEmptyBatches && !ct.IsCancellationRequested)
+        if (requiresSession)
         {
-            var receivedMessages = await receiver.ReceiveMessagesAsync(DeleteBatchSize, DeleteReceiveTimeout, ct);
-
-            if (receivedMessages.Count == 0)
+            foreach (var identifier in requestedMessages.Where(message => string.IsNullOrWhiteSpace(message.SessionId)))
             {
-                consecutiveEmptyBatches++;
-                continue;
+                explicitFailures[identifier] = new BulkOperationFailure(
+                    identifier,
+                    BulkOperationFailureKind.NonRetryable,
+                    "Session ID is required for selected deletion on a session-enabled entity");
             }
 
-            consecutiveEmptyBatches = 0;
-
-            foreach (var msg in receivedMessages)
+            foreach (var sessionGroup in requestedMessages
+                         .Where(message => !string.IsNullOrWhiteSpace(message.SessionId))
+                         .GroupBy(message => message.SessionId!, StringComparer.Ordinal))
             {
-                if (sequenceSet.Contains(msg.SequenceNumber))
+                try
                 {
-                    try
-                    {
-                        await receiver.CompleteMessageAsync(msg, ct);
-                        sequenceSet.Remove(msg.SequenceNumber);
-                        deletedCount++;
-                        progress?.Report(new BulkOperationProgress(
-                            BulkOperationType.Delete,
-                            deletedCount,
-                            requestedMessages.Count,
-                            $"Deleted {deletedCount} of {requestedMessages.Count} message(s)"));
-                    }
-                    catch (ServiceBusException ex)
-                    {
-                        // Message might already be processed or lock expired, continue
-                        Log.Debug(ex, "Failed to complete message {SequenceNumber}, continuing", msg.SequenceNumber);
-                        failureExceptions[msg.SequenceNumber] = ex;
-                    }
+                    await using var receiver = await AcceptSessionReceiverAsync(
+                        client,
+                        entityName,
+                        subscription,
+                        sessionGroup.Key,
+                        deadLetter,
+                        ct);
+                    await ProcessSelectedMessagesAsync(
+                        receiver,
+                        sessionGroup.ToList(),
+                        BulkOperationType.Delete,
+                        requestedMessages.Count,
+                        "Deleted",
+                        static (activeReceiver, message, token) => activeReceiver.CompleteMessageAsync(message, token),
+                        succeeded,
+                        failureExceptions,
+                        progress,
+                        ct);
                 }
-                else
+                catch (ServiceBusException ex)
                 {
-                    try
+                    foreach (var identifier in sessionGroup)
                     {
-                        await receiver.AbandonMessageAsync(msg, cancellationToken: ct);
-                    }
-                    catch (ServiceBusException ex)
-                    {
-                        // Ignore abandon errors
-                        Log.Debug(ex, "Failed to abandon message {SequenceNumber}, ignoring", msg.SequenceNumber);
+                        failureExceptions[identifier] = ex;
                     }
                 }
             }
         }
+        else
+        {
+            var receiverOptions = new ServiceBusReceiverOptions
+            {
+                ReceiveMode = ServiceBusReceiveMode.PeekLock,
+                SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
+            };
+
+            await using var receiver = subscription != null
+                ? client.CreateReceiver(entityName, subscription, receiverOptions)
+                : client.CreateReceiver(entityName, receiverOptions);
+            await ProcessSelectedMessagesAsync(
+                receiver,
+                requestedMessages,
+                BulkOperationType.Delete,
+                requestedMessages.Count,
+                "Deleted",
+                static (activeReceiver, message, token) => activeReceiver.CompleteMessageAsync(message, token),
+                succeeded,
+                failureExceptions,
+                progress,
+                ct);
+        }
 
         var failed = requestedMessages
-            .Where(m => sequenceSet.Contains(m.SequenceNumber))
+            .Where(identifier => !succeeded.Contains(identifier))
             .ToList();
         var failures = failed
-            .Select(identifier => failureExceptions.TryGetValue(identifier.SequenceNumber, out var ex)
-                ? CreateFailure(identifier, ex)
-                : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not completed before the operation finished"))
+            .Select(identifier => explicitFailures.TryGetValue(identifier, out var explicitFailure)
+                ? explicitFailure
+                : failureExceptions.TryGetValue(identifier, out var ex)
+                    ? CreateFailure(identifier, ex)
+                    : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not completed before the operation finished"))
             .ToList();
 
         return new BulkOperationExecutionResult(
             BulkOperationType.Delete,
             requestedMessages.Count,
-            deletedCount,
+            succeeded.Count,
             failed,
-            $"Deleted {deletedCount} of {requestedMessages.Count} message(s)",
+            $"Deleted {succeeded.Count} of {requestedMessages.Count} message(s)",
             CanResume: failures.Any(f => f.Kind == BulkOperationFailureKind.Retryable),
             Failures: failures,
             CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
@@ -1179,9 +1198,9 @@ internal static class ServiceBusOperations
         ServiceBusClient client,
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        var result = await ResendMessagesDetailedAsync(client, entityName, messages, ct);
+        var result = await ResendMessagesDetailedAsync(client, entityName, messages, ct: ct);
         return result.SucceededCount;
     }
 
@@ -1189,8 +1208,8 @@ internal static class ServiceBusOperations
         ServiceBusClient client,
         string entityName,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        CancellationToken ct = default)
     {
         await using var sender = client.CreateSender(entityName);
 
@@ -1289,9 +1308,9 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        var result = await ResubmitDeadLetterMessagesDetailedAsync(client, entityName, subscription, messages, ct);
+        var result = await ResubmitDeadLetterMessagesDetailedAsync(client, entityName, subscription, messages, ct: ct);
         return result.SucceededCount;
     }
 
@@ -1300,100 +1319,246 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         IEnumerable<MessageInfo> messages,
-        CancellationToken ct,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        bool requiresSession = false,
+        CancellationToken ct = default)
     {
-        var receiverOptions = new ServiceBusReceiverOptions
-        {
-            ReceiveMode = ServiceBusReceiveMode.PeekLock,
-            SubQueue = SubQueue.DeadLetter
-        };
-
-        await using var deadLetterReceiver = subscription != null
-            ? client.CreateReceiver(entityName, subscription, receiverOptions)
-            : client.CreateReceiver(entityName, receiverOptions);
+        var messageList = messages.ToList();
+        var requestedMessages = messageList
+            .Select(message => new MessageIdentifier(message.SequenceNumber, message.MessageId, message.SessionId))
+            .ToList();
+        requiresSession |= requestedMessages.Any(message => !string.IsNullOrWhiteSpace(message.SessionId));
+        var succeeded = new HashSet<MessageIdentifier>();
+        var failureExceptions = new Dictionary<MessageIdentifier, ServiceBusException>();
+        var explicitFailures = new Dictionary<MessageIdentifier, BulkOperationFailure>();
 
         await using var sender = client.CreateSender(entityName);
 
-        var resubmittedCount = 0;
-        var messageList = messages.ToList();
-        var failed = new List<MessageIdentifier>();
-        var failures = new List<BulkOperationFailure>();
-        var processedCount = 0;
-
-        // Iterate directly without materializing to list - we only enumerate once
-        foreach (var msg in messageList)
+        async Task ResubmitAsync(ServiceBusReceiver receiver, ServiceBusReceivedMessage deadLetterMessage, CancellationToken token)
         {
-            if (ct.IsCancellationRequested) break;
+            var newMessage = CreateResubmittedMessage(deadLetterMessage);
+            await sender.SendMessageAsync(newMessage, token);
+            await receiver.CompleteMessageAsync(deadLetterMessage, token);
+        }
 
-            try
+        if (requiresSession)
+        {
+            foreach (var identifier in requestedMessages.Where(message => string.IsNullOrWhiteSpace(message.SessionId)))
             {
-                var dlqMsg = await deadLetterReceiver.ReceiveDeferredMessageAsync(msg.SequenceNumber, ct);
-                if (dlqMsg == null)
-                {
-                    var identifier = new MessageIdentifier(msg.SequenceNumber, msg.MessageId);
-                    failed.Add(identifier);
-                    failures.Add(new BulkOperationFailure(identifier, BulkOperationFailureKind.NonRetryable, "Message was not found in the dead-letter queue"));
-                    processedCount++;
-                    progress?.Report(new BulkOperationProgress(
-                        BulkOperationType.ResubmitDeadLetter,
-                        processedCount,
-                        messageList.Count,
-                        $"Processed {processedCount} of {messageList.Count} dead letter message(s)"));
-                    continue;
-                }
-
-                var newMsg = new ServiceBusMessage(dlqMsg.Body)
-                {
-                    ContentType = dlqMsg.ContentType,
-                    CorrelationId = dlqMsg.CorrelationId,
-                    Subject = dlqMsg.Subject,
-                    To = dlqMsg.To,
-                    ReplyTo = dlqMsg.ReplyTo,
-                    ReplyToSessionId = dlqMsg.ReplyToSessionId,
-                    SessionId = dlqMsg.SessionId,
-                    PartitionKey = dlqMsg.PartitionKey
-                };
-
-                foreach (var prop in dlqMsg.ApplicationProperties)
-                    newMsg.ApplicationProperties[prop.Key] = prop.Value;
-
-                await sender.SendMessageAsync(newMsg, ct);
-                await deadLetterReceiver.CompleteMessageAsync(dlqMsg, ct);
-
-                resubmittedCount++;
-                processedCount++;
-                progress?.Report(new BulkOperationProgress(
-                    BulkOperationType.ResubmitDeadLetter,
-                    processedCount,
-                    messageList.Count,
-                    $"Processed {processedCount} of {messageList.Count} dead letter message(s)"));
+                explicitFailures[identifier] = new BulkOperationFailure(
+                    identifier,
+                    BulkOperationFailureKind.NonRetryable,
+                    "Session ID is required for DLQ resubmission on a session-enabled entity");
             }
-            catch (ServiceBusException ex)
+
+            foreach (var sessionGroup in requestedMessages
+                         .Where(message => !string.IsNullOrWhiteSpace(message.SessionId))
+                         .GroupBy(message => message.SessionId!, StringComparer.Ordinal))
             {
-                // Message might not be found or already processed, continue
-                Log.Debug(ex, "Failed to resubmit message {SequenceNumber} from DLQ, continuing", msg.SequenceNumber);
-                var identifier = new MessageIdentifier(msg.SequenceNumber, msg.MessageId);
-                failed.Add(identifier);
-                failures.Add(CreateFailure(identifier, ex));
-                processedCount++;
-                progress?.Report(new BulkOperationProgress(
-                    BulkOperationType.ResubmitDeadLetter,
-                    processedCount,
-                    messageList.Count,
-                    $"Processed {processedCount} of {messageList.Count} dead letter message(s)"));
+                try
+                {
+                    await using var receiver = await AcceptSessionReceiverAsync(
+                        client,
+                        entityName,
+                        subscription,
+                        sessionGroup.Key,
+                        deadLetter: true,
+                        ct);
+                    await ProcessSelectedMessagesAsync(
+                        receiver,
+                        sessionGroup.ToList(),
+                        BulkOperationType.ResubmitDeadLetter,
+                        requestedMessages.Count,
+                        "Resubmitted",
+                        ResubmitAsync,
+                        succeeded,
+                        failureExceptions,
+                        progress,
+                        ct);
+                }
+                catch (ServiceBusException ex)
+                {
+                    foreach (var identifier in sessionGroup)
+                    {
+                        failureExceptions[identifier] = ex;
+                    }
+                }
             }
         }
+        else
+        {
+            var receiverOptions = new ServiceBusReceiverOptions
+            {
+                ReceiveMode = ServiceBusReceiveMode.PeekLock,
+                SubQueue = SubQueue.DeadLetter
+            };
+
+            await using var receiver = subscription != null
+                ? client.CreateReceiver(entityName, subscription, receiverOptions)
+                : client.CreateReceiver(entityName, receiverOptions);
+            await ProcessSelectedMessagesAsync(
+                receiver,
+                requestedMessages,
+                BulkOperationType.ResubmitDeadLetter,
+                requestedMessages.Count,
+                "Resubmitted",
+                ResubmitAsync,
+                succeeded,
+                failureExceptions,
+                progress,
+                ct);
+        }
+
+        var failed = requestedMessages.Where(identifier => !succeeded.Contains(identifier)).ToList();
+        var failures = failed
+            .Select(identifier => explicitFailures.TryGetValue(identifier, out var explicitFailure)
+                ? explicitFailure
+                : failureExceptions.TryGetValue(identifier, out var ex)
+                    ? CreateFailure(identifier, ex)
+                    : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not received from the dead-letter queue before the operation finished"))
+            .ToList();
 
         return new BulkOperationExecutionResult(
             BulkOperationType.ResubmitDeadLetter,
             messageList.Count,
-            resubmittedCount,
+            succeeded.Count,
             failed,
-            $"Resubmitted {resubmittedCount} of {messageList.Count} message(s)",
+            $"Resubmitted {succeeded.Count} of {messageList.Count} message(s)",
             CanResume: failures.Any(f => f.Kind == BulkOperationFailureKind.Retryable),
             Failures: failures,
             CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
+    }
+
+    private static async Task ProcessSelectedMessagesAsync(
+        ServiceBusReceiver receiver,
+        IReadOnlyCollection<MessageIdentifier> requestedMessages,
+        BulkOperationType operationType,
+        int totalRequestedCount,
+        string completedVerb,
+        Func<ServiceBusReceiver, ServiceBusReceivedMessage, CancellationToken, Task> settleAsync,
+        HashSet<MessageIdentifier> succeeded,
+        Dictionary<MessageIdentifier, ServiceBusException> failureExceptions,
+        IProgress<BulkOperationProgress>? progress,
+        CancellationToken ct)
+    {
+        var remaining = requestedMessages.ToHashSet();
+        var heldMessages = new List<ServiceBusReceivedMessage>();
+        var consecutiveEmptyBatches = 0;
+        var scannedMessages = 0;
+
+        async Task ReleaseHeldMessagesAsync()
+        {
+            foreach (var heldMessage in heldMessages)
+            {
+                try
+                {
+                    await receiver.AbandonMessageAsync(heldMessage, cancellationToken: CancellationToken.None);
+                }
+                catch (ServiceBusException ex)
+                {
+                    Log.Debug(ex, "Failed to release held message {SequenceNumber}", heldMessage.SequenceNumber);
+                }
+            }
+
+            heldMessages.Clear();
+        }
+
+        try
+        {
+            while (remaining.Count > 0 &&
+                   consecutiveEmptyBatches < MaxEmptyBatches &&
+                   scannedMessages < MaxSelectedMessageScanCount &&
+                   !ct.IsCancellationRequested)
+            {
+                var receivedMessages = await receiver.ReceiveMessagesAsync(DeleteBatchSize, DeleteReceiveTimeout, ct);
+                if (receivedMessages.Count == 0)
+                {
+                    consecutiveEmptyBatches++;
+                    continue;
+                }
+
+                consecutiveEmptyBatches = 0;
+                scannedMessages += receivedMessages.Count;
+                foreach (var receivedMessage in receivedMessages)
+                {
+                    MessageIdentifier? matchedIdentifier = null;
+                    foreach (var identifier in remaining)
+                    {
+                        if (identifier.SequenceNumber == receivedMessage.SequenceNumber &&
+                            (string.IsNullOrWhiteSpace(identifier.SessionId) ||
+                             string.Equals(identifier.SessionId, receivedMessage.SessionId, StringComparison.Ordinal)))
+                        {
+                            matchedIdentifier = identifier;
+                            break;
+                        }
+                    }
+
+                    if (matchedIdentifier == null)
+                    {
+                        // Keep non-target messages locked until scan completes. Immediate abandon
+                        // can redeliver same head messages and starve selected messages behind them.
+                        heldMessages.Add(receivedMessage);
+                        continue;
+                    }
+
+                    var identifierToSettle = matchedIdentifier.Value;
+                    remaining.Remove(identifierToSettle);
+                    try
+                    {
+                        await settleAsync(receiver, receivedMessage, ct);
+                        succeeded.Add(identifierToSettle);
+                    }
+                    catch (ServiceBusException ex)
+                    {
+                        failureExceptions[identifierToSettle] = ex;
+                        heldMessages.Add(receivedMessage);
+                        Log.Debug(ex, "Failed to settle selected message {SequenceNumber}", receivedMessage.SequenceNumber);
+                    }
+
+                    var processedCount = succeeded.Count + failureExceptions.Count;
+                    progress?.Report(new BulkOperationProgress(
+                        operationType,
+                        processedCount,
+                        totalRequestedCount,
+                        $"{completedVerb} {processedCount} of {totalRequestedCount} message(s)"));
+                }
+
+                if (heldMessages.Count >= DeleteBatchSize)
+                {
+                    await ReleaseHeldMessagesAsync();
+                }
+            }
+        }
+        finally
+        {
+            await ReleaseHeldMessagesAsync();
+        }
+    }
+
+    private static ServiceBusMessage CreateResubmittedMessage(ServiceBusReceivedMessage deadLetterMessage)
+    {
+        var message = new ServiceBusMessage(deadLetterMessage.Body)
+        {
+            ContentType = deadLetterMessage.ContentType,
+            CorrelationId = deadLetterMessage.CorrelationId,
+            Subject = deadLetterMessage.Subject,
+            To = deadLetterMessage.To,
+            ReplyTo = deadLetterMessage.ReplyTo,
+            ReplyToSessionId = deadLetterMessage.ReplyToSessionId,
+            SessionId = deadLetterMessage.SessionId
+        };
+
+        if (deadLetterMessage.PartitionKey != null)
+        {
+            message.PartitionKey = deadLetterMessage.PartitionKey;
+        }
+
+        foreach (var property in deadLetterMessage.ApplicationProperties)
+        {
+            message.ApplicationProperties[property.Key] = property.Value;
+        }
+
+        return message;
     }
 
     /// <summary>
@@ -1406,7 +1571,7 @@ internal static class ServiceBusOperations
         bool deadLetter,
         CancellationToken ct)
     {
-        _ = await PurgeMessagesDetailedAsync(client, entityName, subscription, deadLetter, ct);
+        _ = await PurgeMessagesDetailedAsync(client, entityName, subscription, deadLetter, ct: ct);
     }
 
     public static async Task<BulkOperationExecutionResult> PurgeMessagesDetailedAsync(
@@ -1414,8 +1579,8 @@ internal static class ServiceBusOperations
         string entityName,
         string? subscription,
         bool deadLetter,
-        CancellationToken ct,
-        IProgress<BulkOperationProgress>? progress = null)
+        IProgress<BulkOperationProgress>? progress = null,
+        CancellationToken ct = default)
     {
         var options = new ServiceBusReceiverOptions
         {

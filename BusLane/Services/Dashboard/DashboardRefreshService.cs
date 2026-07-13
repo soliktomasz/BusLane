@@ -13,6 +13,7 @@ namespace BusLane.Services.Dashboard;
 public class DashboardRefreshService : IDashboardRefreshService
 {
     private const int MaxConcurrentSubscriptionRefreshes = 4;
+    private const int MaxTopicsPerRefresh = 4;
 
     public DateTimeOffset? LastRefreshTime { get; private set; }
     public bool IsRefreshing { get; private set; }
@@ -22,24 +23,40 @@ public class DashboardRefreshService : IDashboardRefreshService
     public event EventHandler<NamespaceEntitySnapshot>? EntitiesUpdated;
 
     private Timer? _refreshTimer;
+    private readonly object _stateLock = new();
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private string? _currentNamespaceId;
     private IServiceBusOperations? _currentOperations;
+    private CancellationTokenSource? _refreshCts;
+    private long _refreshGeneration;
+    private DashboardRefreshCache? _refreshCache;
     private NamespaceDashboardSummary? _lastSummary;
     private int _autoRefreshTickInProgress;
 
     public async Task RefreshAsync(string namespaceId, IServiceBusOperations? operations = null, CancellationToken ct = default)
     {
-        IsRefreshing = true;
-        _currentNamespaceId = namespaceId;
-
-        if (operations != null)
+        var context = GetOrCreateRefreshContext(namespaceId, operations);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, context.CancellationToken);
+        try
         {
-            _currentOperations = operations;
+            await RefreshCoreAsync(context, linkedCts.Token);
         }
+        catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            // Context changed or refresh stopped. Stale work must end silently.
+        }
+    }
+
+    private async Task RefreshCoreAsync(RefreshContext context, CancellationToken ct)
+    {
+        await _refreshGate.WaitAsync(ct);
+        IsRefreshing = true;
 
         try
         {
-            if (_currentOperations == null)
+            var operations = context.Operations;
+
+            if (operations == null)
             {
                 // No operations available, return empty summary
                 var emptySummary = new NamespaceDashboardSummary(
@@ -54,26 +71,29 @@ public class DashboardRefreshService : IDashboardRefreshService
                     Timestamp: DateTimeOffset.UtcNow
                 );
 
-                SummaryUpdated?.Invoke(this, emptySummary);
-                TopEntitiesUpdated?.Invoke(this, new List<TopEntityInfo>());
-                LastRefreshTime = DateTimeOffset.UtcNow;
+                if (IsCurrent(context.Generation))
+                {
+                    SummaryUpdated?.Invoke(this, emptySummary);
+                    TopEntitiesUpdated?.Invoke(this, new List<TopEntityInfo>());
+                    LastRefreshTime = DateTimeOffset.UtcNow;
+                }
                 return;
             }
 
             // Fetch all queues and topics
-            var queuesTask = _currentOperations.GetQueuesAsync(ct);
-            var topicsTask = _currentOperations.GetTopicsAsync(ct);
+            var queuesTask = operations.GetQueuesAsync(ct);
+            var topicsTask = operations.GetTopicsAsync(ct);
 
             await Task.WhenAll(queuesTask, topicsTask);
 
             var queues = queuesTask.Result.ToList();
             var topics = topicsTask.Result.ToList();
 
-            // Fetch subscriptions for all topics to get complete message counts
-            using var subscriptionGate = new SemaphoreSlim(MaxConcurrentSubscriptionRefreshes);
-            var subscriptionTasks = FetchSubscriptionsForTopicsAsync(topics, subscriptionGate, ct);
-            var subscriptionResults = await Task.WhenAll(subscriptionTasks);
-            var allSubscriptions = subscriptionResults.SelectMany(static subscriptions => subscriptions).ToList();
+            var (allSubscriptions, isPartial) = await RefreshSubscriptionsAsync(
+                operations,
+                topics,
+                context.Cache,
+                ct);
 
             // Calculate totals from queues
             long totalActiveMessages = queues.Sum(q => q.ActiveMessageCount);
@@ -105,10 +125,19 @@ public class DashboardRefreshService : IDashboardRefreshService
                 DeadLetterGrowthPercentage: deadLetterGrowth,
                 ScheduledGrowthPercentage: scheduledGrowth,
                 SizeGrowthPercentage: sizeGrowth,
-                Timestamp: DateTimeOffset.UtcNow
+                Timestamp: DateTimeOffset.UtcNow,
+                IsPartial: isPartial
             );
 
-            _lastSummary = summary;
+            if (!IsCurrent(context.Generation))
+            {
+                return;
+            }
+
+            if (!isPartial)
+            {
+                _lastSummary = summary;
+            }
 
             // Build top entities list
             var topEntities = BuildTopEntitiesList(queues, topics, allSubscriptions);
@@ -125,6 +154,7 @@ public class DashboardRefreshService : IDashboardRefreshService
         finally
         {
             IsRefreshing = false;
+            _refreshGate.Release();
         }
     }
 
@@ -138,15 +168,72 @@ public class DashboardRefreshService : IDashboardRefreshService
         return ((double)(current - previous) / previous) * 100.0;
     }
 
-    private IEnumerable<Task<List<SubscriptionInfo>>> FetchSubscriptionsForTopicsAsync(
+    private async Task<(List<SubscriptionInfo> Subscriptions, bool IsPartial)> RefreshSubscriptionsAsync(
+        IServiceBusOperations operations,
         IReadOnlyList<TopicInfo> topics,
-        SemaphoreSlim gate,
+        DashboardRefreshCache cache,
         CancellationToken ct)
     {
-        return topics.Select(topic => FetchSubscriptionsForTopicAsync(topic.Name, gate, ct)).ToList();
+        var activeTopicNames = topics.Select(topic => topic.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var removedTopicName in cache.SubscriptionsByTopic.Keys
+                     .Where(name => !activeTopicNames.Contains(name))
+                     .ToList())
+        {
+            cache.SubscriptionsByTopic.Remove(removedTopicName);
+        }
+
+        var topicsToRefresh = SelectTopicsToRefresh(topics, cache);
+        using var gate = new SemaphoreSlim(MaxConcurrentSubscriptionRefreshes);
+        var results = await Task.WhenAll(topicsToRefresh.Select(async topic => new
+        {
+            topic.Name,
+            Result = await FetchSubscriptionsForTopicAsync(operations, topic.Name, gate, ct)
+        }));
+
+        foreach (var result in results.Where(result => result.Result.Succeeded))
+        {
+            cache.SubscriptionsByTopic[result.Name] = result.Result.Subscriptions;
+        }
+
+        var subscriptions = topics
+            .Where(topic => cache.SubscriptionsByTopic.ContainsKey(topic.Name))
+            .SelectMany(topic => cache.SubscriptionsByTopic[topic.Name])
+            .ToList();
+        return (subscriptions, topics.Any(topic => !cache.SubscriptionsByTopic.ContainsKey(topic.Name)));
     }
 
-    private async Task<List<SubscriptionInfo>> FetchSubscriptionsForTopicAsync(
+    private static List<TopicInfo> SelectTopicsToRefresh(
+        IReadOnlyList<TopicInfo> availableTopics,
+        DashboardRefreshCache cache)
+    {
+        var selected = availableTopics
+            .Where(topic => !cache.SubscriptionsByTopic.ContainsKey(topic.Name))
+            .Take(MaxTopicsPerRefresh)
+            .ToList();
+        if (selected.Count == MaxTopicsPerRefresh || availableTopics.Count == 0)
+        {
+            return selected;
+        }
+
+        var selectedNames = selected.Select(topic => topic.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var remainingBudget = MaxTopicsPerRefresh - selected.Count;
+        for (var offset = 0; offset < availableTopics.Count && remainingBudget > 0; offset++)
+        {
+            var index = (cache.NextTopicIndex + offset) % availableTopics.Count;
+            var topic = availableTopics[index];
+            if (selectedNames.Add(topic.Name))
+            {
+                selected.Add(topic);
+                remainingBudget--;
+            }
+        }
+
+        cache.NextTopicIndex = (cache.NextTopicIndex + MaxTopicsPerRefresh) % availableTopics.Count;
+        return selected;
+    }
+
+    private async Task<(bool Succeeded, List<SubscriptionInfo> Subscriptions)> FetchSubscriptionsForTopicAsync(
+        IServiceBusOperations operations,
         string topicName,
         SemaphoreSlim gate,
         CancellationToken ct)
@@ -156,12 +243,12 @@ public class DashboardRefreshService : IDashboardRefreshService
         {
             await gate.WaitAsync(ct);
             gateEntered = true;
-            return (await _currentOperations!.GetSubscriptionsAsync(topicName, ct)).ToList();
+            return (true, (await operations.GetSubscriptionsAsync(topicName, ct)).ToList());
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             Log.Warning(ex, "Failed to fetch subscriptions for topic {TopicName}", topicName);
-            return [];
+            return (false, []);
         }
         finally
         {
@@ -264,25 +351,20 @@ public class DashboardRefreshService : IDashboardRefreshService
 
     public void StartAutoRefresh(string namespaceId, IServiceBusOperations? operations = null, TimeSpan? interval = null)
     {
-        _currentNamespaceId = namespaceId;
-
-        if (operations != null)
-        {
-            _currentOperations = operations;
-        }
+        var context = GetOrCreateRefreshContext(namespaceId, operations);
 
         var actualInterval = interval ?? TimeSpan.FromSeconds(30);
 
         _refreshTimer?.Dispose();
         _refreshTimer = new Timer(
-            _ => _ = OnAutoRefreshTickAsync(namespaceId),
+            _ => _ = OnAutoRefreshTickAsync(context),
             null,
             actualInterval,
             actualInterval
         );
     }
 
-    private async Task OnAutoRefreshTickAsync(string namespaceId)
+    private async Task OnAutoRefreshTickAsync(RefreshContext context)
     {
         if (Interlocked.CompareExchange(ref _autoRefreshTickInProgress, 1, 0) != 0)
         {
@@ -291,7 +373,11 @@ public class DashboardRefreshService : IDashboardRefreshService
 
         try
         {
-            await RefreshAsync(namespaceId, _currentOperations);
+            await RefreshCoreAsync(context, context.CancellationToken);
+        }
+        catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
+        {
+            // Refresh was stopped or replaced by another namespace generation.
         }
         catch (Exception ex)
         {
@@ -307,9 +393,75 @@ public class DashboardRefreshService : IDashboardRefreshService
     {
         _refreshTimer?.Dispose();
         _refreshTimer = null;
-        _currentNamespaceId = null;
-        _currentOperations = null;
-        _lastSummary = null;
-        Interlocked.Exchange(ref _autoRefreshTickInProgress, 0);
+
+        lock (_stateLock)
+        {
+            _refreshGeneration++;
+            _refreshCts?.Cancel();
+            _refreshCts?.Dispose();
+            _refreshCts = null;
+            _refreshCache = null;
+            _currentNamespaceId = null;
+            _currentOperations = null;
+            _lastSummary = null;
+        }
+    }
+
+    private RefreshContext GetOrCreateRefreshContext(string namespaceId, IServiceBusOperations? operations)
+    {
+        lock (_stateLock)
+        {
+            var effectiveOperations = operations ??
+                                      (string.Equals(_currentNamespaceId, namespaceId, StringComparison.Ordinal)
+                                          ? _currentOperations
+                                          : null);
+            var contextChanged = !string.Equals(_currentNamespaceId, namespaceId, StringComparison.Ordinal) ||
+                                 !ReferenceEquals(_currentOperations, effectiveOperations) ||
+                                 _refreshCts == null;
+
+            if (contextChanged)
+            {
+                _refreshGeneration++;
+                _refreshCts?.Cancel();
+                _refreshCts?.Dispose();
+                _refreshCts = new CancellationTokenSource();
+                _currentNamespaceId = namespaceId;
+                _currentOperations = effectiveOperations;
+                _refreshCache = new DashboardRefreshCache();
+                _lastSummary = null;
+            }
+
+            var refreshCts = _refreshCts ?? throw new InvalidOperationException("Refresh context was not initialized");
+            var refreshCache = _refreshCache ?? throw new InvalidOperationException("Refresh cache was not initialized");
+            return new RefreshContext(
+                _refreshGeneration,
+                _currentNamespaceId!,
+                _currentOperations,
+                refreshCache,
+                refreshCts.Token);
+        }
+    }
+
+    private bool IsCurrent(long generation)
+    {
+        lock (_stateLock)
+        {
+            return generation == _refreshGeneration && _refreshCts is { IsCancellationRequested: false };
+        }
+    }
+
+    private sealed record RefreshContext(
+        long Generation,
+        string NamespaceId,
+        IServiceBusOperations? Operations,
+        DashboardRefreshCache Cache,
+        CancellationToken CancellationToken);
+
+    private sealed class DashboardRefreshCache
+    {
+        public Dictionary<string, List<SubscriptionInfo>> SubscriptionsByTopic { get; } =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public int NextTopicIndex { get; set; }
     }
 }

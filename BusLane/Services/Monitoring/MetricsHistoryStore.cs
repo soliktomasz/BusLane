@@ -7,11 +7,19 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class MetricsHistoryStore : IMetricsHistoryStore
 {
+    private static readonly TimeSpan CompactionInterval = TimeSpan.FromHours(1);
+    private static readonly JsonSerializerOptions LineJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly string _filePath;
     private readonly TimeSpan _retention;
     private readonly Func<DateTimeOffset> _nowProvider;
     private readonly object _lock = new();
     private bool _isLoaded;
+    private bool _requiresRewrite;
+    private DateTimeOffset _lastCompactionAt;
     private List<MetricSnapshot> _snapshots = [];
 
     public MetricsHistoryStore(
@@ -37,7 +45,19 @@ public class MetricsHistoryStore : IMetricsHistoryStore
             EnsureLoaded();
             _snapshots.AddRange(snapshotList);
             _snapshots = RemoveExpired(_snapshots);
-            SaveInternal(_snapshots);
+
+            var now = _nowProvider();
+            if (_requiresRewrite || now - _lastCompactionAt >= CompactionInterval)
+            {
+                SaveInternal(_snapshots);
+                _requiresRewrite = false;
+                _lastCompactionAt = now;
+            }
+            else
+            {
+                var cutoff = now - _retention;
+                AppendInternal(snapshotList.Where(snapshot => snapshot.Timestamp >= cutoff));
+            }
         }
     }
 
@@ -89,6 +109,8 @@ public class MetricsHistoryStore : IMetricsHistoryStore
             EnsureLoaded();
             _snapshots = RemoveExpired(_snapshots);
             SaveInternal(_snapshots);
+            _requiresRewrite = false;
+            _lastCompactionAt = _nowProvider();
         }
     }
 
@@ -112,6 +134,7 @@ public class MetricsHistoryStore : IMetricsHistoryStore
 
     private List<MetricSnapshot> LoadInternal()
     {
+        var malformedNonFinalRecord = false;
         try
         {
             if (!File.Exists(_filePath))
@@ -120,9 +143,50 @@ public class MetricsHistoryStore : IMetricsHistoryStore
             }
 
             var json = File.ReadAllText(_filePath);
-            return Deserialize<List<MetricSnapshot>>(json) ?? [];
+            if (json.AsSpan().TrimStart().StartsWith("["))
+            {
+                _requiresRewrite = true;
+                var loadedSnapshots = Deserialize<List<MetricSnapshot>>(json) ?? [];
+                var loadedCount = loadedSnapshots.Count;
+                var retainedSnapshots = RemoveExpired(loadedSnapshots);
+                _requiresRewrite |= retainedSnapshots.Count != loadedCount;
+                return retainedSnapshots;
+            }
+
+            var snapshots = new List<MetricSnapshot>();
+            var nonEmptyLines = File.ReadLines(_filePath)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
+            var cutoff = _nowProvider() - _retention;
+            for (var index = 0; index < nonEmptyLines.Count; index++)
+            {
+                try
+                {
+                    var snapshot = Deserialize<MetricSnapshot>(nonEmptyLines[index]);
+                    if (snapshot != null && snapshot.Timestamp >= cutoff)
+                    {
+                        snapshots.Add(snapshot);
+                    }
+                    else if (snapshot != null)
+                    {
+                        _requiresRewrite = true;
+                    }
+                }
+                catch when (index == nonEmptyLines.Count - 1)
+                {
+                    // Ignore incomplete final record left by interrupted append.
+                    _requiresRewrite = true;
+                }
+                catch
+                {
+                    malformedNonFinalRecord = true;
+                    throw;
+                }
+            }
+
+            return snapshots;
         }
-        catch
+        catch when (!malformedNonFinalRecord)
         {
             return [];
         }
@@ -136,7 +200,31 @@ public class MetricsHistoryStore : IMetricsHistoryStore
             Directory.CreateDirectory(directory);
         }
 
-        var json = Serialize(snapshots);
-        File.WriteAllText(_filePath, json);
+        var content = string.Join(
+            Environment.NewLine,
+            snapshots.Select(snapshot => Serialize(snapshot, LineJsonOptions)));
+        if (content.Length > 0)
+        {
+            content += Environment.NewLine;
+        }
+
+        AtomicFile.WriteAllText(_filePath, content);
+    }
+
+    private void AppendInternal(IEnumerable<MetricSnapshot> snapshots)
+    {
+        var directory = Path.GetDirectoryName(_filePath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        var content = string.Join(
+            Environment.NewLine,
+            snapshots.Select(snapshot => Serialize(snapshot, LineJsonOptions)));
+        if (content.Length > 0)
+        {
+            File.AppendAllText(_filePath, content + Environment.NewLine);
+        }
     }
 }

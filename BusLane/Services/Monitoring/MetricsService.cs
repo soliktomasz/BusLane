@@ -106,6 +106,7 @@ public class MetricsService : IMetricsService, IDisposable
     private const int MaxBatchSize = 50;
     
     private readonly ConcurrentDictionary<string, MetricDataList> _metrics = new();
+    private readonly object _metricsCreationLock = new();
     private readonly List<MetricDataPoint> _pendingMetrics = new();
     private readonly List<MetricSnapshot> _pendingSnapshots = new();
     private readonly object _batchLock = new();
@@ -146,18 +147,19 @@ public class MetricsService : IMetricsService, IDisposable
         var key = GetMetricKey(entityName, metricName);
         var dataPoint = new MetricDataPoint(DateTimeOffset.UtcNow, entityName, metricName, value);
 
-        _metrics.AddOrUpdate(
-            key,
-            _ => {
-                var list = new MetricDataList();
-                list.Add(dataPoint, MaxPointsPerMetric);
-                return list;
-            },
-            (_, list) => {
-                list.Add(dataPoint, MaxPointsPerMetric);
-                return list;
+        if (!_metrics.TryGetValue(key, out var metricList))
+        {
+            lock (_metricsCreationLock)
+            {
+                if (!_metrics.TryGetValue(key, out metricList))
+                {
+                    metricList = new MetricDataList();
+                    _metrics[key] = metricList;
+                }
             }
-        );
+        }
+
+        metricList.Add(dataPoint, MaxPointsPerMetric);
 
         // Add to batch and start timer if needed
         lock (_batchLock)

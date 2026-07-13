@@ -14,6 +14,7 @@ using Serilog;
 public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, PooledClient> _clients = new();
+    private readonly object _lifecycleLock = new();
     private bool _disposed;
 
     /// <summary>
@@ -22,19 +23,21 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
     /// </summary>
     public ServiceBusClient GetClient(string connectionString)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
         var key = ComputeConnectionKey(connectionString);
-        
-        var pooled = _clients.GetOrAdd(key, k =>
-        {
-            Log.Debug("Creating new ServiceBusClient for connection key {Key}", k[..8]);
-            var client = new ServiceBusClient(connectionString);
-            return new PooledClient(client, 0);
-        });
 
-        Interlocked.Increment(ref pooled.ReferenceCount);
-        return pooled.Client;
+        lock (_lifecycleLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            var pooled = _clients.GetOrAdd(key, k =>
+            {
+                Log.Debug("Creating new ServiceBusClient for connection key {Key}", k[..8]);
+                return new PooledClient(new ServiceBusClient(connectionString));
+            });
+
+            pooled.ReferenceCount++;
+            return pooled.Client;
+        }
     }
 
     /// <summary>
@@ -42,42 +45,36 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
     /// </summary>
     public ServiceBusAdministrationClient GetAdminClient(string connectionString)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        
-        // Admin clients are lightweight - create new ones per connection string
-        return new ServiceBusAdministrationClient(connectionString);
+        lock (_lifecycleLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            // Admin clients are lightweight - create new ones per connection string
+            return new ServiceBusAdministrationClient(connectionString);
+        }
     }
 
     /// <summary>
-    /// Returns a client to the pool, disposing it asynchronously if no longer referenced.
+    /// Releases a client reference. Idle clients remain pooled until pool disposal.
     /// </summary>
-    public async ValueTask ReturnClientAsync(string connectionString, ServiceBusClient client)
+    public ValueTask ReturnClientAsync(string connectionString, ServiceBusClient client)
     {
-        if (_disposed) return;
-
         var key = ComputeConnectionKey(connectionString);
-        
-        if (_clients.TryGetValue(key, out var pooled) && pooled.Client == client)
+
+        lock (_lifecycleLock)
         {
-            var newCount = Interlocked.Decrement(ref pooled.ReferenceCount);
-            
-            if (newCount <= 0)
+            if (!_disposed &&
+                _clients.TryGetValue(key, out var pooled) &&
+                pooled.Client == client &&
+                pooled.ReferenceCount > 0)
             {
-                // Try to remove and dispose
-                if (_clients.TryRemove(key, out var removed))
-                {
-                    Log.Debug("Disposing pooled ServiceBusClient for key {Key}", key[..8]);
-                    try
-                    {
-                        await removed.Client.DisposeAsync().ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning(ex, "Error disposing client for key {Key}", key[..8]);
-                    }
-                }
+                pooled.ReferenceCount--;
             }
         }
+
+        // Keep idle clients pooled until pool disposal. This avoids closing a client
+        // while another operations instance concurrently acquires the same entry.
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -85,10 +82,13 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
     /// </summary>
     public PoolStatistics GetStatistics()
     {
-        return new PoolStatistics(
-            _clients.Count,
-            _clients.Values.Sum(c => c.ReferenceCount)
-        );
+        lock (_lifecycleLock)
+        {
+            return new PoolStatistics(
+                _clients.Count,
+                _clients.Values.Sum(c => c.ReferenceCount)
+            );
+        }
     }
 
     /// <summary>
@@ -97,12 +97,18 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
     /// </summary>
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
+        List<KeyValuePair<string, PooledClient>> clients;
+        lock (_lifecycleLock)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            clients = _clients.ToList();
+            _clients.Clear();
+        }
 
-        Log.Information("Disposing ServiceBusClientPool with {Count} clients", _clients.Count);
+        Log.Information("Disposing ServiceBusClientPool with {Count} clients", clients.Count);
         
-        foreach (var kvp in _clients)
+        foreach (var kvp in clients)
         {
             try
             {
@@ -114,7 +120,6 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
             }
         }
         
-        _clients.Clear();
     }
 
     /// <summary>
@@ -122,12 +127,18 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
-        _disposed = true;
+        List<KeyValuePair<string, PooledClient>> clients;
+        lock (_lifecycleLock)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            clients = _clients.ToList();
+            _clients.Clear();
+        }
 
-        Log.Information("Disposing ServiceBusClientPool with {Count} clients", _clients.Count);
+        Log.Information("Disposing ServiceBusClientPool with {Count} clients", clients.Count);
         
-        foreach (var kvp in _clients)
+        foreach (var kvp in clients)
         {
             try
             {
@@ -139,7 +150,6 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
             }
         }
         
-        _clients.Clear();
     }
 
     private static string ComputeConnectionKey(string connectionString)
@@ -156,10 +166,9 @@ public sealed class ServiceBusClientPool : IDisposable, IAsyncDisposable
         public ServiceBusClient Client { get; }
         public int ReferenceCount;
 
-        public PooledClient(ServiceBusClient client, int referenceCount)
+        public PooledClient(ServiceBusClient client)
         {
             Client = client;
-            ReferenceCount = referenceCount;
         }
     }
 

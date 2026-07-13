@@ -259,11 +259,11 @@ public class MessageBulkOperationsViewModelTests
                 null,
                 Arg.Any<IEnumerable<MessageIdentifier>>(),
                 false,
-                Arg.Any<CancellationToken>(),
-                Arg.Any<IProgress<BulkOperationProgress>?>())
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                ct: Arg.Any<CancellationToken>())
             .Returns(call =>
             {
-                call.ArgAt<IProgress<BulkOperationProgress>?>(5)?.Report(new BulkOperationProgress(
+                call.ArgAt<IProgress<BulkOperationProgress>?>(4)?.Report(new BulkOperationProgress(
                     BulkOperationType.Delete,
                     ProcessedCount: 1,
                     RequestedCount: 2,
@@ -317,6 +317,104 @@ public class MessageBulkOperationsViewModelTests
         sut.BulkProgressCurrent.Should().Be(1);
         sut.BulkProgressTotal.Should().Be(2);
         statuses.Should().Contain(s => s.Contains("Partial failure", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task ExecuteBulkDeleteDetailedAsync_WithSessionMessage_PassesSessionContext()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.DeleteMessagesDetailedAsync(
+                "orders",
+                null,
+                Arg.Any<IEnumerable<MessageIdentifier>>(),
+                false,
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                requiresSession: true,
+                ct: Arg.Any<CancellationToken>())
+            .Returns(new BulkOperationExecutionResult(
+                BulkOperationType.Delete,
+                1,
+                1,
+                [],
+                "Deleted 1 of 1 message(s)"));
+        var navigation = new NavigationState
+        {
+            SelectedQueue = CreateQueueInfo("orders", requiresSession: true),
+            SelectedEntity = CreateQueueInfo("orders", requiresSession: true)
+        };
+        var sut = new MessageBulkOperationsViewModel(
+            () => operations,
+            () => navigation,
+            Substitute.For<IPreferencesService>(),
+            Substitute.For<ILogSink>(),
+            _ => { });
+        var selectedMessages = new ObservableCollection<MessageInfo>
+        {
+            CreateMessage("msg-1", 101, "session-a")
+        };
+
+        // Act
+        await sut.ExecuteBulkDeleteDetailedAsync(selectedMessages);
+
+        // Assert
+        await operations.Received(1).DeleteMessagesDetailedAsync(
+            "orders",
+            null,
+            Arg.Is<IEnumerable<MessageIdentifier>>(identifiers =>
+                identifiers!.Single() == new MessageIdentifier(101, "msg-1", "session-a")),
+            false,
+            progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+            requiresSession: true,
+            ct: Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteResubmitDeadLettersDetailedAsync_WithSessionMessage_PassesSessionRequirement()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.ResubmitDeadLetterMessagesDetailedAsync(
+                "orders",
+                null,
+                Arg.Any<IEnumerable<MessageInfo>>(),
+                progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+                requiresSession: true,
+                ct: Arg.Any<CancellationToken>())
+            .Returns(new BulkOperationExecutionResult(
+                BulkOperationType.ResubmitDeadLetter,
+                1,
+                1,
+                [],
+                "Resubmitted 1 of 1 message(s)"));
+        var navigation = new NavigationState
+        {
+            SelectedQueue = CreateQueueInfo("orders", requiresSession: true),
+            SelectedEntity = CreateQueueInfo("orders", requiresSession: true),
+            ShowDeadLetter = true
+        };
+        var sut = new MessageBulkOperationsViewModel(
+            () => operations,
+            () => navigation,
+            Substitute.For<IPreferencesService>(),
+            Substitute.For<ILogSink>(),
+            _ => { });
+        var selectedMessages = new ObservableCollection<MessageInfo>
+        {
+            CreateMessage("msg-1", 101, "session-a")
+        };
+
+        // Act
+        await sut.ExecuteResubmitDeadLettersDetailedAsync(selectedMessages);
+
+        // Assert
+        await operations.Received(1).ResubmitDeadLetterMessagesDetailedAsync(
+            "orders",
+            null,
+            Arg.Any<IEnumerable<MessageInfo>>(),
+            progress: Arg.Any<IProgress<BulkOperationProgress>?>(),
+            requiresSession: true,
+            ct: Arg.Any<CancellationToken>());
     }
 
     [Fact]
