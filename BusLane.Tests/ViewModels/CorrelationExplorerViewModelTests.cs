@@ -50,6 +50,91 @@ public class CorrelationExplorerViewModelTests
     }
 
     [Fact]
+    public async Task ApplyFilters_WithStructuredCriteria_FiltersGroupsAndTimeline()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("loaded", 1, "corr-orders"));
+        catalog.Add(CreateMessage("streamed", 2, "corr-orders") with
+        {
+            Source = CorrelationMessageSource.LiveStream,
+            EntityName = "orders-v2",
+            Environment = ConnectionEnvironment.Production
+        });
+        catalog.Add(CreateMessage("billing", 3, "corr-billing"));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.FilterEntity = "orders-v2";
+        sut.FilterEnvironment = ConnectionEnvironment.Production;
+        sut.FilterSource = CorrelationMessageSource.LiveStream;
+
+        // Act
+        sut.ApplyFiltersCommand.Execute(null);
+
+        // Assert
+        sut.Groups.Should().ContainSingle().Which.DisplayId.Should().Be("corr-orders");
+        sut.Timeline.Should().ContainSingle().Which.MessageId.Should().Be("streamed");
+    }
+
+    [Fact]
+    public async Task ApplyFilters_WithInvalidTime_PreservesCurrentResults()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("message-1", 1));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.FilterFromText = "not-a-time";
+
+        // Act
+        sut.ApplyFiltersCommand.Execute(null);
+
+        // Assert
+        sut.FilterValidationMessage.Should().Be("From time must be a valid ISO 8601 timestamp");
+        sut.Groups.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ClearFilters_RestoresAllGroups()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("orders", 1, "corr-orders"));
+        catalog.Add(CreateMessage("billing", 2, "corr-billing"));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.FilterEntity = "orders";
+        sut.ApplyFiltersCommand.Execute(null);
+
+        // Act
+        sut.ClearFiltersCommand.Execute(null);
+
+        // Assert
+        sut.Groups.Should().HaveCount(2);
+        sut.FilterEntity.Should().BeNull();
+        sut.FilterValidationMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ApplyFilters_WhenSelectedMessageStillMatches_PreservesSelection()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        catalog.Add(CreateMessage("second", 2));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.SelectedMessage = sut.Timeline.Single(message => message.MessageId == "second");
+        sut.FilterNamespace = "demo.servicebus.windows.net";
+
+        // Act
+        sut.ApplyFiltersCommand.Execute(null);
+
+        // Assert
+        sut.SelectedMessage!.MessageId.Should().Be("second");
+    }
+
+    [Fact]
     public async Task OpenReplay_WithSelectedMessage_CreatesReplayEditor()
     {
         // Arrange

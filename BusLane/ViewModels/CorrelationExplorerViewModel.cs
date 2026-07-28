@@ -1,6 +1,7 @@
 namespace BusLane.ViewModels;
 
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Avalonia.Platform.Storage;
@@ -28,8 +29,21 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
     private readonly Func<IServiceBusOperations?> _getOperations;
     private readonly Func<IReadOnlyList<ReplayDestination>> _getDestinations;
     private readonly IFileDialogService? _fileDialogService;
+    private readonly ICorrelationMessageFilter _messageFilter;
+    private CorrelationExplorerFilter _activeFilter = CorrelationExplorerFilter.Empty;
 
     [ObservableProperty] private string _filterText = string.Empty;
+    [ObservableProperty] private string? _filterFromText;
+    [ObservableProperty] private string? _filterToText;
+    [ObservableProperty] private string? _filterNamespace;
+    [ObservableProperty] private string? _filterEntity;
+    [ObservableProperty] private ConnectionEnvironment? _filterEnvironment;
+    [ObservableProperty] private CorrelationMessageSource? _filterSource;
+    [ObservableProperty] private string? _filterIdentifier;
+    [ObservableProperty] private string? _filterPropertyKey;
+    [ObservableProperty] private string? _filterPropertyValue;
+    [ObservableProperty] private bool _showFilters;
+    [ObservableProperty] private string? _filterValidationMessage;
     [ObservableProperty] private CorrelationGroup? _selectedGroup;
     [ObservableProperty] private CorrelationMessage? _selectedMessage;
     [ObservableProperty] private ReplayMessageViewModel? _replayEditor;
@@ -47,7 +61,8 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         IMessageReplayService replayService,
         Func<IServiceBusOperations?> getOperations,
         Func<IReadOnlyList<ReplayDestination>> getDestinations,
-        IFileDialogService? fileDialogService = null)
+        IFileDialogService? fileDialogService = null,
+        ICorrelationMessageFilter? messageFilter = null)
     {
         _catalog = catalog;
         _auditStore = auditStore;
@@ -55,6 +70,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         _getOperations = getOperations;
         _getDestinations = getDestinations;
         _fileDialogService = fileDialogService;
+        _messageFilter = messageFilter ?? new CorrelationMessageFilter();
     }
 
     [RelayCommand]
@@ -74,7 +90,45 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
 
     partial void OnFilterTextChanged(string value)
     {
-        _ = value;
+        _activeFilter = _activeFilter with { Text = Normalize(value) };
+        RefreshGroups();
+    }
+
+    [RelayCommand]
+    private void ToggleFilters()
+    {
+        ShowFilters = !ShowFilters;
+    }
+
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        if (!TryBuildFilter(out var filter, out var error))
+        {
+            FilterValidationMessage = error;
+            return;
+        }
+
+        FilterValidationMessage = null;
+        _activeFilter = filter!;
+        RefreshGroups();
+    }
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterFromText = null;
+        FilterToText = null;
+        FilterNamespace = null;
+        FilterEntity = null;
+        FilterEnvironment = null;
+        FilterSource = null;
+        FilterIdentifier = null;
+        FilterPropertyKey = null;
+        FilterPropertyValue = null;
+        FilterText = string.Empty;
+        FilterValidationMessage = null;
+        _activeFilter = CorrelationExplorerFilter.Empty;
         RefreshGroups();
     }
 
@@ -152,17 +206,19 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
     private void RefreshGroups()
     {
         var selectedKey = SelectedGroup?.Key;
+        var selectedMessageIdentity = SelectedMessage == null
+            ? (CorrelationMessageIdentity?)null
+            : CorrelationMessageIdentity.From(SelectedMessage);
         var groups = _catalog.GetGroups();
-        if (!string.IsNullOrWhiteSpace(FilterText))
-        {
-            groups = groups
-                .Where(group =>
-                    group.DisplayId.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ||
-                    group.Messages.Any(message =>
-                        message.MessageId.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ||
-                        message.EntityName.Contains(FilterText, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
-        }
+        groups = groups
+            .Select(group => group with
+            {
+                Messages = group.Messages
+                    .Where(message => _messageFilter.Matches(message, _activeFilter))
+                    .ToList()
+            })
+            .Where(static group => group.Messages.Count > 0)
+            .ToList();
 
         Groups.Clear();
         foreach (var group in groups)
@@ -171,6 +227,70 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         }
 
         SelectedGroup = Groups.FirstOrDefault(group => group.Key == selectedKey) ?? Groups.FirstOrDefault();
+        if (selectedMessageIdentity.HasValue)
+        {
+            SelectedMessage = Timeline.FirstOrDefault(message =>
+                CorrelationMessageIdentity.From(message) == selectedMessageIdentity.Value) ??
+                Timeline.FirstOrDefault();
+        }
+    }
+
+    private bool TryBuildFilter(out CorrelationExplorerFilter? filter, out string? error)
+    {
+        filter = null;
+        error = null;
+        if (!TryParseTimestamp(FilterFromText, "From", out var from, out error) ||
+            !TryParseTimestamp(FilterToText, "To", out var to, out error))
+        {
+            return false;
+        }
+
+        filter = new CorrelationExplorerFilter
+        {
+            Text = Normalize(FilterText),
+            From = from,
+            To = to,
+            Namespace = Normalize(FilterNamespace),
+            Entity = Normalize(FilterEntity),
+            Environment = FilterEnvironment,
+            Source = FilterSource,
+            Identifier = Normalize(FilterIdentifier),
+            PropertyKey = Normalize(FilterPropertyKey),
+            PropertyValue = Normalize(FilterPropertyValue)
+        };
+        return true;
+    }
+
+    private static bool TryParseTimestamp(
+        string? value,
+        string label,
+        out DateTimeOffset? timestamp,
+        out string? error)
+    {
+        timestamp = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        if (!DateTimeOffset.TryParse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out var parsed))
+        {
+            error = $"{label} time must be a valid ISO 8601 timestamp";
+            return false;
+        }
+
+        timestamp = parsed;
+        return true;
+    }
+
+    private static string? Normalize(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private async Task ReloadHistoryAsync(CancellationToken ct)
