@@ -128,6 +128,37 @@ public class CorrelationExplorerViewTests
         xaml.Should().Contain("Comparison.Body.Second");
     }
 
+    [Fact]
+    public void CorrelationExplorerStyles_UseThemeAwareInvestigationSurfaces()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("..", "Styles", "AppStyles.axaml"));
+        string[] selectorTokens =
+        [
+            "Border.correlation-command-bar",
+            "Border.correlation-filter-surface",
+            "Border.correlation-pane",
+            "Border.correlation-pane.inspector",
+            "ListBox.correlation-list",
+            "ListBox.timeline-list",
+            "Border.correlation-group-row",
+            "Border.timeline-event",
+            "Ellipse.timeline-node",
+            "Border.correlation-inspector-header"
+        ];
+
+        // Assert
+        xaml.Should().Contain("<!-- Correlation Explorer -->");
+
+        foreach (var selectorToken in selectorTokens)
+        {
+            xaml.Should().Contain(selectorToken);
+        }
+
+        var correlationExplorerStyles = xaml[xaml.IndexOf("<!-- Correlation Explorer -->", StringComparison.Ordinal)..];
+        correlationExplorerStyles.Should().NotContain("#");
+    }
+
     private static string GetPath(params string[] parts)
     {
         return Path.GetFullPath(Path.Combine(
