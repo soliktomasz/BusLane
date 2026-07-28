@@ -307,7 +307,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IFileDialogService? fileDialogService = null,
         ICorrelationMessageCatalog? correlationMessageCatalog = null,
         IReplayAuditStore? replayAuditStore = null,
-        IMessageReplayService? messageReplayService = null)
+        IMessageReplayService? messageReplayService = null,
+        ICorrelationRefreshDelay? correlationRefreshDelay = null)
     {
         _auth = auth;
         _azureResources = azureResources;
@@ -390,7 +391,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             messageReplayService,
             replayAuditStore,
             GetReplayDestinations,
-            () => _fileDialogService);
+            () => _fileDialogService,
+            correlationRefreshDelay);
 
         // Initialize refactored components
         Tabs = new TabManagementViewModel(

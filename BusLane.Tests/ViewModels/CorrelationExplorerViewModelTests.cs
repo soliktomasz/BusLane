@@ -135,6 +135,114 @@ public class CorrelationExplorerViewModelTests
     }
 
     [Fact]
+    public async Task CatalogChanged_AfterDebounce_RefreshesWithoutStealingSelection()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        var delay = new ControlledRefreshDelay();
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>(), refreshDelay: delay);
+        await sut.RefreshAsync();
+        sut.SelectedMessage = sut.Timeline.Single();
+
+        // Act
+        catalog.Add(CreateMessage("second", 2));
+
+        // Assert
+        delay.InvocationCount.Should().Be(1);
+        sut.Timeline.Should().ContainSingle();
+        delay.ReleaseLatest();
+        await WaitUntilAsync(() => sut.Timeline.Count == 2);
+        sut.SelectedMessage!.MessageId.Should().Be("first");
+        sut.NewMessageCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CatalogChanged_DuringBurst_CancelsEarlierRefresh()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        var delay = new ControlledRefreshDelay();
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>(), refreshDelay: delay);
+        await sut.RefreshAsync();
+
+        // Act
+        catalog.Add(CreateMessage("second", 2));
+        catalog.Add(CreateMessage("third", 3));
+        delay.ReleaseLatest();
+        await WaitUntilAsync(() => sut.Timeline.Count == 3);
+
+        // Assert
+        delay.InvocationCount.Should().Be(2);
+        delay.CancelledCount.Should().Be(1);
+        delay.CompletedCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CatalogChanged_WhenNewMessageIsFilteredOut_DoesNotChangeTimeline()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("orders", 1));
+        var delay = new ControlledRefreshDelay();
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>(), refreshDelay: delay);
+        await sut.RefreshAsync();
+        sut.FilterEntity = "orders";
+        sut.ApplyFiltersCommand.Execute(null);
+
+        // Act
+        catalog.Add(CreateMessage("billing", 2) with { EntityName = "billing" });
+        delay.ReleaseLatest();
+        await WaitUntilAsync(() => delay.CompletedCount == 1);
+
+        // Assert
+        sut.Timeline.Should().ContainSingle().Which.MessageId.Should().Be("orders");
+        sut.NewMessageCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SelectingNewestMessage_AcknowledgesNewMessages()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        var delay = new ControlledRefreshDelay();
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>(), refreshDelay: delay);
+        await sut.RefreshAsync();
+        catalog.Add(CreateMessage("second", 2));
+        delay.ReleaseLatest();
+        await WaitUntilAsync(() => sut.Timeline.Count == 2);
+
+        // Act
+        sut.SelectedMessage = sut.Timeline[^1];
+
+        // Assert
+        sut.NewMessageCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Dispose_UnsubscribesAndCancelsPendingRefresh()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        var delay = new ControlledRefreshDelay();
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>(), refreshDelay: delay);
+        await sut.RefreshAsync();
+        catalog.Add(CreateMessage("second", 2));
+
+        // Act
+        sut.Dispose();
+        catalog.Add(CreateMessage("third", 3));
+
+        // Assert
+        await WaitUntilAsync(() => delay.CancelledCount == 1);
+        delay.InvocationCount.Should().Be(1);
+        sut.Timeline.Should().ContainSingle();
+    }
+
+    [Fact]
     public async Task OpenReplay_WithSelectedMessage_CreatesReplayEditor()
     {
         // Arrange
@@ -186,7 +294,8 @@ public class CorrelationExplorerViewModelTests
     private static CorrelationExplorerViewModel CreateSut(
         ICorrelationMessageCatalog catalog,
         IReplayAuditStore auditStore,
-        IFileDialogService? fileDialog = null)
+        IFileDialogService? fileDialog = null,
+        ICorrelationRefreshDelay? refreshDelay = null)
     {
         var replayService = Substitute.For<IMessageReplayService>();
         var destination = new ReplayDestination(
@@ -214,7 +323,77 @@ public class CorrelationExplorerViewModelTests
             replayService,
             () => Substitute.For<IServiceBusOperations>(),
             () => [destination],
-            fileDialog);
+            fileDialog,
+            refreshDelay: refreshDelay);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        var timeout = DateTime.UtcNow.AddSeconds(2);
+        while (!predicate())
+        {
+            if (DateTime.UtcNow >= timeout)
+            {
+                throw new TimeoutException("Condition was not reached");
+            }
+
+            await Task.Delay(10);
+        }
+    }
+
+    private sealed class ControlledRefreshDelay : ICorrelationRefreshDelay
+    {
+        private readonly List<PendingDelay> _pending = [];
+
+        public int InvocationCount => _pending.Count;
+        public int CancelledCount => _pending.Count(item => item.IsCancelled);
+        public int CompletedCount => _pending.Count(item => item.IsCompleted);
+
+        public Task DelayAsync(TimeSpan duration, CancellationToken ct = default)
+        {
+            _ = duration;
+            var pending = new PendingDelay(ct);
+            _pending.Add(pending);
+            return pending.Task;
+        }
+
+        public void ReleaseLatest()
+        {
+            _pending[^1].Release();
+        }
+
+        private sealed class PendingDelay
+        {
+            private readonly TaskCompletionSource _completion =
+                new(TaskCreationOptions.RunContinuationsAsynchronously);
+            private readonly CancellationTokenRegistration _registration;
+
+            public PendingDelay(CancellationToken ct)
+            {
+                _registration = ct.Register(() => _completion.TrySetCanceled(ct));
+            }
+
+            public Task Task => AwaitAndDisposeAsync();
+            public bool IsCancelled => _completion.Task.IsCanceled;
+            public bool IsCompleted => _completion.Task.IsCompletedSuccessfully;
+
+            public void Release()
+            {
+                _completion.TrySetResult();
+            }
+
+            private async Task AwaitAndDisposeAsync()
+            {
+                try
+                {
+                    await _completion.Task;
+                }
+                finally
+                {
+                    _registration.Dispose();
+                }
+            }
+        }
     }
 
     private static CorrelationMessage CreateMessage(

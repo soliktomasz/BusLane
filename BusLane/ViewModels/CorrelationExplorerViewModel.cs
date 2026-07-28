@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Avalonia;
+using Avalonia.Threading;
 using Avalonia.Platform.Storage;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
@@ -12,8 +14,9 @@ using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-public partial class CorrelationExplorerViewModel : ViewModelBase
+public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
 {
+    private static readonly TimeSpan RefreshDebounce = TimeSpan.FromMilliseconds(100);
     private static readonly IReadOnlyList<FilePickerFileType> JsonFileTypes =
     [
         new("JSON Files")
@@ -30,7 +33,11 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
     private readonly Func<IReadOnlyList<ReplayDestination>> _getDestinations;
     private readonly IFileDialogService? _fileDialogService;
     private readonly ICorrelationMessageFilter _messageFilter;
+    private readonly ICorrelationRefreshDelay _refreshDelay;
+    private readonly object _refreshLock = new();
     private CorrelationExplorerFilter _activeFilter = CorrelationExplorerFilter.Empty;
+    private CancellationTokenSource? _refreshCts;
+    private bool _disposed;
 
     [ObservableProperty] private string _filterText = string.Empty;
     [ObservableProperty] private string? _filterFromText;
@@ -50,6 +57,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
     [ObservableProperty] private bool _showReplayEditor;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _statusMessage;
+    [ObservableProperty] private int _newMessageCount;
 
     public ObservableCollection<CorrelationGroup> Groups { get; } = [];
     public ObservableCollection<CorrelationMessage> Timeline { get; } = [];
@@ -62,7 +70,8 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         Func<IServiceBusOperations?> getOperations,
         Func<IReadOnlyList<ReplayDestination>> getDestinations,
         IFileDialogService? fileDialogService = null,
-        ICorrelationMessageFilter? messageFilter = null)
+        ICorrelationMessageFilter? messageFilter = null,
+        ICorrelationRefreshDelay? refreshDelay = null)
     {
         _catalog = catalog;
         _auditStore = auditStore;
@@ -71,6 +80,8 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         _getDestinations = getDestinations;
         _fileDialogService = fileDialogService;
         _messageFilter = messageFilter ?? new CorrelationMessageFilter();
+        _refreshDelay = refreshDelay ?? new CorrelationRefreshDelay();
+        _catalog.Changed += OnCatalogChanged;
     }
 
     [RelayCommand]
@@ -144,6 +155,23 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         }
 
         SelectedMessage = Timeline.FirstOrDefault();
+        NewMessageCount = 0;
+    }
+
+    partial void OnSelectedMessageChanged(CorrelationMessage? value)
+    {
+        if (value != null &&
+            Timeline.LastOrDefault() is { } latest &&
+            CorrelationMessageIdentity.From(value) == CorrelationMessageIdentity.From(latest))
+        {
+            NewMessageCount = 0;
+        }
+    }
+
+    [RelayCommand]
+    private void AcknowledgeNewMessages()
+    {
+        NewMessageCount = 0;
     }
 
     [RelayCommand]
@@ -203,12 +231,15 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         StatusMessage = $"Exported replay history to {Path.GetFileName(path)}";
     }
 
-    private void RefreshGroups()
+    private void RefreshGroups(bool isLiveUpdate = false)
     {
         var selectedKey = SelectedGroup?.Key;
         var selectedMessageIdentity = SelectedMessage == null
             ? (CorrelationMessageIdentity?)null
             : CorrelationMessageIdentity.From(SelectedMessage);
+        var previousTimeline = Timeline
+            .Select(CorrelationMessageIdentity.From)
+            .ToHashSet();
         var groups = _catalog.GetGroups();
         groups = groups
             .Select(group => group with
@@ -232,6 +263,12 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
             SelectedMessage = Timeline.FirstOrDefault(message =>
                 CorrelationMessageIdentity.From(message) == selectedMessageIdentity.Value) ??
                 Timeline.FirstOrDefault();
+        }
+
+        if (isLiveUpdate && SelectedGroup?.Key == selectedKey)
+        {
+            NewMessageCount += Timeline.Count(message =>
+                !previousTimeline.Contains(CorrelationMessageIdentity.From(message)));
         }
     }
 
@@ -300,5 +337,95 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         {
             ReplayHistory.Add(entry);
         }
+    }
+
+    private void OnCatalogChanged(object? sender, CorrelationCatalogChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        CancellationTokenSource? previous;
+        CancellationTokenSource current;
+        lock (_refreshLock)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            previous = _refreshCts;
+            current = new CancellationTokenSource();
+            _refreshCts = current;
+        }
+
+        previous?.Cancel();
+        _ = RefreshAfterDelayAsync(current);
+    }
+
+    private async Task RefreshAfterDelayAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await _refreshDelay.DelayAsync(RefreshDebounce, cts.Token);
+            RunOnUiThread(() =>
+            {
+                try
+                {
+                    RefreshGroups(isLiveUpdate: true);
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"Correlation refresh failed: {ex.Message}";
+                }
+            });
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            RunOnUiThread(() => StatusMessage = $"Correlation refresh failed: {ex.Message}");
+        }
+        finally
+        {
+            lock (_refreshLock)
+            {
+                if (ReferenceEquals(_refreshCts, cts))
+                {
+                    _refreshCts = null;
+                }
+            }
+
+            cts.Dispose();
+        }
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(action);
+    }
+
+    public void Dispose()
+    {
+        CancellationTokenSource? refreshCts;
+        lock (_refreshLock)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            refreshCts = _refreshCts;
+            _refreshCts = null;
+        }
+
+        _catalog.Changed -= OnCatalogChanged;
+        refreshCts?.Cancel();
     }
 }

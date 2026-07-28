@@ -30,6 +30,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly IReplayAuditStore? _replayAuditStore;
     private readonly Func<IReadOnlyList<ReplayDestination>>? _getReplayDestinations;
     private readonly Func<BusLane.Services.Abstractions.IFileDialogService?>? _getFileDialogService;
+    private readonly ICorrelationRefreshDelay? _correlationRefreshDelay;
 
     [ObservableProperty] private bool _showLiveStream;
     [ObservableProperty] private bool _showCharts;
@@ -58,7 +59,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         IMessageReplayService? messageReplayService = null,
         IReplayAuditStore? replayAuditStore = null,
         Func<IReadOnlyList<ReplayDestination>>? getReplayDestinations = null,
-        Func<BusLane.Services.Abstractions.IFileDialogService?>? getFileDialogService = null)
+        Func<BusLane.Services.Abstractions.IFileDialogService?>? getFileDialogService = null,
+        ICorrelationRefreshDelay? correlationRefreshDelay = null)
     {
         _liveStreamService = liveStreamService;
         _alertService = alertService;
@@ -76,6 +78,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _replayAuditStore = replayAuditStore;
         _getReplayDestinations = getReplayDestinations;
         _getFileDialogService = getFileDialogService;
+        _correlationRefreshDelay = correlationRefreshDelay;
         DashboardViewModel = dashboardViewModel;
 
         _alertService.AlertTriggered += OnAlertTriggered;
@@ -172,13 +175,15 @@ public partial class FeaturePanelsViewModel : ViewModelBase
             return;
         }
 
+        CorrelationExplorerViewModel?.Dispose();
         CorrelationExplorerViewModel = new CorrelationExplorerViewModel(
             _correlationCatalog,
             _replayAuditStore,
             _messageReplayService,
             _getOperations,
             _getReplayDestinations,
-            _getFileDialogService?.Invoke());
+            _getFileDialogService?.Invoke(),
+            refreshDelay: _correlationRefreshDelay);
         await CorrelationExplorerViewModel.RefreshAsync();
 
         ShowCorrelationExplorer = true;
@@ -190,6 +195,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     public void CloseCorrelationExplorer()
     {
         ShowCorrelationExplorer = false;
+        CorrelationExplorerViewModel?.Dispose();
         CorrelationExplorerViewModel = null;
     }
 

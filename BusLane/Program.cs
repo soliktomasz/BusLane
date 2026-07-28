@@ -136,6 +136,7 @@ class Program
         services.AddSingleton<INamespaceTopologyService, NamespaceTopologyService>();
         services.AddSingleton<IScheduledMessageStore, ScheduledMessageStore>();
         services.AddSingleton<ICorrelationMessageCatalog, CorrelationMessageCatalog>();
+        services.AddSingleton<ICorrelationRefreshDelay, CorrelationRefreshDelay>();
         services.AddSingleton<IReplayAuditStore, ReplayAuditStore>();
         services.AddSingleton<IReplayDelay, ReplayDelay>();
         services.AddSingleton(TimeProvider.System);
@@ -197,7 +198,8 @@ class Program
             sp.GetRequiredService<INamespaceTopologyService>(),
             correlationMessageCatalog: sp.GetRequiredService<ICorrelationMessageCatalog>(),
             replayAuditStore: sp.GetRequiredService<IReplayAuditStore>(),
-            messageReplayService: sp.GetRequiredService<IMessageReplayService>()
+            messageReplayService: sp.GetRequiredService<IMessageReplayService>(),
+            correlationRefreshDelay: sp.GetRequiredService<ICorrelationRefreshDelay>()
         ));
 
     }

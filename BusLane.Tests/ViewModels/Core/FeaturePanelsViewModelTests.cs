@@ -61,7 +61,41 @@ public class FeaturePanelsViewModelTests
         catalog.GetGroups().Should().ContainSingle();
     }
 
-    private static FeaturePanelsViewModel CreateSut(ICorrelationMessageCatalog? catalog = null)
+    [Fact]
+    public async Task CloseCorrelationExplorer_DisposesExplorerSubscription()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        var delay = Substitute.For<ICorrelationRefreshDelay>();
+        var sut = CreateSut(catalog, delay);
+        await sut.OpenCorrelationExplorer();
+
+        // Act
+        sut.CloseCorrelationExplorer();
+        catalog.Add(new CorrelationMessage(
+            CorrelationMessageSource.Loaded,
+            "namespace",
+            ConnectionEnvironment.Test,
+            "orders",
+            "Queue",
+            null,
+            null,
+            "message-1",
+            "corr-1",
+            null,
+            null,
+            "{}",
+            DateTimeOffset.UtcNow,
+            1,
+            new Dictionary<string, object>()));
+
+        // Assert
+        await delay.DidNotReceiveWithAnyArgs().DelayAsync(default, default);
+    }
+
+    private static FeaturePanelsViewModel CreateSut(
+        ICorrelationMessageCatalog? catalog = null,
+        ICorrelationRefreshDelay? refreshDelay = null)
     {
         var auditStore = Substitute.For<IReplayAuditStore>();
         auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
@@ -91,6 +125,7 @@ public class FeaturePanelsViewModelTests
             replayService,
             auditStore,
             () => [destination],
-            () => null);
+            () => null,
+            refreshDelay);
     }
 }
