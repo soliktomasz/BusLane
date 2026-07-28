@@ -459,4 +459,3 @@ Expected: build succeeds and the full suite passes.
 **Step 3: Request code review**
 
 Invoke `superpowers:requesting-code-review`, address any validated findings with TDD, and rerun final verification.
-
