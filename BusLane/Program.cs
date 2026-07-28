@@ -135,6 +135,7 @@ class Program
         });
         services.AddSingleton<INamespaceTopologyService, NamespaceTopologyService>();
         services.AddSingleton<IScheduledMessageStore, ScheduledMessageStore>();
+        services.AddSingleton<ICorrelationMessageCatalog, CorrelationMessageCatalog>();
         services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
         services.AddSingleton<IConnectionBackupService, ConnectionBackupService>();
@@ -189,7 +190,8 @@ class Program
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
             sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>(),
             sp.GetRequiredService<IScheduledMessageStore>(),
-            sp.GetRequiredService<INamespaceTopologyService>()
+            sp.GetRequiredService<INamespaceTopologyService>(),
+            correlationMessageCatalog: sp.GetRequiredService<ICorrelationMessageCatalog>()
         ));
 
     }

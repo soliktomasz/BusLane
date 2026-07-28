@@ -57,6 +57,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
     private readonly IScheduledMessageStore? _scheduledMessageStore;
+    private readonly ICorrelationMessageCatalog _correlationMessageCatalog;
     private readonly SemaphoreSlim _startupInitializationGate = new(1, 1);
     private bool _startupInitialized;
 
@@ -166,6 +167,29 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// </summary>
     public SessionInspectorViewModel CurrentSessionInspector => ActiveTab?.SessionInspector ?? SessionInspector;
 
+    private CorrelationSourceContext? GetCorrelationSourceContext()
+    {
+        var entityName = CurrentNavigation.CurrentEntityName;
+        if (string.IsNullOrWhiteSpace(entityName))
+        {
+            return null;
+        }
+
+        var subscriptionName = CurrentNavigation.CurrentSubscriptionName;
+        var namespaceName = ActiveTab?.SavedConnection?.Endpoint
+            ?? ActiveTab?.Namespace?.Name
+            ?? CurrentNavigation.SelectedNamespace?.Name
+            ?? "current-namespace";
+
+        return new CorrelationSourceContext(
+            namespaceName,
+            ActiveTab?.SavedConnection?.Environment ?? ConnectionEnvironment.None,
+            subscriptionName ?? entityName,
+            subscriptionName == null ? "Queue" : "Subscription",
+            subscriptionName == null ? null : entityName,
+            subscriptionName);
+    }
+
     // UI State
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _showIntroductionSplash;
@@ -253,7 +277,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
         IScheduledMessageStore? scheduledMessageStore = null,
         INamespaceTopologyService? namespaceTopologyService = null,
-        IFileDialogService? fileDialogService = null)
+        IFileDialogService? fileDialogService = null,
+        ICorrelationMessageCatalog? correlationMessageCatalog = null)
     {
         _auth = auth;
         _azureResources = azureResources;
@@ -273,6 +298,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _logSink = logSink;
         _fileDialogService = fileDialogService;
         _scheduledMessageStore = scheduledMessageStore;
+        _correlationMessageCatalog = correlationMessageCatalog ?? new CorrelationMessageCatalog();
 
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
@@ -306,7 +332,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             () => Navigation.CurrentEntityRequiresSession,
             () => Navigation.ShowDeadLetter,
             () => GetKnownMessageCount(),
-            msg => StatusMessage = msg);
+            msg => StatusMessage = msg,
+            _correlationMessageCatalog,
+            GetCorrelationSourceContext);
 
         SessionInspector = new SessionInspectorViewModel(
             () => _operations,
@@ -327,7 +355,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             () => CurrentNavigation.TopicSubscriptions,
             () => CurrentNavigation.SelectedQueue,
             () => CurrentNavigation.SelectedSubscription,
-            msg => StatusMessage = msg);
+            msg => StatusMessage = msg,
+            _correlationMessageCatalog,
+            GetCorrelationSourceContext);
 
         // Initialize refactored components
         Tabs = new TabManagementViewModel(
@@ -336,7 +366,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             connectionStorage,
             auth,
             _logSink,
-            tab => ActiveTab = tab);
+            tab => ActiveTab = tab,
+            _correlationMessageCatalog);
 
         BulkOps = new MessageBulkOperationsViewModel(
             () => ActiveTab?.Operations ?? _operations,

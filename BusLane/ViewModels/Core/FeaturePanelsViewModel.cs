@@ -24,6 +24,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly Func<QueueInfo?> _getSelectedQueue;
     private readonly Func<SubscriptionInfo?> _getSelectedSubscription;
     private readonly Action<string> _setStatus;
+    private readonly ICorrelationMessageCatalog? _correlationCatalog;
+    private readonly Func<CorrelationSourceContext?>? _getCorrelationContext;
 
     [ObservableProperty] private bool _showLiveStream;
     [ObservableProperty] private bool _showCharts;
@@ -44,7 +46,9 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         Func<ObservableCollection<SubscriptionInfo>> getSubscriptions,
         Func<QueueInfo?> getSelectedQueue,
         Func<SubscriptionInfo?> getSelectedSubscription,
-        Action<string> setStatus)
+        Action<string> setStatus,
+        ICorrelationMessageCatalog? correlationCatalog = null,
+        Func<CorrelationSourceContext?>? getCorrelationContext = null)
     {
         _liveStreamService = liveStreamService;
         _alertService = alertService;
@@ -56,6 +60,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _getSelectedQueue = getSelectedQueue;
         _getSelectedSubscription = getSelectedSubscription;
         _setStatus = setStatus;
+        _correlationCatalog = correlationCatalog;
+        _getCorrelationContext = getCorrelationContext;
         DashboardViewModel = dashboardViewModel;
 
         _alertService.AlertTriggered += OnAlertTriggered;
@@ -85,7 +91,11 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     [RelayCommand]
     public async Task OpenLiveStream()
     {
-        LiveStreamViewModel = new LiveStreamViewModel(_liveStreamService, _getOperations);
+        LiveStreamViewModel = new LiveStreamViewModel(
+            _liveStreamService,
+            _getOperations,
+            _correlationCatalog,
+            _getCorrelationContext);
         LiveStreamViewModel.SetAvailableEntities(_getQueues(), _getTopics());
 
         ShowLiveStream = true;

@@ -11,6 +11,57 @@ using NSubstitute;
 public class MessageOperationsViewModelTests
 {
     [Fact]
+    public async Task LoadMessagesAsync_AfterDisplayingPage_AddsLoadedMessagesToCorrelationCatalog()
+    {
+        // Arrange
+        var message = CreateMessage("message-1", DateTimeOffset.UtcNow, 1) with
+        {
+            CorrelationId = "corr-1"
+        };
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync(
+                "orders",
+                null,
+                Arg.Any<int>(),
+                null,
+                false,
+                false,
+                null,
+                Arg.Any<CancellationToken>())
+            .Returns([message]);
+        var catalog = Substitute.For<ICorrelationMessageCatalog>();
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(25);
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            Substitute.For<ILogSink>(),
+            () => "orders",
+            () => null,
+            () => false,
+            () => false,
+            () => 1,
+            _ => { },
+            catalog,
+            () => new CorrelationSourceContext(
+                "demo.servicebus.windows.net",
+                ConnectionEnvironment.Development,
+                "orders",
+                "Queue",
+                null,
+                null));
+
+        // Act
+        await sut.LoadMessagesAsync();
+
+        // Assert
+        catalog.Received(1).AddRange(Arg.Is<IEnumerable<CorrelationMessage>>(items =>
+            items != null &&
+            items.Single().MessageId == "message-1" &&
+            items.Single().Source == CorrelationMessageSource.Loaded));
+    }
+
+    [Fact]
     public void MessageSearchText_AfterClearing_DoesNotThrow()
     {
         // Arrange

@@ -7,9 +7,39 @@ using BusLane.Models;
 using BusLane.Services.ServiceBus;
 using BusLane.ViewModels;
 using FluentAssertions;
+using NSubstitute;
 
 public class LiveStreamViewModelTests
 {
+    [Fact]
+    public async Task IncomingMessage_AfterFlush_AddsMessageToCorrelationCatalog()
+    {
+        // Arrange
+        var liveStreamService = new FakeLiveStreamService();
+        var catalog = Substitute.For<ICorrelationMessageCatalog>();
+        await using var sut = new LiveStreamViewModel(
+            liveStreamService,
+            () => null,
+            catalog,
+            () => new CorrelationSourceContext(
+                "demo.servicebus.windows.net",
+                ConnectionEnvironment.Test,
+                "",
+                "",
+                null,
+                null));
+
+        // Act
+        liveStreamService.EmitMessage(CreateMessage("message-1", 1) with { CorrelationId = "corr-1" });
+        await WaitForAsync(() => sut.Messages.Count == 1);
+
+        // Assert
+        catalog.Received(1).Add(Arg.Is<CorrelationMessage>(message =>
+            message != null &&
+            message.MessageId == "message-1" &&
+            message.Source == CorrelationMessageSource.LiveStream));
+    }
+
     [Fact]
     public async Task IncomingMessages_AfterInitialFlush_DoesNotResetMessagesCollection()
     {

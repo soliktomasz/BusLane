@@ -26,6 +26,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
     private readonly Func<bool> _getShowDeadLetter;
     private readonly Func<long> _getKnownMessageCount;
     private readonly Action<string> _setStatus;
+    private readonly ICorrelationMessageCatalog? _correlationCatalog;
+    private readonly Func<CorrelationSourceContext?>? _getCorrelationContext;
 
     private string GetEntityDisplayName()
     {
@@ -158,7 +160,9 @@ public partial class MessageOperationsViewModel : ViewModelBase
         Func<bool> getRequiresSession,
         Func<bool> getShowDeadLetter,
         Func<long> getKnownMessageCount,
-        Action<string> setStatus)
+        Action<string> setStatus,
+        ICorrelationMessageCatalog? correlationCatalog = null,
+        Func<CorrelationSourceContext?>? getCorrelationContext = null)
     {
         _getOperations = getOperations;
         _preferencesService = preferencesService;
@@ -169,6 +173,8 @@ public partial class MessageOperationsViewModel : ViewModelBase
         _getShowDeadLetter = getShowDeadLetter;
         _getKnownMessageCount = getKnownMessageCount;
         _setStatus = setStatus;
+        _correlationCatalog = correlationCatalog;
+        _getCorrelationContext = getCorrelationContext;
 
         SelectedMessages.CollectionChanged += (_, _) =>
         {
@@ -874,6 +880,13 @@ public partial class MessageOperationsViewModel : ViewModelBase
         foreach (var message in pageMessages)
         {
             Messages.Add(message);
+        }
+
+        var correlationContext = _getCorrelationContext?.Invoke();
+        if (_correlationCatalog != null && correlationContext != null)
+        {
+            _correlationCatalog.AddRange(pageMessages.Select(
+                message => CorrelationMessageFactory.FromLoaded(message, correlationContext)));
         }
 
         ApplyMessageFilter();
