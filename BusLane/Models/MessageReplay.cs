@@ -47,3 +47,27 @@ public sealed record ReplayResult(
     long? ScheduledSequenceNumber = null,
     IReadOnlyList<string>? ValidationErrors = null,
     string? AuditWarning = null);
+
+public enum ReplayAuditOutcome
+{
+    ValidationFailed,
+    Cancelled,
+    Attempted,
+    Succeeded,
+    Failed
+}
+
+public sealed record ReplayAuditEntry(
+    string Id,
+    DateTimeOffset Timestamp,
+    ReplayAuditOutcome Outcome,
+    string SourceMessageId,
+    string? CorrelationId,
+    string DestinationNamespace,
+    ConnectionEnvironment DestinationEnvironment,
+    string DestinationEntity,
+    bool IsScheduled,
+    int RateLimitPerSecond,
+    IReadOnlyList<string> ChangedFields,
+    IReadOnlyList<string> ValidationMessages,
+    string ResultMessage);

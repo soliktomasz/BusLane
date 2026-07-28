@@ -8,6 +8,127 @@ using NSubstitute;
 public class MessageReplayServiceTests
 {
     [Fact]
+    public async Task ReplayAsync_WithValidationFailure_AuditsFailure()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var audit = Substitute.For<IReplayAuditStore>();
+        var sut = CreateSut(auditStore: audit);
+        var request = sut.CreateRequest(CreateSource(), CreateDestination()) with
+        {
+            Body = "",
+            IsConfirmed = true
+        };
+
+        // Act
+        await sut.ReplayAsync(operations, request);
+
+        // Assert
+        await audit.Received(1).AddAsync(
+            Arg.Is<ReplayAuditEntry>(entry =>
+                entry != null && entry.Outcome == ReplayAuditOutcome.ValidationFailed),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReplayAsync_WithoutConfirmation_AuditsCancellation()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var audit = Substitute.For<IReplayAuditStore>();
+        var sut = CreateSut(auditStore: audit);
+        var request = sut.CreateRequest(CreateSource(), CreateDestination());
+
+        // Act
+        await sut.ReplayAsync(operations, request);
+
+        // Assert
+        await audit.Received(1).AddAsync(
+            Arg.Is<ReplayAuditEntry>(entry =>
+                entry != null && entry.Outcome == ReplayAuditOutcome.Cancelled),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReplayAsync_WhenSendSucceeds_AuditsAttemptAndSuccess()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var audit = Substitute.For<IReplayAuditStore>();
+        var sut = CreateSut(auditStore: audit);
+        var request = sut.CreateRequest(CreateSource(), CreateDestination()) with { IsConfirmed = true };
+
+        // Act
+        await sut.ReplayAsync(operations, request);
+
+        // Assert
+        await audit.Received(1).AddAsync(
+            Arg.Is<ReplayAuditEntry>(entry =>
+                entry != null && entry.Outcome == ReplayAuditOutcome.Attempted),
+            Arg.Any<CancellationToken>());
+        await audit.Received(1).AddAsync(
+            Arg.Is<ReplayAuditEntry>(entry =>
+                entry != null && entry.Outcome == ReplayAuditOutcome.Succeeded),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReplayAsync_WhenSendFails_AuditsFailure()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.SendMessageAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(_ => throw new InvalidOperationException("send failed"));
+        var audit = Substitute.For<IReplayAuditStore>();
+        var sut = CreateSut(auditStore: audit);
+        var request = sut.CreateRequest(CreateSource(), CreateDestination()) with { IsConfirmed = true };
+
+        // Act
+        var result = await sut.ReplayAsync(operations, request);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        await audit.Received(1).AddAsync(
+            Arg.Is<ReplayAuditEntry>(entry =>
+                entry != null && entry.Outcome == ReplayAuditOutcome.Failed),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReplayAsync_WhenAuditWriteFails_PreservesSendOutcomeAndReturnsWarning()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var audit = Substitute.For<IReplayAuditStore>();
+        audit.AddAsync(Arg.Any<ReplayAuditEntry>(), Arg.Any<CancellationToken>())
+            .Returns(_ => throw new IOException("disk full"));
+        var sut = CreateSut(auditStore: audit);
+        var request = sut.CreateRequest(CreateSource(), CreateDestination()) with { IsConfirmed = true };
+
+        // Act
+        var result = await sut.ReplayAsync(operations, request);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.AuditWarning.Should().Be("Replay audit could not be saved: disk full");
+    }
+
+    [Fact]
     public void CreateRequest_PreservesEditableDataAndGeneratesNewMessageId()
     {
         // Arrange
@@ -218,11 +339,13 @@ public class MessageReplayServiceTests
 
     private static MessageReplayService CreateSut(
         TimeProvider? timeProvider = null,
-        IReplayDelay? delay = null)
+        IReplayDelay? delay = null,
+        IReplayAuditStore? auditStore = null)
     {
         return new MessageReplayService(
             timeProvider ?? new ManualTimeProvider(DateTimeOffset.Parse("2026-07-28T10:00:00Z")),
-            delay ?? Substitute.For<IReplayDelay>());
+            delay ?? Substitute.For<IReplayDelay>(),
+            auditStore);
     }
 
     private static ReplayDestination CreateDestination()

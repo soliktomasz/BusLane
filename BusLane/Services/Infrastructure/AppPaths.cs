@@ -138,6 +138,11 @@ internal static class AppPaths
     public static string ScheduledMessages => Path.Combine(AppDataFolder, "scheduled-messages.json");
 
     /// <summary>
+    /// Path to the local message replay audit history.
+    /// </summary>
+    public static string ReplayAudit => Path.Combine(AppDataFolder, "replay-audit.json");
+
+    /// <summary>
     /// Directory used for diagnostic bundle exports.
     /// </summary>
     public static string DiagnosticBundles => Path.Combine(AppDataFolder, "diagnostics");

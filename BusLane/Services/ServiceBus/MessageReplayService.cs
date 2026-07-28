@@ -29,13 +29,18 @@ public sealed class MessageReplayService : IMessageReplayService
 {
     private readonly TimeProvider _timeProvider;
     private readonly IReplayDelay _delay;
+    private readonly IReplayAuditStore? _auditStore;
     private readonly SemaphoreSlim _rateLock = new(1, 1);
     private DateTimeOffset? _lastReplayAt;
 
-    public MessageReplayService(TimeProvider timeProvider, IReplayDelay delay)
+    public MessageReplayService(
+        TimeProvider timeProvider,
+        IReplayDelay delay,
+        IReplayAuditStore? auditStore = null)
     {
         _timeProvider = timeProvider;
         _delay = delay;
+        _auditStore = auditStore;
     }
 
     public ReplayRequest CreateRequest(CorrelationMessage source, ReplayDestination destination)
@@ -120,25 +125,52 @@ public sealed class MessageReplayService : IMessageReplayService
         var preview = Preview(request);
         if (!preview.IsValid)
         {
+            var validationAuditWarning = await TryAuditAsync(
+                request,
+                preview,
+                ReplayAuditOutcome.ValidationFailed,
+                "Replay validation failed",
+                ct);
             return new ReplayResult(
                 false,
                 false,
                 "Replay validation failed",
-                ValidationErrors: preview.ValidationErrors);
+                ValidationErrors: preview.ValidationErrors,
+                AuditWarning: validationAuditWarning);
         }
 
         if (!request.IsConfirmed)
         {
-            return new ReplayResult(false, false, "Replay confirmation is required");
+            const string message = "Replay confirmation is required";
+            var confirmationAuditWarning = await TryAuditAsync(
+                request,
+                preview,
+                ReplayAuditOutcome.Cancelled,
+                message,
+                ct);
+            return new ReplayResult(false, false, message, AuditWarning: confirmationAuditWarning);
         }
 
         if (request.Destination.Environment == ConnectionEnvironment.Production &&
             !request.IsProductionAcknowledged)
         {
-            return new ReplayResult(false, false, "Production replay acknowledgement is required");
+            const string message = "Production replay acknowledgement is required";
+            var productionAuditWarning = await TryAuditAsync(
+                request,
+                preview,
+                ReplayAuditOutcome.Cancelled,
+                message,
+                ct);
+            return new ReplayResult(false, false, message, AuditWarning: productionAuditWarning);
         }
 
         await WaitForRateLimitAsync(request.RateLimitPerSecond, ct);
+        var auditWarning = await TryAuditAsync(
+            request,
+            preview,
+            ReplayAuditOutcome.Attempted,
+            "Replay attempt started",
+            ct);
 
         try
         {
@@ -165,11 +197,21 @@ public sealed class MessageReplayService : IMessageReplayService
                     request.TimeToLive,
                     ct);
 
+                var resultMessage = $"Message scheduled successfully (sequence {sequenceNumber})";
+                auditWarning = MergeAuditWarnings(
+                    auditWarning,
+                    await TryAuditAsync(
+                        request,
+                        preview,
+                        ReplayAuditOutcome.Succeeded,
+                        resultMessage,
+                        ct));
                 return new ReplayResult(
                     true,
                     true,
-                    $"Message scheduled successfully (sequence {sequenceNumber})",
-                    sequenceNumber);
+                    resultMessage,
+                    sequenceNumber,
+                    AuditWarning: auditWarning);
             }
 
             await operations.SendMessageAsync(
@@ -189,7 +231,16 @@ public sealed class MessageReplayService : IMessageReplayService
                 null,
                 ct);
 
-            return new ReplayResult(true, false, "Message replayed successfully");
+            const string replayedMessage = "Message replayed successfully";
+            auditWarning = MergeAuditWarnings(
+                auditWarning,
+                await TryAuditAsync(
+                    request,
+                    preview,
+                    ReplayAuditOutcome.Succeeded,
+                    replayedMessage,
+                    ct));
+            return new ReplayResult(true, false, replayedMessage, AuditWarning: auditWarning);
         }
         catch (OperationCanceledException)
         {
@@ -197,7 +248,20 @@ public sealed class MessageReplayService : IMessageReplayService
         }
         catch (Exception ex)
         {
-            return new ReplayResult(false, request.ScheduledEnqueueTime.HasValue, $"Replay failed: {ex.Message}");
+            var failedMessage = $"Replay failed: {ex.Message}";
+            auditWarning = MergeAuditWarnings(
+                auditWarning,
+                await TryAuditAsync(
+                    request,
+                    preview,
+                    ReplayAuditOutcome.Failed,
+                    failedMessage,
+                    ct));
+            return new ReplayResult(
+                false,
+                request.ScheduledEnqueueTime.HasValue,
+                failedMessage,
+                AuditWarning: auditWarning);
         }
     }
 
@@ -278,5 +342,62 @@ public sealed class MessageReplayService : IMessageReplayService
                source.All(property =>
                    replay.TryGetValue(property.Key, out var value) &&
                    Equals(property.Value, value));
+    }
+
+    private async Task<string?> TryAuditAsync(
+        ReplayRequest request,
+        ReplayPreview preview,
+        ReplayAuditOutcome outcome,
+        string resultMessage,
+        CancellationToken ct)
+    {
+        if (_auditStore == null)
+        {
+            return null;
+        }
+
+        var entry = new ReplayAuditEntry(
+            Guid.NewGuid().ToString(),
+            _timeProvider.GetUtcNow(),
+            outcome,
+            request.Source.MessageId,
+            request.CorrelationId,
+            request.Destination.NamespaceName,
+            request.Destination.Environment,
+            request.Destination.EntityName,
+            request.ScheduledEnqueueTime.HasValue,
+            request.RateLimitPerSecond,
+            preview.Changes.Select(static change => change.Field).ToList(),
+            preview.ValidationErrors,
+            resultMessage);
+
+        try
+        {
+            await _auditStore.AddAsync(entry, ct);
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return $"Replay audit could not be saved: {ex.Message}";
+        }
+    }
+
+    private static string? MergeAuditWarnings(string? first, string? second)
+    {
+        if (string.IsNullOrWhiteSpace(first))
+        {
+            return second;
+        }
+
+        if (string.IsNullOrWhiteSpace(second) || string.Equals(first, second, StringComparison.Ordinal))
+        {
+            return first;
+        }
+
+        return $"{first} {second}";
     }
 }
