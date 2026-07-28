@@ -16,6 +16,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 {
     private readonly IPreferencesService _preferencesService;
     private readonly ILogSink _logSink;
+    private readonly ICorrelationMessageCatalog? _correlationCatalog;
 
     // Identity
     [ObservableProperty] private string _tabId;
@@ -55,13 +56,15 @@ public partial class ConnectionTabViewModel : ViewModelBase
         string tabTitle,
         string tabSubtitle,
         IPreferencesService preferencesService,
-        ILogSink logSink)
+        ILogSink logSink,
+        ICorrelationMessageCatalog? correlationCatalog = null)
     {
         _tabId = tabId;
         _tabTitle = tabTitle;
         _tabSubtitle = tabSubtitle;
         _preferencesService = preferencesService ?? new DummyPreferencesService();
         _logSink = logSink;
+        _correlationCatalog = correlationCatalog;
 
         Navigation = new NavigationState(_preferencesService);
 
@@ -74,7 +77,9 @@ public partial class ConnectionTabViewModel : ViewModelBase
             () => Navigation.CurrentEntityRequiresSession,
             () => Navigation.ShowDeadLetter,
             () => GetKnownMessageCount(),
-            msg => StatusMessage = msg);
+            msg => StatusMessage = msg,
+            _correlationCatalog,
+            GetCorrelationSourceContext);
 
         SessionInspector = new SessionInspectorViewModel(
             () => _operations,
@@ -85,6 +90,25 @@ public partial class ConnectionTabViewModel : ViewModelBase
             () => Navigation.CurrentEntityRequiresSession,
             index => Navigation.SelectedMessageTabIndex = index,
             msg => StatusMessage = msg);
+    }
+
+    private CorrelationSourceContext? GetCorrelationSourceContext()
+    {
+        var entityName = Navigation.CurrentEntityName;
+        if (string.IsNullOrWhiteSpace(entityName))
+        {
+            return null;
+        }
+
+        var subscriptionName = Navigation.CurrentSubscriptionName;
+        var namespaceName = SavedConnection?.Endpoint ?? Namespace?.Name ?? TabSubtitle;
+        return new CorrelationSourceContext(
+            namespaceName,
+            SavedConnection?.Environment ?? ConnectionEnvironment.None,
+            subscriptionName ?? entityName,
+            subscriptionName == null ? "Queue" : "Subscription",
+            subscriptionName == null ? null : entityName,
+            subscriptionName);
     }
 
     /// <summary>

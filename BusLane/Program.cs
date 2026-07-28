@@ -135,6 +135,13 @@ class Program
         });
         services.AddSingleton<INamespaceTopologyService, NamespaceTopologyService>();
         services.AddSingleton<IScheduledMessageStore, ScheduledMessageStore>();
+        services.AddSingleton<ICorrelationMessageCatalog, CorrelationMessageCatalog>();
+        services.AddSingleton<ICorrelationRefreshDelay, CorrelationRefreshDelay>();
+        services.AddSingleton<ICorrelationMessageComparisonService, CorrelationMessageComparisonService>();
+        services.AddSingleton<IReplayAuditStore, ReplayAuditStore>();
+        services.AddSingleton<IReplayDelay, ReplayDelay>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IMessageReplayService, MessageReplayService>();
         services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
         services.AddSingleton<IConnectionBackupService, ConnectionBackupService>();
@@ -189,7 +196,12 @@ class Program
             sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
             sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>(),
             sp.GetRequiredService<IScheduledMessageStore>(),
-            sp.GetRequiredService<INamespaceTopologyService>()
+            sp.GetRequiredService<INamespaceTopologyService>(),
+            correlationMessageCatalog: sp.GetRequiredService<ICorrelationMessageCatalog>(),
+            replayAuditStore: sp.GetRequiredService<IReplayAuditStore>(),
+            messageReplayService: sp.GetRequiredService<IMessageReplayService>(),
+            correlationRefreshDelay: sp.GetRequiredService<ICorrelationRefreshDelay>(),
+            correlationComparisonService: sp.GetRequiredService<ICorrelationMessageComparisonService>()
         ));
 
     }

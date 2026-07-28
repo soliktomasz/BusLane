@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:BusLane.Models"
+             x:Class="BusLane.Views.Dialogs.ReplayMessageDialog"
+             x:CompileBindings="False">
+    <Border Background="{DynamicResource DialogOverlay}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            IsHitTestVisible="True">
+        <Border Classes="dialog-surface"
+                MinWidth="760"
+                MaxWidth="1000"
+                MaxHeight="760"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Border Grid.Row="0" Classes="dialog-header">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Preview and replay message" Classes="heading"/>
+                            <TextBlock Text="{Binding ReplayEditor.SelectedDestination.NamespaceName}"
+                                       Classes="caption"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                            <TextBlock Text="{Binding ReplayEditor.SelectedDestination.Environment}"
+                                       FontWeight="Bold"/>
+                            <TextBlock Text="PRODUCTION DESTINATION"
+                                       Foreground="{DynamicResource TextDanger}"
+                                       FontWeight="Bold"
+                                       IsVisible="{Binding ReplayEditor.IsProductionDestination}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" Classes="dialog-body">
+                    <StackPanel Spacing="14">
+                        <Border Classes="dialog-section-surface">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Destination" Classes="title-small"/>
+                                <ComboBox ItemsSource="{Binding ReplayEditor.AvailableDestinations}"
+                                          SelectedItem="{Binding ReplayEditor.SelectedDestination}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ReplayDestination">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding EntityName}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding NamespaceName}" Classes="caption"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="dialog-section-surface">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Payload" Classes="title-small"/>
+                                <TextBox Text="{Binding ReplayEditor.Body}"
+                                         Classes="code-editor"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Height="180"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="dialog-section-surface">
+                            <Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto,10,Auto,10,Auto">
+                                <StackPanel Grid.Row="0" Grid.Column="0">
+                                    <TextBlock Text="Message ID" Classes="field-label"/>
+                                    <TextBox Text="{Binding ReplayEditor.MessageId}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2">
+                                    <TextBlock Text="Correlation ID" Classes="field-label"/>
+                                    <TextBox Text="{Binding ReplayEditor.CorrelationId}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="0">
+                                    <TextBlock Text="Session ID" Classes="field-label"/>
+                                    <TextBox Text="{Binding ReplayEditor.SessionId}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="2">
+                                    <TextBlock Text="Content type" Classes="field-label"/>
+                                    <TextBox Text="{Binding ReplayEditor.ContentType}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="4" Grid.Column="0">
+                                    <TextBlock Text="Scheduled enqueue (ISO 8601)" Classes="field-label"/>
+                                    <TextBox Text="{Binding ReplayEditor.ScheduledEnqueueTimeText}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="4" Grid.Column="2">
+                                    <TextBlock Text="Rate limit (messages/second)" Classes="field-label"/>
+                                    <NumericUpDown Value="{Binding ReplayEditor.RateLimitPerSecond}"
+                                                   Minimum="1"
+                                                   Maximum="1000"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Classes="dialog-section-surface">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Application properties" Classes="title-small"/>
+                                <ItemsControl ItemsSource="{Binding ReplayEditor.CustomProperties}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CustomProperty">
+                                            <Grid ColumnDefinitions="*,12,*,Auto" Margin="0,3">
+                                                <TextBox Text="{Binding Key}" PlaceholderText="Key"/>
+                                                <TextBox Grid.Column="2" Text="{Binding Value}" PlaceholderText="Value"/>
+                                                <Button Grid.Column="3"
+                                                        Classes="icon"
+                                                        Command="{Binding $parent[UserControl].DataContext.ReplayEditor.RemoveCustomPropertyCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <LucideIcon Kind="X" Size="12"/>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Button Content="Add property"
+                                        Classes="secondary small"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding ReplayEditor.AddCustomPropertyCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="dialog-section-surface" IsVisible="{Binding ReplayEditor.Preview}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Replay preview" Classes="title-small"/>
+                                <ItemsControl ItemsSource="{Binding ReplayEditor.Preview.Changes}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ReplayFieldChange">
+                                            <TextBlock Text="{Binding Field, StringFormat='Changed: {0}'}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding ReplayEditor.Preview.ValidationErrors}"/>
+                                <ItemsControl ItemsSource="{Binding ReplayEditor.Preview.Warnings}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="infobar-error"
+                                IsVisible="{Binding ReplayEditor.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding ReplayEditor.ErrorMessage}" TextWrapping="Wrap"/>
+                        </Border>
+
+                        <CheckBox Content="I reviewed the final replay request and destination"
+                                  IsChecked="{Binding ReplayEditor.IsConfirmed}"/>
+                        <CheckBox Content="I acknowledge that this replay targets Production"
+                                  IsChecked="{Binding ReplayEditor.IsProductionAcknowledged}"
+                                  IsVisible="{Binding ReplayEditor.IsProductionDestination}"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Classes="dialog-footer">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding ReplayEditor.ResultMessage}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button Content="Cancel"
+                                    Classes="secondary"
+                                    Command="{Binding CloseReplayCommand}"/>
+                            <Button Content="Build preview"
+                                    Classes="secondary"
+                                    Command="{Binding ReplayEditor.BuildPreviewCommand}"/>
+                            <Button Content="Replay message"
+                                    Classes="primary"
+                                    Command="{Binding ReplayEditor.ReplayCommand}"
+                                    IsEnabled="{Binding ReplayEditor.HasPreview}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>

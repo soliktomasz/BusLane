@@ -13,6 +13,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 {
     private readonly ILiveStreamService _liveStreamService;
     private readonly Func<IServiceBusOperations?> _getOperations;
+    private readonly ICorrelationMessageCatalog? _correlationCatalog;
+    private readonly Func<CorrelationSourceContext?>? _getCorrelationContext;
     private IDisposable? _messageSubscription;
     private const int MaxMessages = 500;
     private const int FlushDelayMilliseconds = 100;
@@ -49,10 +51,14 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
     public LiveStreamViewModel(
         ILiveStreamService liveStreamService,
-        Func<IServiceBusOperations?> getOperations)
+        Func<IServiceBusOperations?> getOperations,
+        ICorrelationMessageCatalog? correlationCatalog = null,
+        Func<CorrelationSourceContext?>? getCorrelationContext = null)
     {
         _liveStreamService = liveStreamService;
         _getOperations = getOperations;
+        _correlationCatalog = correlationCatalog;
+        _getCorrelationContext = getCorrelationContext;
         _liveStreamService.StreamingStatusChanged += OnStreamingStatusChanged;
         _liveStreamService.StreamError += OnStreamError;
 
@@ -394,6 +400,12 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             if (MatchesFilter(message))
             {
                 FilteredMessages.Insert(0, message);
+            }
+
+            var correlationContext = _getCorrelationContext?.Invoke();
+            if (_correlationCatalog != null && correlationContext != null)
+            {
+                _correlationCatalog.Add(CorrelationMessageFactory.FromLiveStream(message, correlationContext));
             }
         }
 

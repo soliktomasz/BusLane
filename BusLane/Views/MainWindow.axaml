@@ -98,6 +98,36 @@
                 </Grid>
             </Border>
 
+            <!-- Correlation Explorer Panel -->
+            <Border Grid.Row="0" Grid.RowSpan="2"
+                    IsVisible="{Binding FeaturePanels.ShowCorrelationExplorer}"
+                    Background="{DynamicResource AppBackground}">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
+                                <LucideIcon Kind="GitBranch" Size="18"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="Correlation Explorer" Classes="heading"/>
+                                <TextBlock Text="Trace and safely replay messages visible to BusLane"
+                                           Classes="caption"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Classes="secondary small"
+                                    Command="{Binding CloseCorrelationExplorerCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="X" Size="14"/>
+                                    <TextBlock Text="Close"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <controls:CorrelationExplorerView Grid.Row="1"
+                        DataContext="{Binding FeaturePanels.CorrelationExplorerViewModel}"/>
+                </Grid>
+            </Border>
+
             <!-- Charts Panel (overlay when active) -->
             <Border Grid.Row="0" Grid.RowSpan="2"
                     IsVisible="{Binding FeaturePanels.ShowCharts}"

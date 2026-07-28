@@ -27,6 +27,108 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 public class MainWindowViewModelTests
 {
     [Fact]
+    public async Task OpenCorrelationExplorerCommand_WithComposedServices_OpensPanel()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(new CorrelationMessage(
+            CorrelationMessageSource.Loaded,
+            "demo.servicebus.windows.net",
+            ConnectionEnvironment.Test,
+            "orders",
+            "Queue",
+            null,
+            null,
+            "message-1",
+            "corr-1",
+            null,
+            "application/json",
+            "{}",
+            DateTimeOffset.UtcNow,
+            1,
+            new Dictionary<string, object>()));
+        var auditStore = Substitute.For<IReplayAuditStore>();
+        auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var replayService = Substitute.For<IMessageReplayService>();
+        using var sut = CreateSut(
+            preferences,
+            correlationCatalog: catalog,
+            replayAuditStore: auditStore,
+            messageReplayService: replayService);
+
+        // Act
+        await sut.OpenCorrelationExplorerCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.FeaturePanels.ShowCorrelationExplorer.Should().BeTrue();
+        sut.FeaturePanels.CorrelationExplorerViewModel.Should().NotBeNull();
+        sut.FeaturePanels.CorrelationExplorerViewModel!.Groups.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task OpenCorrelationExplorerCommand_AfterCatalogIngestion_RefreshesLive()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateCorrelationMessage("message-1", 1));
+        var auditStore = Substitute.For<IReplayAuditStore>();
+        auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var delay = Substitute.For<ICorrelationRefreshDelay>();
+        delay.DelayAsync(Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+        using var sut = CreateSut(
+            preferences,
+            correlationCatalog: catalog,
+            replayAuditStore: auditStore,
+            messageReplayService: Substitute.For<IMessageReplayService>(),
+            correlationRefreshDelay: delay,
+            correlationComparisonService: new CorrelationMessageComparisonService());
+        await sut.OpenCorrelationExplorerCommand.ExecuteAsync(null);
+
+        // Act
+        catalog.Add(CreateCorrelationMessage("message-2", 2));
+        await WaitUntilAsync(() =>
+            sut.FeaturePanels.CorrelationExplorerViewModel?.Timeline.Count == 2);
+
+        // Assert
+        sut.FeaturePanels.CorrelationExplorerViewModel!.Timeline
+            .Select(static message => message.MessageId)
+            .Should().ContainInOrder("message-1", "message-2");
+        sut.FeaturePanels.CorrelationExplorerViewModel.SetComparisonACommand.Execute(
+            sut.FeaturePanels.CorrelationExplorerViewModel.Timeline[0]);
+        sut.FeaturePanels.CorrelationExplorerViewModel.SetComparisonBCommand.Execute(
+            sut.FeaturePanels.CorrelationExplorerViewModel.Timeline[1]);
+        sut.FeaturePanels.CorrelationExplorerViewModel.HasComparison.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Dispose_WhenCorrelationExplorerIsOpen_UnsubscribesFromCatalog()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var catalog = new CorrelationMessageCatalog();
+        var auditStore = Substitute.For<IReplayAuditStore>();
+        auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var delay = Substitute.For<ICorrelationRefreshDelay>();
+        var sut = CreateSut(
+            preferences,
+            correlationCatalog: catalog,
+            replayAuditStore: auditStore,
+            messageReplayService: Substitute.For<IMessageReplayService>(),
+            correlationRefreshDelay: delay);
+        await sut.OpenCorrelationExplorerCommand.ExecuteAsync(null);
+
+        // Act
+        sut.Dispose();
+        catalog.Add(CreateCorrelationMessage("message-1", 1));
+
+        // Assert
+        await delay.DidNotReceiveWithAnyArgs().DelayAsync(default, default);
+    }
+
+    [Fact]
     public void IntroductionSplash_WithNewPreferences_IsVisible()
     {
         // Arrange
@@ -1316,7 +1418,12 @@ public class MainWindowViewModelTests
         IBiometricAuthService? biometricAuthService = null,
         IServiceBusOperationsFactory? operationsFactory = null,
         IDashboardRefreshService? dashboardRefreshService = null,
-        IAlertService? alertService = null)
+        IAlertService? alertService = null,
+        ICorrelationMessageCatalog? correlationCatalog = null,
+        IReplayAuditStore? replayAuditStore = null,
+        IMessageReplayService? messageReplayService = null,
+        ICorrelationRefreshDelay? correlationRefreshDelay = null,
+        ICorrelationMessageComparisonService? correlationComparisonService = null)
     {
         auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
@@ -1386,7 +1493,44 @@ public class MainWindowViewModelTests
             biometricAuthService,
             logSink,
             dashboardViewModel,
-            namespaceDashboardViewModel);
+            namespaceDashboardViewModel,
+            correlationMessageCatalog: correlationCatalog,
+            replayAuditStore: replayAuditStore,
+            messageReplayService: messageReplayService,
+            correlationRefreshDelay: correlationRefreshDelay,
+            correlationComparisonService: correlationComparisonService);
+    }
+
+    private static CorrelationMessage CreateCorrelationMessage(string messageId, long sequenceNumber) =>
+        new(
+            CorrelationMessageSource.Loaded,
+            "demo.servicebus.windows.net",
+            ConnectionEnvironment.Test,
+            "orders",
+            "Queue",
+            null,
+            null,
+            messageId,
+            "corr-1",
+            null,
+            "application/json",
+            "{}",
+            DateTimeOffset.Parse("2026-07-28T09:00:00Z").AddSeconds(sequenceNumber),
+            sequenceNumber,
+            new Dictionary<string, object>());
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        var timeout = DateTime.UtcNow.AddSeconds(2);
+        while (!predicate())
+        {
+            if (DateTime.UtcNow >= timeout)
+            {
+                throw new TimeoutException("Condition was not reached");
+            }
+
+            await Task.Delay(10);
+        }
     }
 
     private static ConnectionTabViewModel CreateTab(

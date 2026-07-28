@@ -21,6 +21,7 @@ public partial class TabManagementViewModel : ViewModelBase
     private readonly IConnectionStorageService _connectionStorage;
     private readonly IAzureAuthService _auth;
     private readonly ILogSink _logSink;
+    private readonly ICorrelationMessageCatalog? _correlationCatalog;
     private readonly Action<ConnectionTabViewModel?> _activeTabChanged;
     private CancellationTokenSource? _saveSessionCts;
     private string _lastSavedTabsJson;
@@ -41,7 +42,8 @@ public partial class TabManagementViewModel : ViewModelBase
         IConnectionStorageService connectionStorage,
         IAzureAuthService auth,
         ILogSink logSink,
-        Action<ConnectionTabViewModel?> activeTabChanged)
+        Action<ConnectionTabViewModel?> activeTabChanged,
+        ICorrelationMessageCatalog? correlationCatalog = null)
     {
         _operationsFactory = operationsFactory;
         _preferencesService = preferencesService;
@@ -49,6 +51,7 @@ public partial class TabManagementViewModel : ViewModelBase
         _auth = auth;
         _logSink = logSink;
         _activeTabChanged = activeTabChanged;
+        _correlationCatalog = correlationCatalog;
         _lastSavedTabsJson = _preferencesService.OpenTabsJson;
     }
 
@@ -68,7 +71,8 @@ public partial class TabManagementViewModel : ViewModelBase
             connection.Name,
             connection.Endpoint ?? "",
             _preferencesService,
-            _logSink);
+            _logSink,
+            _correlationCatalog);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
@@ -121,7 +125,8 @@ public partial class TabManagementViewModel : ViewModelBase
             ns.Name,
             ns.Endpoint,
             _preferencesService,
-            _logSink);
+            _logSink,
+            _correlationCatalog);
 
         ConnectionTabs.Add(tab);
         ActiveTab = tab;
