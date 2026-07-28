@@ -1,6 +1,9 @@
 namespace BusLane.Tests.Views;
 
+using System.Text.RegularExpressions;
+
 using FluentAssertions;
+using FluentAssertions.Execution;
 
 public class CorrelationExplorerViewTests
 {
@@ -27,6 +30,42 @@ public class CorrelationExplorerViewTests
         xaml.Should().Contain("FeaturePanels.ShowCorrelationExplorer");
         xaml.Should().Contain("FeaturePanels.CorrelationExplorerViewModel");
         xaml.Should().Contain("CloseCorrelationExplorerCommand");
+    }
+
+    [Fact]
+    public void CorrelationWorkspace_UsesContinuousHeaderAndStandardSearchSurface()
+    {
+        // Arrange
+        var mainWindowXaml = File.ReadAllText(GetPath("MainWindow.axaml"));
+        var panelStart = mainWindowXaml.IndexOf("<!-- Correlation Explorer Panel -->", StringComparison.Ordinal);
+        var panelEnd = mainWindowXaml.IndexOf("<!-- Charts Panel", panelStart, StringComparison.Ordinal);
+
+        panelStart.Should().BeGreaterThanOrEqualTo(0);
+        panelEnd.Should().BeGreaterThan(panelStart);
+
+        var correlationPanel = mainWindowXaml[panelStart..panelEnd];
+        var headerElement = Regex.Match(
+            correlationPanel,
+            "<Border\\b(?=[^>]*\\bClasses\\s*=\\s*\"page-header-surface\")[^>]*>",
+            RegexOptions.Singleline);
+
+        var viewXaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        var searchTextBox = Regex.Match(
+            viewXaml,
+            "<TextBox\\b(?=[^>]*\\bAutomationProperties\\.Name\\s*=\\s*\"Search correlation messages\")[^>]*/>",
+            RegexOptions.Singleline);
+
+        // Assert
+        headerElement.Success.Should().BeTrue("the Correlation Explorer page header must be discoverable");
+        searchTextBox.Success.Should().BeTrue("the correlation search TextBox must be discoverable");
+
+        using (new AssertionScope())
+        {
+            Regex.IsMatch(headerElement.Value, "\\bMargin\\s*=", RegexOptions.Singleline)
+                .Should().BeFalse("the Correlation Explorer header must not define a local Margin");
+            Regex.IsMatch(searchTextBox.Value, "\\bBackground\\s*=", RegexOptions.Singleline)
+                .Should().BeFalse("the correlation search TextBox must use the standard input background");
+        }
     }
 
     [Fact]

@@ -103,7 +103,7 @@
                     IsVisible="{Binding FeaturePanels.ShowCorrelationExplorer}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
+                    <Border Grid.Row="0" Classes="page-header-surface">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
                                 <LucideIcon Kind="GitBranch" Size="18"
