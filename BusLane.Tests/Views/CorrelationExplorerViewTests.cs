@@ -144,18 +144,46 @@ public class CorrelationExplorerViewTests
             "Border.correlation-group-row",
             "Border.timeline-event",
             "Ellipse.timeline-node",
-            "Border.correlation-inspector-header"
+            "Border.correlation-inspector-header",
+            "ListBox.correlation-list ListBoxItem:pointerover /template/ ContentPresenter",
+            "ListBox.correlation-list ListBoxItem:selected /template/ ContentPresenter",
+            "ListBox.correlation-list ListBoxItem:selected:pointerover /template/ ContentPresenter",
+            "ListBox.timeline-list ListBoxItem:pointerover /template/ ContentPresenter",
+            "ListBox.timeline-list ListBoxItem:selected /template/ ContentPresenter",
+            "ListBox.timeline-list ListBoxItem:selected:pointerover /template/ ContentPresenter"
+        ];
+        string[] dynamicResourceTokens =
+        [
+            "Value=\"{DynamicResource SurfaceSubtle}\"",
+            "Value=\"{DynamicResource LayerBackground}\"",
+            "Value=\"{DynamicResource CardBackground}\"",
+            "Value=\"{DynamicResource BorderDefault}\"",
+            "Value=\"{DynamicResource HoverBackground}\"",
+            "Value=\"{DynamicResource SelectedBackground}\"",
+            "Value=\"{DynamicResource SelectedBorder}\"",
+            "Value=\"{DynamicResource AccentBrand}\""
         ];
 
         // Assert
-        xaml.Should().Contain("<!-- Correlation Explorer -->");
-
         foreach (var selectorToken in selectorTokens)
         {
             xaml.Should().Contain(selectorToken);
         }
 
-        var correlationExplorerStyles = xaml[xaml.IndexOf("<!-- Correlation Explorer -->", StringComparison.Ordinal)..];
+        const string sectionStartMarker = "<!-- Correlation Explorer -->";
+        const string sectionEndMarker = "<!-- /Correlation Explorer -->";
+        xaml.Should().Contain(sectionStartMarker);
+        xaml.Should().Contain(sectionEndMarker);
+
+        var sectionStart = xaml.IndexOf(sectionStartMarker, StringComparison.Ordinal);
+        var sectionEnd = xaml.IndexOf(sectionEndMarker, sectionStart, StringComparison.Ordinal);
+        var correlationExplorerStyles = xaml[sectionStart..sectionEnd];
+
+        foreach (var dynamicResourceToken in dynamicResourceTokens)
+        {
+            correlationExplorerStyles.Should().Contain(dynamicResourceToken);
+        }
+
         correlationExplorerStyles.Should().NotContain("#");
     }
 
