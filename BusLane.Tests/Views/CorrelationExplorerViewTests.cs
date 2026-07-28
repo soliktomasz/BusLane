@@ -258,6 +258,54 @@ public class CorrelationExplorerViewTests
     }
 
     [Fact]
+    public void CorrelationExplorer_UsesCompactWidthSafeInspectorLayout()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        var styles = File.ReadAllText(GetPath("..", "Styles", "AppStyles.axaml"));
+        const string sectionStartMarker = "<!-- Correlation Explorer -->";
+        const string sectionEndMarker = "<!-- /Correlation Explorer -->";
+        var sectionStart = styles.IndexOf(sectionStartMarker, StringComparison.Ordinal);
+        var sectionEnd = styles.IndexOf(sectionEndMarker, sectionStart, StringComparison.Ordinal);
+        var correlationExplorerStyles = styles[sectionStart..sectionEnd];
+        string[] expectedViewTokens =
+        [
+            "Classes=\"inspector-tabs\"",
+            "Header=\"Properties\"",
+            "Header=\"History\"",
+            "IsVisible=\"{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}\"",
+            "<Grid RowDefinitions=\"Auto,Auto\" RowSpacing=\"10\">",
+            "<Grid ColumnDefinitions=\"*,Auto,*\" ColumnSpacing=\"6\">",
+            "AutomationProperties.Name=\"Compare selected message with previous\"",
+            "AutomationProperties.Name=\"Replay selected message\"",
+            "Value A",
+            "Value B",
+            "Message A body",
+            "Message B body"
+        ];
+        string[] expectedStyleTokens =
+        [
+            "TabControl.inspector-tabs TabItem",
+            "Property=\"Padding\" Value=\"7,10\"",
+            "Property=\"MinHeight\" Value=\"38\""
+        ];
+
+        // Assert
+        foreach (var expectedToken in expectedViewTokens)
+        {
+            xaml.Should().Contain(expectedToken);
+        }
+
+        foreach (var expectedToken in expectedStyleTokens)
+        {
+            correlationExplorerStyles.Should().Contain(expectedToken);
+        }
+
+        xaml.Should().NotContain("ColumnDefinitions=\"130,100,*,*\"");
+        xaml.Should().NotContain("Width=\"360\"");
+    }
+
+    [Fact]
     public void CorrelationExplorer_ExposesCollapsibleStructuredFilters()
     {
         // Arrange

@@ -343,22 +343,27 @@
 
                 <Border Grid.Column="2" Classes="correlation-pane inspector">
                     <Grid RowDefinitions="Auto,Auto,*">
-                        <Border Grid.Row="0" Classes="correlation-inspector-header">
-                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{Binding SelectedMessage.MessageId}"
-                                               Classes="body-strong"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="{Binding SelectedMessage.NamespaceName}"
-                                                   Classes="caption"
+                        <Border Grid.Row="0"
+                                Classes="correlation-inspector-header"
+                                IsVisible="{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{Binding SelectedMessage.MessageId}"
+                                                   Classes="body-strong"
                                                    TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="•" Classes="caption"/>
-                                        <TextBlock Text="{Binding SelectedMessage.EntityName}"
-                                                   Classes="caption"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="6">
+                                            <TextBlock Text="{Binding SelectedMessage.NamespaceName}"
+                                                       Classes="caption"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Text="•" Classes="caption"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding SelectedMessage.EntityName}"
+                                                       Classes="caption"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                         <Border Classes="badge-info">
                                             <TextBlock Text="{Binding SelectedMessage.Source}"/>
                                         </Border>
@@ -366,25 +371,30 @@
                                             <TextBlock Text="{Binding SelectedMessage.Environment}"/>
                                         </Border>
                                     </StackPanel>
+                                </Grid>
+                                <StackPanel Grid.Row="1"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            HorizontalAlignment="Right">
+                                    <Button Classes="secondary small"
+                                            Command="{Binding CompareWithPreviousCommand}"
+                                            IsEnabled="{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                            AutomationProperties.Name="Compare selected message with previous">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="ArrowLeftRight" Size="13"/>
+                                            <TextBlock Text="Compare previous"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="primary small"
+                                            Command="{Binding OpenReplayCommand}"
+                                            IsEnabled="{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                            AutomationProperties.Name="Replay selected message">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="Send" Size="13"/>
+                                            <TextBlock Text="Replay message"/>
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
-                                <Button Grid.Column="1"
-                                        Classes="secondary small"
-                                        Command="{Binding CompareWithPreviousCommand}"
-                                        IsEnabled="{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <LucideIcon Kind="ArrowLeftRight" Size="13"/>
-                                        <TextBlock Text="Compare previous"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Grid.Column="2"
-                                        Classes="primary small"
-                                        Command="{Binding OpenReplayCommand}"
-                                        IsEnabled="{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <LucideIcon Kind="Send" Size="13"/>
-                                        <TextBlock Text="Replay message"/>
-                                    </StackPanel>
-                                </Button>
                             </Grid>
                         </Border>
 
@@ -403,7 +413,8 @@
                         </Border>
 
                         <Grid Grid.Row="2">
-                            <TabControl Margin="12"
+                            <TabControl Classes="inspector-tabs"
+                                        Margin="12"
                                         IsVisible="{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
                                 <TabItem Header="Payload">
                                     <TextBox Text="{Binding SelectedMessage.Body}"
@@ -419,47 +430,47 @@
                                             <Border Classes="property-row">
                                                 <Grid ColumnDefinitions="140,*" ColumnSpacing="12">
                                                     <TextBlock Text="Correlation ID" Classes="caption"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding SelectedMessage.CorrelationId}"
-                                                               TextWrapping="Wrap"/>
+                                                    <SelectableTextBlock Grid.Column="1"
+                                                                         Text="{Binding SelectedMessage.CorrelationId}"
+                                                                         TextWrapping="Wrap"/>
                                                 </Grid>
                                             </Border>
                                             <Border Classes="property-row">
                                                 <Grid ColumnDefinitions="140,*" ColumnSpacing="12">
                                                     <TextBlock Text="Session ID" Classes="caption"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding SelectedMessage.SessionId}"
-                                                               TextWrapping="Wrap"/>
+                                                    <SelectableTextBlock Grid.Column="1"
+                                                                         Text="{Binding SelectedMessage.SessionId}"
+                                                                         TextWrapping="Wrap"/>
                                                 </Grid>
                                             </Border>
                                             <Border Classes="property-row">
                                                 <Grid ColumnDefinitions="140,*" ColumnSpacing="12">
                                                     <TextBlock Text="Entity" Classes="caption"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding SelectedMessage.EntityName}"
-                                                               TextWrapping="Wrap"/>
+                                                    <SelectableTextBlock Grid.Column="1"
+                                                                         Text="{Binding SelectedMessage.EntityName}"
+                                                                         TextWrapping="Wrap"/>
                                                 </Grid>
                                             </Border>
                                             <Border Classes="property-row">
                                                 <Grid ColumnDefinitions="140,*" ColumnSpacing="12">
                                                     <TextBlock Text="Content type" Classes="caption"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding SelectedMessage.ContentType}"
-                                                               TextWrapping="Wrap"/>
+                                                    <SelectableTextBlock Grid.Column="1"
+                                                                         Text="{Binding SelectedMessage.ContentType}"
+                                                                         TextWrapping="Wrap"/>
                                                 </Grid>
                                             </Border>
                                             <Border Classes="property-row">
                                                 <Grid ColumnDefinitions="140,*" ColumnSpacing="12">
                                                     <TextBlock Text="Sequence" Classes="caption"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding SelectedMessage.SequenceNumber}"
-                                                               TextWrapping="Wrap"/>
+                                                    <SelectableTextBlock Grid.Column="1"
+                                                                         Text="{Binding SelectedMessage.SequenceNumber}"
+                                                                         TextWrapping="Wrap"/>
                                                 </Grid>
                                             </Border>
                                         </StackPanel>
                                     </ScrollViewer>
                                 </TabItem>
-                                <TabItem Header="Application properties">
+                                <TabItem Header="Properties">
                                     <Grid>
                                         <ScrollViewer>
                                             <ItemsControl ItemsSource="{Binding SelectedMessage.Properties}">
@@ -468,9 +479,9 @@
                                                         <Border Classes="property-row" Margin="0,0,0,4">
                                                             <Grid ColumnDefinitions="140,*" ColumnSpacing="12">
                                                                 <TextBlock Text="{Binding Key}" Classes="body-strong"/>
-                                                                <TextBlock Grid.Column="1"
-                                                                           Text="{Binding Value}"
-                                                                           TextWrapping="Wrap"/>
+                                                                <SelectableTextBlock Grid.Column="1"
+                                                                                     Text="{Binding Value}"
+                                                                                     TextWrapping="Wrap"/>
                                                             </Grid>
                                                         </Border>
                                                     </DataTemplate>
@@ -530,15 +541,23 @@
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="models:MessageFieldChange">
                                                             <Border Classes="property-row" Margin="0,0,0,4">
-                                                                <Grid ColumnDefinitions="140,*,*" ColumnSpacing="8">
-                                                                    <TextBlock Text="{Binding Field}" Classes="body-strong"/>
-                                                                    <TextBlock Grid.Column="1"
-                                                                               Text="{Binding FirstValue}"
-                                                                               TextWrapping="Wrap"/>
-                                                                    <TextBlock Grid.Column="2"
-                                                                               Text="{Binding SecondValue}"
-                                                                               TextWrapping="Wrap"/>
-                                                                </Grid>
+                                                                <StackPanel Spacing="8">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Text="{Binding Field}" Classes="body-strong"/>
+                                                                    </Grid>
+                                                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                                                        <StackPanel Spacing="4">
+                                                                            <TextBlock Text="Value A" Classes="caption"/>
+                                                                            <SelectableTextBlock Text="{Binding FirstValue}"
+                                                                                                 TextWrapping="Wrap"/>
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="1" Spacing="4">
+                                                                            <TextBlock Text="Value B" Classes="caption"/>
+                                                                            <SelectableTextBlock Text="{Binding SecondValue}"
+                                                                                                 TextWrapping="Wrap"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </StackPanel>
                                                             </Border>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
@@ -552,16 +571,26 @@
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="models:MessagePropertyChange">
                                                             <Border Classes="property-row" Margin="0,0,0,4">
-                                                                <Grid ColumnDefinitions="130,100,*,*" ColumnSpacing="8">
-                                                                    <TextBlock Text="{Binding Key}" Classes="body-strong"/>
-                                                                    <TextBlock Grid.Column="1" Text="{Binding Kind}"/>
-                                                                    <TextBlock Grid.Column="2"
-                                                                               Text="{Binding FirstValue}"
-                                                                               TextWrapping="Wrap"/>
-                                                                    <TextBlock Grid.Column="3"
-                                                                               Text="{Binding SecondValue}"
-                                                                               TextWrapping="Wrap"/>
-                                                                </Grid>
+                                                                <StackPanel Spacing="8">
+                                                                    <Grid ColumnDefinitions="*,Auto">
+                                                                        <TextBlock Text="{Binding Key}" Classes="body-strong"/>
+                                                                        <Border Grid.Column="1" Classes="badge-muted">
+                                                                            <TextBlock Text="{Binding Kind}"/>
+                                                                        </Border>
+                                                                    </Grid>
+                                                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                                                        <StackPanel Spacing="4">
+                                                                            <TextBlock Text="Value A" Classes="caption"/>
+                                                                            <SelectableTextBlock Text="{Binding FirstValue}"
+                                                                                                 TextWrapping="Wrap"/>
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="1" Spacing="4">
+                                                                            <TextBlock Text="Value B" Classes="caption"/>
+                                                                            <SelectableTextBlock Text="{Binding SecondValue}"
+                                                                                                 TextWrapping="Wrap"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </StackPanel>
                                                             </Border>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
@@ -571,23 +600,22 @@
                                                            IsVisible="{Binding Comparison.PropertyChanges.Count, Converter={StaticResource IntEqualsConverter}, ConverterParameter=0}"/>
 
                                                 <TextBlock Text="Body comparison" Classes="body-strong"/>
-                                                <WrapPanel Orientation="Horizontal">
-                                                    <TextBox Width="360"
-                                                             MinHeight="180"
-                                                             Margin="0,0,8,8"
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Text="Message A body" Classes="caption"/>
+                                                    <TextBox MinHeight="160"
                                                              Text="{Binding Comparison.Body.First}"
                                                              Classes="code-editor"
                                                              IsReadOnly="True"
                                                              AcceptsReturn="True"
                                                              TextWrapping="Wrap"/>
-                                                    <TextBox Width="360"
-                                                             MinHeight="180"
+                                                    <TextBlock Text="Message B body" Classes="caption"/>
+                                                    <TextBox MinHeight="160"
                                                              Text="{Binding Comparison.Body.Second}"
                                                              Classes="code-editor"
                                                              IsReadOnly="True"
                                                              AcceptsReturn="True"
                                                              TextWrapping="Wrap"/>
-                                                </WrapPanel>
+                                                </StackPanel>
                                             </StackPanel>
                                         </ScrollViewer>
                                         <Border Classes="empty-state"
@@ -609,7 +637,7 @@
                                         </Border>
                                     </Grid>
                                 </TabItem>
-                                <TabItem Header="Replay history">
+                                <TabItem Header="History">
                                     <Grid>
                                         <ListBox ItemsSource="{Binding ReplayHistory}">
                                             <ListBox.ItemTemplate>
@@ -626,10 +654,9 @@
                                                             <TextBlock Text="{Binding DestinationEntity}"
                                                                        Classes="body-strong"
                                                                        TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock Text="{Binding ResultMessage}"
-                                                                       Classes="caption"
-                                                                       TextWrapping="Wrap"
-                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <SelectableTextBlock Text="{Binding ResultMessage}"
+                                                                                 Classes="caption"
+                                                                                 TextWrapping="Wrap"/>
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>

@@ -2103,5 +2103,11 @@
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="Padding" Value="16,14"/>
     </Style>
+
+    <Style Selector="TabControl.inspector-tabs TabItem">
+        <Setter Property="Padding" Value="7,10"/>
+        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
     <!-- /Correlation Explorer -->
 </Styles>
