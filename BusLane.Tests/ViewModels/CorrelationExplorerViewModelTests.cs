@@ -135,6 +135,26 @@ public class CorrelationExplorerViewModelTests
     }
 
     [Fact]
+    public void ClearSearchCommand_WithStructuredCriteria_PreservesStructuredFilters()
+    {
+        // Arrange
+        var sut = CreateSut(new CorrelationMessageCatalog(), Substitute.For<IReplayAuditStore>());
+        sut.FilterText = "needle";
+        sut.FilterNamespace = "orders-prod";
+        sut.FilterEnvironment = ConnectionEnvironment.Production;
+        sut.FilterIdentifier = "corr-42";
+
+        // Act
+        sut.ClearSearchCommand.Execute(null);
+
+        // Assert
+        sut.FilterText.Should().BeEmpty();
+        sut.FilterNamespace.Should().Be("orders-prod");
+        sut.FilterEnvironment.Should().Be(ConnectionEnvironment.Production);
+        sut.FilterIdentifier.Should().Be("corr-42");
+    }
+
+    [Fact]
     public async Task ApplyFilters_WhenSelectedMessageStillMatches_PreservesSelection()
     {
         // Arrange

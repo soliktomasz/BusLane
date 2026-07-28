@@ -122,6 +122,12 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
+    private void ClearSearch()
+    {
+        FilterText = string.Empty;
+    }
+
+    [RelayCommand]
     private void ToggleFilters()
     {
         ShowFilters = !ShowFilters;

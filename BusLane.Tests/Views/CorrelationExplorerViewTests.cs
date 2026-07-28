@@ -84,8 +84,23 @@ public class CorrelationExplorerViewTests
             "Text=\"{Binding FilterPropertyKey}\"",
             "Text=\"{Binding FilterPropertyValue}\"",
             "Text=\"{Binding FilterValidationMessage}\"",
+            "Command=\"{Binding ClearSearchCommand}\"",
             "Command=\"{Binding ClearFiltersCommand}\"",
             "Command=\"{Binding ApplyFiltersCommand}\""
+        ];
+        string[] automationNameTokens =
+        [
+            "AutomationProperties.Name=\"Search correlation messages\"",
+            "AutomationProperties.Name=\"Clear correlation search\"",
+            "AutomationProperties.Name=\"From time\"",
+            "AutomationProperties.Name=\"To time\"",
+            "AutomationProperties.Name=\"Namespace\"",
+            "AutomationProperties.Name=\"Entity\"",
+            "AutomationProperties.Name=\"Environment\"",
+            "AutomationProperties.Name=\"Source\"",
+            "AutomationProperties.Name=\"Correlation or session ID\"",
+            "AutomationProperties.Name=\"Property key\"",
+            "AutomationProperties.Name=\"Property value\""
         ];
 
         // Assert
@@ -96,13 +111,18 @@ public class CorrelationExplorerViewTests
         xaml.Should().Contain("Kind=\"SlidersHorizontal\"");
         xaml.Should().Contain("Kind=\"RefreshCw\"");
         xaml.Should().Contain("Kind=\"Download\"");
-        xaml.Should().Contain("ToolTip.Tip=\"Show structured filters\"");
+        xaml.Should().Contain("ToolTip.Tip=\"Toggle structured filters\"");
         xaml.Should().Contain("Classes=\"correlation-filter-surface\"");
         xaml.Should().Contain("ColumnDefinitions=\"*,*,*,*\"");
 
         foreach (var bindingToken in bindingTokens)
         {
             xaml.Should().Contain(bindingToken);
+        }
+
+        foreach (var automationNameToken in automationNameTokens)
+        {
+            xaml.Should().Contain(automationNameToken);
         }
 
         xaml.Should().Contain("{DynamicResource TextDanger}");
