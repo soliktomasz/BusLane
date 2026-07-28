@@ -190,6 +190,33 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             subscriptionName);
     }
 
+    private IReadOnlyList<ReplayDestination> GetReplayDestinations()
+    {
+        var namespaceName = ActiveTab?.SavedConnection?.Endpoint
+            ?? ActiveTab?.Namespace?.Name
+            ?? CurrentNavigation.SelectedNamespace?.Name
+            ?? "current-namespace";
+        var environment = ActiveTab?.SavedConnection?.Environment ?? ConnectionEnvironment.None;
+
+        var destinations = CurrentNavigation.Queues
+            .Select(queue => new ReplayDestination(
+                namespaceName,
+                environment,
+                queue.Name,
+                "Queue",
+                queue.RequiresSession))
+            .ToList();
+
+        destinations.AddRange(CurrentNavigation.Topics.Select(topic => new ReplayDestination(
+            namespaceName,
+            environment,
+            topic.Name,
+            "Topic",
+            RequiresSession: false)));
+
+        return destinations;
+    }
+
     // UI State
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _showIntroductionSplash;
@@ -278,7 +305,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IScheduledMessageStore? scheduledMessageStore = null,
         INamespaceTopologyService? namespaceTopologyService = null,
         IFileDialogService? fileDialogService = null,
-        ICorrelationMessageCatalog? correlationMessageCatalog = null)
+        ICorrelationMessageCatalog? correlationMessageCatalog = null,
+        IReplayAuditStore? replayAuditStore = null,
+        IMessageReplayService? messageReplayService = null)
     {
         _auth = auth;
         _azureResources = azureResources;
@@ -357,7 +386,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             () => CurrentNavigation.SelectedSubscription,
             msg => StatusMessage = msg,
             _correlationMessageCatalog,
-            GetCorrelationSourceContext);
+            GetCorrelationSourceContext,
+            messageReplayService,
+            replayAuditStore,
+            GetReplayDestinations,
+            () => _fileDialogService);
 
         // Initialize refactored components
         Tabs = new TabManagementViewModel(

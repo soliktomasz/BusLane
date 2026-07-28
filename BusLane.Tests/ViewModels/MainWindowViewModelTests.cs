@@ -27,6 +27,46 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 public class MainWindowViewModelTests
 {
     [Fact]
+    public async Task OpenCorrelationExplorerCommand_WithComposedServices_OpensPanel()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(new CorrelationMessage(
+            CorrelationMessageSource.Loaded,
+            "demo.servicebus.windows.net",
+            ConnectionEnvironment.Test,
+            "orders",
+            "Queue",
+            null,
+            null,
+            "message-1",
+            "corr-1",
+            null,
+            "application/json",
+            "{}",
+            DateTimeOffset.UtcNow,
+            1,
+            new Dictionary<string, object>()));
+        var auditStore = Substitute.For<IReplayAuditStore>();
+        auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var replayService = Substitute.For<IMessageReplayService>();
+        using var sut = CreateSut(
+            preferences,
+            correlationCatalog: catalog,
+            replayAuditStore: auditStore,
+            messageReplayService: replayService);
+
+        // Act
+        await sut.OpenCorrelationExplorerCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.FeaturePanels.ShowCorrelationExplorer.Should().BeTrue();
+        sut.FeaturePanels.CorrelationExplorerViewModel.Should().NotBeNull();
+        sut.FeaturePanels.CorrelationExplorerViewModel!.Groups.Should().ContainSingle();
+    }
+
+    [Fact]
     public void IntroductionSplash_WithNewPreferences_IsVisible()
     {
         // Arrange
@@ -1316,7 +1356,10 @@ public class MainWindowViewModelTests
         IBiometricAuthService? biometricAuthService = null,
         IServiceBusOperationsFactory? operationsFactory = null,
         IDashboardRefreshService? dashboardRefreshService = null,
-        IAlertService? alertService = null)
+        IAlertService? alertService = null,
+        ICorrelationMessageCatalog? correlationCatalog = null,
+        IReplayAuditStore? replayAuditStore = null,
+        IMessageReplayService? messageReplayService = null)
     {
         auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
@@ -1386,7 +1429,10 @@ public class MainWindowViewModelTests
             biometricAuthService,
             logSink,
             dashboardViewModel,
-            namespaceDashboardViewModel);
+            namespaceDashboardViewModel,
+            correlationMessageCatalog: correlationCatalog,
+            replayAuditStore: replayAuditStore,
+            messageReplayService: messageReplayService);
     }
 
     private static ConnectionTabViewModel CreateTab(
