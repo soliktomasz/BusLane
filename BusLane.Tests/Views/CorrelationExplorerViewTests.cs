@@ -1,6 +1,7 @@
 namespace BusLane.Tests.Views;
 
 using FluentAssertions;
+using FluentAssertions.Execution;
 
 public class CorrelationExplorerViewTests
 {
@@ -27,6 +28,32 @@ public class CorrelationExplorerViewTests
         xaml.Should().Contain("FeaturePanels.ShowCorrelationExplorer");
         xaml.Should().Contain("FeaturePanels.CorrelationExplorerViewModel");
         xaml.Should().Contain("CloseCorrelationExplorerCommand");
+    }
+
+    [Fact]
+    public void CorrelationWorkspace_UsesContinuousHeaderAndStandardSearchSurface()
+    {
+        // Arrange
+        var mainWindowXaml = File.ReadAllText(GetPath("MainWindow.axaml"));
+        var panelStart = mainWindowXaml.IndexOf("<!-- Correlation Explorer Panel -->", StringComparison.Ordinal);
+        var panelEnd = mainWindowXaml.IndexOf("<!-- Charts Panel", panelStart, StringComparison.Ordinal);
+        var correlationPanel = mainWindowXaml[panelStart..panelEnd];
+
+        var viewXaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        var searchStart = viewXaml.LastIndexOf(
+            "<TextBox",
+            viewXaml.IndexOf("PlaceholderText=\"Search message ID", StringComparison.Ordinal),
+            StringComparison.Ordinal);
+        var searchEnd = viewXaml.IndexOf("/>", searchStart, StringComparison.Ordinal);
+        var searchTextBox = viewXaml[searchStart..searchEnd];
+
+        // Assert
+        correlationPanel.Should().Contain("Classes=\"page-header-surface\"");
+        using (new AssertionScope())
+        {
+            searchTextBox.Should().NotContain("Background=\"Transparent\"");
+            correlationPanel.Should().NotContain("Margin=\"0,0,0,16\"");
+        }
     }
 
     [Fact]

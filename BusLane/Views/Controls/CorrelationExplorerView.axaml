@@ -24,7 +24,6 @@
                                      Text="{Binding FilterText, Mode=TwoWay}"
                                      PlaceholderText="Search message ID, body, correlation, session, or property"
                                      AutomationProperties.Name="Search correlation messages"
-                                     Background="Transparent"
                                      BorderThickness="0"
                                      Padding="0,4"
                                      FontSize="13"/>
