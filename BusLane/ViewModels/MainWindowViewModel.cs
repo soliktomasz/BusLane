@@ -308,7 +308,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         ICorrelationMessageCatalog? correlationMessageCatalog = null,
         IReplayAuditStore? replayAuditStore = null,
         IMessageReplayService? messageReplayService = null,
-        ICorrelationRefreshDelay? correlationRefreshDelay = null)
+        ICorrelationRefreshDelay? correlationRefreshDelay = null,
+        ICorrelationMessageComparisonService? correlationComparisonService = null)
     {
         _auth = auth;
         _azureResources = azureResources;
@@ -392,7 +393,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             replayAuditStore,
             GetReplayDestinations,
             () => _fileDialogService,
-            correlationRefreshDelay);
+            correlationRefreshDelay,
+            correlationComparisonService);
 
         // Initialize refactored components
         Tabs = new TabManagementViewModel(

@@ -243,6 +243,133 @@ public class CorrelationExplorerViewModelTests
     }
 
     [Fact]
+    public async Task SetComparisonMessages_WhenBothAssigned_ProducesComparison()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        catalog.Add(CreateMessage("second", 2) with { Body = """{"status":"changed"}""" });
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+
+        // Act
+        sut.SetComparisonACommand.Execute(sut.Timeline[0]);
+        sut.SetComparisonBCommand.Execute(sut.Timeline[1]);
+
+        // Assert
+        sut.ComparisonMessageA!.MessageId.Should().Be("first");
+        sut.ComparisonMessageB!.MessageId.Should().Be("second");
+        sut.HasComparison.Should().BeTrue();
+        sut.Comparison!.Body.IsChanged.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CompareWithPrevious_UsesChronologicalPreviousMessage()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        catalog.Add(CreateMessage("second", 2));
+        catalog.Add(CreateMessage("third", 3));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.SelectedMessage = sut.Timeline[2];
+
+        // Act
+        sut.CompareWithPreviousCommand.Execute(null);
+
+        // Assert
+        sut.ComparisonMessageA!.MessageId.Should().Be("second");
+        sut.ComparisonMessageB!.MessageId.Should().Be("third");
+    }
+
+    [Fact]
+    public async Task CompareWithPrevious_ForFirstMessage_ShowsStatus()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+
+        // Act
+        sut.CompareWithPreviousCommand.Execute(null);
+
+        // Assert
+        sut.HasComparison.Should().BeFalse();
+        sut.StatusMessage.Should().Be("The selected message has no previous timeline entry");
+    }
+
+    [Fact]
+    public async Task SetComparisonA_WhenReplacingSlot_RecomputesComparison()
+    {
+        // Arrange
+        var comparisonService = Substitute.For<ICorrelationMessageComparisonService>();
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        catalog.Add(CreateMessage("second", 2));
+        catalog.Add(CreateMessage("third", 3));
+        var sut = CreateSut(
+            catalog,
+            Substitute.For<IReplayAuditStore>(),
+            comparisonService: comparisonService);
+        await sut.RefreshAsync();
+        sut.SetComparisonACommand.Execute(sut.Timeline[0]);
+        sut.SetComparisonBCommand.Execute(sut.Timeline[1]);
+
+        // Act
+        sut.SetComparisonACommand.Execute(sut.Timeline[2]);
+
+        // Assert
+        comparisonService.Received(1).Compare(sut.Timeline[2], sut.Timeline[1]);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenComparedMessageWasEvicted_ClearsOnlyMissingSlot()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog(capacity: 2);
+        catalog.Add(CreateMessage("first", 1));
+        catalog.Add(CreateMessage("second", 2));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.SetComparisonACommand.Execute(sut.Timeline[0]);
+        sut.SetComparisonBCommand.Execute(sut.Timeline[1]);
+        catalog.Add(CreateMessage("third", 3));
+
+        // Act
+        await sut.RefreshAsync();
+
+        // Assert
+        sut.ComparisonMessageA.Should().BeNull();
+        sut.ComparisonMessageB!.MessageId.Should().Be("second");
+        sut.HasComparison.Should().BeFalse();
+        sut.StatusMessage.Should().Be("A compared message is no longer available");
+    }
+
+    [Fact]
+    public async Task ClearComparison_ResetsSlotsAndResult()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        catalog.Add(CreateMessage("second", 2));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.SetComparisonACommand.Execute(sut.Timeline[0]);
+        sut.SetComparisonBCommand.Execute(sut.Timeline[1]);
+
+        // Act
+        sut.ClearComparisonCommand.Execute(null);
+
+        // Assert
+        sut.ComparisonMessageA.Should().BeNull();
+        sut.ComparisonMessageB.Should().BeNull();
+        sut.Comparison.Should().BeNull();
+        sut.HasComparison.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task OpenReplay_WithSelectedMessage_CreatesReplayEditor()
     {
         // Arrange
@@ -295,7 +422,8 @@ public class CorrelationExplorerViewModelTests
         ICorrelationMessageCatalog catalog,
         IReplayAuditStore auditStore,
         IFileDialogService? fileDialog = null,
-        ICorrelationRefreshDelay? refreshDelay = null)
+        ICorrelationRefreshDelay? refreshDelay = null,
+        ICorrelationMessageComparisonService? comparisonService = null)
     {
         var replayService = Substitute.For<IMessageReplayService>();
         var destination = new ReplayDestination(
@@ -324,7 +452,8 @@ public class CorrelationExplorerViewModelTests
             () => Substitute.For<IServiceBusOperations>(),
             () => [destination],
             fileDialog,
-            refreshDelay: refreshDelay);
+            refreshDelay: refreshDelay,
+            comparisonService: comparisonService);
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate)

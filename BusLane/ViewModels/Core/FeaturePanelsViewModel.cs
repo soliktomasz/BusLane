@@ -31,6 +31,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly Func<IReadOnlyList<ReplayDestination>>? _getReplayDestinations;
     private readonly Func<BusLane.Services.Abstractions.IFileDialogService?>? _getFileDialogService;
     private readonly ICorrelationRefreshDelay? _correlationRefreshDelay;
+    private readonly ICorrelationMessageComparisonService? _correlationComparisonService;
 
     [ObservableProperty] private bool _showLiveStream;
     [ObservableProperty] private bool _showCharts;
@@ -60,7 +61,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         IReplayAuditStore? replayAuditStore = null,
         Func<IReadOnlyList<ReplayDestination>>? getReplayDestinations = null,
         Func<BusLane.Services.Abstractions.IFileDialogService?>? getFileDialogService = null,
-        ICorrelationRefreshDelay? correlationRefreshDelay = null)
+        ICorrelationRefreshDelay? correlationRefreshDelay = null,
+        ICorrelationMessageComparisonService? correlationComparisonService = null)
     {
         _liveStreamService = liveStreamService;
         _alertService = alertService;
@@ -79,6 +81,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _getReplayDestinations = getReplayDestinations;
         _getFileDialogService = getFileDialogService;
         _correlationRefreshDelay = correlationRefreshDelay;
+        _correlationComparisonService = correlationComparisonService;
         DashboardViewModel = dashboardViewModel;
 
         _alertService.AlertTriggered += OnAlertTriggered;
@@ -183,7 +186,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
             _getOperations,
             _getReplayDestinations,
             _getFileDialogService?.Invoke(),
-            refreshDelay: _correlationRefreshDelay);
+            refreshDelay: _correlationRefreshDelay,
+            comparisonService: _correlationComparisonService);
         await CorrelationExplorerViewModel.RefreshAsync();
 
         ShowCorrelationExplorer = true;

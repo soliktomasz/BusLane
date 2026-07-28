@@ -34,6 +34,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
     private readonly IFileDialogService? _fileDialogService;
     private readonly ICorrelationMessageFilter _messageFilter;
     private readonly ICorrelationRefreshDelay _refreshDelay;
+    private readonly ICorrelationMessageComparisonService _comparisonService;
     private readonly object _refreshLock = new();
     private CorrelationExplorerFilter _activeFilter = CorrelationExplorerFilter.Empty;
     private CancellationTokenSource? _refreshCts;
@@ -58,10 +59,16 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private int _newMessageCount;
+    [ObservableProperty] private CorrelationMessage? _comparisonMessageA;
+    [ObservableProperty] private CorrelationMessage? _comparisonMessageB;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasComparison))]
+    private MessageComparison? _comparison;
 
     public ObservableCollection<CorrelationGroup> Groups { get; } = [];
     public ObservableCollection<CorrelationMessage> Timeline { get; } = [];
     public ObservableCollection<ReplayAuditEntry> ReplayHistory { get; } = [];
+    public bool HasComparison => Comparison != null;
 
     public CorrelationExplorerViewModel(
         ICorrelationMessageCatalog catalog,
@@ -71,7 +78,8 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
         Func<IReadOnlyList<ReplayDestination>> getDestinations,
         IFileDialogService? fileDialogService = null,
         ICorrelationMessageFilter? messageFilter = null,
-        ICorrelationRefreshDelay? refreshDelay = null)
+        ICorrelationRefreshDelay? refreshDelay = null,
+        ICorrelationMessageComparisonService? comparisonService = null)
     {
         _catalog = catalog;
         _auditStore = auditStore;
@@ -81,6 +89,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
         _fileDialogService = fileDialogService;
         _messageFilter = messageFilter ?? new CorrelationMessageFilter();
         _refreshDelay = refreshDelay ?? new CorrelationRefreshDelay();
+        _comparisonService = comparisonService ?? new CorrelationMessageComparisonService();
         _catalog.Changed += OnCatalogChanged;
     }
 
@@ -174,6 +183,71 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
         NewMessageCount = 0;
     }
 
+    partial void OnComparisonMessageAChanged(CorrelationMessage? value)
+    {
+        _ = value;
+        RecomputeComparison();
+    }
+
+    partial void OnComparisonMessageBChanged(CorrelationMessage? value)
+    {
+        _ = value;
+        RecomputeComparison();
+    }
+
+    [RelayCommand]
+    private void SetComparisonA(CorrelationMessage? message)
+    {
+        if (message == null)
+        {
+            StatusMessage = "Select a message for comparison A";
+            return;
+        }
+
+        ComparisonMessageA = message;
+    }
+
+    [RelayCommand]
+    private void SetComparisonB(CorrelationMessage? message)
+    {
+        if (message == null)
+        {
+            StatusMessage = "Select a message for comparison B";
+            return;
+        }
+
+        ComparisonMessageB = message;
+    }
+
+    [RelayCommand]
+    private void CompareWithPrevious()
+    {
+        if (SelectedMessage == null)
+        {
+            StatusMessage = "Select a message to compare";
+            return;
+        }
+
+        var index = Timeline.IndexOf(SelectedMessage);
+        if (index <= 0)
+        {
+            StatusMessage = "The selected message has no previous timeline entry";
+            return;
+        }
+
+        ComparisonMessageA = Timeline[index - 1];
+        ComparisonMessageB = SelectedMessage;
+        StatusMessage = null;
+    }
+
+    [RelayCommand]
+    private void ClearComparison()
+    {
+        ComparisonMessageA = null;
+        ComparisonMessageB = null;
+        Comparison = null;
+    }
+
     [RelayCommand]
     private void OpenReplay()
     {
@@ -241,6 +315,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
             .Select(CorrelationMessageIdentity.From)
             .ToHashSet();
         var groups = _catalog.GetGroups();
+        ReconcileComparisonSlots(groups.SelectMany(static group => group.Messages));
         groups = groups
             .Select(group => group with
             {
@@ -328,6 +403,39 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
     private static string? Normalize(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private void RecomputeComparison()
+    {
+        Comparison = ComparisonMessageA != null && ComparisonMessageB != null
+            ? _comparisonService.Compare(ComparisonMessageA, ComparisonMessageB)
+            : null;
+    }
+
+    private void ReconcileComparisonSlots(IEnumerable<CorrelationMessage> messages)
+    {
+        var available = messages
+            .Select(CorrelationMessageIdentity.From)
+            .ToHashSet();
+        var cleared = false;
+        if (ComparisonMessageA != null &&
+            !available.Contains(CorrelationMessageIdentity.From(ComparisonMessageA)))
+        {
+            ComparisonMessageA = null;
+            cleared = true;
+        }
+
+        if (ComparisonMessageB != null &&
+            !available.Contains(CorrelationMessageIdentity.From(ComparisonMessageB)))
+        {
+            ComparisonMessageB = null;
+            cleared = true;
+        }
+
+        if (cleared)
+        {
+            StatusMessage = "A compared message is no longer available";
+        }
     }
 
     private async Task ReloadHistoryAsync(CancellationToken ct)

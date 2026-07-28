@@ -137,6 +137,7 @@ class Program
         services.AddSingleton<IScheduledMessageStore, ScheduledMessageStore>();
         services.AddSingleton<ICorrelationMessageCatalog, CorrelationMessageCatalog>();
         services.AddSingleton<ICorrelationRefreshDelay, CorrelationRefreshDelay>();
+        services.AddSingleton<ICorrelationMessageComparisonService, CorrelationMessageComparisonService>();
         services.AddSingleton<IReplayAuditStore, ReplayAuditStore>();
         services.AddSingleton<IReplayDelay, ReplayDelay>();
         services.AddSingleton(TimeProvider.System);
@@ -199,7 +200,8 @@ class Program
             correlationMessageCatalog: sp.GetRequiredService<ICorrelationMessageCatalog>(),
             replayAuditStore: sp.GetRequiredService<IReplayAuditStore>(),
             messageReplayService: sp.GetRequiredService<IMessageReplayService>(),
-            correlationRefreshDelay: sp.GetRequiredService<ICorrelationRefreshDelay>()
+            correlationRefreshDelay: sp.GetRequiredService<ICorrelationRefreshDelay>(),
+            correlationComparisonService: sp.GetRequiredService<ICorrelationMessageComparisonService>()
         ));
 
     }
