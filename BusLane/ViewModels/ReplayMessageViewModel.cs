@@ -11,6 +11,7 @@ public partial class ReplayMessageViewModel : ViewModelBase
 {
     private readonly IMessageReplayService _replayService;
     private readonly Func<IServiceBusOperations?> _getOperations;
+    private readonly Func<CancellationToken, Task>? _onReplayCompleted;
     private readonly ReplayRequest _initialRequest;
     private readonly IReadOnlyDictionary<string, object> _sourceProperties;
 
@@ -47,7 +48,8 @@ public partial class ReplayMessageViewModel : ViewModelBase
         CorrelationMessage source,
         IReadOnlyList<ReplayDestination> destinations,
         IMessageReplayService replayService,
-        Func<IServiceBusOperations?> getOperations)
+        Func<IServiceBusOperations?> getOperations,
+        Func<CancellationToken, Task>? onReplayCompleted = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(destinations);
@@ -62,6 +64,7 @@ public partial class ReplayMessageViewModel : ViewModelBase
         AvailableDestinations = destinations;
         _replayService = replayService;
         _getOperations = getOperations;
+        _onReplayCompleted = onReplayCompleted;
         SelectedDestination = destinations[0];
         _initialRequest = replayService.CreateRequest(source, SelectedDestination);
         _sourceProperties = source.Properties;
@@ -81,32 +84,51 @@ public partial class ReplayMessageViewModel : ViewModelBase
 
         foreach (var property in source.Properties)
         {
-            CustomProperties.Add(new CustomProperty
+            var customProperty = new CustomProperty
             {
                 Key = property.Key,
                 Value = property.Value?.ToString() ?? string.Empty
-            });
+            };
+            customProperty.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProperty);
         }
     }
 
     partial void OnSelectedDestinationChanged(ReplayDestination? value)
     {
         OnPropertyChanged(nameof(IsProductionDestination));
-        HasPreview = false;
+        InvalidatePreview();
     }
+
+    partial void OnBodyChanged(string value) => InvalidatePreview();
+    partial void OnContentTypeChanged(string? value) => InvalidatePreview();
+    partial void OnCorrelationIdChanged(string? value) => InvalidatePreview();
+    partial void OnMessageIdChanged(string? value) => InvalidatePreview();
+    partial void OnSessionIdChanged(string? value) => InvalidatePreview();
+    partial void OnSubjectChanged(string? value) => InvalidatePreview();
+    partial void OnToChanged(string? value) => InvalidatePreview();
+    partial void OnReplyToChanged(string? value) => InvalidatePreview();
+    partial void OnReplyToSessionIdChanged(string? value) => InvalidatePreview();
+    partial void OnPartitionKeyChanged(string? value) => InvalidatePreview();
+    partial void OnTimeToLiveTextChanged(string? value) => InvalidatePreview();
+    partial void OnScheduledEnqueueTimeTextChanged(string? value) => InvalidatePreview();
+    partial void OnRateLimitPerSecondChanged(int value) => InvalidatePreview();
 
     [RelayCommand]
     private void AddCustomProperty()
     {
-        CustomProperties.Add(new CustomProperty());
-        HasPreview = false;
+        var property = new CustomProperty();
+        property.PropertyChanged += OnCustomPropertyChanged;
+        CustomProperties.Add(property);
+        InvalidatePreview();
     }
 
     [RelayCommand]
     private void RemoveCustomProperty(CustomProperty property)
     {
+        property.PropertyChanged -= OnCustomPropertyChanged;
         CustomProperties.Remove(property);
-        HasPreview = false;
+        InvalidatePreview();
     }
 
     [RelayCommand]
@@ -123,7 +145,7 @@ public partial class ReplayMessageViewModel : ViewModelBase
         }
 
         Preview = _replayService.Preview(request!);
-        HasPreview = true;
+        HasPreview = Preview.IsValid;
     }
 
     [RelayCommand]
@@ -162,6 +184,11 @@ public partial class ReplayMessageViewModel : ViewModelBase
                     ? string.Join(Environment.NewLine, result.ValidationErrors)
                     : result.Message;
             }
+
+            if (_onReplayCompleted != null)
+            {
+                await _onReplayCompleted(ct);
+            }
         }
         finally
         {
@@ -176,6 +203,20 @@ public partial class ReplayMessageViewModel : ViewModelBase
         if (SelectedDestination == null)
         {
             error = "Select a replay destination";
+            return false;
+        }
+
+        if (CustomProperties.Any(property => string.IsNullOrWhiteSpace(property.Key)))
+        {
+            error = "Application property keys cannot be empty";
+            return false;
+        }
+
+        if (CustomProperties
+            .GroupBy(property => property.Key, StringComparer.Ordinal)
+            .Any(group => group.Count() > 1))
+        {
+            error = "Application property keys must be unique";
             return false;
         }
 
@@ -243,5 +284,18 @@ public partial class ReplayMessageViewModel : ViewModelBase
         }
 
         return properties;
+    }
+
+    private void OnCustomPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        InvalidatePreview();
+    }
+
+    private void InvalidatePreview()
+    {
+        HasPreview = false;
+        Preview = null;
     }
 }

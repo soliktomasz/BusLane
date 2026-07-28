@@ -64,11 +64,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         try
         {
             RefreshGroups();
-            ReplayHistory.Clear();
-            foreach (var entry in (await _auditStore.LoadAsync(ct)).OrderByDescending(static item => item.Timestamp))
-            {
-                ReplayHistory.Add(entry);
-            }
+            await ReloadHistoryAsync(ct);
         }
         finally
         {
@@ -116,7 +112,8 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
             SelectedMessage,
             destinations,
             _replayService,
-            _getOperations);
+            _getOperations,
+            ReloadHistoryAsync);
         ShowReplayEditor = true;
     }
 
@@ -174,5 +171,14 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         }
 
         SelectedGroup = Groups.FirstOrDefault(group => group.Key == selectedKey) ?? Groups.FirstOrDefault();
+    }
+
+    private async Task ReloadHistoryAsync(CancellationToken ct)
+    {
+        ReplayHistory.Clear();
+        foreach (var entry in (await _auditStore.LoadAsync(ct)).OrderByDescending(static item => item.Timestamp))
+        {
+            ReplayHistory.Add(entry);
+        }
     }
 }
