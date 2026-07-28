@@ -26,13 +26,19 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly Action<string> _setStatus;
     private readonly ICorrelationMessageCatalog? _correlationCatalog;
     private readonly Func<CorrelationSourceContext?>? _getCorrelationContext;
+    private readonly IMessageReplayService? _messageReplayService;
+    private readonly IReplayAuditStore? _replayAuditStore;
+    private readonly Func<IReadOnlyList<ReplayDestination>>? _getReplayDestinations;
+    private readonly Func<BusLane.Services.Abstractions.IFileDialogService?>? _getFileDialogService;
 
     [ObservableProperty] private bool _showLiveStream;
     [ObservableProperty] private bool _showCharts;
     [ObservableProperty] private bool _showAlerts;
+    [ObservableProperty] private bool _showCorrelationExplorer;
     [ObservableProperty] private LiveStreamViewModel? _liveStreamViewModel;
     [ObservableProperty] private DashboardViewModel? _dashboardViewModel;
     [ObservableProperty] private AlertsViewModel? _alertsViewModel;
+    [ObservableProperty] private CorrelationExplorerViewModel? _correlationExplorerViewModel;
     [ObservableProperty] private int _activeAlertCount;
 
     public FeaturePanelsViewModel(
@@ -48,7 +54,11 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         Func<SubscriptionInfo?> getSelectedSubscription,
         Action<string> setStatus,
         ICorrelationMessageCatalog? correlationCatalog = null,
-        Func<CorrelationSourceContext?>? getCorrelationContext = null)
+        Func<CorrelationSourceContext?>? getCorrelationContext = null,
+        IMessageReplayService? messageReplayService = null,
+        IReplayAuditStore? replayAuditStore = null,
+        Func<IReadOnlyList<ReplayDestination>>? getReplayDestinations = null,
+        Func<BusLane.Services.Abstractions.IFileDialogService?>? getFileDialogService = null)
     {
         _liveStreamService = liveStreamService;
         _alertService = alertService;
@@ -62,6 +72,10 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _setStatus = setStatus;
         _correlationCatalog = correlationCatalog;
         _getCorrelationContext = getCorrelationContext;
+        _messageReplayService = messageReplayService;
+        _replayAuditStore = replayAuditStore;
+        _getReplayDestinations = getReplayDestinations;
+        _getFileDialogService = getFileDialogService;
         DashboardViewModel = dashboardViewModel;
 
         _alertService.AlertTriggered += OnAlertTriggered;
@@ -101,6 +115,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         ShowLiveStream = true;
         ShowCharts = false;
         ShowAlerts = false;
+        ShowCorrelationExplorer = false;
 
         await StartLiveStreamForSelectedEntity();
     }
@@ -123,11 +138,13 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         ShowCharts = true;
         ShowLiveStream = false;
         ShowAlerts = false;
+        ShowCorrelationExplorer = false;
     }
 
     public void CloseCharts()
     {
         ShowCharts = false;
+        ShowCorrelationExplorer = false;
     }
 
     public void OpenAlerts()
@@ -142,6 +159,38 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     {
         ShowAlerts = false;
         AlertsViewModel = null;
+    }
+
+    public async Task OpenCorrelationExplorer()
+    {
+        if (_correlationCatalog == null ||
+            _messageReplayService == null ||
+            _replayAuditStore == null ||
+            _getReplayDestinations == null)
+        {
+            _setStatus("Correlation Explorer is not available");
+            return;
+        }
+
+        CorrelationExplorerViewModel = new CorrelationExplorerViewModel(
+            _correlationCatalog,
+            _replayAuditStore,
+            _messageReplayService,
+            _getOperations,
+            _getReplayDestinations,
+            _getFileDialogService?.Invoke());
+        await CorrelationExplorerViewModel.RefreshAsync();
+
+        ShowCorrelationExplorer = true;
+        ShowLiveStream = false;
+        ShowCharts = false;
+        ShowAlerts = false;
+    }
+
+    public void CloseCorrelationExplorer()
+    {
+        ShowCorrelationExplorer = false;
+        CorrelationExplorerViewModel = null;
     }
 
     [RelayCommand]
@@ -176,5 +225,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         CloseLiveStream();
         CloseCharts();
         CloseAlerts();
+        CloseCorrelationExplorer();
     }
 }
