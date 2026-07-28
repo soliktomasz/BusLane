@@ -67,6 +67,43 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task OpenCorrelationExplorerCommand_AfterCatalogIngestion_RefreshesLive()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateCorrelationMessage("message-1", 1));
+        var auditStore = Substitute.For<IReplayAuditStore>();
+        auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var delay = Substitute.For<ICorrelationRefreshDelay>();
+        delay.DelayAsync(Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+        using var sut = CreateSut(
+            preferences,
+            correlationCatalog: catalog,
+            replayAuditStore: auditStore,
+            messageReplayService: Substitute.For<IMessageReplayService>(),
+            correlationRefreshDelay: delay,
+            correlationComparisonService: new CorrelationMessageComparisonService());
+        await sut.OpenCorrelationExplorerCommand.ExecuteAsync(null);
+
+        // Act
+        catalog.Add(CreateCorrelationMessage("message-2", 2));
+        await WaitUntilAsync(() =>
+            sut.FeaturePanels.CorrelationExplorerViewModel?.Timeline.Count == 2);
+
+        // Assert
+        sut.FeaturePanels.CorrelationExplorerViewModel!.Timeline
+            .Select(static message => message.MessageId)
+            .Should().ContainInOrder("message-1", "message-2");
+        sut.FeaturePanels.CorrelationExplorerViewModel.SetComparisonACommand.Execute(
+            sut.FeaturePanels.CorrelationExplorerViewModel.Timeline[0]);
+        sut.FeaturePanels.CorrelationExplorerViewModel.SetComparisonBCommand.Execute(
+            sut.FeaturePanels.CorrelationExplorerViewModel.Timeline[1]);
+        sut.FeaturePanels.CorrelationExplorerViewModel.HasComparison.Should().BeTrue();
+    }
+
+    [Fact]
     public void IntroductionSplash_WithNewPreferences_IsVisible()
     {
         // Arrange
@@ -1359,7 +1396,9 @@ public class MainWindowViewModelTests
         IAlertService? alertService = null,
         ICorrelationMessageCatalog? correlationCatalog = null,
         IReplayAuditStore? replayAuditStore = null,
-        IMessageReplayService? messageReplayService = null)
+        IMessageReplayService? messageReplayService = null,
+        ICorrelationRefreshDelay? correlationRefreshDelay = null,
+        ICorrelationMessageComparisonService? correlationComparisonService = null)
     {
         auth ??= Substitute.For<IAzureAuthService>();
         var azureResources = Substitute.For<IAzureResourceService>();
@@ -1432,7 +1471,41 @@ public class MainWindowViewModelTests
             namespaceDashboardViewModel,
             correlationMessageCatalog: correlationCatalog,
             replayAuditStore: replayAuditStore,
-            messageReplayService: messageReplayService);
+            messageReplayService: messageReplayService,
+            correlationRefreshDelay: correlationRefreshDelay,
+            correlationComparisonService: correlationComparisonService);
+    }
+
+    private static CorrelationMessage CreateCorrelationMessage(string messageId, long sequenceNumber) =>
+        new(
+            CorrelationMessageSource.Loaded,
+            "demo.servicebus.windows.net",
+            ConnectionEnvironment.Test,
+            "orders",
+            "Queue",
+            null,
+            null,
+            messageId,
+            "corr-1",
+            null,
+            "application/json",
+            "{}",
+            DateTimeOffset.Parse("2026-07-28T09:00:00Z").AddSeconds(sequenceNumber),
+            sequenceNumber,
+            new Dictionary<string, object>());
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        var timeout = DateTime.UtcNow.AddSeconds(2);
+        while (!predicate())
+        {
+            if (DateTime.UtcNow >= timeout)
+            {
+                throw new TimeoutException("Condition was not reached");
+            }
+
+            await Task.Delay(10);
+        }
     }
 
     private static ConnectionTabViewModel CreateTab(
