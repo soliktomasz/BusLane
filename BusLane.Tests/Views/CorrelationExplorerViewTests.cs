@@ -219,6 +219,45 @@ public class CorrelationExplorerViewTests
     }
 
     [Fact]
+    public void CorrelationExplorer_UsesStructuredMessageInspector()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        string[] expectedTokens =
+        [
+            "Classes=\"correlation-inspector-header\"",
+            "StatusMessage",
+            "Classes=\"infobar\"",
+            "IsEnabled=\"{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}\"",
+            "IsVisible=\"{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}\"",
+            "IsVisible=\"{Binding SelectedMessage, Converter={x:Static ObjectConverters.IsNull}}\"",
+            "Kind=\"ArrowLeftRight\"",
+            "Kind=\"Send\"",
+            "Select a message to inspect",
+            "Classes=\"property-row\"",
+            "SelectedMessage.CorrelationId",
+            "SelectedMessage.SessionId",
+            "SelectedMessage.EntityName",
+            "SelectedMessage.ContentType",
+            "SelectedMessage.SequenceNumber",
+            "IsVisible=\"{Binding Comparison, Converter={x:Static ObjectConverters.IsNotNull}}\"",
+            "IsVisible=\"{Binding Comparison, Converter={x:Static ObjectConverters.IsNull}}\"",
+            "Choose message A and message B",
+            "No metadata changes",
+            "No property changes",
+            "No application properties",
+            "No replay activity yet",
+            "ReplayHistory.Count"
+        ];
+
+        // Assert
+        foreach (var expectedToken in expectedTokens)
+        {
+            xaml.Should().Contain(expectedToken);
+        }
+    }
+
+    [Fact]
     public void CorrelationExplorer_ExposesCollapsibleStructuredFilters()
     {
         // Arrange
