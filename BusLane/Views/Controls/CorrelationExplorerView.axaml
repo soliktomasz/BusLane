@@ -158,75 +158,186 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="2" ColumnDefinitions="280,320,*" ColumnSpacing="12">
-                <Border Grid.Column="0" Classes="pane-card" Padding="12">
-                    <Grid RowDefinitions="Auto,*">
-                        <TextBlock Grid.Row="0" Text="Correlations" Classes="title-small" Margin="4,0,0,10"/>
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding Groups}"
-                                 SelectedItem="{Binding SelectedGroup}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:CorrelationGroup">
-                                    <StackPanel Margin="6" Spacing="3">
-                                        <TextBlock Text="{Binding DisplayId}"
-                                                   FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding Messages.Count, StringFormat='{}{0} messages'}"
-                                                   Classes="caption"/>
-                                        <TextBlock Text="Session fallback"
-                                                   Classes="caption"
-                                                   IsVisible="{Binding UsesSessionFallback}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
-                </Border>
+            <Grid Grid.Row="2" ColumnDefinitions="260,360,*">
+                <Border Grid.Column="0" Classes="correlation-pane">
+                    <Grid RowDefinitions="48,*">
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource SurfaceSubtle}"
+                                BorderBrush="{DynamicResource BorderDefault}"
+                                BorderThickness="0,0,0,1"
+                                Padding="14,10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Correlations" Classes="body-strong"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Groups.Count, StringFormat='{}{0} groups'}"
+                                           Classes="caption"/>
+                            </Grid>
+                        </Border>
 
-                <Border Grid.Column="1" Classes="pane-card" Padding="12">
-                    <Grid RowDefinitions="Auto,*">
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="4,0,0,10">
-                            <TextBlock Text="Timeline" Classes="title-small"/>
-                            <Button Grid.Column="1"
-                                    Classes="secondary small"
-                                    IsVisible="{Binding HasNewMessages}"
-                                    Content="{Binding NewMessageCount, StringFormat='{}{0} new'}"
-                                    Command="{Binding AcknowledgeNewMessagesCommand}"/>
+                        <Grid Grid.Row="1">
+                            <ListBox Classes="correlation-list"
+                                     ItemsSource="{Binding Groups}"
+                                     SelectedItem="{Binding SelectedGroup}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:CorrelationGroup">
+                                        <Border Classes="correlation-group-row">
+                                            <StackPanel Spacing="6">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Text="{Binding DisplayId}"
+                                                               Classes="body-strong"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Border Grid.Column="1" Classes="badge-info">
+                                                        <TextBlock Text="{Binding Messages.Count, StringFormat='{}{0} messages'}"/>
+                                                    </Border>
+                                                </Grid>
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Border Classes="badge-muted"
+                                                            IsVisible="{Binding UsesSessionFallback, Converter={x:Static BoolConverters.Not}}">
+                                                        <TextBlock Text="Correlation"/>
+                                                    </Border>
+                                                    <Border Classes="badge-warning"
+                                                            IsVisible="{Binding UsesSessionFallback}">
+                                                        <TextBlock Text="Session"/>
+                                                    </Border>
+                                                    <TextBlock Text="Session fallback"
+                                                               Classes="caption"
+                                                               IsVisible="{Binding UsesSessionFallback}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Border Classes="empty-state"
+                                    Margin="16"
+                                    VerticalAlignment="Top"
+                                    IsVisible="{Binding Groups.Count, Converter={StaticResource IntEqualsConverter}, ConverterParameter=0}">
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="GitBranch"
+                                                Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"/>
+                                    <TextBlock Text="No correlations found"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Load or stream messages with a correlation or session ID."
+                                               Classes="caption"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
                         </Grid>
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding Timeline}"
-                                 SelectedItem="{Binding SelectedMessage}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:CorrelationMessage">
-                                    <StackPanel Margin="6" Spacing="3">
-                                        <TextBlock Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss.fff}'}"
-                                                   Classes="caption"/>
-                                        <TextBlock Text="{Binding EntityName}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding MessageId}"
-                                                   Classes="caption"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="{Binding Source}" Classes="caption"/>
-                                            <TextBlock Text="{Binding EntityType}" Classes="caption"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Button Classes="secondary small"
-                                                    Content="Set A"
-                                                    Command="{Binding $parent[UserControl].DataContext.SetComparisonACommand}"
-                                                    CommandParameter="{Binding}"/>
-                                            <Button Classes="secondary small"
-                                                    Content="Set B"
-                                                    Command="{Binding $parent[UserControl].DataContext.SetComparisonBCommand}"
-                                                    CommandParameter="{Binding}"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
                     </Grid>
                 </Border>
 
-                <Border Grid.Column="2" Classes="pane-card" Padding="16">
+                <Border Grid.Column="1" Classes="correlation-pane">
+                    <Grid RowDefinitions="48,*">
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource SurfaceSubtle}"
+                                BorderBrush="{DynamicResource BorderDefault}"
+                                BorderThickness="0,0,0,1"
+                                Padding="14,10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Timeline" Classes="body-strong"/>
+                                <Button Grid.Column="1"
+                                        Classes="secondary small"
+                                        IsVisible="{Binding HasNewMessages}"
+                                        Content="{Binding NewMessageCount, StringFormat='{}{0} new'}"
+                                        Command="{Binding AcknowledgeNewMessagesCommand}"/>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="1">
+                            <ListBox Classes="timeline-list"
+                                     ItemsSource="{Binding Timeline}"
+                                     SelectedItem="{Binding SelectedMessage}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:CorrelationMessage">
+                                        <Grid ColumnDefinitions="28,*">
+                                            <Border Grid.Column="0"
+                                                    Width="1"
+                                                    Background="{DynamicResource BorderStrong}"
+                                                    HorizontalAlignment="Center"/>
+                                            <Ellipse Grid.Column="0"
+                                                     Classes="timeline-node"
+                                                     VerticalAlignment="Top"
+                                                     Margin="0,18,0,0"/>
+                                            <Border Grid.Column="1" Classes="timeline-event">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss.fff}'}"
+                                                               Classes="caption"/>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Text="{Binding EntityName}"
+                                                                   Classes="body-strong"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <StackPanel Grid.Column="1"
+                                                                    Orientation="Horizontal"
+                                                                    Spacing="6">
+                                                            <Border Classes="badge-info">
+                                                                <TextBlock Text="{Binding Source}"/>
+                                                            </Border>
+                                                            <Border Classes="badge-env">
+                                                                <TextBlock Text="{Binding Environment}"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="{Binding EntityType}" Classes="caption"/>
+                                                        <TextBlock Text="•" Classes="caption"/>
+                                                        <TextBlock Text="{Binding MessageId}"
+                                                                   Classes="caption"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Text="{Binding SequenceNumber, StringFormat='Sequence {0}'}"
+                                                                   Classes="caption"
+                                                                   VerticalAlignment="Center"/>
+                                                        <StackPanel Grid.Column="1"
+                                                                    Orientation="Horizontal"
+                                                                    Spacing="4">
+                                                            <Button Classes="subtle small"
+                                                                    Content="A"
+                                                                    Command="{Binding $parent[UserControl].DataContext.SetComparisonACommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Use as comparison A"
+                                                                    AutomationProperties.Name="Use message as comparison A"/>
+                                                            <Button Classes="subtle small"
+                                                                    Content="B"
+                                                                    Command="{Binding $parent[UserControl].DataContext.SetComparisonBCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Use as comparison B"
+                                                                    AutomationProperties.Name="Use message as comparison B"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Border Classes="empty-state"
+                                    Margin="16"
+                                    VerticalAlignment="Top"
+                                    IsVisible="{Binding Timeline.Count, Converter={StaticResource IntEqualsConverter}, ConverterParameter=0}">
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <LucideIcon Kind="Clock3"
+                                                Size="24"
+                                                Foreground="{DynamicResource MutedForeground}"/>
+                                    <TextBlock Text="Select a correlation"
+                                               Classes="body-strong"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Its messages will appear here in chronological order."
+                                               Classes="caption"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2" Classes="correlation-pane inspector" Padding="16">
                     <Grid RowDefinitions="Auto,*">
                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,12">
                             <StackPanel>

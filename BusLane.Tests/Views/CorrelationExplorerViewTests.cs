@@ -65,6 +65,49 @@ public class CorrelationExplorerViewTests
     }
 
     [Fact]
+    public void CorrelationExplorer_UsesCorrelationRailAndEventTimeline()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        string[] expectedTokens =
+        [
+            "ColumnDefinitions=\"260,360,*\"",
+            "Classes=\"correlation-pane\"",
+            "Classes=\"correlation-list\"",
+            "Classes=\"correlation-group-row\"",
+            "Text=\"Correlation\"",
+            "Text=\"Session\"",
+            "Classes=\"timeline-list\"",
+            "Classes=\"timeline-node\"",
+            "Classes=\"timeline-event\"",
+            "Kind=\"GitBranch\"",
+            "ItemsSource=\"{Binding Groups}\"",
+            "ItemsSource=\"{Binding Timeline}\"",
+            "Messages.Count",
+            "Groups.Count",
+            "EnqueuedTime",
+            "EntityName",
+            "EntityType",
+            "Source",
+            "Environment",
+            "MessageId",
+            "SetComparisonACommand",
+            "SetComparisonBCommand",
+            "ToolTip.Tip=\"Use as comparison A\"",
+            "ToolTip.Tip=\"Use as comparison B\"",
+            "No correlations found",
+            "Select a correlation",
+            "Converter={StaticResource IntEqualsConverter}"
+        ];
+
+        // Assert
+        foreach (var expectedToken in expectedTokens)
+        {
+            xaml.Should().Contain(expectedToken);
+        }
+    }
+
+    [Fact]
     public void CorrelationExplorer_UsesBusLaneCommandAndFilterSurfaces()
     {
         // Arrange
