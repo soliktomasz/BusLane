@@ -34,3 +34,37 @@ public sealed record CorrelationGroup(
     string DisplayId,
     bool UsesSessionFallback,
     IReadOnlyList<CorrelationMessage> Messages);
+
+public readonly record struct CorrelationMessageIdentity(
+    string NamespaceName,
+    string EntityName,
+    long SequenceNumber,
+    string MessageId)
+{
+    public static CorrelationMessageIdentity From(CorrelationMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        return new CorrelationMessageIdentity(
+            message.NamespaceName,
+            message.EntityName,
+            message.SequenceNumber,
+            message.MessageId);
+    }
+}
+
+public enum CorrelationCatalogChangeKind
+{
+    Added,
+    Replaced,
+    Evicted,
+    RangeAdded,
+    Cleared
+}
+
+public sealed class CorrelationCatalogChangedEventArgs(
+    CorrelationCatalogChangeKind changeKind,
+    IReadOnlySet<string> affectedGroupKeys) : EventArgs
+{
+    public CorrelationCatalogChangeKind ChangeKind { get; } = changeKind;
+    public IReadOnlySet<string> AffectedGroupKeys { get; } = affectedGroupKeys;
+}

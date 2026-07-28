@@ -4,6 +4,8 @@ using BusLane.Models;
 
 public interface ICorrelationMessageCatalog
 {
+    event EventHandler<CorrelationCatalogChangedEventArgs>? Changed;
+
     void Add(CorrelationMessage message);
     void AddRange(IEnumerable<CorrelationMessage> messages);
     IReadOnlyList<CorrelationGroup> GetGroups();
@@ -15,7 +17,9 @@ public sealed class CorrelationMessageCatalog : ICorrelationMessageCatalog
     private readonly int _capacity;
     private readonly object _lock = new();
     private readonly LinkedList<CorrelationMessage> _messages = [];
-    private readonly Dictionary<MessageIdentity, LinkedListNode<CorrelationMessage>> _nodes = [];
+    private readonly Dictionary<CorrelationMessageIdentity, LinkedListNode<CorrelationMessage>> _nodes = [];
+
+    public event EventHandler<CorrelationCatalogChangedEventArgs>? Changed;
 
     public CorrelationMessageCatalog(int capacity = 2_000)
     {
@@ -31,32 +35,36 @@ public sealed class CorrelationMessageCatalog : ICorrelationMessageCatalog
     {
         ArgumentNullException.ThrowIfNull(message);
 
+        MutationResult result;
         lock (_lock)
         {
-            var identity = MessageIdentity.From(message);
-            if (_nodes.Remove(identity, out var existing))
-            {
-                _messages.Remove(existing);
-            }
-
-            var node = _messages.AddLast(message);
-            _nodes[identity] = node;
-
-            while (_messages.Count > _capacity)
-            {
-                var oldest = _messages.First!;
-                _messages.RemoveFirst();
-                _nodes.Remove(MessageIdentity.From(oldest.Value));
-            }
+            result = AddCore(message);
         }
+
+        RaiseChanged(result);
     }
 
     public void AddRange(IEnumerable<CorrelationMessage> messages)
     {
         ArgumentNullException.ThrowIfNull(messages);
-        foreach (var message in messages)
+        var materialized = messages.ToList();
+        if (materialized.Any(static message => message == null))
         {
-            Add(message);
+            throw new ArgumentException("Messages cannot contain null values", nameof(messages));
+        }
+
+        var affectedGroupKeys = new HashSet<string>(StringComparer.Ordinal);
+        lock (_lock)
+        {
+            foreach (var message in materialized)
+            {
+                affectedGroupKeys.UnionWith(AddCore(message).AffectedGroupKeys);
+            }
+        }
+
+        if (affectedGroupKeys.Count > 0)
+        {
+            RaiseChanged(new MutationResult(CorrelationCatalogChangeKind.RangeAdded, affectedGroupKeys));
         }
     }
 
@@ -88,10 +96,72 @@ public sealed class CorrelationMessageCatalog : ICorrelationMessageCatalog
 
     public void Clear()
     {
+        HashSet<string> affectedGroupKeys;
         lock (_lock)
         {
+            affectedGroupKeys = _messages
+                .Select(GetGroupIdentity)
+                .Where(static group => group.HasValue)
+                .Select(static group => group!.Value.Key)
+                .ToHashSet(StringComparer.Ordinal);
             _messages.Clear();
             _nodes.Clear();
+        }
+
+        if (affectedGroupKeys.Count > 0)
+        {
+            RaiseChanged(new MutationResult(CorrelationCatalogChangeKind.Cleared, affectedGroupKeys));
+        }
+    }
+
+    private MutationResult AddCore(CorrelationMessage message)
+    {
+        var affectedGroupKeys = new HashSet<string>(StringComparer.Ordinal);
+        var identity = CorrelationMessageIdentity.From(message);
+        var kind = CorrelationCatalogChangeKind.Added;
+        if (_nodes.Remove(identity, out var existing))
+        {
+            AddGroupKey(affectedGroupKeys, existing.Value);
+            _messages.Remove(existing);
+            kind = CorrelationCatalogChangeKind.Replaced;
+        }
+
+        AddGroupKey(affectedGroupKeys, message);
+        var node = _messages.AddLast(message);
+        _nodes[identity] = node;
+
+        while (_messages.Count > _capacity)
+        {
+            var oldest = _messages.First!;
+            _messages.RemoveFirst();
+            _nodes.Remove(CorrelationMessageIdentity.From(oldest.Value));
+            AddGroupKey(affectedGroupKeys, oldest.Value);
+            kind = CorrelationCatalogChangeKind.Evicted;
+        }
+
+        return new MutationResult(kind, affectedGroupKeys);
+    }
+
+    private void RaiseChanged(MutationResult result)
+    {
+        if (result.AffectedGroupKeys.Count == 0)
+        {
+            return;
+        }
+
+        Changed?.Invoke(
+            this,
+            new CorrelationCatalogChangedEventArgs(
+                result.ChangeKind,
+                result.AffectedGroupKeys.ToHashSet(StringComparer.Ordinal)));
+    }
+
+    private static void AddGroupKey(ISet<string> keys, CorrelationMessage message)
+    {
+        var group = GetGroupIdentity(message);
+        if (group.HasValue)
+        {
+            keys.Add(group.Value.Key);
         }
     }
 
@@ -112,19 +182,7 @@ public sealed class CorrelationMessageCatalog : ICorrelationMessageCatalog
 
     private readonly record struct GroupIdentity(string Key, string DisplayId, bool UsesSessionFallback);
 
-    private readonly record struct MessageIdentity(
-        string NamespaceName,
-        string EntityName,
-        long SequenceNumber,
-        string MessageId)
-    {
-        public static MessageIdentity From(CorrelationMessage message)
-        {
-            return new MessageIdentity(
-                message.NamespaceName,
-                message.EntityName,
-                message.SequenceNumber,
-                message.MessageId);
-        }
-    }
+    private sealed record MutationResult(
+        CorrelationCatalogChangeKind ChangeKind,
+        IReadOnlySet<string> AffectedGroupKeys);
 }
