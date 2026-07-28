@@ -5,7 +5,7 @@
              x:Class="BusLane.Views.Controls.CorrelationExplorerView"
              x:CompileBindings="False">
     <Grid>
-        <Grid RowDefinitions="Auto,*">
+        <Grid RowDefinitions="Auto,Auto,*">
             <Border Grid.Row="0"
                     Classes="page-header-surface"
                     Margin="0,0,0,16">
@@ -17,6 +17,9 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                         <Button Classes="secondary small"
+                                Content="Filters"
+                                Command="{Binding ToggleFiltersCommand}"/>
+                        <Button Classes="secondary small"
                                 Content="Refresh"
                                 Command="{Binding RefreshCommand}"/>
                         <Button Classes="secondary small"
@@ -26,13 +29,78 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" ColumnDefinitions="280,320,*" ColumnSpacing="12">
+            <Border Grid.Row="1"
+                    Classes="pane-card"
+                    Padding="12"
+                    Margin="0,0,0,12"
+                    IsVisible="{Binding ShowFilters}">
+                <StackPanel Spacing="10">
+                    <WrapPanel Orientation="Horizontal">
+                        <StackPanel Width="190" Margin="0,0,8,8">
+                            <TextBlock Text="Search" Classes="caption"/>
+                            <TextBox Text="{Binding FilterText}" PlaceholderText="ID, body, property..."/>
+                        </StackPanel>
+                        <StackPanel Width="190" Margin="0,0,8,8">
+                            <TextBlock Text="From (ISO 8601)" Classes="caption"/>
+                            <TextBox Text="{Binding FilterFromText}" PlaceholderText="2026-07-28T09:00:00Z"/>
+                        </StackPanel>
+                        <StackPanel Width="190" Margin="0,0,8,8">
+                            <TextBlock Text="To (ISO 8601)" Classes="caption"/>
+                            <TextBox Text="{Binding FilterToText}" PlaceholderText="2026-07-28T10:00:00Z"/>
+                        </StackPanel>
+                        <StackPanel Width="190" Margin="0,0,8,8">
+                            <TextBlock Text="Namespace" Classes="caption"/>
+                            <TextBox Text="{Binding FilterNamespace}"/>
+                        </StackPanel>
+                        <StackPanel Width="190" Margin="0,0,8,8">
+                            <TextBlock Text="Entity" Classes="caption"/>
+                            <TextBox Text="{Binding FilterEntity}"/>
+                        </StackPanel>
+                        <StackPanel Width="150" Margin="0,0,8,8">
+                            <TextBlock Text="Environment" Classes="caption"/>
+                            <ComboBox ItemsSource="{Binding FilterEnvironmentOptions}"
+                                      SelectedItem="{Binding FilterEnvironment}"
+                                      PlaceholderText="Any"/>
+                        </StackPanel>
+                        <StackPanel Width="150" Margin="0,0,8,8">
+                            <TextBlock Text="Source" Classes="caption"/>
+                            <ComboBox ItemsSource="{Binding FilterSourceOptions}"
+                                      SelectedItem="{Binding FilterSource}"
+                                      PlaceholderText="Any"/>
+                        </StackPanel>
+                        <StackPanel Width="190" Margin="0,0,8,8">
+                            <TextBlock Text="Correlation or session ID" Classes="caption"/>
+                            <TextBox Text="{Binding FilterIdentifier}"/>
+                        </StackPanel>
+                        <StackPanel Width="170" Margin="0,0,8,8">
+                            <TextBlock Text="Property key" Classes="caption"/>
+                            <TextBox Text="{Binding FilterPropertyKey}"/>
+                        </StackPanel>
+                        <StackPanel Width="170" Margin="0,0,8,8">
+                            <TextBlock Text="Property value" Classes="caption"/>
+                            <TextBox Text="{Binding FilterPropertyValue}"/>
+                        </StackPanel>
+                    </WrapPanel>
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <TextBlock Text="{Binding FilterValidationMessage}"
+                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Classes="secondary small"
+                                Content="Clear filters"
+                                Command="{Binding ClearFiltersCommand}"/>
+                        <Button Grid.Column="2"
+                                Classes="primary small"
+                                Content="Apply filters"
+                                Command="{Binding ApplyFiltersCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="2" ColumnDefinitions="280,320,*" ColumnSpacing="12">
                 <Border Grid.Column="0" Classes="pane-card" Padding="12">
                     <Grid RowDefinitions="Auto,*">
-                        <TextBox Grid.Row="0"
-                                 Text="{Binding FilterText}"
-                                 PlaceholderText="Filter correlations..."
-                                 Margin="0,0,0,10"/>
+                        <TextBlock Grid.Row="0" Text="Correlations" Classes="title-small" Margin="4,0,0,10"/>
                         <ListBox Grid.Row="1"
                                  ItemsSource="{Binding Groups}"
                                  SelectedItem="{Binding SelectedGroup}">
@@ -56,7 +124,14 @@
 
                 <Border Grid.Column="1" Classes="pane-card" Padding="12">
                     <Grid RowDefinitions="Auto,*">
-                        <TextBlock Grid.Row="0" Text="Timeline" Classes="title-small" Margin="4,0,0,10"/>
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="4,0,0,10">
+                            <TextBlock Text="Timeline" Classes="title-small"/>
+                            <Button Grid.Column="1"
+                                    Classes="secondary small"
+                                    IsVisible="{Binding HasNewMessages}"
+                                    Content="{Binding NewMessageCount, StringFormat='{}{0} new'}"
+                                    Command="{Binding AcknowledgeNewMessagesCommand}"/>
+                        </Grid>
                         <ListBox Grid.Row="1"
                                  ItemsSource="{Binding Timeline}"
                                  SelectedItem="{Binding SelectedMessage}">
@@ -73,6 +148,16 @@
                                             <TextBlock Text="{Binding Source}" Classes="caption"/>
                                             <TextBlock Text="{Binding EntityType}" Classes="caption"/>
                                         </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Button Classes="secondary small"
+                                                    Content="Set A"
+                                                    Command="{Binding $parent[UserControl].DataContext.SetComparisonACommand}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Classes="secondary small"
+                                                    Content="Set B"
+                                                    Command="{Binding $parent[UserControl].DataContext.SetComparisonBCommand}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -82,12 +167,16 @@
 
                 <Border Grid.Column="2" Classes="pane-card" Padding="16">
                     <Grid RowDefinitions="Auto,*">
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,12">
                             <StackPanel>
                                 <TextBlock Text="{Binding SelectedMessage.MessageId}" Classes="title-small"/>
                                 <TextBlock Text="{Binding SelectedMessage.NamespaceName}" Classes="caption"/>
                             </StackPanel>
                             <Button Grid.Column="1"
+                                    Classes="secondary"
+                                    Content="Compare with previous"
+                                    Command="{Binding CompareWithPreviousCommand}"/>
+                            <Button Grid.Column="2"
                                     Classes="primary"
                                     Content="Replay selected message"
                                     Command="{Binding OpenReplayCommand}"/>
@@ -122,6 +211,76 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                            </TabItem>
+                            <TabItem Header="Compare">
+                                <ScrollViewer>
+                                    <StackPanel Spacing="12" Margin="8">
+                                        <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+                                            <StackPanel>
+                                                <TextBlock Text="Message A" Classes="caption"/>
+                                                <TextBlock Text="{Binding ComparisonMessageA.MessageId}"
+                                                           FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="→" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Message B" Classes="caption"/>
+                                                <TextBlock Text="{Binding ComparisonMessageB.MessageId}"
+                                                           FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding Comparison.EnqueueTimeDelta, StringFormat='Enqueue delta: {0}'}"/>
+                                            <Button Classes="secondary small"
+                                                    Content="Clear comparison"
+                                                    Command="{Binding ClearComparisonCommand}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Changed metadata" Classes="title-small"/>
+                                        <ItemsControl ItemsSource="{Binding Comparison.FieldChanges}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:MessageFieldChange">
+                                                    <Grid ColumnDefinitions="150,*,*" ColumnSpacing="8" Margin="0,3">
+                                                        <TextBlock Text="{Binding Field}" FontWeight="SemiBold"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding FirstValue}" TextWrapping="Wrap"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding SecondValue}" TextWrapping="Wrap"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Application properties" Classes="title-small"/>
+                                        <ItemsControl ItemsSource="{Binding Comparison.PropertyChanges}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:MessagePropertyChange">
+                                                    <Grid ColumnDefinitions="130,100,*,*" ColumnSpacing="8" Margin="0,3">
+                                                        <TextBlock Text="{Binding Key}" FontWeight="SemiBold"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Kind}"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding FirstValue}" TextWrapping="Wrap"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding SecondValue}" TextWrapping="Wrap"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Body comparison" Classes="title-small"/>
+                                        <WrapPanel Orientation="Horizontal">
+                                            <TextBox Width="360"
+                                                     MinHeight="180"
+                                                     Margin="0,0,8,8"
+                                                     Text="{Binding Comparison.Body.First}"
+                                                     Classes="code-editor"
+                                                     IsReadOnly="True"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"/>
+                                            <TextBox Width="360"
+                                                     MinHeight="180"
+                                                     Text="{Binding Comparison.Body.Second}"
+                                                     Classes="code-editor"
+                                                     IsReadOnly="True"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
                             </TabItem>
                             <TabItem Header="Replay history">
                                 <ListBox ItemsSource="{Binding ReplayHistory}">

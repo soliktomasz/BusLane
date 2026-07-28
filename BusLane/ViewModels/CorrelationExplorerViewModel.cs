@@ -58,7 +58,9 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _showReplayEditor;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _statusMessage;
-    [ObservableProperty] private int _newMessageCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNewMessages))]
+    private int _newMessageCount;
     [ObservableProperty] private CorrelationMessage? _comparisonMessageA;
     [ObservableProperty] private CorrelationMessage? _comparisonMessageB;
     [ObservableProperty]
@@ -69,6 +71,11 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
     public ObservableCollection<CorrelationMessage> Timeline { get; } = [];
     public ObservableCollection<ReplayAuditEntry> ReplayHistory { get; } = [];
     public bool HasComparison => Comparison != null;
+    public bool HasNewMessages => NewMessageCount > 0;
+    public IReadOnlyList<ConnectionEnvironment> FilterEnvironmentOptions { get; } =
+        Enum.GetValues<ConnectionEnvironment>();
+    public IReadOnlyList<CorrelationMessageSource> FilterSourceOptions { get; } =
+        Enum.GetValues<CorrelationMessageSource>();
 
     public CorrelationExplorerViewModel(
         ICorrelationMessageCatalog catalog,
