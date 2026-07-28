@@ -96,13 +96,39 @@ public class CorrelationExplorerViewTests
             "Environment",
             "MessageId",
             "SequenceNumber",
-            "SetComparisonACommand",
-            "SetComparisonBCommand",
+            "Command=\"{Binding $parent[UserControl].DataContext.SetComparisonACommand}\"",
+            "Command=\"{Binding $parent[UserControl].DataContext.SetComparisonBCommand}\"",
+            "CommandParameter=\"{Binding}\"",
             "ToolTip.Tip=\"Use as comparison A\"",
             "ToolTip.Tip=\"Use as comparison B\"",
             "No correlations found",
             "Select a correlation",
             "Converter={StaticResource IntEqualsConverter}"
+        ];
+
+        // Assert
+        foreach (var expectedToken in expectedTokens)
+        {
+            xaml.Should().Contain(expectedToken);
+        }
+    }
+
+    [Fact]
+    public void CorrelationExplorer_ProtectsInspectorWidthAndTimelineAccessibility()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        string[] expectedTokens =
+        [
+            "HorizontalScrollBarVisibility=\"Auto\"",
+            "VerticalScrollBarVisibility=\"Disabled\"",
+            "MinWidth=\"1040\"",
+            "<Grid ColumnDefinitions=\"Auto,Auto,*\" ColumnSpacing=\"6\">",
+            "Command=\"{Binding $parent[UserControl].DataContext.SetComparisonACommand}\"",
+            "Command=\"{Binding $parent[UserControl].DataContext.SetComparisonBCommand}\"",
+            "CommandParameter=\"{Binding}\"",
+            "StringFormat='Use {0} as comparison A'",
+            "StringFormat='Use {0} as comparison B'"
         ];
 
         // Assert

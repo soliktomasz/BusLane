@@ -158,8 +158,11 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="2" ColumnDefinitions="260,360,*">
-                <Border Grid.Column="0" Classes="correlation-pane">
+            <ScrollViewer Grid.Row="2"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <Grid MinWidth="1040" ColumnDefinitions="260,360,*">
+                    <Border Grid.Column="0" Classes="correlation-pane">
                     <Grid RowDefinitions="48,*">
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceSubtle}"
@@ -281,13 +284,14 @@
                                                             </Border>
                                                         </StackPanel>
                                                     </Grid>
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="6">
                                                         <TextBlock Text="{Binding EntityType}" Classes="caption"/>
-                                                        <TextBlock Text="•" Classes="caption"/>
-                                                        <TextBlock Text="{Binding MessageId}"
+                                                        <TextBlock Grid.Column="1" Text="•" Classes="caption"/>
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding MessageId}"
                                                                    Classes="caption"
                                                                    TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
+                                                    </Grid>
                                                     <Grid ColumnDefinitions="*,Auto">
                                                         <TextBlock Text="{Binding SequenceNumber, StringFormat='Sequence {0}'}"
                                                                    Classes="caption"
@@ -300,13 +304,13 @@
                                                                     Command="{Binding $parent[UserControl].DataContext.SetComparisonACommand}"
                                                                     CommandParameter="{Binding}"
                                                                     ToolTip.Tip="Use as comparison A"
-                                                                    AutomationProperties.Name="Use message as comparison A"/>
+                                                                    AutomationProperties.Name="{Binding MessageId, StringFormat='Use {0} as comparison A'}"/>
                                                             <Button Classes="subtle small"
                                                                     Content="B"
                                                                     Command="{Binding $parent[UserControl].DataContext.SetComparisonBCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     ToolTip.Tip="Use as comparison B"
-                                                                    AutomationProperties.Name="Use message as comparison B"/>
+                                                                    AutomationProperties.Name="{Binding MessageId, StringFormat='Use {0} as comparison B'}"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </StackPanel>
@@ -470,8 +474,9 @@
                             </TabItem>
                         </TabControl>
                     </Grid>
-                </Border>
-            </Grid>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
         </Grid>
 
         <dialogs:ReplayMessageDialog IsVisible="{Binding ShowReplayEditor}"/>
