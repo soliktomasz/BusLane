@@ -54,10 +54,15 @@ public class CorrelationExplorerViewTests
             viewXaml,
             "<TextBox\\b(?=[^>]*\\bAutomationProperties\\.Name\\s*=\\s*\"Search correlation messages\")[^>]*/>",
             RegexOptions.Singleline);
+        var searchSurface = Regex.Match(
+            viewXaml,
+            "<Border\\b(?=[^>]*\\bClasses\\s*=\\s*\"message-search-surface\")[^>]*>",
+            RegexOptions.Singleline);
 
         // Assert
         headerElement.Success.Should().BeTrue("the Correlation Explorer page header must be discoverable");
         searchTextBox.Success.Should().BeTrue("the correlation search TextBox must be discoverable");
+        searchSurface.Success.Should().BeTrue("the correlation search surface must be discoverable");
 
         using (new AssertionScope())
         {
@@ -65,6 +70,11 @@ public class CorrelationExplorerViewTests
                 .Should().BeFalse("the Correlation Explorer header must not define a local Margin");
             Regex.IsMatch(searchTextBox.Value, "\\bBackground\\s*=", RegexOptions.Singleline)
                 .Should().BeFalse("the correlation search TextBox must use the standard input background");
+            Regex.IsMatch(
+                    searchSurface.Value,
+                    "\\bHorizontalAlignment\\s*=\\s*\"Left\"",
+                    RegexOptions.Singleline)
+                .Should().BeTrue("the constrained search surface must stay aligned to the left");
         }
     }
 

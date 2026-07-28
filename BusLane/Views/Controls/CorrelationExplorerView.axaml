@@ -13,7 +13,9 @@
         <Grid RowDefinitions="Auto,Auto,*">
             <Border Grid.Row="0" Classes="correlation-command-bar">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <Border Classes="message-search-surface" MaxWidth="620">
+                    <Border Classes="message-search-surface"
+                            Width="600"
+                            HorizontalAlignment="Left">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0"
                                         Kind="Search"
@@ -25,7 +27,7 @@
                                      PlaceholderText="Search message ID, body, correlation, session, or property"
                                      AutomationProperties.Name="Search correlation messages"
                                      BorderThickness="0"
-                                     Padding="0,4"
+                                     Padding="0,10"
                                      FontSize="13"/>
                             <Button Grid.Column="2"
                                     Classes="subtle small"
