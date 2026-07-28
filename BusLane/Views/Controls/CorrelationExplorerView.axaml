@@ -2,99 +2,149 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="using:BusLane.Models"
              xmlns:dialogs="using:BusLane.Views.Dialogs"
+             xmlns:converters="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.CorrelationExplorerView"
              x:CompileBindings="False">
+    <UserControl.Resources>
+        <converters:IntEqualsConverter x:Key="IntEqualsConverter"/>
+    </UserControl.Resources>
+
     <Grid>
         <Grid RowDefinitions="Auto,Auto,*">
-            <Border Grid.Row="0"
-                    Classes="page-header-surface"
-                    Margin="0,0,0,16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Correlation Explorer" Classes="heading"/>
-                        <TextBlock Text="Trace related loaded and streamed messages, then replay one safely."
-                                   Classes="caption"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <Border Grid.Row="0" Classes="correlation-command-bar">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Border Classes="message-search-surface" MaxWidth="620">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <LucideIcon Grid.Column="0"
+                                        Kind="Search"
+                                        Size="14"
+                                        Foreground="{DynamicResource MutedForeground}"
+                                        Margin="4,0,8,0"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding FilterText, Mode=TwoWay}"
+                                     PlaceholderText="Search message ID, body, correlation, session, or property"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Padding="0,4"
+                                     FontSize="13"/>
+                            <Button Grid.Column="2"
+                                    Classes="subtle small"
+                                    Command="{Binding ClearFiltersCommand}"
+                                    IsVisible="{Binding FilterText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    ToolTip.Tip="Clear search"
+                                    Padding="4">
+                                <LucideIcon Kind="X" Size="12"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                         <Button Classes="secondary small"
-                                Content="Filters"
-                                Command="{Binding ToggleFiltersCommand}"/>
+                                Command="{Binding ToggleFiltersCommand}"
+                                ToolTip.Tip="Show structured filters">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="SlidersHorizontal" Size="13"/>
+                                <TextBlock Text="Filters"/>
+                            </StackPanel>
+                        </Button>
                         <Button Classes="secondary small"
-                                Content="Refresh"
-                                Command="{Binding RefreshCommand}"/>
+                                Command="{Binding RefreshCommand}"
+                                ToolTip.Tip="Refresh correlation messages and replay history">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="RefreshCw" Size="13"/>
+                                <TextBlock Text="Refresh"/>
+                            </StackPanel>
+                        </Button>
                         <Button Classes="secondary small"
-                                Content="Export replay history"
-                                Command="{Binding ExportHistoryCommand}"/>
+                                Command="{Binding ExportHistoryCommand}"
+                                ToolTip.Tip="Export replay history">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="Download" Size="13"/>
+                                <TextBlock Text="Export history"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <Border Grid.Row="1"
-                    Classes="pane-card"
-                    Padding="12"
-                    Margin="0,0,0,12"
+                    Classes="correlation-filter-surface"
                     IsVisible="{Binding ShowFilters}">
-                <StackPanel Spacing="10">
-                    <WrapPanel Orientation="Horizontal">
-                        <StackPanel Width="190" Margin="0,0,8,8">
-                            <TextBlock Text="Search" Classes="caption"/>
-                            <TextBox Text="{Binding FilterText}" PlaceholderText="ID, body, property..."/>
-                        </StackPanel>
-                        <StackPanel Width="190" Margin="0,0,8,8">
-                            <TextBlock Text="From (ISO 8601)" Classes="caption"/>
-                            <TextBox Text="{Binding FilterFromText}" PlaceholderText="2026-07-28T09:00:00Z"/>
-                        </StackPanel>
-                        <StackPanel Width="190" Margin="0,0,8,8">
-                            <TextBlock Text="To (ISO 8601)" Classes="caption"/>
-                            <TextBox Text="{Binding FilterToText}" PlaceholderText="2026-07-28T10:00:00Z"/>
-                        </StackPanel>
-                        <StackPanel Width="190" Margin="0,0,8,8">
-                            <TextBlock Text="Namespace" Classes="caption"/>
-                            <TextBox Text="{Binding FilterNamespace}"/>
-                        </StackPanel>
-                        <StackPanel Width="190" Margin="0,0,8,8">
-                            <TextBlock Text="Entity" Classes="caption"/>
-                            <TextBox Text="{Binding FilterEntity}"/>
-                        </StackPanel>
-                        <StackPanel Width="150" Margin="0,0,8,8">
-                            <TextBlock Text="Environment" Classes="caption"/>
-                            <ComboBox ItemsSource="{Binding FilterEnvironmentOptions}"
-                                      SelectedItem="{Binding FilterEnvironment}"
-                                      PlaceholderText="Any"/>
-                        </StackPanel>
-                        <StackPanel Width="150" Margin="0,0,8,8">
-                            <TextBlock Text="Source" Classes="caption"/>
-                            <ComboBox ItemsSource="{Binding FilterSourceOptions}"
-                                      SelectedItem="{Binding FilterSource}"
-                                      PlaceholderText="Any"/>
-                        </StackPanel>
-                        <StackPanel Width="190" Margin="0,0,8,8">
-                            <TextBlock Text="Correlation or session ID" Classes="caption"/>
-                            <TextBox Text="{Binding FilterIdentifier}"/>
-                        </StackPanel>
-                        <StackPanel Width="170" Margin="0,0,8,8">
-                            <TextBlock Text="Property key" Classes="caption"/>
+                <Grid ColumnDefinitions="*,*,*,*"
+                      RowDefinitions="Auto,Auto,Auto"
+                      ColumnSpacing="12"
+                      RowSpacing="10">
+                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                        <TextBlock Text="From" Classes="field-label"/>
+                        <TextBox Text="{Binding FilterFromText}"
+                                 PlaceholderText="2026-07-28T09:00:00Z"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                        <TextBlock Text="To" Classes="field-label"/>
+                        <TextBox Text="{Binding FilterToText}"
+                                 PlaceholderText="2026-07-28T10:00:00Z"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2" Spacing="4">
+                        <TextBlock Text="Namespace" Classes="field-label"/>
+                        <TextBox Text="{Binding FilterNamespace}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="3" Spacing="4">
+                        <TextBlock Text="Entity" Classes="field-label"/>
+                        <TextBox Text="{Binding FilterEntity}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                        <TextBlock Text="Environment" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding FilterEnvironmentOptions}"
+                                  SelectedItem="{Binding FilterEnvironment}"
+                                  PlaceholderText="Any"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                        <TextBlock Text="Source" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding FilterSourceOptions}"
+                                  SelectedItem="{Binding FilterSource}"
+                                  PlaceholderText="Any"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="2" Spacing="4">
+                        <TextBlock Text="Correlation or session ID" Classes="field-label"/>
+                        <TextBox Text="{Binding FilterIdentifier}"/>
+                    </StackPanel>
+                    <Grid Grid.Row="1"
+                          Grid.Column="3"
+                          ColumnDefinitions="*,*"
+                          ColumnSpacing="8">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Property key" Classes="field-label"/>
                             <TextBox Text="{Binding FilterPropertyKey}"/>
                         </StackPanel>
-                        <StackPanel Width="170" Margin="0,0,8,8">
-                            <TextBlock Text="Property value" Classes="caption"/>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Property value" Classes="field-label"/>
                             <TextBox Text="{Binding FilterPropertyValue}"/>
                         </StackPanel>
-                    </WrapPanel>
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-                        <TextBlock Text="{Binding FilterValidationMessage}"
-                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                                   VerticalAlignment="Center"/>
-                        <Button Grid.Column="1"
-                                Classes="secondary small"
+                    </Grid>
+
+                    <TextBlock Grid.Row="2"
+                               Grid.Column="0"
+                               Grid.ColumnSpan="2"
+                               Text="{Binding FilterValidationMessage}"
+                               Classes="caption"
+                               Foreground="{DynamicResource TextDanger}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"/>
+                    <StackPanel Grid.Row="2"
+                                Grid.Column="2"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="8">
+                        <Button Classes="secondary small"
                                 Content="Clear filters"
                                 Command="{Binding ClearFiltersCommand}"/>
-                        <Button Grid.Column="2"
-                                Classes="primary small"
+                        <Button Classes="primary small"
                                 Content="Apply filters"
                                 Command="{Binding ApplyFiltersCommand}"/>
-                    </Grid>
-                </StackPanel>
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <Grid Grid.Row="2" ColumnDefinitions="280,320,*" ColumnSpacing="12">

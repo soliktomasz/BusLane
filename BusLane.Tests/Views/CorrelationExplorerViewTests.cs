@@ -65,6 +65,50 @@ public class CorrelationExplorerViewTests
     }
 
     [Fact]
+    public void CorrelationExplorer_UsesBusLaneCommandAndFilterSurfaces()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+        string[] bindingTokens =
+        [
+            "Text=\"{Binding FilterText, Mode=TwoWay}\"",
+            "Text=\"{Binding FilterFromText}\"",
+            "Text=\"{Binding FilterToText}\"",
+            "Text=\"{Binding FilterNamespace}\"",
+            "Text=\"{Binding FilterEntity}\"",
+            "ItemsSource=\"{Binding FilterEnvironmentOptions}\"",
+            "SelectedItem=\"{Binding FilterEnvironment}\"",
+            "ItemsSource=\"{Binding FilterSourceOptions}\"",
+            "SelectedItem=\"{Binding FilterSource}\"",
+            "Text=\"{Binding FilterIdentifier}\"",
+            "Text=\"{Binding FilterPropertyKey}\"",
+            "Text=\"{Binding FilterPropertyValue}\"",
+            "Text=\"{Binding FilterValidationMessage}\"",
+            "Command=\"{Binding ClearFiltersCommand}\"",
+            "Command=\"{Binding ApplyFiltersCommand}\""
+        ];
+
+        // Assert
+        xaml.Should().NotContain("Text=\"Correlation Explorer\"");
+        xaml.Should().Contain("Classes=\"correlation-command-bar\"");
+        xaml.Should().Contain("Classes=\"message-search-surface\"");
+        xaml.Should().Contain("Kind=\"Search\"");
+        xaml.Should().Contain("Kind=\"SlidersHorizontal\"");
+        xaml.Should().Contain("Kind=\"RefreshCw\"");
+        xaml.Should().Contain("Kind=\"Download\"");
+        xaml.Should().Contain("ToolTip.Tip=\"Show structured filters\"");
+        xaml.Should().Contain("Classes=\"correlation-filter-surface\"");
+        xaml.Should().Contain("ColumnDefinitions=\"*,*,*,*\"");
+
+        foreach (var bindingToken in bindingTokens)
+        {
+            xaml.Should().Contain(bindingToken);
+        }
+
+        xaml.Should().Contain("{DynamicResource TextDanger}");
+    }
+
+    [Fact]
     public void CorrelationExplorer_ProvidesInvestigationEmptyStates()
     {
         // Arrange
