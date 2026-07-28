@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:BusLane.Models"
+             xmlns:dialogs="using:BusLane.Views.Dialogs"
+             x:Class="BusLane.Views.Controls.CorrelationExplorerView"
+             x:CompileBindings="False">
+    <Grid>
+        <Grid RowDefinitions="Auto,*">
+            <Border Grid.Row="0"
+                    Classes="page-header-surface"
+                    Margin="0,0,0,16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Correlation Explorer" Classes="heading"/>
+                        <TextBlock Text="Trace related loaded and streamed messages, then replay one safely."
+                                   Classes="caption"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Classes="secondary small"
+                                Content="Refresh"
+                                Command="{Binding RefreshCommand}"/>
+                        <Button Classes="secondary small"
+                                Content="Export replay history"
+                                Command="{Binding ExportHistoryCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" ColumnDefinitions="280,320,*" ColumnSpacing="12">
+                <Border Grid.Column="0" Classes="pane-card" Padding="12">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBox Grid.Row="0"
+                                 Text="{Binding FilterText}"
+                                 PlaceholderText="Filter correlations..."
+                                 Margin="0,0,0,10"/>
+                        <ListBox Grid.Row="1"
+                                 ItemsSource="{Binding Groups}"
+                                 SelectedItem="{Binding SelectedGroup}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:CorrelationGroup">
+                                    <StackPanel Margin="6" Spacing="3">
+                                        <TextBlock Text="{Binding DisplayId}"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Messages.Count, StringFormat='{}{0} messages'}"
+                                                   Classes="caption"/>
+                                        <TextBlock Text="Session fallback"
+                                                   Classes="caption"
+                                                   IsVisible="{Binding UsesSessionFallback}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="1" Classes="pane-card" Padding="12">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" Text="Timeline" Classes="title-small" Margin="4,0,0,10"/>
+                        <ListBox Grid.Row="1"
+                                 ItemsSource="{Binding Timeline}"
+                                 SelectedItem="{Binding SelectedMessage}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:CorrelationMessage">
+                                    <StackPanel Margin="6" Spacing="3">
+                                        <TextBlock Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss.fff}'}"
+                                                   Classes="caption"/>
+                                        <TextBlock Text="{Binding EntityName}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding MessageId}"
+                                                   Classes="caption"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding Source}" Classes="caption"/>
+                                            <TextBlock Text="{Binding EntityType}" Classes="caption"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2" Classes="pane-card" Padding="16">
+                    <Grid RowDefinitions="Auto,*">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedMessage.MessageId}" Classes="title-small"/>
+                                <TextBlock Text="{Binding SelectedMessage.NamespaceName}" Classes="caption"/>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Classes="primary"
+                                    Content="Replay selected message"
+                                    Command="{Binding OpenReplayCommand}"/>
+                        </Grid>
+                        <TabControl Grid.Row="1">
+                            <TabItem Header="Payload">
+                                <TextBox Text="{Binding SelectedMessage.Body}"
+                                         Classes="code-editor"
+                                         IsReadOnly="True"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"/>
+                            </TabItem>
+                            <TabItem Header="Metadata">
+                                <ScrollViewer>
+                                    <StackPanel Spacing="8" Margin="8">
+                                        <TextBlock Text="{Binding SelectedMessage.CorrelationId, StringFormat='Correlation: {0}'}"/>
+                                        <TextBlock Text="{Binding SelectedMessage.SessionId, StringFormat='Session: {0}'}"/>
+                                        <TextBlock Text="{Binding SelectedMessage.EntityName, StringFormat='Entity: {0}'}"/>
+                                        <TextBlock Text="{Binding SelectedMessage.ContentType, StringFormat='Content type: {0}'}"/>
+                                        <TextBlock Text="{Binding SelectedMessage.SequenceNumber, StringFormat='Sequence: {0}'}"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                            <TabItem Header="Application properties">
+                                <ItemsControl ItemsSource="{Binding SelectedMessage.Properties}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="180,*" Margin="8,4">
+                                                <TextBlock Text="{Binding Key}" FontWeight="SemiBold"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </TabItem>
+                            <TabItem Header="Replay history">
+                                <ListBox ItemsSource="{Binding ReplayHistory}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ReplayAuditEntry">
+                                            <Grid ColumnDefinitions="150,110,*,Auto" Margin="6">
+                                                <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Outcome}"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding DestinationEntity}"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding ResultMessage}" TextTrimming="CharacterEllipsis"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <dialogs:ReplayMessageDialog IsVisible="{Binding ShowReplayEditor}"/>
+    </Grid>
+</UserControl>

@@ -57,6 +57,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase
         _fileDialogService = fileDialogService;
     }
 
+    [RelayCommand]
     public async Task RefreshAsync(CancellationToken ct = default)
     {
         IsLoading = true;

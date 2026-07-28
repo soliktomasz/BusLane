@@ -393,6 +393,15 @@
                     </Button>
 
                     <Button Classes="subtle sidebar-utility-button"
+                            Command="{Binding OpenCorrelationExplorerCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="GitBranch" Size="16"/>
+                            <TextBlock Text="Correlation Explorer" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="subtle sidebar-utility-button"
                             Command="{Binding OpenChartsCommand}"
                             HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal" Spacing="10">
@@ -471,6 +480,11 @@
                         Command="{Binding OpenLiveStreamCommand}"
                         ToolTip.Tip="Live Stream">
                     <LucideIcon Kind="Radio" Size="17"/>
+                </Button>
+                <Button Classes="subtle icon-button"
+                        Command="{Binding OpenCorrelationExplorerCommand}"
+                        ToolTip.Tip="Correlation Explorer">
+                    <LucideIcon Kind="GitBranch" Size="17"/>
                 </Button>
                 <Button Classes="subtle icon-button"
                         Command="{Binding OpenChartsCommand}"

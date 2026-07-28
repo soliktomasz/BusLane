@@ -1868,6 +1868,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void CloseLiveStream() => FeaturePanels.CloseLiveStream();
 
     [RelayCommand]
+    private async Task OpenCorrelationExplorer()
+    {
+        await FeaturePanels.OpenCorrelationExplorer();
+    }
+
+    [RelayCommand]
+    private void CloseCorrelationExplorer() => FeaturePanels.CloseCorrelationExplorer();
+
+    [RelayCommand]
     private void OpenCharts()
     {
         FeaturePanels.OpenCharts();
