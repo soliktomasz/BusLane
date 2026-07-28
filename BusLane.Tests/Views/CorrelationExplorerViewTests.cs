@@ -46,6 +46,41 @@ public class CorrelationExplorerViewTests
     }
 
     [Fact]
+    public void CorrelationExplorer_UsesTimelineFirstBusLaneWorkspace()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+
+        // Assert
+        xaml.Should().NotContain("Text=\"Correlation Explorer\"");
+        xaml.Should().Contain("Classes=\"correlation-command-bar\"");
+        xaml.Should().Contain("Kind=\"Search\"");
+        xaml.Should().Contain("Kind=\"SlidersHorizontal\"");
+        xaml.Should().Contain("Kind=\"RefreshCw\"");
+        xaml.Should().Contain("Kind=\"Download\"");
+        xaml.Should().Contain("Classes=\"correlation-list\"");
+        xaml.Should().Contain("Classes=\"timeline-list\"");
+        xaml.Should().Contain("Classes=\"timeline-node\"");
+        xaml.Should().Contain("ColumnDefinitions=\"260,360,*\"");
+    }
+
+    [Fact]
+    public void CorrelationExplorer_ProvidesInvestigationEmptyStates()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetPath("Controls", "CorrelationExplorerView.axaml"));
+
+        // Assert
+        xaml.Should().Contain("No correlations found");
+        xaml.Should().Contain("Select a correlation");
+        xaml.Should().Contain("Select a message to inspect");
+        xaml.Should().Contain("Choose message A and message B");
+        xaml.Should().Contain("No replay activity yet");
+        xaml.Should().Contain("Converter={StaticResource IntEqualsConverter}");
+        xaml.Should().Contain("Converter={x:Static ObjectConverters.IsNull}");
+    }
+
+    [Fact]
     public void CorrelationExplorer_ExposesCollapsibleStructuredFilters()
     {
         // Arrange
@@ -67,7 +102,7 @@ public class CorrelationExplorerViewTests
         xaml.Should().Contain("FilterPropertyValue");
         xaml.Should().Contain("FilterValidationMessage");
         xaml.Should().Contain("RowDefinitions=\"Auto,Auto,*\"");
-        xaml.Should().Contain("ColumnDefinitions=\"280,320,*\"");
+        xaml.Should().Contain("ColumnDefinitions=\"*,*,*,*\"");
     }
 
     [Fact]
