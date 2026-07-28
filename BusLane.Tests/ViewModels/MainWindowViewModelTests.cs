@@ -104,6 +104,31 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task Dispose_WhenCorrelationExplorerIsOpen_UnsubscribesFromCatalog()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var catalog = new CorrelationMessageCatalog();
+        var auditStore = Substitute.For<IReplayAuditStore>();
+        auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var delay = Substitute.For<ICorrelationRefreshDelay>();
+        var sut = CreateSut(
+            preferences,
+            correlationCatalog: catalog,
+            replayAuditStore: auditStore,
+            messageReplayService: Substitute.For<IMessageReplayService>(),
+            correlationRefreshDelay: delay);
+        await sut.OpenCorrelationExplorerCommand.ExecuteAsync(null);
+
+        // Act
+        sut.Dispose();
+        catalog.Add(CreateCorrelationMessage("message-1", 1));
+
+        // Assert
+        await delay.DidNotReceiveWithAnyArgs().DelayAsync(default, default);
+    }
+
+    [Fact]
     public void IntroductionSplash_WithNewPreferences_IsVisible()
     {
         // Arrange

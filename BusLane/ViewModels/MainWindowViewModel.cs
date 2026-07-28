@@ -2310,6 +2310,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
         Terminal?.Dispose();
+        FeaturePanels.CloseCorrelationExplorer();
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();
@@ -2332,6 +2333,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         LogViewer?.Dispose();
         await Terminal.DisposeAsync();
+        FeaturePanels.CloseCorrelationExplorer();
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();

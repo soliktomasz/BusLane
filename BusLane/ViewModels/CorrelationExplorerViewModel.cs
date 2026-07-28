@@ -321,6 +321,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
         var previousTimeline = Timeline
             .Select(CorrelationMessageIdentity.From)
             .ToHashSet();
+        var previousNewMessageCount = NewMessageCount;
         var groups = _catalog.GetGroups();
         ReconcileComparisonSlots(groups.SelectMany(static group => group.Messages));
         groups = groups
@@ -349,7 +350,7 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
 
         if (isLiveUpdate && SelectedGroup?.Key == selectedKey)
         {
-            NewMessageCount += Timeline.Count(message =>
+            NewMessageCount = previousNewMessageCount + Timeline.Count(message =>
                 !previousTimeline.Contains(CorrelationMessageIdentity.From(message)));
         }
     }
@@ -361,6 +362,12 @@ public partial class CorrelationExplorerViewModel : ViewModelBase, IDisposable
         if (!TryParseTimestamp(FilterFromText, "From", out var from, out error) ||
             !TryParseTimestamp(FilterToText, "To", out var to, out error))
         {
+            return false;
+        }
+
+        if (from.HasValue && to.HasValue && from.Value > to.Value)
+        {
+            error = "From time must be before or equal to To time";
             return false;
         }
 

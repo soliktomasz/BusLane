@@ -95,6 +95,25 @@ public class CorrelationExplorerViewModelTests
     }
 
     [Fact]
+    public async Task ApplyFilters_WithReversedTimeRange_ShowsValidationAndPreservesResults()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("message-1", 1));
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>());
+        await sut.RefreshAsync();
+        sut.FilterFromText = "2026-07-28T10:00:00Z";
+        sut.FilterToText = "2026-07-28T09:00:00Z";
+
+        // Act
+        sut.ApplyFiltersCommand.Execute(null);
+
+        // Assert
+        sut.FilterValidationMessage.Should().Be("From time must be before or equal to To time");
+        sut.Groups.Should().ContainSingle();
+    }
+
+    [Fact]
     public async Task ClearFilters_RestoresAllGroups()
     {
         // Arrange
@@ -177,6 +196,28 @@ public class CorrelationExplorerViewModelTests
         delay.InvocationCount.Should().Be(2);
         delay.CancelledCount.Should().Be(1);
         delay.CompletedCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CatalogChanged_AcrossMultipleBursts_AccumulatesNewMessageCount()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        catalog.Add(CreateMessage("first", 1));
+        var delay = new ControlledRefreshDelay();
+        var sut = CreateSut(catalog, Substitute.For<IReplayAuditStore>(), refreshDelay: delay);
+        await sut.RefreshAsync();
+
+        // Act
+        catalog.Add(CreateMessage("second", 2));
+        delay.ReleaseLatest();
+        await WaitUntilAsync(() => sut.Timeline.Count == 2);
+        catalog.Add(CreateMessage("third", 3));
+        delay.ReleaseLatest();
+        await WaitUntilAsync(() => sut.Timeline.Count == 3);
+
+        // Assert
+        sut.NewMessageCount.Should().Be(2);
     }
 
     [Fact]

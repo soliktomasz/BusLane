@@ -111,6 +111,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     [RelayCommand]
     public async Task OpenLiveStream()
     {
+        DisposeCorrelationExplorer();
         LiveStreamViewModel = new LiveStreamViewModel(
             _liveStreamService,
             _getOperations,
@@ -135,6 +136,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public void OpenCharts()
     {
+        DisposeCorrelationExplorer();
         var queues = _getQueues();
         var subscriptions = _getSubscriptions();
 
@@ -155,6 +157,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public void OpenAlerts()
     {
+        DisposeCorrelationExplorer();
         AlertsViewModel = new AlertsViewModel(_alertService, _notificationService, () => ShowAlerts = false);
         ShowAlerts = true;
         ShowLiveStream = false;
@@ -198,9 +201,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public void CloseCorrelationExplorer()
     {
-        ShowCorrelationExplorer = false;
-        CorrelationExplorerViewModel?.Dispose();
-        CorrelationExplorerViewModel = null;
+        DisposeCorrelationExplorer();
     }
 
     [RelayCommand]
@@ -236,5 +237,12 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         CloseCharts();
         CloseAlerts();
         CloseCorrelationExplorer();
+    }
+
+    private void DisposeCorrelationExplorer()
+    {
+        ShowCorrelationExplorer = false;
+        CorrelationExplorerViewModel?.Dispose();
+        CorrelationExplorerViewModel = null;
     }
 }

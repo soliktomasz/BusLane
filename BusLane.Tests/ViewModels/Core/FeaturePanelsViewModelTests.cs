@@ -93,6 +93,41 @@ public class FeaturePanelsViewModelTests
         await delay.DidNotReceiveWithAnyArgs().DelayAsync(default, default);
     }
 
+    [Fact]
+    public async Task OpenCharts_WhenExplorerIsOpen_DisposesExplorerSubscription()
+    {
+        // Arrange
+        var catalog = new CorrelationMessageCatalog();
+        var delay = Substitute.For<ICorrelationRefreshDelay>();
+        var sut = CreateSut(catalog, delay);
+        await sut.OpenCorrelationExplorer();
+
+        // Act
+        sut.OpenCharts();
+        catalog.Add(CreateMessage());
+
+        // Assert
+        sut.ShowCorrelationExplorer.Should().BeFalse();
+        sut.CorrelationExplorerViewModel.Should().BeNull();
+        await delay.DidNotReceiveWithAnyArgs().DelayAsync(default, default);
+    }
+
+    [Fact]
+    public async Task OpenAlerts_WhenExplorerIsOpen_ClosesExplorer()
+    {
+        // Arrange
+        var sut = CreateSut();
+        await sut.OpenCorrelationExplorer();
+
+        // Act
+        sut.OpenAlerts();
+
+        // Assert
+        sut.ShowCorrelationExplorer.Should().BeFalse();
+        sut.CorrelationExplorerViewModel.Should().BeNull();
+        sut.ShowAlerts.Should().BeTrue();
+    }
+
     private static FeaturePanelsViewModel CreateSut(
         ICorrelationMessageCatalog? catalog = null,
         ICorrelationRefreshDelay? refreshDelay = null)
@@ -128,4 +163,22 @@ public class FeaturePanelsViewModelTests
             () => null,
             refreshDelay);
     }
+
+    private static CorrelationMessage CreateMessage() =>
+        new(
+            CorrelationMessageSource.Loaded,
+            "namespace",
+            ConnectionEnvironment.Test,
+            "orders",
+            "Queue",
+            null,
+            null,
+            "message-1",
+            "corr-1",
+            null,
+            null,
+            "{}",
+            DateTimeOffset.UtcNow,
+            1,
+            new Dictionary<string, object>());
 }
