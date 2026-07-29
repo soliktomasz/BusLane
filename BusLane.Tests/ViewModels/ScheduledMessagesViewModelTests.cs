@@ -1,0 +1,68 @@
+namespace BusLane.Tests.ViewModels;
+
+using BusLane.Models;
+using BusLane.Services.ServiceBus;
+using BusLane.ViewModels;
+using FluentAssertions;
+using NSubstitute;
+
+public class ScheduledMessagesViewModelTests
+{
+    [Fact]
+    public async Task RefreshAsync_LoadsResolvedEntriesAndDefaultsToUpcoming()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        service.RefreshAsync(Arg.Any<CancellationToken>()).Returns(
+            [new ScheduledMessageResolvedEntry(CreateEntry(), "Upcoming (local)", false)]);
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+
+        await sut.RefreshCommand.ExecuteAsync(null);
+
+        sut.FilteredEntries.Should().ContainSingle();
+        sut.SelectedStatus.Should().Be("Upcoming");
+    }
+
+    [Theory]
+    [InlineData("orders")]
+    [InlineData("message-42")]
+    [InlineData("corr-42")]
+    public async Task SearchText_MatchesSupportedMetadata(string searchText)
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        service.RefreshAsync(Arg.Any<CancellationToken>()).Returns(
+            [new ScheduledMessageResolvedEntry(CreateEntry(), "Upcoming (local)", false)]);
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+        await sut.RefreshCommand.ExecuteAsync(null);
+
+        sut.SearchText = searchText;
+
+        sut.FilteredEntries.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task CloneAsync_LegacyEntry_ShowsPayloadUnavailable()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        var legacy = CreateEntry() with { SchemaVersion = 1, EncryptedPayload = null };
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+
+        await sut.CloneCommand.ExecuteAsync(new ScheduledMessageResolvedEntry(legacy, "Limited / stale", true));
+
+        sut.StatusText.Should().Be("The scheduled payload is unavailable.");
+    }
+
+    private static ScheduledMessageIndexEntry CreateEntry() => new()
+    {
+        RecordId = "record-1",
+        ConnectionId = "connection-1",
+        ConnectionName = "Development",
+        EntityName = "orders",
+        MessageId = "message-42",
+        CorrelationId = "corr-42",
+        SequenceNumber = 42,
+        ScheduledEnqueueTime = DateTimeOffset.UtcNow.AddHours(1),
+        CreatedAt = DateTimeOffset.UtcNow,
+        UpdatedAt = DateTimeOffset.UtcNow,
+        EncryptedPayload = "encrypted"
+    };
+}
