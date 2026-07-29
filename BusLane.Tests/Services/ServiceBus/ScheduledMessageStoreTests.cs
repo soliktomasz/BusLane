@@ -1,12 +1,111 @@
 namespace BusLane.Tests.Services.ServiceBus;
 
 using BusLane.Models;
+using BusLane.Services.Infrastructure;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
+using NSubstitute;
 using Xunit;
 
 public class ScheduledMessageStoreTests
 {
+    [Fact]
+    public async Task AddAsync_WithPayload_PersistsEncryptedPayloadWithoutPlainBody()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
+        var encryption = Substitute.For<IEncryptionService>();
+        encryption.Encrypt(Arg.Any<string>()).Returns(call => $"enc:{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(call.Arg<string>()))}");
+        var sut = new ScheduledMessageStore(encryption, TimeProvider.System, path);
+        var payload = new ScheduledMessagePayload(
+            "secret body", "application/json", null, "message-1", null, null, null, null,
+            null, null, null,
+            new Dictionary<string, ScheduledMessagePropertyValue>
+            {
+                ["tenant"] = new("String", "north")
+            });
+
+        try
+        {
+            await sut.AddAsync(CreateEntry("orders", 42), payload);
+
+            var raw = await File.ReadAllTextAsync(path);
+            raw.Should().NotContain("secret body");
+            raw.Should().NotContain("north");
+            raw.Should().Contain("enc:");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task LoadAsync_WithLegacyRecord_ReturnsLimitedEntry()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
+        await File.WriteAllTextAsync(path, """
+            [{"EntityName":"orders","SubscriptionName":null,"SequenceNumber":42,
+              "ScheduledEnqueueTime":"2026-08-01T10:00:00+00:00","MessageId":"m1",
+              "BodyPreview":"body","CreatedAt":"2026-07-29T10:00:00+00:00"}]
+            """);
+        var sut = new ScheduledMessageStore(path);
+
+        try
+        {
+            var entry = (await sut.LoadAsync()).Single();
+            entry.SchemaVersion.Should().Be(1);
+            entry.IsLegacyLimited.Should().BeTrue();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ConcurrentMutations_DoNotLoseEntries()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
+        var sut = new ScheduledMessageStore(path);
+
+        try
+        {
+            await Task.WhenAll(Enumerable.Range(1, 20)
+                .Select(i => sut.AddAsync(CreateEntry("orders", i))));
+
+            (await sut.LoadAsync()).Should().HaveCount(20);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task LoadAsync_WithUndecryptablePayload_ReturnsStaleLimitedEntry()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
+        var encryption = Substitute.For<IEncryptionService>();
+        encryption.Encrypt(Arg.Any<string>()).Returns("encrypted");
+        encryption.Decrypt("encrypted").Returns((string?)null);
+        var sut = new ScheduledMessageStore(encryption, TimeProvider.System, path);
+
+        try
+        {
+            await sut.AddAsync(CreateEntry("orders", 42), new ScheduledMessagePayload(
+                "body", null, null, null, null, null, null, null, null, null, null,
+                new Dictionary<string, ScheduledMessagePropertyValue>()));
+            var entry = (await sut.LoadAsync()).Single();
+
+            (await sut.LoadPayloadAsync(entry)).Should().BeNull();
+            (await sut.LoadAsync()).Should().ContainSingle();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public async Task LoadAsync_WhenCanceled_PropagatesCancellation()
     {
