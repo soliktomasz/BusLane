@@ -1,6 +1,5 @@
 namespace BusLane.Services.ServiceBus;
 
-using System.Globalization;
 using BusLane.Models;
 using BusLane.Services.Auth;
 using BusLane.Services.Storage;
@@ -59,8 +58,7 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         var resolved = new List<ScheduledMessageResolvedEntry>(entries.Count);
         foreach (var entry in entries)
         {
-            var operations = await ResolveOperationsAsync(entry);
-            var stale = operations is null || entry.IsLegacyLimited;
+            var stale = !await CanResolveConnectionAsync(entry) || entry.IsLegacyLimited;
             var localState = entry.Status switch
             {
                 ScheduledMessageRecordStatus.Cancelled => "Cancelled (broker confirmed)",
@@ -96,17 +94,42 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
             return new(false, "The indexed connection is unavailable", request.Entry);
         }
 
+        await using (operations)
+        {
+            try
+            {
+                await operations.CancelScheduledMessageAsync(
+                    request.Entry.EntityName, request.Entry.SequenceNumber, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var failed = request.Entry with
+                {
+                    Status = request.Entry.IsBrokerConfirmed
+                        ? request.Entry.Status
+                        : ScheduledMessageRecordStatus.ActionFailed,
+                    LastBrokerAction = "Cancel",
+                    LastBrokerActionAt = _timeProvider.GetUtcNow(),
+                    LastError = ex.Message
+                };
+                await _store.UpdateAsync(failed, ct);
+                return new(false, $"Cancellation failed: {ex.Message}", failed);
+            }
+        }
+
+        var updated = request.Entry with
+        {
+            Status = ScheduledMessageRecordStatus.Cancelled,
+            LastBrokerAction = "Cancel",
+            LastBrokerActionAt = _timeProvider.GetUtcNow(),
+            LastError = null
+        };
         try
         {
-            await operations.CancelScheduledMessageAsync(
-                request.Entry.EntityName, request.Entry.SequenceNumber, ct);
-            var updated = request.Entry with
-            {
-                Status = ScheduledMessageRecordStatus.Cancelled,
-                LastBrokerAction = "Cancel",
-                LastBrokerActionAt = _timeProvider.GetUtcNow(),
-                LastError = null
-            };
             await _store.UpdateAsync(updated, ct);
             return new(true, "Scheduled message cancelled", updated);
         }
@@ -114,17 +137,12 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         {
             throw;
         }
-        catch (Exception ex)
+        catch
         {
-            var failed = request.Entry with
-            {
-                Status = ScheduledMessageRecordStatus.ActionFailed,
-                LastBrokerAction = "Cancel",
-                LastBrokerActionAt = _timeProvider.GetUtcNow(),
-                LastError = ex.Message
-            };
-            await _store.UpdateAsync(failed, ct);
-            return new(false, $"Cancellation failed: {ex.Message}", failed);
+            return new(true,
+                "Scheduled message cancelled. The local schedule index could not be updated.",
+                updated,
+                IsPartialFailure: true);
         }
     }
 
@@ -150,39 +168,21 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         }
 
         var operations = await ResolveOperationsAsync(request.Entry);
+        if (operations is null)
+        {
+            return new(false, "The indexed connection is unavailable", cancelled.Entry, true);
+        }
+        long sequence;
+        await using (operations)
         try
         {
             var properties = payload.Properties.ToDictionary(
-                p => p.Key, p => ParseProperty(p.Value));
-            var sequence = await operations!.ScheduleMessageAsync(
+                p => p.Key, p => p.Value.ToObject()!);
+            sequence = await operations.ScheduleMessageAsync(
                 request.Entry.EntityName, payload.Body, properties, request.NewScheduledTime.Value,
                 payload.ContentType, payload.CorrelationId, payload.MessageId, payload.SessionId,
                 payload.Subject, payload.To, payload.ReplyTo, payload.ReplyToSessionId,
                 payload.PartitionKey, payload.TimeToLive, ct);
-            var now = _timeProvider.GetUtcNow();
-            var replacement = request.Entry with
-            {
-                RecordId = Guid.NewGuid().ToString("N"),
-                ReplacementRecordId = null,
-                SequenceNumber = sequence,
-                ScheduledEnqueueTime = request.NewScheduledTime.Value,
-                CreatedAt = now,
-                UpdatedAt = now,
-                Status = ScheduledMessageRecordStatus.Indexed,
-                LastBrokerAction = null,
-                LastBrokerActionAt = null,
-                LastError = null,
-                EncryptedPayload = null
-            };
-            await _store.AddAsync(replacement, payload, ct);
-            var old = cancelled.Entry with
-            {
-                Status = ScheduledMessageRecordStatus.Rescheduled,
-                ReplacementRecordId = replacement.RecordId,
-                LastBrokerAction = "Reschedule"
-            };
-            await _store.UpdateAsync(old, ct);
-            return new(true, "Scheduled message rescheduled", old);
         }
         catch (OperationCanceledException)
         {
@@ -191,10 +191,56 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         catch (Exception ex)
         {
             var cancelledWithError = cancelled.Entry with { LastError = ex.Message };
-            await _store.UpdateAsync(cancelledWithError, ct);
+            try
+            {
+                await _store.UpdateAsync(cancelledWithError, ct);
+            }
+            catch
+            {
+                // Broker-confirmed cancellation remains the primary outcome.
+            }
             return new(false,
                 "The original schedule was cancelled, but the replacement could not be created.",
                 cancelledWithError,
+                IsPartialFailure: true);
+        }
+
+        var now = _timeProvider.GetUtcNow();
+        var replacement = request.Entry with
+        {
+            RecordId = Guid.NewGuid().ToString("N"),
+            ReplacementRecordId = null,
+            SequenceNumber = sequence,
+            ScheduledEnqueueTime = request.NewScheduledTime.Value,
+            CreatedAt = now,
+            UpdatedAt = now,
+            Status = ScheduledMessageRecordStatus.Indexed,
+            LastBrokerAction = null,
+            LastBrokerActionAt = null,
+            LastError = null,
+            EncryptedPayload = null
+        };
+        var old = cancelled.Entry with
+        {
+            Status = ScheduledMessageRecordStatus.Rescheduled,
+            ReplacementRecordId = replacement.RecordId,
+            LastBrokerAction = "Reschedule"
+        };
+        try
+        {
+            await _store.AddAsync(replacement, payload, ct);
+            await _store.UpdateAsync(old, ct);
+            return new(true, "Scheduled message rescheduled", old);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return new(true,
+                "Replacement scheduled successfully. The local schedule index could not be updated.",
+                cancelled.Entry,
                 IsPartialFailure: true);
         }
     }
@@ -215,12 +261,20 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
     {
         if (entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString)
         {
-            var saved = await _connections.GetConnectionAsync(entry.ConnectionId);
+            var saved = !string.IsNullOrWhiteSpace(entry.ConnectionId)
+                ? await _connections.GetConnectionAsync(entry.ConnectionId)
+                : (await _connections.GetConnectionsAsync())
+                    .Where(connection => connection.IsNamespaceLevel ||
+                                         string.Equals(connection.EntityName, entry.EntityName,
+                                             StringComparison.OrdinalIgnoreCase))
+                    .Take(2)
+                    .ToArray() is [var only] ? only : null;
             return saved is null ? null : _operationsFactory.CreateFromConnectionString(saved.ConnectionString);
         }
 
         if (!_auth.IsAuthenticated || _auth.Credential is null ||
-            string.IsNullOrWhiteSpace(entry.NamespaceResourceId))
+            string.IsNullOrWhiteSpace(entry.NamespaceResourceId) ||
+            !NamespaceIdentityMatches(entry))
         {
             return null;
         }
@@ -228,23 +282,35 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
             entry.NamespaceEndpoint, entry.NamespaceResourceId, _auth.Credential);
     }
 
-    private static object ParseProperty(ScheduledMessagePropertyValue property) => property.Type switch
+    private async Task<bool> CanResolveConnectionAsync(ScheduledMessageIndexEntry entry)
     {
-        nameof(Boolean) => bool.Parse(property.Value),
-        nameof(Byte) => byte.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(SByte) => sbyte.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Int16) => short.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Int32) => int.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Int64) => long.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(UInt16) => ushort.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(UInt32) => uint.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(UInt64) => ulong.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Single) => float.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Double) => double.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Decimal) => decimal.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(Guid) => Guid.Parse(property.Value),
-        nameof(DateTime) => DateTime.Parse(property.Value, CultureInfo.InvariantCulture),
-        nameof(DateTimeOffset) => DateTimeOffset.Parse(property.Value, CultureInfo.InvariantCulture),
-        _ => property.Value
-    };
+        if (entry.ConnectionKind == ScheduledMessageConnectionKind.AzureCredential)
+        {
+            return _auth.IsAuthenticated && _auth.Credential is not null && NamespaceIdentityMatches(entry);
+        }
+        if (!string.IsNullOrWhiteSpace(entry.ConnectionId))
+        {
+            return await _connections.GetConnectionAsync(entry.ConnectionId) is not null;
+        }
+        var matches = (await _connections.GetConnectionsAsync())
+            .Count(connection => connection.IsNamespaceLevel ||
+                                 string.Equals(connection.EntityName, entry.EntityName,
+                                     StringComparison.OrdinalIgnoreCase));
+        return matches == 1;
+    }
+
+    private static bool NamespaceIdentityMatches(ScheduledMessageIndexEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.NamespaceResourceId) ||
+            string.IsNullOrWhiteSpace(entry.NamespaceEndpoint))
+        {
+            return false;
+        }
+        var namespaceName = entry.NamespaceEndpoint
+            .Replace("sb://", "", StringComparison.OrdinalIgnoreCase)
+            .Split('.', StringSplitOptions.RemoveEmptyEntries)[0];
+        return entry.NamespaceResourceId.Contains(
+            $"/namespaces/{namespaceName}", StringComparison.OrdinalIgnoreCase);
+    }
+
 }

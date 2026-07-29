@@ -36,6 +36,65 @@ public class ScheduledMessageManagementServiceTests
             Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task CancelAsync_ProductionWithoutAcknowledgement_DoesNotCallBroker()
+    {
+        var (sut, operations, _) = CreateSut();
+        var entry = CreateEntry() with { Environment = ConnectionEnvironment.Production };
+
+        var result = await sut.CancelAsync(new ScheduledMessageActionRequest(entry, true, false));
+
+        result.IsSuccess.Should().BeFalse();
+        await operations.DidNotReceiveWithAnyArgs().CancelScheduledMessageAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_MissingConnection_ReturnsStaleState()
+    {
+        var (sut, _, store) = CreateSut();
+        var entry = CreateEntry() with { ConnectionId = "missing" };
+        store.LoadAsync(Arg.Any<CancellationToken>()).Returns([entry]);
+
+        var result = await sut.RefreshAsync();
+
+        result.Should().ContainSingle(item => item.IsStale && item.LocalState == "Limited / stale");
+    }
+
+    [Fact]
+    public async Task RescheduleAsync_WhenReplacementFails_PreservesConfirmedCancellation()
+    {
+        var (sut, operations, store) = CreateSut();
+        store.LoadPayloadAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
+            .Returns(new ScheduledMessagePayload(
+                "body", null, null, null, null, null, null, null, null, null, null,
+                new Dictionary<string, ScheduledMessagePropertyValue>()));
+        operations.ScheduleMessageAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(), ct: Arg.Any<CancellationToken>())
+            .Returns<long>(_ => throw new InvalidOperationException("schedule failed"));
+
+        var result = await sut.RescheduleAsync(new ScheduledMessageActionRequest(
+            CreateEntry(), true, true, DateTimeOffset.UtcNow.AddHours(2)));
+
+        result.IsPartialFailure.Should().BeTrue();
+        result.Entry.Status.Should().Be(ScheduledMessageRecordStatus.Cancelled);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_MarksOnlyLocalResolution()
+    {
+        var (sut, operations, store) = CreateSut();
+
+        await sut.ResolveLocallyAsync(CreateEntry());
+
+        await operations.DidNotReceiveWithAnyArgs().CancelScheduledMessageAsync(default!, default);
+        await store.Received(1).UpdateAsync(
+            Arg.Is<ScheduledMessageIndexEntry>(entry =>
+                entry.Status == ScheduledMessageRecordStatus.ResolvedLocally &&
+                !entry.IsBrokerConfirmed),
+            Arg.Any<CancellationToken>());
+    }
+
     private static (ScheduledMessageManagementService Sut, IConnectionStringOperations Operations, IScheduledMessageStore Store)
         CreateSut()
     {

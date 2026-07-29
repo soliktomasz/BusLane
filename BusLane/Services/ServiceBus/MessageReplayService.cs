@@ -201,8 +201,14 @@ public sealed class MessageReplayService : IMessageReplayService
                     ct);
 
                 var resultMessage = $"Message scheduled successfully (sequence {sequenceNumber})";
-                if (_scheduledMessageStore is not null &&
-                    request.Destination.ScheduledConnectionContext is { } context)
+                var context = request.Destination.ScheduledConnectionContext;
+                if (_scheduledMessageStore is not null && context is null)
+                {
+                    auditWarning = MergeAuditWarnings(
+                        auditWarning,
+                        "The local schedule index could not be updated: connection identity is unavailable.");
+                }
+                else if (_scheduledMessageStore is not null && context is not null)
                 {
                     try
                     {
@@ -233,10 +239,12 @@ public sealed class MessageReplayService : IMessageReplayService
                                 request.TimeToLive,
                                 request.Properties.ToDictionary(
                                     p => p.Key,
-                                    p => new ScheduledMessagePropertyValue(
-                                        p.Value?.GetType().Name ?? "String",
-                                        p.Value?.ToString() ?? ""))),
+                                    p => ScheduledMessagePropertyValue.FromObject(p.Value))),
                             ct);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch (Exception ex)
                     {

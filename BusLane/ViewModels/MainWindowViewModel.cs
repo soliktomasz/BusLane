@@ -1392,7 +1392,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 ScheduledMessageConnectionKind.ConnectionString);
         }
 
-        if (tab?.Namespace is { } serviceBusNamespace)
+        var serviceBusNamespace = tab?.Namespace ?? CurrentNavigation.SelectedNamespace;
+        if (serviceBusNamespace is not null)
         {
             return new ScheduledMessageConnectionContext(
                 serviceBusNamespace.Id,

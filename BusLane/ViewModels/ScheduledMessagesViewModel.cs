@@ -16,6 +16,7 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     private readonly IScheduledMessageManagementService _service;
     private readonly Func<ScheduledMessageResolvedEntry, ScheduledMessagePayload, Task> _clone;
     private readonly TimeProvider _timeProvider;
+    private readonly Dictionary<string, string> _payloadSearchText = new(StringComparer.Ordinal);
 
     [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private string _selectedConnection = "All";
@@ -63,18 +64,31 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task RefreshAsync()
+    private async Task RefreshAsync(CancellationToken ct)
     {
         IsLoading = true;
         ErrorText = null;
         try
         {
             Entries.Clear();
-            foreach (var entry in await _service.RefreshAsync())
+            _payloadSearchText.Clear();
+            foreach (var entry in await _service.RefreshAsync(ct))
             {
                 Entries.Add(entry);
+                var payload = await _service.LoadPayloadAsync(entry.Entry, ct);
+                if (payload is not null)
+                {
+                    _payloadSearchText[entry.Entry.RecordId] = string.Join('\n',
+                        new[] { payload.Body }
+                            .Concat(payload.Properties.SelectMany(p =>
+                                new[] { p.Key, p.Value.Value })));
+                }
             }
             NotifyProjectionChanged();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -92,10 +106,10 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     [RelayCommand] private void NextMonth() => SelectedMonth = SelectedMonth.AddMonths(1);
 
     [RelayCommand]
-    private async Task CloneAsync(ScheduledMessageResolvedEntry? item)
+    private async Task CloneAsync(ScheduledMessageResolvedEntry? item, CancellationToken ct)
     {
         if (item is null) return;
-        var payload = await _service.LoadPayloadAsync(item.Entry);
+        var payload = await _service.LoadPayloadAsync(item.Entry, ct);
         if (payload is null)
         {
             StatusText = "The scheduled payload is unavailable.";
@@ -109,6 +123,7 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     {
         if (item is null) return;
         SelectedEntry = item;
+        IsProductionAcknowledged = false;
         ConfirmationAction = "Cancel";
         ConfirmationText = BuildConfirmationText(item.Entry);
         ShowConfirmation = true;
@@ -119,13 +134,14 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     {
         if (item is null) return;
         SelectedEntry = item;
+        IsProductionAcknowledged = false;
         ConfirmationAction = "Reschedule";
         ConfirmationText = BuildConfirmationText(item.Entry);
         ShowConfirmation = true;
     }
 
     [RelayCommand]
-    private async Task ConfirmActionAsync()
+    private async Task ConfirmActionAsync(CancellationToken ct)
     {
         if (SelectedEntry is null) return;
         if (ConfirmationAction == "Reschedule" &&
@@ -137,11 +153,12 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         var request = new ScheduledMessageActionRequest(
             SelectedEntry.Entry, true, IsProductionAcknowledged, RescheduleTime);
         var result = ConfirmationAction == "Reschedule"
-            ? await _service.RescheduleAsync(request)
-            : await _service.CancelAsync(request);
+            ? await _service.RescheduleAsync(request, ct)
+            : await _service.CancelAsync(request, ct);
         StatusText = result.Message;
         ShowConfirmation = false;
-        await RefreshAsync();
+        IsProductionAcknowledged = false;
+        await RefreshAsync(ct);
     }
 
     [RelayCommand]
@@ -154,12 +171,12 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task ResolveAsync(ScheduledMessageResolvedEntry? item)
+    private async Task ResolveAsync(ScheduledMessageResolvedEntry? item, CancellationToken ct)
     {
         if (item is null) return;
-        await _service.ResolveLocallyAsync(item.Entry);
+        await _service.ResolveLocallyAsync(item.Entry, ct);
         StatusText = "Record resolved locally.";
-        await RefreshAsync();
+        await RefreshAsync(ct);
     }
 
     private bool MatchesFilters(ScheduledMessageResolvedEntry item)
@@ -172,12 +189,18 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         if (SelectedEntity != "All" && entry.EntityName != SelectedEntity) return false;
         if (SelectedEnvironment != "All" &&
             !entry.Environment.ToString().Equals(SelectedEnvironment, StringComparison.OrdinalIgnoreCase)) return false;
+        var now = _timeProvider.GetUtcNow();
+        if (SelectedTimeRange == "Today" && entry.ScheduledEnqueueTime.Date != now.Date) return false;
+        if (SelectedTimeRange == "7 days" && entry.ScheduledEnqueueTime > now.AddDays(7)) return false;
+        if (SelectedTimeRange == "30 days" && entry.ScheduledEnqueueTime > now.AddDays(30)) return false;
         if (string.IsNullOrWhiteSpace(SearchText)) return true;
         var search = SearchText.Trim();
         return Contains(entry.ConnectionName, search) || Contains(entry.EntityName, search) ||
                Contains(entry.MessageId, search) || Contains(entry.CorrelationId, search) ||
                Contains(entry.Subject, search) ||
-               entry.SearchableProperties.Keys.Any(key => Contains(key, search));
+               entry.SearchableProperties.Keys.Any(key => Contains(key, search)) ||
+               (_payloadSearchText.TryGetValue(entry.RecordId, out var payloadText) &&
+                Contains(payloadText, search));
     }
 
     private static bool Contains(string? value, string search) =>

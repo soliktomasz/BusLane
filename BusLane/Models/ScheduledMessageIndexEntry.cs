@@ -18,7 +18,41 @@ public enum ScheduledMessageConnectionKind
     AzureCredential
 }
 
-public sealed record ScheduledMessagePropertyValue(string Type, string Value);
+public sealed record ScheduledMessagePropertyValue(string Type, string Value)
+{
+    public static ScheduledMessagePropertyValue FromObject(object? value) => value switch
+    {
+        null => new("Null", ""),
+        byte[] bytes => new(nameof(Byte) + "[]", Convert.ToBase64String(bytes)),
+        DateTime dateTime => new(nameof(DateTime), dateTime.ToString("O")),
+        DateTimeOffset dateTimeOffset => new(nameof(DateTimeOffset), dateTimeOffset.ToString("O")),
+        IFormattable formattable => new(value.GetType().Name,
+            formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture) ?? ""),
+        _ => new(value.GetType().Name, value.ToString() ?? "")
+    };
+
+    public object? ToObject() => Type switch
+    {
+        "Null" => null,
+        "Byte[]" => Convert.FromBase64String(Value),
+        nameof(Boolean) => bool.Parse(Value),
+        nameof(Byte) => byte.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(SByte) => sbyte.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Int16) => short.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Int32) => int.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Int64) => long.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(UInt16) => ushort.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(UInt32) => uint.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(UInt64) => ulong.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Single) => float.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Double) => double.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Decimal) => decimal.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Guid) => Guid.Parse(Value),
+        nameof(DateTime) => DateTime.Parse(Value, null, System.Globalization.DateTimeStyles.RoundtripKind),
+        nameof(DateTimeOffset) => DateTimeOffset.Parse(Value, null, System.Globalization.DateTimeStyles.RoundtripKind),
+        _ => Value
+    };
+}
 
 public sealed record ScheduledMessagePayload(
     string Body,
