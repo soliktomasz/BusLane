@@ -146,6 +146,7 @@ class Program
         services.AddSingleton<IMessageReplayService, MessageReplayService>();
         services.AddSingleton<IAzureResourceService, AzureResourceService>();
         services.AddSingleton<IConnectionStorageService, ConnectionStorageService>();
+        services.AddSingleton<IScheduledMessageManagementService, ScheduledMessageManagementService>();
         services.AddSingleton<IConnectionBackupService, ConnectionBackupService>();
 
         // Monitoring services for Live Stream, Charts, and Alerts
@@ -203,7 +204,8 @@ class Program
             replayAuditStore: sp.GetRequiredService<IReplayAuditStore>(),
             messageReplayService: sp.GetRequiredService<IMessageReplayService>(),
             correlationRefreshDelay: sp.GetRequiredService<ICorrelationRefreshDelay>(),
-            correlationComparisonService: sp.GetRequiredService<ICorrelationMessageComparisonService>()
+            correlationComparisonService: sp.GetRequiredService<ICorrelationMessageComparisonService>(),
+            scheduledMessageManagementService: sp.GetRequiredService<IScheduledMessageManagementService>()
         ));
 
     }

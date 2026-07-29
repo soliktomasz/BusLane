@@ -402,6 +402,15 @@
                     </Button>
 
                     <Button Classes="subtle sidebar-utility-button"
+                            Command="{Binding OpenScheduledMessagesCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="CalendarClock" Size="16"/>
+                            <TextBlock Text="Scheduled Messages" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="subtle sidebar-utility-button"
                             Command="{Binding OpenChartsCommand}"
                             HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal" Spacing="10">
@@ -485,6 +494,11 @@
                         Command="{Binding OpenCorrelationExplorerCommand}"
                         ToolTip.Tip="Correlation Explorer">
                     <LucideIcon Kind="GitBranch" Size="17"/>
+                </Button>
+                <Button Classes="subtle icon-button"
+                        Command="{Binding OpenScheduledMessagesCommand}"
+                        ToolTip.Tip="Scheduled Messages">
+                    <LucideIcon Kind="CalendarClock" Size="17"/>
                 </Button>
                 <Button Classes="subtle icon-button"
                         Command="{Binding OpenChartsCommand}"

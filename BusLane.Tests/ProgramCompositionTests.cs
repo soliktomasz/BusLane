@@ -29,5 +29,9 @@ public class ProgramCompositionTests
             .Should().BeOfType<CorrelationRefreshDelay>();
         provider.GetRequiredService<ICorrelationMessageComparisonService>()
             .Should().BeOfType<CorrelationMessageComparisonService>();
+        provider.GetRequiredService<IScheduledMessageStore>()
+            .Should().BeOfType<ScheduledMessageStore>();
+        provider.GetRequiredService<IScheduledMessageManagementService>()
+            .Should().BeOfType<ScheduledMessageManagementService>();
     }
 }
