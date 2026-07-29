@@ -28,6 +28,7 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
 - **Dual connection modes** - Azure Identity authentication or direct connection strings
 - **Full entity support** - Queues, topics, subscriptions, and session-enabled entities
 - **Message operations** - Peek, receive-lock settlement, deferred receive, send/schedule, resend from DLQ, purge, search and filter
+- **Scheduled-message console** - Search, clone, cancel, reschedule, refresh, and locally resolve messages scheduled through BusLane
 - **Namespace topology tools** - Export, dry-run compare, and non-destructive import/clone of queues, topics, subscriptions, and rules
 - **Live monitoring** - Real-time message streaming, charts, and configurable alerts
 - **Secure storage** - AES-256 encrypted connection strings with machine-specific keys
