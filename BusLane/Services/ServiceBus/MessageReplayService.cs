@@ -30,17 +30,20 @@ public sealed class MessageReplayService : IMessageReplayService
     private readonly TimeProvider _timeProvider;
     private readonly IReplayDelay _delay;
     private readonly IReplayAuditStore? _auditStore;
+    private readonly IScheduledMessageStore? _scheduledMessageStore;
     private readonly SemaphoreSlim _rateLock = new(1, 1);
     private DateTimeOffset? _lastReplayAt;
 
     public MessageReplayService(
         TimeProvider timeProvider,
         IReplayDelay delay,
-        IReplayAuditStore? auditStore = null)
+        IReplayAuditStore? auditStore = null,
+        IScheduledMessageStore? scheduledMessageStore = null)
     {
         _timeProvider = timeProvider;
         _delay = delay;
         _auditStore = auditStore;
+        _scheduledMessageStore = scheduledMessageStore;
     }
 
     public ReplayRequest CreateRequest(CorrelationMessage source, ReplayDestination destination)
@@ -198,6 +201,50 @@ public sealed class MessageReplayService : IMessageReplayService
                     ct);
 
                 var resultMessage = $"Message scheduled successfully (sequence {sequenceNumber})";
+                if (_scheduledMessageStore is not null &&
+                    request.Destination.ScheduledConnectionContext is { } context)
+                {
+                    try
+                    {
+                        var now = _timeProvider.GetUtcNow();
+                        await _scheduledMessageStore.AddAsync(
+                            new ScheduledMessageIndexEntry
+                            {
+                                ConnectionId = context.ConnectionId,
+                                ConnectionName = context.ConnectionName,
+                                NamespaceEndpoint = context.NamespaceEndpoint,
+                                NamespaceResourceId = context.NamespaceResourceId,
+                                Environment = context.Environment,
+                                ConnectionKind = context.Kind,
+                                EntityName = request.Destination.EntityName,
+                                SequenceNumber = sequenceNumber,
+                                ScheduledEnqueueTime = request.ScheduledEnqueueTime.Value,
+                                CreatedAt = now,
+                                UpdatedAt = now,
+                                MessageId = request.MessageId,
+                                CorrelationId = request.CorrelationId,
+                                Subject = request.Subject,
+                                SearchableProperties = request.Properties.Keys.ToDictionary(k => k, _ => "")
+                            },
+                            new ScheduledMessagePayload(
+                                request.Body, request.ContentType, request.CorrelationId,
+                                request.MessageId, request.SessionId, request.Subject, request.To,
+                                request.ReplyTo, request.ReplyToSessionId, request.PartitionKey,
+                                request.TimeToLive,
+                                request.Properties.ToDictionary(
+                                    p => p.Key,
+                                    p => new ScheduledMessagePropertyValue(
+                                        p.Value?.GetType().Name ?? "String",
+                                        p.Value?.ToString() ?? ""))),
+                            ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        auditWarning = MergeAuditWarnings(
+                            auditWarning,
+                            $"The local schedule index could not be updated: {ex.Message}");
+                    }
+                }
                 auditWarning = MergeAuditWarnings(
                     auditWarning,
                     await TryAuditAsync(

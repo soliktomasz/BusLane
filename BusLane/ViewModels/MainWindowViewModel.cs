@@ -197,6 +197,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             ?? CurrentNavigation.SelectedNamespace?.Name
             ?? "current-namespace";
         var environment = ActiveTab?.SavedConnection?.Environment ?? ConnectionEnvironment.None;
+        var scheduledConnectionContext = GetScheduledMessageConnectionContext();
 
         var destinations = CurrentNavigation.Queues
             .Select(queue => new ReplayDestination(
@@ -204,7 +205,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 environment,
                 queue.Name,
                 "Queue",
-                queue.RequiresSession))
+                queue.RequiresSession,
+                scheduledConnectionContext))
             .ToList();
 
         destinations.AddRange(CurrentNavigation.Topics.Select(topic => new ReplayDestination(
@@ -212,7 +214,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             environment,
             topic.Name,
             "Topic",
-            RequiresSession: false)));
+            RequiresSession: false,
+            scheduledConnectionContext)));
 
         return destinations;
     }

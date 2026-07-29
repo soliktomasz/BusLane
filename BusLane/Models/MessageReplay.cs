@@ -5,7 +5,8 @@ public sealed record ReplayDestination(
     ConnectionEnvironment Environment,
     string EntityName,
     string EntityType,
-    bool RequiresSession);
+    bool RequiresSession,
+    ScheduledMessageConnectionContext? ScheduledConnectionContext = null);
 
 public sealed record ReplayRequest
 {
