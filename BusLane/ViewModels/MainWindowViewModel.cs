@@ -1293,7 +1293,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             CloseSendMessagePopup,
             msg => StatusMessage = msg,
             _fileDialogService,
-            scheduledMessageStore: _scheduledMessageStore);
+            scheduledMessageStore: _scheduledMessageStore,
+            scheduledConnectionContext: GetScheduledMessageConnectionContext(),
+            subscriptionName: CurrentNavigation.CurrentSubscriptionName);
 
         ShowSendMessagePopup = true;
     }
@@ -1363,7 +1365,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             CloseSendMessagePopup,
             status => StatusMessage = status,
             _fileDialogService,
-            scheduledMessageStore: _scheduledMessageStore);
+            scheduledMessageStore: _scheduledMessageStore,
+            scheduledConnectionContext: GetScheduledMessageConnectionContext(),
+            subscriptionName: CurrentNavigation.CurrentSubscriptionName);
 
         SendMessageViewModel.PopulateFromMessage(msg);
         ShowSendMessagePopup = true;
@@ -1371,6 +1375,33 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     #endregion
+
+    private ScheduledMessageConnectionContext? GetScheduledMessageConnectionContext()
+    {
+        var tab = ActiveTab;
+        if (tab?.SavedConnection is { } connection)
+        {
+            return new ScheduledMessageConnectionContext(
+                connection.Id,
+                connection.Name,
+                connection.Endpoint ?? tab.TabSubtitle,
+                connection.Environment,
+                ScheduledMessageConnectionKind.ConnectionString);
+        }
+
+        if (tab?.Namespace is { } serviceBusNamespace)
+        {
+            return new ScheduledMessageConnectionContext(
+                serviceBusNamespace.Id,
+                serviceBusNamespace.Name,
+                serviceBusNamespace.Endpoint,
+                ConnectionEnvironment.None,
+                ScheduledMessageConnectionKind.AzureCredential,
+                serviceBusNamespace.Id);
+        }
+
+        return null;
+    }
 
     #region Purge & Bulk Operations
 

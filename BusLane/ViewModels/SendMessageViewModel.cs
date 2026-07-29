@@ -23,6 +23,8 @@ public partial class SendMessageViewModel : ViewModelBase
     private readonly Action<string> _onStatusUpdate;
     private readonly string _savedMessagesPath;
     private readonly IScheduledMessageStore? _scheduledMessageStore;
+    private readonly ScheduledMessageConnectionContext? _scheduledConnectionContext;
+    private readonly string? _subscriptionName;
 
     private static readonly string DefaultSavedMessagesPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -72,7 +74,9 @@ public partial class SendMessageViewModel : ViewModelBase
         Action<string> onStatusUpdate,
         IFileDialogService? fileDialogService = null,
         string? savedMessagesPath = null,
-        IScheduledMessageStore? scheduledMessageStore = null)
+        IScheduledMessageStore? scheduledMessageStore = null,
+        ScheduledMessageConnectionContext? scheduledConnectionContext = null,
+        string? subscriptionName = null)
     {
         _operations = operations;
         _fileDialogService = fileDialogService;
@@ -81,6 +85,8 @@ public partial class SendMessageViewModel : ViewModelBase
         _onStatusUpdate = onStatusUpdate;
         _savedMessagesPath = savedMessagesPath ?? DefaultSavedMessagesPath;
         _scheduledMessageStore = scheduledMessageStore;
+        _scheduledConnectionContext = scheduledConnectionContext;
+        _subscriptionName = subscriptionName;
 
         LoadSavedMessages();
     }
@@ -164,26 +170,60 @@ public partial class SendMessageViewModel : ViewModelBase
                     messageToSend.TimeToLive
                 );
 
-                if (_scheduledMessageStore != null)
+                var indexWarning = false;
+                if (_scheduledMessageStore != null && _scheduledConnectionContext != null)
                 {
                     try
                     {
-                        await _scheduledMessageStore.AddAsync(new ScheduledMessageIndexEntry(
-                            _entityName,
-                            SubscriptionName: null,
-                            sequenceNumber,
-                            messageToSend.ScheduledEnqueueTime.Value,
+                        var now = DateTimeOffset.UtcNow;
+                        var entry = new ScheduledMessageIndexEntry
+                        {
+                            ConnectionId = _scheduledConnectionContext.ConnectionId,
+                            ConnectionName = _scheduledConnectionContext.ConnectionName,
+                            NamespaceEndpoint = _scheduledConnectionContext.NamespaceEndpoint,
+                            NamespaceResourceId = _scheduledConnectionContext.NamespaceResourceId,
+                            Environment = _scheduledConnectionContext.Environment,
+                            ConnectionKind = _scheduledConnectionContext.Kind,
+                            EntityName = _entityName,
+                            SubscriptionName = _subscriptionName,
+                            SequenceNumber = sequenceNumber,
+                            ScheduledEnqueueTime = messageToSend.ScheduledEnqueueTime.Value,
+                            CreatedAt = now,
+                            UpdatedAt = now,
+                            MessageId = messageToSend.MessageId,
+                            CorrelationId = messageToSend.CorrelationId,
+                            Subject = messageToSend.Subject,
+                            BodyPreview = BuildBodyPreview(messageToSend.Body),
+                            SearchableProperties = messageToSend.CustomProperties
+                                .ToDictionary(p => p.Key, p => p.Value)
+                        };
+                        var payload = new ScheduledMessagePayload(
+                            messageToSend.Body,
+                            messageToSend.ContentType,
+                            messageToSend.CorrelationId,
                             messageToSend.MessageId,
-                            BuildBodyPreview(messageToSend.Body),
-                            DateTimeOffset.UtcNow));
+                            messageToSend.SessionId,
+                            messageToSend.Subject,
+                            messageToSend.To,
+                            messageToSend.ReplyTo,
+                            messageToSend.ReplyToSessionId,
+                            messageToSend.PartitionKey,
+                            messageToSend.TimeToLive,
+                            messageToSend.CustomProperties.ToDictionary(
+                                p => p.Key,
+                                p => new ScheduledMessagePropertyValue("String", p.Value)));
+                        await _scheduledMessageStore.AddAsync(entry, payload);
                     }
                     catch (Exception ex)
                     {
                         Log.Warning(ex, "Failed to update scheduled message index for {EntityName}", _entityName);
+                        indexWarning = true;
                     }
                 }
 
-                _onStatusUpdate($"Message scheduled successfully (sequence {sequenceNumber})");
+                _onStatusUpdate(indexWarning
+                    ? $"Message scheduled successfully (sequence {sequenceNumber}). The local schedule index could not be updated."
+                    : $"Message scheduled successfully (sequence {sequenceNumber})");
             }
             else
             {
@@ -564,6 +604,29 @@ public partial class SendMessageViewModel : ViewModelBase
             var customProp = new CustomProperty { Key = prop.Key, Value = prop.Value?.ToString() ?? "" };
             customProp.PropertyChanged += OnCustomPropertyChanged;
             CustomProperties.Add(customProp);
+        }
+    }
+
+    public void PopulateFromScheduledPayload(ScheduledMessagePayload payload)
+    {
+        Body = payload.Body;
+        ContentType = payload.ContentType;
+        CorrelationId = payload.CorrelationId;
+        MessageId = Guid.NewGuid().ToString();
+        SessionId = payload.SessionId;
+        Subject = payload.Subject;
+        To = payload.To;
+        ReplyTo = payload.ReplyTo;
+        ReplyToSessionId = payload.ReplyToSessionId;
+        PartitionKey = payload.PartitionKey;
+        TimeToLiveText = payload.TimeToLive?.ToString();
+        ScheduledEnqueueTimeText = null;
+        CustomProperties.Clear();
+        foreach (var property in payload.Properties)
+        {
+            var customProperty = new CustomProperty { Key = property.Key, Value = property.Value.Value };
+            customProperty.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProperty);
         }
     }
 
