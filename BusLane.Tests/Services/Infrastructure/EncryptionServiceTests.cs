@@ -3,13 +3,22 @@ namespace BusLane.Tests.Services.Infrastructure;
 using BusLane.Services.Infrastructure;
 using FluentAssertions;
 
-public class EncryptionServiceTests
+public class EncryptionServiceTests : IDisposable
 {
     private readonly EncryptionService _sut;
+    private readonly DirectoryInfo _testDirectory;
 
     public EncryptionServiceTests()
     {
-        _sut = new EncryptionService();
+        _testDirectory = Directory.CreateTempSubdirectory("BusLane-EncryptionServiceTests-");
+        _sut = new EncryptionService(
+            Path.Combine(_testDirectory.FullName, "encryption.key"),
+            "test-legacy-entropy");
+    }
+
+    public void Dispose()
+    {
+        _testDirectory.Delete(recursive: true);
     }
 
     [Fact]
@@ -182,5 +191,57 @@ public class EncryptionServiceTests
         // Assert
         decrypted.Should().Be(longText);
     }
-}
 
+    [Fact]
+    public void Decrypt_AfterLegacyEntropyChanges_UsesPersistedMasterKey()
+    {
+        // Arrange
+        var testDirectory = Directory.CreateTempSubdirectory("BusLane-EncryptionServiceTests-");
+        var keyPath = Path.Combine(testDirectory.FullName, "encryption.key");
+        const string plainText = "Endpoint=sb://persistent.servicebus.windows.net/";
+
+        try
+        {
+            var previousRelease = new EncryptionService(keyPath, "legacy-entropy-before-update");
+            var encrypted = previousRelease.Encrypt(plainText);
+
+            // Act
+            var updatedRelease = new EncryptionService(keyPath, "legacy-entropy-after-update");
+            var decrypted = updatedRelease.Decrypt(encrypted);
+
+            // Assert
+            decrypted.Should().Be(plainText);
+        }
+        finally
+        {
+            testDirectory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Decrypt_WithWrongLegacyEntropy_DoesNotPersistUnusableKey()
+    {
+        // Arrange
+        var testDirectory = Directory.CreateTempSubdirectory("BusLane-EncryptionServiceTests-");
+        var keyPath = Path.Combine(testDirectory.FullName, "encryption.key");
+
+        try
+        {
+            var previousRelease = new EncryptionService(keyPath, "legacy-entropy-before-update");
+            var encrypted = previousRelease.Encrypt("secret");
+            File.Delete(keyPath);
+            var updatedRelease = new EncryptionService(keyPath, "legacy-entropy-after-update");
+
+            // Act
+            var decrypted = updatedRelease.Decrypt(encrypted);
+
+            // Assert
+            decrypted.Should().BeNull();
+            File.Exists(keyPath).Should().BeFalse();
+        }
+        finally
+        {
+            testDirectory.Delete(recursive: true);
+        }
+    }
+}

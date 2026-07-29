@@ -5,10 +5,10 @@ using System.Text;
 using Serilog;
 
 /// <summary>
-/// Provides AES-256 encryption for sensitive data with a machine-specific key.
+/// Provides AES-256 encryption for sensitive data with a persisted per-user key.
 /// The encryption uses:
 /// - AES-256-CBC for encryption
-/// - PBKDF2 for key derivation from machine-specific entropy
+/// - PBKDF2 for key derivation
 /// - Random IV for each encryption operation
 /// </summary>
 public class EncryptionService : IEncryptionService
@@ -21,45 +21,92 @@ public class EncryptionService : IEncryptionService
     private const int Iterations = 100000;
     
     private readonly byte[] _masterKey;
+    private readonly string _keyPath;
+    private readonly object _keyPersistenceLock = new();
+    private bool _isMasterKeyPersisted;
     
     public EncryptionService()
+        : this(AppPaths.EncryptionKey, GetLegacyEntropy())
     {
-        _masterKey = DeriveMasterKey();
     }
-    
-    /// <summary>
-    /// Derives a machine-specific master key using available entropy sources.
-    /// This key is deterministic for the same machine/user but different across machines.
-    /// </summary>
-    private static byte[] DeriveMasterKey()
+
+    internal EncryptionService(string keyPath, string legacyEntropy)
     {
-        // Combine multiple entropy sources for the master key
-        // IMPORTANT: Only use stable values that don't change between runs/debug sessions
+        ArgumentException.ThrowIfNullOrWhiteSpace(keyPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(legacyEntropy);
+
+        _keyPath = keyPath;
+        if (File.Exists(keyPath))
+        {
+            _masterKey = LoadPersistedMasterKey(keyPath);
+            _isMasterKeyPersisted = true;
+        }
+        else
+        {
+            _masterKey = DeriveMasterKey(legacyEntropy);
+        }
+    }
+
+    private static byte[] LoadPersistedMasterKey(string keyPath)
+    {
+        try
+        {
+            var persistedKey = Convert.FromBase64String(File.ReadAllText(keyPath));
+            if (persistedKey.Length != KeySize / 8)
+            {
+                throw new CryptographicException("Persisted encryption key has an invalid length.");
+            }
+
+            return persistedKey;
+        }
+        catch (Exception ex) when (ex is FormatException or IOException or UnauthorizedAccessException)
+        {
+            throw new CryptographicException("Failed to load the persisted encryption key.", ex);
+        }
+    }
+
+    private void PersistMasterKey()
+    {
+        if (_isMasterKeyPersisted)
+            return;
+
+        lock (_keyPersistenceLock)
+        {
+            if (_isMasterKeyPersisted)
+                return;
+
+            if (File.Exists(_keyPath))
+            {
+                var persistedKey = LoadPersistedMasterKey(_keyPath);
+                if (!CryptographicOperations.FixedTimeEquals(persistedKey, _masterKey))
+                {
+                    throw new CryptographicException("Persisted encryption key does not match the active key.");
+                }
+            }
+            else
+            {
+                AppPaths.CreateSecureFile(_keyPath, Convert.ToBase64String(_masterKey));
+            }
+
+            _isMasterKeyPersisted = true;
+        }
+    }
+
+    private static string GetLegacyEntropy()
+    {
         var entropyBuilder = new StringBuilder();
-        
-        // Machine name
         entropyBuilder.Append(Environment.MachineName);
-        
-        // User name
         entropyBuilder.Append(Environment.UserName);
-        
-        // App-specific salt
         entropyBuilder.Append("BusLane-v1-SecureStorage");
-        
-        // User profile path (different per user)
         entropyBuilder.Append(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-        
-        // Note: We intentionally do NOT use Environment.OSVersion.VersionString 
-        // because it can change between OS updates or debug sessions, causing
-        // previously encrypted data to become undecryptable.
-        
-        var entropy = entropyBuilder.ToString();
-        var entropyBytes = Encoding.UTF8.GetBytes(entropy);
-        
-        // Use a fixed salt for key derivation (app-specific)
+        return entropyBuilder.ToString();
+    }
+
+    private static byte[] DeriveMasterKey(string legacyEntropy)
+    {
+        var entropyBytes = Encoding.UTF8.GetBytes(legacyEntropy);
         var fixedSalt = "BusLane-Master-Key-Salt-2025"u8.ToArray();
-        
-        // Derive a 256-bit key using PBKDF2
+
         return Rfc2898DeriveBytes.Pbkdf2(
             entropyBytes, 
             fixedSalt, 
@@ -72,9 +119,10 @@ public class EncryptionService : IEncryptionService
     {
         if (string.IsNullOrEmpty(plainText))
             return plainText;
-            
+
         try
         {
+            PersistMasterKey();
             var plainBytes = Encoding.UTF8.GetBytes(plainText);
             
             // Generate random salt and IV for this encryption
@@ -163,8 +211,18 @@ public class EncryptionService : IEncryptionService
             
             using var decryptor = aes.CreateDecryptor();
             var decryptedBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
-            
-            return Encoding.UTF8.GetString(decryptedBytes);
+            var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
+
+            try
+            {
+                PersistMasterKey();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Decryption succeeded, but the master key could not be persisted");
+            }
+
+            return decryptedText;
         }
         catch (Exception ex)
         {
@@ -178,4 +236,3 @@ public class EncryptionService : IEncryptionService
         return !string.IsNullOrEmpty(text) && text.StartsWith(EncryptionPrefix);
     }
 }
-

@@ -21,13 +21,13 @@ BusLane encrypts all saved Azure Service Bus connection strings using industry-s
 
 - **Algorithm**: AES-256-CBC encryption
 - **Key Derivation**: PBKDF2 with SHA-256 (100,000 iterations)
-- **Machine-Specific Keys**: Encryption keys are derived from machine-specific entropy (machine name, username, user profile path)
+- **Persistent Per-User Key**: First launch derives a key from legacy machine-specific entropy, then stores it with owner-only permissions so application updates and hostname changes do not invalidate saved connections
 - **Random IVs**: Each encryption operation uses a unique, randomly generated initialization vector
-- **Storage Location**: Encrypted connection strings are stored in `%APPDATA%/BusLane/connections.json` (Windows) or `~/.config/BusLane/connections.json` (macOS/Linux)
+- **Storage Location**: Encrypted connection strings and key are stored under `%APPDATA%/BusLane` (Windows), `~/Library/Application Support/BusLane` (macOS), or `~/.config/BusLane` (Linux)
 
 This means:
 - ✅ Connection strings are never stored in plaintext
-- ✅ Encrypted data cannot be transferred between machines and decrypted
+- ✅ Encrypted data requires both connection data and persisted master key
 - ✅ Each encryption operation produces different ciphertext (even for the same input)
 - ✅ Data is protected from unauthorized access on the local machine
 

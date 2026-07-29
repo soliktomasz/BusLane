@@ -108,6 +108,11 @@ internal static class AppPaths
     public static string Connections => Path.Combine(AppDataFolder, "connections.json");
 
     /// <summary>
+    /// Path to the persisted connection-encryption master key.
+    /// </summary>
+    public static string EncryptionKey => Path.Combine(AppDataFolder, "encryption.key");
+
+    /// <summary>
     /// Path to the persisted app lock file.
     /// </summary>
     public static string AppLock => Path.Combine(AppDataFolder, "app-lock.json");
