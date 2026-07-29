@@ -627,6 +627,40 @@ public class ScheduledMessageIndexEntryTests
         entry.IsBrokerConfirmed.Should().BeTrue();
         entry.ReplacementRecordId.Should().Be("record-2");
     }
+
+    [Theory]
+    [InlineData(42)]
+    [InlineData(42L)]
+    [InlineData(true)]
+    [InlineData(12.5)]
+    [InlineData("north")]
+    [InlineData('x')]
+    public void ScheduledMessagePropertyValue_ServiceBusPrimitive_RoundTrips(object value)
+    {
+        var serialized = ScheduledMessagePropertyValue.FromObject(value);
+
+        serialized.ToObject().Should().Be(value);
+    }
+
+    [Fact]
+    public void ScheduledMessagePropertyValue_ByteArray_RoundTrips()
+    {
+        var value = new byte[] { 1, 2, 3 };
+
+        var roundTripped = ScheduledMessagePropertyValue.FromObject(value).ToObject();
+
+        roundTripped.Should().BeEquivalentTo(value);
+    }
+
+    [Fact]
+    public void ScheduledMessagePropertyValue_TimeSpanAndUri_RoundTrip()
+    {
+        var duration = TimeSpan.FromMinutes(12);
+        var uri = new Uri("https://example.test/orders");
+
+        ScheduledMessagePropertyValue.FromObject(duration).ToObject().Should().Be(duration);
+        ScheduledMessagePropertyValue.FromObject(uri).ToObject().Should().Be(uri);
+    }
 }
 
 public class TopicInfoTests

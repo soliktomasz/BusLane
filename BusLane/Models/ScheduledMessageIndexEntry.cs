@@ -24,6 +24,9 @@ public sealed record ScheduledMessagePropertyValue(string Type, string Value)
     {
         null => new("Null", ""),
         byte[] bytes => new(nameof(Byte) + "[]", Convert.ToBase64String(bytes)),
+        char character => new(nameof(Char), character.ToString()),
+        TimeSpan timeSpan => new(nameof(TimeSpan), timeSpan.ToString("c")),
+        Uri uri => new(nameof(Uri), uri.ToString()),
         DateTime dateTime => new(nameof(DateTime), dateTime.ToString("O")),
         DateTimeOffset dateTimeOffset => new(nameof(DateTimeOffset), dateTimeOffset.ToString("O")),
         IFormattable formattable => new(value.GetType().Name,
@@ -35,6 +38,9 @@ public sealed record ScheduledMessagePropertyValue(string Type, string Value)
     {
         "Null" => null,
         "Byte[]" => Convert.FromBase64String(Value),
+        nameof(Char) => char.Parse(Value),
+        nameof(TimeSpan) => TimeSpan.ParseExact(Value, "c", System.Globalization.CultureInfo.InvariantCulture),
+        nameof(Uri) => new Uri(Value, UriKind.RelativeOrAbsolute),
         nameof(Boolean) => bool.Parse(Value),
         nameof(Byte) => byte.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),
         nameof(SByte) => sbyte.Parse(Value, System.Globalization.CultureInfo.InvariantCulture),

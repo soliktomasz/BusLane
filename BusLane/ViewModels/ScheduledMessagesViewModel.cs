@@ -8,8 +8,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 public sealed record ScheduledMessageCalendarDay(
-    DateOnly Date,
-    IReadOnlyList<ScheduledMessageResolvedEntry> Entries);
+    DateOnly? Date,
+    bool IsInMonth,
+    IReadOnlyList<ScheduledMessageResolvedEntry> Entries)
+{
+    public string DisplayDay => Date?.Day.ToString() ?? "";
+}
 
 public partial class ScheduledMessagesViewModel : ViewModelBase
 {
@@ -35,20 +39,50 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     [ObservableProperty] private string? _confirmationText;
     [ObservableProperty] private bool _isProductionAcknowledged;
     [ObservableProperty] private DateTimeOffset? _rescheduleTime;
+    [ObservableProperty] private TimeSpan? _rescheduleClockTime;
 
     public ObservableCollection<ScheduledMessageResolvedEntry> Entries { get; } = [];
+    public IReadOnlyList<string> ConnectionOptions =>
+        new[] { "All" }.Concat(Entries.Select(e => e.Entry.ConnectionName)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value)).ToList();
+    public IReadOnlyList<string> EntityOptions =>
+        new[] { "All" }.Concat(Entries.Select(e => e.Entry.EntityName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value)).ToList();
+    public IReadOnlyList<string> EnvironmentOptions { get; } =
+        ["All", "None", "Development", "Test", "Production"];
+    public IReadOnlyList<string> StatusOptions { get; } =
+        ["All", "Upcoming", "Due", "Cancelled", "Rescheduled", "Action failed", "Limited", "Resolved"];
+    public IReadOnlyList<string> TimeRangeOptions { get; } =
+        ["All", "Today", "7 days", "30 days"];
 
     public IReadOnlyList<ScheduledMessageResolvedEntry> FilteredEntries =>
         Entries.Where(MatchesFilters).ToList();
 
-    public IReadOnlyList<ScheduledMessageCalendarDay> CalendarDays =>
-        FilteredEntries
-            .Where(e => e.Entry.ScheduledEnqueueTime.Year == SelectedMonth.Year &&
-                        e.Entry.ScheduledEnqueueTime.Month == SelectedMonth.Month)
-            .GroupBy(e => DateOnly.FromDateTime(e.Entry.ScheduledEnqueueTime.LocalDateTime))
-            .Select(g => new ScheduledMessageCalendarDay(g.Key, g.ToList()))
-            .OrderBy(day => day.Date)
-            .ToList();
+    public IReadOnlyList<ScheduledMessageCalendarDay> CalendarDays
+    {
+        get
+        {
+            var first = new DateOnly(SelectedMonth.Year, SelectedMonth.Month, 1);
+            var leading = ((int)first.DayOfWeek + 6) % 7;
+            var start = first.AddDays(-leading);
+            var byDay = FilteredEntries.GroupBy(e =>
+                    DateOnly.FromDateTime(e.Entry.ScheduledEnqueueTime.LocalDateTime))
+                .ToDictionary(group => group.Key, group => (IReadOnlyList<ScheduledMessageResolvedEntry>)group.ToList());
+            return Enumerable.Range(0, 42)
+                .Select(offset =>
+                {
+                    var date = start.AddDays(offset);
+                    return new ScheduledMessageCalendarDay(
+                        date,
+                        date.Month == SelectedMonth.Month,
+                        byDay.GetValueOrDefault(date, []));
+                })
+                .ToList();
+        }
+    }
 
     public bool IsEmpty => FilteredEntries.Count == 0;
 
@@ -104,6 +138,7 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     [RelayCommand] private void ShowCalendar() => IsCalendarMode = true;
     [RelayCommand] private void PreviousMonth() => SelectedMonth = SelectedMonth.AddMonths(-1);
     [RelayCommand] private void NextMonth() => SelectedMonth = SelectedMonth.AddMonths(1);
+    [RelayCommand] private void SelectEntry(ScheduledMessageResolvedEntry? item) => SelectedEntry = item;
 
     [RelayCommand]
     private async Task CloneAsync(ScheduledMessageResolvedEntry? item, CancellationToken ct)
@@ -126,6 +161,8 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         IsProductionAcknowledged = false;
         ConfirmationAction = "Cancel";
         ConfirmationText = BuildConfirmationText(item.Entry);
+        RescheduleTime = item.Entry.ScheduledEnqueueTime;
+        RescheduleClockTime = item.Entry.ScheduledEnqueueTime.TimeOfDay;
         ShowConfirmation = true;
     }
 
@@ -144,8 +181,16 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     private async Task ConfirmActionAsync(CancellationToken ct)
     {
         if (SelectedEntry is null) return;
+        if (ConfirmationAction == "Reschedule" && RescheduleTime is not null &&
+            RescheduleClockTime is not null)
+        {
+            RescheduleTime = new DateTimeOffset(
+                RescheduleTime.Value.Date.Add(RescheduleClockTime.Value),
+                RescheduleTime.Value.Offset);
+        }
         if (ConfirmationAction == "Reschedule" &&
-            (RescheduleTime is null || RescheduleTime <= _timeProvider.GetUtcNow()))
+            (RescheduleTime is null || RescheduleClockTime is null ||
+             RescheduleTime <= _timeProvider.GetUtcNow()))
         {
             StatusText = "A future scheduled time is required.";
             return;
@@ -191,8 +236,10 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
             !entry.Environment.ToString().Equals(SelectedEnvironment, StringComparison.OrdinalIgnoreCase)) return false;
         var now = _timeProvider.GetUtcNow();
         if (SelectedTimeRange == "Today" && entry.ScheduledEnqueueTime.Date != now.Date) return false;
-        if (SelectedTimeRange == "7 days" && entry.ScheduledEnqueueTime > now.AddDays(7)) return false;
-        if (SelectedTimeRange == "30 days" && entry.ScheduledEnqueueTime > now.AddDays(30)) return false;
+        if (SelectedTimeRange == "7 days" &&
+            (entry.ScheduledEnqueueTime < now || entry.ScheduledEnqueueTime > now.AddDays(7))) return false;
+        if (SelectedTimeRange == "30 days" &&
+            (entry.ScheduledEnqueueTime < now || entry.ScheduledEnqueueTime > now.AddDays(30))) return false;
         if (string.IsNullOrWhiteSpace(SearchText)) return true;
         var search = SearchText.Trim();
         return Contains(entry.ConnectionName, search) || Contains(entry.EntityName, search) ||
@@ -215,6 +262,8 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         OnPropertyChanged(nameof(FilteredEntries));
         OnPropertyChanged(nameof(CalendarDays));
         OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(ConnectionOptions));
+        OnPropertyChanged(nameof(EntityOptions));
     }
 
     partial void OnSearchTextChanged(string value) => NotifyProjectionChanged();

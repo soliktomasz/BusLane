@@ -79,6 +79,22 @@ public class ScheduledMessagesViewModelTests
     }
 
     [Fact]
+    public async Task RescheduleAsync_PastTime_ShowsValidationError()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+        var item = new ScheduledMessageResolvedEntry(CreateEntry(), "Upcoming (local)", false);
+        sut.BeginRescheduleCommand.Execute(item);
+        sut.RescheduleTime = DateTimeOffset.UtcNow.AddDays(-1);
+        sut.RescheduleClockTime = TimeSpan.Zero;
+
+        await sut.ConfirmActionCommand.ExecuteAsync(null);
+
+        sut.StatusText.Should().Be("A future scheduled time is required.");
+        await service.DidNotReceiveWithAnyArgs().RescheduleAsync(default!, default);
+    }
+
+    [Fact]
     public async Task CloneAsync_LegacyEntry_ShowsPayloadUnavailable()
     {
         var service = Substitute.For<IScheduledMessageManagementService>();

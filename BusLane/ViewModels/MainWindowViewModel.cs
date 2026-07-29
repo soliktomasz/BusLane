@@ -1310,23 +1310,23 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         ShowSendMessagePopup = true;
     }
 
-    private async void CloseSendMessagePopup()
+    private void CloseSendMessagePopup() =>
+        FireAndForget(CloseSendMessagePopupAsync(), nameof(CloseSendMessagePopupAsync));
+
+    private async Task CloseSendMessagePopupAsync()
     {
         ShowSendMessagePopup = false;
         SendMessageViewModel = null;
-        if (_scheduledCloneOperations is not null)
-        {
-            await _scheduledCloneOperations.DisposeAsync();
-            _scheduledCloneOperations = null;
-        }
+        await DisposeScheduledCloneOperationsAsync();
         await CurrentMessageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
-    private void CancelSendMessage()
+    private async Task CancelSendMessageAsync()
     {
         ShowSendMessagePopup = false;
         SendMessageViewModel = null;
+        await DisposeScheduledCloneOperationsAsync();
     }
 
     [RelayCommand]
@@ -1428,7 +1428,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString)
         {
             var connection = await _connectionStorage.GetConnectionAsync(entry.ConnectionId);
-            if (connection is not null)
+            if (connection is not null &&
+                (connection.IsNamespaceLevel ||
+                 string.Equals(connection.EntityName, entry.EntityName, StringComparison.OrdinalIgnoreCase)) &&
+                string.Equals(
+                    NormalizeNamespaceEndpoint(connection.Endpoint),
+                    NormalizeNamespaceEndpoint(entry.NamespaceEndpoint),
+                    StringComparison.OrdinalIgnoreCase))
             {
                 operations = _operationsFactory.CreateFromConnectionString(connection.ConnectionString);
             }
@@ -1470,6 +1476,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             subscriptionName: entry.SubscriptionName);
         SendMessageViewModel.PopulateFromScheduledPayload(payload);
         ShowSendMessagePopup = true;
+    }
+
+    private static string NormalizeNamespaceEndpoint(string? endpoint) =>
+        (endpoint ?? "").Replace("sb://", "", StringComparison.OrdinalIgnoreCase).TrimEnd('/');
+
+    private async Task DisposeScheduledCloneOperationsAsync()
+    {
+        if (_scheduledCloneOperations is null)
+        {
+            return;
+        }
+        var operations = _scheduledCloneOperations;
+        _scheduledCloneOperations = null;
+        await operations.DisposeAsync();
     }
 
     #region Purge & Bulk Operations
@@ -2417,6 +2437,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         LogViewer?.Dispose();
         Terminal?.Dispose();
         FeaturePanels.CloseCorrelationExplorer();
+        if (_scheduledCloneOperations is IDisposable cloneDisposable)
+        {
+            cloneDisposable.Dispose();
+            _scheduledCloneOperations = null;
+        }
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();
@@ -2440,6 +2465,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         LogViewer?.Dispose();
         await Terminal.DisposeAsync();
         FeaturePanels.CloseCorrelationExplorer();
+        await DisposeScheduledCloneOperationsAsync();
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();

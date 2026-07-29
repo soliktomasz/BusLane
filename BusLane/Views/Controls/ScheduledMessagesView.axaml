@@ -20,11 +20,11 @@
         </Grid>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Margin="16,0,16,12" ColumnSpacing="8">
-            <ComboBox SelectedItem="{Binding SelectedConnection}" PlaceholderText="Connection"/>
-            <ComboBox Grid.Column="1" SelectedItem="{Binding SelectedEntity}" PlaceholderText="Entity"/>
-            <ComboBox Grid.Column="2" SelectedItem="{Binding SelectedEnvironment}" PlaceholderText="Environment"/>
-            <ComboBox Grid.Column="3" SelectedItem="{Binding SelectedStatus}" PlaceholderText="Status"/>
-            <ComboBox Grid.Column="4" SelectedItem="{Binding SelectedTimeRange}" PlaceholderText="Time range"/>
+            <ComboBox ItemsSource="{Binding ConnectionOptions}" SelectedItem="{Binding SelectedConnection}" PlaceholderText="Connection"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding EntityOptions}" SelectedItem="{Binding SelectedEntity}" PlaceholderText="Entity"/>
+            <ComboBox Grid.Column="2" ItemsSource="{Binding EnvironmentOptions}" SelectedItem="{Binding SelectedEnvironment}" PlaceholderText="Environment"/>
+            <ComboBox Grid.Column="3" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" PlaceholderText="Status"/>
+            <ComboBox Grid.Column="4" ItemsSource="{Binding TimeRangeOptions}" SelectedItem="{Binding SelectedTimeRange}" PlaceholderText="Time range"/>
         </Grid>
 
         <Grid Grid.Row="2">
@@ -42,7 +42,10 @@
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <TextBlock Text="{Binding LocalState}"/>
                                             <TextBlock Text="local index" Classes="caption"/>
-                                            <TextBlock Text="broker confirmed" Classes="caption"/>
+                                            <TextBlock Text="broker confirmed" Classes="caption"
+                                                       IsVisible="{Binding Entry.IsBrokerConfirmed}"/>
+                                            <TextBlock Text="local only" Classes="caption"
+                                                       IsVisible="{Binding !Entry.IsBrokerConfirmed}"/>
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4">
@@ -75,14 +78,24 @@
                 </Grid>
                 <ItemsControl Grid.Row="1" ItemsSource="{Binding CalendarDays}">
                     <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate><WrapPanel ItemWidth="150"/></ItemsPanelTemplate>
+                        <ItemsPanelTemplate><UniformGrid Columns="7"/></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Classes="property-row" Margin="3" Padding="8">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Date}" Classes="body-strong"/>
+                                    <TextBlock Text="{Binding DisplayDay}" Classes="body-strong"/>
                                     <TextBlock Text="{Binding Entries.Count, StringFormat='{}{0} scheduled'}"/>
+                                    <ItemsControl ItemsSource="{Binding Entries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Classes="subtle small"
+                                                        Content="{Binding Entry.EntityName}"
+                                                        Command="{Binding $parent[UserControl].DataContext.SelectEntryCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -106,7 +119,10 @@
                         <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap"/>
                         <TextBlock Text="A partial failure may leave the original broker schedule cancelled."
                                    Classes="caption"/>
-                        <DatePicker SelectedDate="{Binding RescheduleTime}"/>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <DatePicker SelectedDate="{Binding RescheduleTime}"/>
+                            <TimePicker Grid.Column="1" SelectedTime="{Binding RescheduleClockTime}"/>
+                        </Grid>
                         <CheckBox IsChecked="{Binding IsProductionAcknowledged}"
                                   Content="I acknowledge this Production destination"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">

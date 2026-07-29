@@ -82,13 +82,40 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         {
             return new(false, "Cancellation confirmation is required", request.Entry);
         }
-        if (request.Entry.Environment == ConnectionEnvironment.Production &&
+        SavedConnection? currentConnection;
+        try
+        {
+            currentConnection = request.Entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString
+                ? await GetMatchingSavedConnectionAsync(request.Entry)
+                : null;
+        }
+        catch (Exception ex)
+        {
+            return new(false, $"Connection resolution failed: {ex.Message}", request.Entry);
+        }
+        if (request.Entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString &&
+            currentConnection is null)
+        {
+            return new(false, "The indexed connection no longer matches its saved destination", request.Entry);
+        }
+        if ((request.Entry.Environment == ConnectionEnvironment.Production ||
+             currentConnection?.Environment == ConnectionEnvironment.Production) &&
             !request.IsProductionAcknowledged)
         {
             return new(false, "Production acknowledgement is required", request.Entry);
         }
 
-        var operations = await ResolveOperationsAsync(request.Entry);
+        IServiceBusOperations? operations;
+        try
+        {
+            operations = currentConnection is not null
+                ? _operationsFactory.CreateFromConnectionString(currentConnection.ConnectionString)
+                : await ResolveOperationsAsync(request.Entry);
+        }
+        catch (Exception ex)
+        {
+            return new(false, $"Connection resolution failed: {ex.Message}", request.Entry);
+        }
         if (operations is null)
         {
             return new(false, "The indexed connection is unavailable", request.Entry);
@@ -167,7 +194,18 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
             return cancelled;
         }
 
-        var operations = await ResolveOperationsAsync(request.Entry);
+        IServiceBusOperations? operations;
+        try
+        {
+            operations = await ResolveOperationsAsync(request.Entry);
+        }
+        catch (Exception ex)
+        {
+            return new(false,
+                $"The original schedule was cancelled, but connection resolution failed: {ex.Message}",
+                cancelled.Entry with { LastError = ex.Message },
+                IsPartialFailure: true);
+        }
         if (operations is null)
         {
             return new(false, "The indexed connection is unavailable", cancelled.Entry, true);
@@ -261,14 +299,7 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
     {
         if (entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString)
         {
-            var saved = !string.IsNullOrWhiteSpace(entry.ConnectionId)
-                ? await _connections.GetConnectionAsync(entry.ConnectionId)
-                : (await _connections.GetConnectionsAsync())
-                    .Where(connection => connection.IsNamespaceLevel ||
-                                         string.Equals(connection.EntityName, entry.EntityName,
-                                             StringComparison.OrdinalIgnoreCase))
-                    .Take(2)
-                    .ToArray() is [var only] ? only : null;
+            var saved = await GetMatchingSavedConnectionAsync(entry);
             return saved is null ? null : _operationsFactory.CreateFromConnectionString(saved.ConnectionString);
         }
 
@@ -290,7 +321,7 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         }
         if (!string.IsNullOrWhiteSpace(entry.ConnectionId))
         {
-            return await _connections.GetConnectionAsync(entry.ConnectionId) is not null;
+            return await GetMatchingSavedConnectionAsync(entry) is not null;
         }
         var matches = (await _connections.GetConnectionsAsync())
             .Count(connection => connection.IsNamespaceLevel ||
@@ -298,6 +329,46 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
                                      StringComparison.OrdinalIgnoreCase));
         return matches == 1;
     }
+
+    private async Task<SavedConnection?> GetMatchingSavedConnectionAsync(ScheduledMessageIndexEntry entry)
+    {
+        SavedConnection? saved;
+        if (!string.IsNullOrWhiteSpace(entry.ConnectionId))
+        {
+            saved = await _connections.GetConnectionAsync(entry.ConnectionId);
+        }
+        else
+        {
+            saved = (await _connections.GetConnectionsAsync())
+                .Where(connection => connection.IsNamespaceLevel ||
+                                     string.Equals(connection.EntityName, entry.EntityName,
+                                         StringComparison.OrdinalIgnoreCase))
+                .Take(2)
+                .ToArray() is [var only] ? only : null;
+        }
+
+        if (saved is null)
+        {
+            return null;
+        }
+        if (!saved.IsNamespaceLevel &&
+            !string.Equals(saved.EntityName, entry.EntityName, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+        if (!string.IsNullOrWhiteSpace(entry.NamespaceEndpoint) &&
+            !string.Equals(
+                NormalizeEndpoint(saved.Endpoint),
+                NormalizeEndpoint(entry.NamespaceEndpoint),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+        return saved;
+    }
+
+    private static string NormalizeEndpoint(string? endpoint) =>
+        (endpoint ?? "").Replace("sb://", "", StringComparison.OrdinalIgnoreCase).TrimEnd('/');
 
     private static bool NamespaceIdentityMatches(ScheduledMessageIndexEntry entry)
     {

@@ -81,6 +81,31 @@ public class ScheduledMessageManagementServiceTests
     }
 
     [Fact]
+    public async Task RescheduleAsync_Success_CancelsThenSchedulesAndLinksReplacement()
+    {
+        var (sut, operations, store) = CreateSut();
+        store.LoadPayloadAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
+            .Returns(new ScheduledMessagePayload(
+                "body", null, null, null, null, null, null, null, null, null, null,
+                new Dictionary<string, ScheduledMessagePropertyValue>()));
+        operations.ScheduleMessageAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(), ct: Arg.Any<CancellationToken>())
+            .Returns(99);
+
+        var result = await sut.RescheduleAsync(new ScheduledMessageActionRequest(
+            CreateEntry(), true, true, DateTimeOffset.UtcNow.AddHours(2)));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Entry.Status.Should().Be(ScheduledMessageRecordStatus.Rescheduled);
+        result.Entry.ReplacementRecordId.Should().NotBeNullOrWhiteSpace();
+        await store.Received(1).AddAsync(
+            Arg.Is<ScheduledMessageIndexEntry>(entry => entry.SequenceNumber == 99),
+            Arg.Any<ScheduledMessagePayload>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task ResolveAsync_MarksOnlyLocalResolution()
     {
         var (sut, operations, store) = CreateSut();
@@ -93,6 +118,19 @@ public class ScheduledMessageManagementServiceTests
                 entry.Status == ScheduledMessageRecordStatus.ResolvedLocally &&
                 !entry.IsBrokerConfirmed),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CancelAsync_SavedConnectionRepointedToDifferentNamespace_DoesNotCallBroker()
+    {
+        var (sut, operations, _) = CreateSut();
+        var entry = CreateEntry() with { NamespaceEndpoint = "original.servicebus.windows.net" };
+
+        var result = await sut.CancelAsync(new ScheduledMessageActionRequest(entry, true, true));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Message.Should().Contain("no longer matches");
+        await operations.DidNotReceiveWithAnyArgs().CancelScheduledMessageAsync(default!, default);
     }
 
     private static (ScheduledMessageManagementService Sut, IConnectionStringOperations Operations, IScheduledMessageStore Store)
