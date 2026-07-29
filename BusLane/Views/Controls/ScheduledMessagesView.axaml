@@ -1,0 +1,124 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="BusLane.Views.Controls.ScheduledMessagesView"
+             x:CompileBindings="False">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,12" ColumnSpacing="12">
+            <TextBox Text="{Binding SearchText, Mode=TwoWay}"
+                     PlaceholderText="Search connection, entity, message, body, or property"
+                     AutomationProperties.Name="Search scheduled messages"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <Button Classes="secondary small" Command="{Binding ShowListCommand}" Content="List"/>
+                <Button Classes="secondary small" Command="{Binding ShowCalendarCommand}" Content="Calendar"/>
+                <Button Classes="secondary small" Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <LucideIcon Kind="RefreshCw" Size="13"/>
+                        <TextBlock Text="Refresh"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Margin="16,0,16,12" ColumnSpacing="8">
+            <ComboBox SelectedItem="{Binding SelectedConnection}" PlaceholderText="Connection"/>
+            <ComboBox Grid.Column="1" SelectedItem="{Binding SelectedEntity}" PlaceholderText="Entity"/>
+            <ComboBox Grid.Column="2" SelectedItem="{Binding SelectedEnvironment}" PlaceholderText="Environment"/>
+            <ComboBox Grid.Column="3" SelectedItem="{Binding SelectedStatus}" PlaceholderText="Status"/>
+            <ComboBox Grid.Column="4" SelectedItem="{Binding SelectedTimeRange}" PlaceholderText="Time range"/>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <ScrollViewer IsVisible="{Binding !IsCalendarMode}">
+                <ItemsControl ItemsSource="{Binding FilteredEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="property-row" Margin="16,0,16,6" Padding="12">
+                                <Grid ColumnDefinitions="150,160,160,*,Auto" ColumnSpacing="10">
+                                    <TextBlock Text="{Binding Entry.ScheduledEnqueueTime, StringFormat='{}{0:g}'}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Entry.ConnectionName}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Entry.EntityName}"/>
+                                    <StackPanel Grid.Column="3">
+                                        <TextBlock Text="{Binding Entry.MessageId}" Classes="caption"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding LocalState}"/>
+                                            <TextBlock Text="local index" Classes="caption"/>
+                                            <TextBlock Text="broker confirmed" Classes="caption"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4">
+                                        <Button Classes="secondary small" Content="Clone"
+                                                Command="{Binding $parent[UserControl].DataContext.CloneCommand}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Classes="secondary small" Content="Cancel"
+                                                Command="{Binding $parent[UserControl].DataContext.BeginCancelCommand}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Classes="secondary small" Content="Reschedule"
+                                                Command="{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Classes="secondary small" Content="Resolve"
+                                                Command="{Binding $parent[UserControl].DataContext.ResolveCommand}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Grid IsVisible="{Binding IsCalendarMode}" RowDefinitions="Auto,*" Margin="16">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Button Command="{Binding PreviousMonthCommand}" Content="Previous"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SelectedMonth, StringFormat='{}{0:MMMM yyyy}'}"
+                               HorizontalAlignment="Center"/>
+                    <Button Grid.Column="2" Command="{Binding NextMonthCommand}" Content="Next"/>
+                </Grid>
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding CalendarDays}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel ItemWidth="150"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="property-row" Margin="3" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Date}" Classes="body-strong"/>
+                                    <TextBlock Text="{Binding Entries.Count, StringFormat='{}{0} scheduled'}"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+
+            <Border Classes="empty-state" Margin="24" IsVisible="{Binding IsEmpty}">
+                <StackPanel HorizontalAlignment="Center" Spacing="8">
+                    <LucideIcon Kind="CalendarClock" Size="24"/>
+                    <TextBlock Text="No scheduled messages"/>
+                    <TextBlock Text="Only messages scheduled through BusLane appear here." Classes="caption"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="#99000000" IsVisible="{Binding ShowConfirmation}">
+                <Border Classes="dialog-card" Width="520" Padding="20"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{Binding ConfirmationAction}" Classes="title"/>
+                        <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap"/>
+                        <TextBlock Text="A partial failure may leave the original broker schedule cancelled."
+                                   Classes="caption"/>
+                        <DatePicker SelectedDate="{Binding RescheduleTime}"/>
+                        <CheckBox IsChecked="{Binding IsProductionAcknowledged}"
+                                  Content="I acknowledge this Production destination"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button Command="{Binding CancelActionCommand}" Content="Back"/>
+                            <Button Classes="primary" Command="{Binding ConfirmActionCommand}" Content="Confirm"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+
+            <TextBlock Text="{Binding StatusText}" Margin="16" VerticalAlignment="Bottom"/>
+            <TextBlock Text="{Binding ErrorText}" Margin="16" VerticalAlignment="Bottom"/>
+        </Grid>
+    </Grid>
+</UserControl>
