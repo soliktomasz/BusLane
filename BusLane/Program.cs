@@ -134,7 +134,9 @@ class Program
             return new ServiceBusOperationsFactory(() => auth.ArmClient);
         });
         services.AddSingleton<INamespaceTopologyService, NamespaceTopologyService>();
-        services.AddSingleton<IScheduledMessageStore, ScheduledMessageStore>();
+        services.AddSingleton<IScheduledMessageStore>(sp => new ScheduledMessageStore(
+            sp.GetRequiredService<IEncryptionService>(),
+            sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<ICorrelationMessageCatalog, CorrelationMessageCatalog>();
         services.AddSingleton<ICorrelationRefreshDelay, CorrelationRefreshDelay>();
         services.AddSingleton<ICorrelationMessageComparisonService, CorrelationMessageComparisonService>();

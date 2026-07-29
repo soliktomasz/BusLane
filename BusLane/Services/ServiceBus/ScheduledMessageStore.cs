@@ -75,6 +75,10 @@ public class ScheduledMessageStore : IScheduledMessageStore
                 {
                     SchemaVersion = ScheduledMessageIndexEntry.CurrentSchemaVersion,
                     EncryptedPayload = _encryptionService.Encrypt(Serialize(payload)),
+                    BodyPreview = "",
+                    SearchableProperties = entry.SearchableProperties.Keys.ToDictionary(
+                        static key => key,
+                        static _ => ""),
                     UpdatedAt = _timeProvider.GetUtcNow()
                 };
             }
@@ -185,11 +189,25 @@ public class ScheduledMessageStore : IScheduledMessageStore
                     entry = entry with
                     {
                         SchemaVersion = 1,
-                        RecordId = string.IsNullOrWhiteSpace(entry.RecordId)
-                            ? $"{entry.EntityName}:{entry.SequenceNumber}"
-                            : entry.RecordId,
+                        RecordId = $"{entry.EntityName}:{entry.SequenceNumber}",
                         UpdatedAt = entry.UpdatedAt == default ? entry.CreatedAt : entry.UpdatedAt
                     };
+                }
+
+                if (entry.HasPayload && _encryptionService is not null)
+                {
+                    try
+                    {
+                        entry = entry with
+                        {
+                            IsPayloadUnavailable =
+                                string.IsNullOrWhiteSpace(_encryptionService.Decrypt(entry.EncryptedPayload!))
+                        };
+                    }
+                    catch
+                    {
+                        entry = entry with { IsPayloadUnavailable = true };
+                    }
                 }
 
                 entries.Add(entry);
@@ -201,9 +219,9 @@ public class ScheduledMessageStore : IScheduledMessageStore
         {
             throw;
         }
-        catch
+        catch (Exception ex)
         {
-            return [];
+            throw new InvalidDataException("The scheduled message index could not be read.", ex);
         }
     }
 

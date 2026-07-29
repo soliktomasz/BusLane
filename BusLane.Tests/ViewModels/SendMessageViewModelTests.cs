@@ -188,7 +188,8 @@ public class SendMessageViewModelTests
                 entry.EntityName == "queue" &&
                 entry.SequenceNumber == 42 &&
                 entry.ScheduledEnqueueTime == scheduledAt &&
-                entry.BodyPreview == "{\"id\":1}"),
+                entry.BodyPreview == "" &&
+                entry.SearchableProperties.Values.All(string.IsNullOrEmpty)),
             Arg.Is<ScheduledMessagePayload>(payload => payload.Body == "{\"id\":1}"),
             Arg.Any<CancellationToken>());
         _statusMessage.Should().Be("Message scheduled successfully (sequence 42)");

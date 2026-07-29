@@ -193,9 +193,9 @@ public partial class SendMessageViewModel : ViewModelBase
                             MessageId = messageToSend.MessageId,
                             CorrelationId = messageToSend.CorrelationId,
                             Subject = messageToSend.Subject,
-                            BodyPreview = BuildBodyPreview(messageToSend.Body),
+                            BodyPreview = "",
                             SearchableProperties = messageToSend.CustomProperties
-                                .ToDictionary(p => p.Key, p => p.Value)
+                                .ToDictionary(p => p.Key, _ => "")
                         };
                         var payload = new ScheduledMessagePayload(
                             messageToSend.Body,

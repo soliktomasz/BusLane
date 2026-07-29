@@ -31,6 +31,7 @@ public class ScheduledMessageStoreTests
             var raw = await File.ReadAllTextAsync(path);
             raw.Should().NotContain("secret body");
             raw.Should().NotContain("north");
+            raw.Should().NotContain("\"body\"");
             raw.Should().Contain("enc:");
         }
         finally
@@ -55,6 +56,7 @@ public class ScheduledMessageStoreTests
             var entry = (await sut.LoadAsync()).Single();
             entry.SchemaVersion.Should().Be(1);
             entry.IsLegacyLimited.Should().BeTrue();
+            entry.RecordId.Should().Be("orders:42");
         }
         finally
         {
@@ -98,7 +100,28 @@ public class ScheduledMessageStoreTests
             var entry = (await sut.LoadAsync()).Single();
 
             (await sut.LoadPayloadAsync(entry)).Should().BeNull();
+            entry.IsLegacyLimited.Should().BeTrue();
             (await sut.LoadAsync()).Should().ContainSingle();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task AddAsync_WithUnreadableStore_DoesNotOverwriteExistingContent()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
+        const string corrupt = "{not-json";
+        await File.WriteAllTextAsync(path, corrupt);
+        var sut = new ScheduledMessageStore(path);
+
+        try
+        {
+            var act = () => sut.AddAsync(CreateEntry("orders", 42));
+            await act.Should().ThrowAsync<InvalidDataException>();
+            (await File.ReadAllTextAsync(path)).Should().Be(corrupt);
         }
         finally
         {

@@ -97,12 +97,13 @@ public record ScheduledMessageIndexEntry
     public IReadOnlyDictionary<string, string> SearchableProperties { get; init; } =
         new Dictionary<string, string>();
     public string? EncryptedPayload { get; init; }
+    public bool IsPayloadUnavailable { get; init; }
     public ScheduledMessageRecordStatus Status { get; init; } = ScheduledMessageRecordStatus.Indexed;
     public string? LastBrokerAction { get; init; }
     public DateTimeOffset? LastBrokerActionAt { get; init; }
     public string? LastError { get; init; }
 
-    public bool HasPayload => !string.IsNullOrWhiteSpace(EncryptedPayload);
+    public bool HasPayload => !IsPayloadUnavailable && !string.IsNullOrWhiteSpace(EncryptedPayload);
     public bool IsLegacyLimited => SchemaVersion < CurrentSchemaVersion || !HasPayload;
     public bool IsBrokerConfirmed =>
         Status is ScheduledMessageRecordStatus.Cancelled or ScheduledMessageRecordStatus.Rescheduled;
