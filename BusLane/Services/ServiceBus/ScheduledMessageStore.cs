@@ -184,7 +184,9 @@ public class ScheduledMessageStore : IScheduledMessageStore
                     continue;
                 }
 
-                if (!element.TryGetProperty(nameof(ScheduledMessageIndexEntry.SchemaVersion), out _))
+                if (!element.TryGetProperty(
+                        JsonNamingPolicy.CamelCase.ConvertName(nameof(ScheduledMessageIndexEntry.SchemaVersion)),
+                        out _))
                 {
                     entry = entry with
                     {

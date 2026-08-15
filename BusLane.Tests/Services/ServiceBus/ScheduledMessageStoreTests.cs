@@ -65,6 +65,39 @@ public class ScheduledMessageStoreTests
     }
 
     [Fact]
+    public async Task LoadAsync_WithCurrentSchemaRecord_PreservesCurrentSchema()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
+        var encryption = Substitute.For<IEncryptionService>();
+        encryption.Decrypt("encrypted").Returns("{}");
+        var sut = new ScheduledMessageStore(encryption, TimeProvider.System, path);
+        var current = new ScheduledMessageIndexEntry
+        {
+            RecordId = "record-1",
+            EntityName = "orders",
+            SequenceNumber = 42,
+            ScheduledEnqueueTime = DateTimeOffset.UtcNow.AddHours(1),
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            EncryptedPayload = "encrypted"
+        };
+
+        try
+        {
+            await sut.AddAsync(current);
+
+            var loaded = (await sut.LoadAsync()).Single();
+            loaded.SchemaVersion.Should().Be(ScheduledMessageIndexEntry.CurrentSchemaVersion);
+            loaded.RecordId.Should().Be("record-1");
+            loaded.IsLegacyLimited.Should().BeFalse();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task UpdateAsync_ConcurrentMutations_DoNotLoseEntries()
     {
         var path = Path.Combine(Path.GetTempPath(), $"buslane-scheduled-{Guid.NewGuid():N}.json");
