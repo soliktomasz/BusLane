@@ -99,7 +99,7 @@
                                     <TextBlock Text="{Binding Entry.ScheduledEnqueueTime, StringFormat='{}{0:g}'}"/>
                                     <TextBlock Grid.Column="1" Text="{Binding Entry.ConnectionName}"/>
                                     <TextBlock Grid.Column="2" Text="{Binding Entry.EntityName}"/>
-                                    <StackPanel Grid.Column="3">
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
                                         <TextBlock Text="{Binding Entry.MessageId}" Classes="caption"/>
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <TextBlock Text="{Binding LocalState}"/>
