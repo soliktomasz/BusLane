@@ -266,8 +266,8 @@ jobs:
       - name: Create Velopack package
         env:
           PACK_VERSION: ${{ steps.version.outputs.version }}
-          SIGN_APP_IDENTITY: "Developer ID Application: Your Name"
-          SIGN_INSTALL_IDENTITY: "Developer ID Installer: Your Name"
+          SIGN_APP_IDENTITY: "Developer ID Application: Tomasz Solik"
+          SIGN_INSTALL_IDENTITY: "Developer ID Installer: Tomasz Solik"
         run: |
           vpk pack \
             --packId BusLane \
