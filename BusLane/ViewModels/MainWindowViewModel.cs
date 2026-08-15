@@ -224,6 +224,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     // UI State
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _isMoreToolsExpanded;
     [ObservableProperty] private bool _showIntroductionSplash;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShellStatusMessage))]

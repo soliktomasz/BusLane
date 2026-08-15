@@ -170,6 +170,19 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public void MoreTools_OnCreation_IsCollapsed()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+
+        // Act
+        using var sut = CreateSut(preferences);
+
+        // Assert
+        sut.IsMoreToolsExpanded.Should().BeFalse();
+    }
+
+    [Fact]
     public void ShowIntroductionSplashCommand_WithSeenPreferences_ShowsSplashAgainWithoutChangingPreference()
     {
         // Arrange
