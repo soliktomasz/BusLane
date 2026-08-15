@@ -38,6 +38,46 @@ public class ScheduledMessagesViewModelTests
         sut.SelectedStatus.Should().Be("Upcoming");
     }
 
+    [Fact]
+    public async Task RefreshAsync_SelectedFiltersStillAvailable_PreservesSelections()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        service.RefreshAsync(Arg.Any<CancellationToken>()).Returns(
+            [new ScheduledMessageResolvedEntry(CreateEntry(), "Upcoming (local)", false)]);
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+        await sut.RefreshCommand.ExecuteAsync(null);
+        sut.SelectedConnection = "Development";
+        sut.SelectedEntity = "orders";
+
+        await sut.RefreshCommand.ExecuteAsync(null);
+
+        sut.SelectedConnection.Should().Be("Development");
+        sut.SelectedEntity.Should().Be("orders");
+    }
+
+    [Fact]
+    public async Task RefreshAsync_SelectedFiltersNoLongerAvailable_ResetsSelections()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        var responses = new Queue<IReadOnlyList<ScheduledMessageResolvedEntry>>(
+        [
+            [new ScheduledMessageResolvedEntry(CreateEntry(), "Upcoming (local)", false)],
+            [new ScheduledMessageResolvedEntry(
+                CreateEntry() with { ConnectionName = "Production", EntityName = "invoices" },
+                "Upcoming (local)", false)]
+        ]);
+        service.RefreshAsync(Arg.Any<CancellationToken>()).Returns(_ => responses.Dequeue());
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+        await sut.RefreshCommand.ExecuteAsync(null);
+        sut.SelectedConnection = "Development";
+        sut.SelectedEntity = "orders";
+
+        await sut.RefreshCommand.ExecuteAsync(null);
+
+        sut.SelectedConnection.Should().Be("All");
+        sut.SelectedEntity.Should().Be("All");
+    }
+
     [Theory]
     [InlineData("orders")]
     [InlineData("message-42")]

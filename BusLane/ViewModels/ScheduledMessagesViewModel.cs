@@ -118,6 +118,15 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
                                 new[] { p.Key, p.Value.Value })));
                 }
             }
+            if (!ConnectionOptions.Contains(SelectedConnection, StringComparer.OrdinalIgnoreCase))
+            {
+                SelectedConnection = "All";
+            }
+            if (!EntityOptions.Contains(SelectedEntity, StringComparer.OrdinalIgnoreCase))
+            {
+                SelectedEntity = "All";
+            }
+            NotifyFilterOptionsChanged();
             NotifyProjectionChanged();
         }
         catch (OperationCanceledException)
@@ -262,6 +271,10 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         OnPropertyChanged(nameof(FilteredEntries));
         OnPropertyChanged(nameof(CalendarDays));
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    private void NotifyFilterOptionsChanged()
+    {
         OnPropertyChanged(nameof(ConnectionOptions));
         OnPropertyChanged(nameof(EntityOptions));
     }
