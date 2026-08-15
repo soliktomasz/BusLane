@@ -21,4 +21,8 @@ Deferred messages are recovered by sequence number. Enter one or more sequence n
 
 ## Scheduled Messages
 
-BusLane stores a local index for messages scheduled through BusLane and records Azure sequence numbers. Azure Service Bus does not expose a general API for listing every scheduled message, so the local list is not an authoritative namespace-wide schedule.
+The Scheduled Messages console indexes only messages scheduled through BusLane. New records keep the complete message snapshot encrypted locally; connection strings, credentials, tokens, message bodies, and application-property values are not stored as plaintext index metadata. Legacy index records remain visible, but payload-dependent clone and reschedule actions are unavailable.
+
+Azure Service Bus does not expose an API for enumerating all scheduled messages or verifying one schedule by sequence number. Refresh therefore reloads and re-resolves the local index; it cannot prove that an individual schedule still exists at the broker. The console labels derived states such as upcoming, due, stale, and resolved as local-only. Cancelled and rescheduled labels are broker-confirmed only after the corresponding broker request succeeds.
+
+Rescheduling cancels the original sequence before creating its replacement. If cancellation succeeds but replacement scheduling fails, the original remains broker-confirmed cancelled and the console reports a partial failure. Resolving a stale record changes only the local index and never claims broker cancellation.

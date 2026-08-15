@@ -57,6 +57,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private readonly ILogSink _logSink;
     private IFileDialogService? _fileDialogService;
     private readonly IScheduledMessageStore? _scheduledMessageStore;
+    private readonly IScheduledMessageManagementService? _scheduledMessageManagementService;
+    private IServiceBusOperations? _scheduledCloneOperations;
     private readonly ICorrelationMessageCatalog _correlationMessageCatalog;
     private readonly SemaphoreSlim _startupInitializationGate = new(1, 1);
     private bool _startupInitialized;
@@ -197,6 +199,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             ?? CurrentNavigation.SelectedNamespace?.Name
             ?? "current-namespace";
         var environment = ActiveTab?.SavedConnection?.Environment ?? ConnectionEnvironment.None;
+        var scheduledConnectionContext = GetScheduledMessageConnectionContext();
 
         var destinations = CurrentNavigation.Queues
             .Select(queue => new ReplayDestination(
@@ -204,7 +207,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 environment,
                 queue.Name,
                 "Queue",
-                queue.RequiresSession))
+                queue.RequiresSession,
+                scheduledConnectionContext))
             .ToList();
 
         destinations.AddRange(CurrentNavigation.Topics.Select(topic => new ReplayDestination(
@@ -212,7 +216,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             environment,
             topic.Name,
             "Topic",
-            RequiresSession: false)));
+            RequiresSession: false,
+            scheduledConnectionContext)));
 
         return destinations;
     }
@@ -309,7 +314,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IReplayAuditStore? replayAuditStore = null,
         IMessageReplayService? messageReplayService = null,
         ICorrelationRefreshDelay? correlationRefreshDelay = null,
-        ICorrelationMessageComparisonService? correlationComparisonService = null)
+        ICorrelationMessageComparisonService? correlationComparisonService = null,
+        IScheduledMessageManagementService? scheduledMessageManagementService = null)
     {
         _auth = auth;
         _azureResources = azureResources;
@@ -329,6 +335,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _logSink = logSink;
         _fileDialogService = fileDialogService;
         _scheduledMessageStore = scheduledMessageStore;
+        _scheduledMessageManagementService = scheduledMessageManagementService;
         _correlationMessageCatalog = correlationMessageCatalog ?? new CorrelationMessageCatalog();
 
         // Initialize dashboard components
@@ -394,7 +401,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             GetReplayDestinations,
             () => _fileDialogService,
             correlationRefreshDelay,
-            correlationComparisonService);
+            correlationComparisonService,
+            scheduledMessageManagementService,
+            CloneScheduledMessageAsync,
+            TimeProvider.System);
 
         // Initialize refactored components
         Tabs = new TabManagementViewModel(
@@ -1293,23 +1303,30 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             CloseSendMessagePopup,
             msg => StatusMessage = msg,
             _fileDialogService,
-            scheduledMessageStore: _scheduledMessageStore);
+            scheduledMessageStore: _scheduledMessageStore,
+            scheduledConnectionContext: GetScheduledMessageConnectionContext(),
+            subscriptionName: CurrentNavigation.CurrentSubscriptionName);
 
         ShowSendMessagePopup = true;
     }
 
-    private async void CloseSendMessagePopup()
+    private void CloseSendMessagePopup() =>
+        FireAndForget(CloseSendMessagePopupAsync(), nameof(CloseSendMessagePopupAsync));
+
+    private async Task CloseSendMessagePopupAsync()
     {
         ShowSendMessagePopup = false;
         SendMessageViewModel = null;
+        await DisposeScheduledCloneOperationsAsync();
         await CurrentMessageOps.LoadMessagesAsync();
     }
 
     [RelayCommand]
-    private void CancelSendMessage()
+    private async Task CancelSendMessageAsync()
     {
         ShowSendMessagePopup = false;
         SendMessageViewModel = null;
+        await DisposeScheduledCloneOperationsAsync();
     }
 
     [RelayCommand]
@@ -1363,7 +1380,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             CloseSendMessagePopup,
             status => StatusMessage = status,
             _fileDialogService,
-            scheduledMessageStore: _scheduledMessageStore);
+            scheduledMessageStore: _scheduledMessageStore,
+            scheduledConnectionContext: GetScheduledMessageConnectionContext(),
+            subscriptionName: CurrentNavigation.CurrentSubscriptionName);
 
         SendMessageViewModel.PopulateFromMessage(msg);
         ShowSendMessagePopup = true;
@@ -1371,6 +1390,107 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     #endregion
+
+    private ScheduledMessageConnectionContext? GetScheduledMessageConnectionContext()
+    {
+        var tab = ActiveTab;
+        if (tab?.SavedConnection is { } connection)
+        {
+            return new ScheduledMessageConnectionContext(
+                connection.Id,
+                connection.Name,
+                connection.Endpoint ?? tab.TabSubtitle,
+                connection.Environment,
+                ScheduledMessageConnectionKind.ConnectionString);
+        }
+
+        var serviceBusNamespace = tab?.Namespace ?? CurrentNavigation.SelectedNamespace;
+        if (serviceBusNamespace is not null)
+        {
+            return new ScheduledMessageConnectionContext(
+                serviceBusNamespace.Id,
+                serviceBusNamespace.Name,
+                serviceBusNamespace.Endpoint,
+                ConnectionEnvironment.None,
+                ScheduledMessageConnectionKind.AzureCredential,
+                serviceBusNamespace.Id);
+        }
+
+        return null;
+    }
+
+    private async Task CloneScheduledMessageAsync(
+        ScheduledMessageResolvedEntry resolved,
+        ScheduledMessagePayload payload)
+    {
+        IServiceBusOperations? operations = null;
+        var entry = resolved.Entry;
+        if (entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString)
+        {
+            var connection = await _connectionStorage.GetConnectionAsync(entry.ConnectionId);
+            if (connection is not null &&
+                (connection.IsNamespaceLevel ||
+                 string.Equals(connection.EntityName, entry.EntityName, StringComparison.OrdinalIgnoreCase)) &&
+                string.Equals(
+                    NormalizeNamespaceEndpoint(connection.Endpoint),
+                    NormalizeNamespaceEndpoint(entry.NamespaceEndpoint),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                operations = _operationsFactory.CreateFromConnectionString(connection.ConnectionString);
+            }
+        }
+        else if (_auth.IsAuthenticated && _auth.Credential is not null &&
+                 !string.IsNullOrWhiteSpace(entry.NamespaceResourceId))
+        {
+            operations = _operationsFactory.CreateFromAzureCredential(
+                entry.NamespaceEndpoint,
+                entry.NamespaceResourceId,
+                _auth.Credential);
+        }
+
+        if (operations is null)
+        {
+            StatusMessage = "The indexed connection is unavailable";
+            return;
+        }
+
+        if (_scheduledCloneOperations is not null)
+        {
+            await _scheduledCloneOperations.DisposeAsync();
+        }
+        _scheduledCloneOperations = operations;
+        SendMessageViewModel = new SendMessageViewModel(
+            operations,
+            entry.EntityName,
+            CloseSendMessagePopup,
+            status => StatusMessage = status,
+            _fileDialogService,
+            scheduledMessageStore: _scheduledMessageStore,
+            scheduledConnectionContext: new ScheduledMessageConnectionContext(
+                entry.ConnectionId,
+                entry.ConnectionName,
+                entry.NamespaceEndpoint,
+                entry.Environment,
+                entry.ConnectionKind,
+                entry.NamespaceResourceId),
+            subscriptionName: entry.SubscriptionName);
+        SendMessageViewModel.PopulateFromScheduledPayload(payload);
+        ShowSendMessagePopup = true;
+    }
+
+    private static string NormalizeNamespaceEndpoint(string? endpoint) =>
+        (endpoint ?? "").Replace("sb://", "", StringComparison.OrdinalIgnoreCase).TrimEnd('/');
+
+    private async Task DisposeScheduledCloneOperationsAsync()
+    {
+        if (_scheduledCloneOperations is null)
+        {
+            return;
+        }
+        var operations = _scheduledCloneOperations;
+        _scheduledCloneOperations = null;
+        await operations.DisposeAsync();
+    }
 
     #region Purge & Bulk Operations
 
@@ -1914,6 +2034,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void CloseCorrelationExplorer() => FeaturePanels.CloseCorrelationExplorer();
 
     [RelayCommand]
+    private Task OpenScheduledMessages() => FeaturePanels.OpenScheduledMessages();
+
+    [RelayCommand]
+    private void CloseScheduledMessages() => FeaturePanels.CloseScheduledMessages();
+
+    [RelayCommand]
     private void OpenCharts()
     {
         FeaturePanels.OpenCharts();
@@ -2311,6 +2437,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         LogViewer?.Dispose();
         Terminal?.Dispose();
         FeaturePanels.CloseCorrelationExplorer();
+        if (_scheduledCloneOperations is IDisposable cloneDisposable)
+        {
+            cloneDisposable.Dispose();
+            _scheduledCloneOperations = null;
+        }
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();
@@ -2334,6 +2465,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         LogViewer?.Dispose();
         await Terminal.DisposeAsync();
         FeaturePanels.CloseCorrelationExplorer();
+        await DisposeScheduledCloneOperationsAsync();
 
         // Dispose update notification to unsubscribe from events
         UpdateNotification?.Dispose();

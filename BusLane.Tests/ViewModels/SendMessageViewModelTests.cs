@@ -182,11 +182,16 @@ public class SendMessageViewModelTests
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>());
         await _operations.DidNotReceiveWithAnyArgs().SendMessageAsync(default!, default!, default);
-        await store.Received(1).AddAsync(Arg.Is<ScheduledMessageIndexEntry>(entry =>
-            entry.EntityName == "queue" &&
-            entry.SequenceNumber == 42 &&
-            entry.ScheduledEnqueueTime == scheduledAt &&
-            entry.BodyPreview == "{\"id\":1}"));
+        await store.Received(1).AddAsync(
+            Arg.Is<ScheduledMessageIndexEntry>(entry =>
+                entry.ConnectionId == "connection-1" &&
+                entry.EntityName == "queue" &&
+                entry.SequenceNumber == 42 &&
+                entry.ScheduledEnqueueTime == scheduledAt &&
+                entry.BodyPreview == "" &&
+                entry.SearchableProperties.Values.All(string.IsNullOrEmpty)),
+            Arg.Is<ScheduledMessagePayload>(payload => payload.Body == "{\"id\":1}"),
+            Arg.Any<CancellationToken>());
         _statusMessage.Should().Be("Message scheduled successfully (sequence 42)");
     }
 
@@ -213,7 +218,10 @@ public class SendMessageViewModelTests
                 Arg.Any<CancellationToken>())
             .Returns(42);
         var store = Substitute.For<IScheduledMessageStore>();
-        store.AddAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
+        store.AddAsync(
+                Arg.Any<ScheduledMessageIndexEntry>(),
+                Arg.Any<ScheduledMessagePayload?>(),
+                Arg.Any<CancellationToken>())
             .Returns(_ => throw new IOException("disk full"));
         var sut = CreateSut(store);
         sut.Body = "{\"id\":1}";
@@ -225,7 +233,37 @@ public class SendMessageViewModelTests
         // Assert
         sut.ErrorMessage.Should().BeNull();
         _closed.Should().BeTrue();
-        _statusMessage.Should().Be("Message scheduled successfully (sequence 42)");
+        _statusMessage.Should().Be(
+            "Message scheduled successfully (sequence 42). The local schedule index could not be updated.");
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenScheduledConnectionContextIsMissing_ReportsIndexWarning()
+    {
+        _operations.ScheduleMessageAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(), Arg.Any<string?>(), Arg.Any<string?>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(42);
+        var store = Substitute.For<IScheduledMessageStore>();
+        var sut = new SendMessageViewModel(
+            _operations,
+            "queue",
+            () => _closed = true,
+            message => _statusMessage = message,
+            savedMessagesPath: _savedMessagesPath,
+            scheduledMessageStore: store);
+        sut.Body = "body";
+        sut.ScheduledEnqueueTimeText = DateTimeOffset.UtcNow.AddHours(1).ToString("O");
+
+        await sut.SendCommand.ExecuteAsync(null);
+
+        _statusMessage.Should().Be(
+            "Message scheduled successfully (sequence 42). The local schedule index could not be updated.");
+        await store.DidNotReceiveWithAnyArgs().AddAsync(
+            default!, default(ScheduledMessagePayload), default);
     }
 
     [Fact]
@@ -287,6 +325,12 @@ public class SendMessageViewModelTests
             () => _closed = true,
             message => _statusMessage = message,
             savedMessagesPath: _savedMessagesPath,
-            scheduledMessageStore: scheduledMessageStore);
+            scheduledMessageStore: scheduledMessageStore,
+            scheduledConnectionContext: new ScheduledMessageConnectionContext(
+                "connection-1",
+                "Development",
+                "dev.servicebus.windows.net",
+                ConnectionEnvironment.Development,
+                ScheduledMessageConnectionKind.ConnectionString));
     }
 }

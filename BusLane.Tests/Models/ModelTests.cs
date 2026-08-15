@@ -565,6 +565,104 @@ public class MessageInfoTests
     }
 }
 
+public class ScheduledMessageIndexEntryTests
+{
+    [Fact]
+    public void ScheduledMessageIndexEntry_NewRecord_ExposesLocalUpcomingState()
+    {
+        var entry = new ScheduledMessageIndexEntry
+        {
+            RecordId = "record-1",
+            ConnectionId = "connection-1",
+            ConnectionName = "Development",
+            NamespaceEndpoint = "dev.servicebus.windows.net",
+            Environment = ConnectionEnvironment.Development,
+            ConnectionKind = ScheduledMessageConnectionKind.ConnectionString,
+            EntityName = "orders",
+            SequenceNumber = 42,
+            ScheduledEnqueueTime = DateTimeOffset.UtcNow.AddHours(1),
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            EncryptedPayload = "encrypted"
+        };
+
+        entry.Status.Should().Be(ScheduledMessageRecordStatus.Indexed);
+        entry.HasPayload.Should().BeTrue();
+        entry.IsLegacyLimited.Should().BeFalse();
+        entry.IsBrokerConfirmed.Should().BeFalse();
+        Enum.GetValues<ScheduledMessageRecordStatus>().Should().Contain(
+            ScheduledMessageRecordStatus.ActionFailed);
+        Enum.GetValues<ScheduledMessageConnectionKind>().Should().Contain(
+            ScheduledMessageConnectionKind.AzureCredential);
+    }
+
+    [Fact]
+    public void ScheduledMessageIndexEntry_LegacyRecord_DisablesPayloadActions()
+    {
+        var entry = new ScheduledMessageIndexEntry
+        {
+            SchemaVersion = 1,
+            RecordId = "legacy",
+            EntityName = "orders"
+        };
+
+        entry.HasPayload.Should().BeFalse();
+        entry.IsLegacyLimited.Should().BeTrue();
+        entry.IsBrokerConfirmed.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ScheduledMessageIndexEntry_ConfirmedCancellation_IsBrokerConfirmed()
+    {
+        var entry = new ScheduledMessageIndexEntry
+        {
+            RecordId = "record-1",
+            ReplacementRecordId = "record-2",
+            EntityName = "orders",
+            Status = ScheduledMessageRecordStatus.Cancelled,
+            LastBrokerAction = "Cancel",
+            LastBrokerActionAt = DateTimeOffset.UtcNow
+        };
+
+        entry.IsBrokerConfirmed.Should().BeTrue();
+        entry.ReplacementRecordId.Should().Be("record-2");
+    }
+
+    [Theory]
+    [InlineData(42)]
+    [InlineData(42L)]
+    [InlineData(true)]
+    [InlineData(12.5)]
+    [InlineData("north")]
+    [InlineData('x')]
+    public void ScheduledMessagePropertyValue_ServiceBusPrimitive_RoundTrips(object value)
+    {
+        var serialized = ScheduledMessagePropertyValue.FromObject(value);
+
+        serialized.ToObject().Should().Be(value);
+    }
+
+    [Fact]
+    public void ScheduledMessagePropertyValue_ByteArray_RoundTrips()
+    {
+        var value = new byte[] { 1, 2, 3 };
+
+        var roundTripped = ScheduledMessagePropertyValue.FromObject(value).ToObject();
+
+        roundTripped.Should().BeEquivalentTo(value);
+    }
+
+    [Fact]
+    public void ScheduledMessagePropertyValue_TimeSpanAndUri_RoundTrip()
+    {
+        var duration = TimeSpan.FromMinutes(12);
+        var uri = new Uri("https://example.test/orders");
+
+        ScheduledMessagePropertyValue.FromObject(duration).ToObject().Should().Be(duration);
+        ScheduledMessagePropertyValue.FromObject(uri).ToObject().Should().Be(uri);
+    }
+}
+
 public class TopicInfoTests
 {
     [Fact]

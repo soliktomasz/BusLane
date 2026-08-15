@@ -40,6 +40,17 @@ public class MainWindowViewTests
         xaml.Should().Contain("Command=\"{Binding DismissIntroductionSplashCommand}\"");
     }
 
+    [Fact]
+    public void MainWindow_HostsScheduledMessagesFeaturePanel()
+    {
+        var xaml = File.ReadAllText(GetMainWindowPath());
+
+        xaml.Should().Contain("FeaturePanels.ShowScheduledMessages");
+        xaml.Should().Contain("FeaturePanels.ScheduledMessagesViewModel");
+        xaml.Should().Contain("CloseScheduledMessagesCommand");
+        xaml.Should().Contain("<controls:ScheduledMessagesView");
+    }
+
     private static string GetMainWindowPath()
     {
         return Path.GetFullPath(Path.Combine(

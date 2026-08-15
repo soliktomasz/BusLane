@@ -32,15 +32,20 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly Func<BusLane.Services.Abstractions.IFileDialogService?>? _getFileDialogService;
     private readonly ICorrelationRefreshDelay? _correlationRefreshDelay;
     private readonly ICorrelationMessageComparisonService? _correlationComparisonService;
+    private readonly IScheduledMessageManagementService? _scheduledMessageManagementService;
+    private readonly Func<ScheduledMessageResolvedEntry, ScheduledMessagePayload, Task>? _cloneScheduledMessage;
+    private readonly TimeProvider _timeProvider;
 
     [ObservableProperty] private bool _showLiveStream;
     [ObservableProperty] private bool _showCharts;
     [ObservableProperty] private bool _showAlerts;
     [ObservableProperty] private bool _showCorrelationExplorer;
+    [ObservableProperty] private bool _showScheduledMessages;
     [ObservableProperty] private LiveStreamViewModel? _liveStreamViewModel;
     [ObservableProperty] private DashboardViewModel? _dashboardViewModel;
     [ObservableProperty] private AlertsViewModel? _alertsViewModel;
     [ObservableProperty] private CorrelationExplorerViewModel? _correlationExplorerViewModel;
+    [ObservableProperty] private ScheduledMessagesViewModel? _scheduledMessagesViewModel;
     [ObservableProperty] private int _activeAlertCount;
 
     public FeaturePanelsViewModel(
@@ -62,7 +67,10 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         Func<IReadOnlyList<ReplayDestination>>? getReplayDestinations = null,
         Func<BusLane.Services.Abstractions.IFileDialogService?>? getFileDialogService = null,
         ICorrelationRefreshDelay? correlationRefreshDelay = null,
-        ICorrelationMessageComparisonService? correlationComparisonService = null)
+        ICorrelationMessageComparisonService? correlationComparisonService = null,
+        IScheduledMessageManagementService? scheduledMessageManagementService = null,
+        Func<ScheduledMessageResolvedEntry, ScheduledMessagePayload, Task>? cloneScheduledMessage = null,
+        TimeProvider? timeProvider = null)
     {
         _liveStreamService = liveStreamService;
         _alertService = alertService;
@@ -82,6 +90,9 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _getFileDialogService = getFileDialogService;
         _correlationRefreshDelay = correlationRefreshDelay;
         _correlationComparisonService = correlationComparisonService;
+        _scheduledMessageManagementService = scheduledMessageManagementService;
+        _cloneScheduledMessage = cloneScheduledMessage;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         DashboardViewModel = dashboardViewModel;
 
         _alertService.AlertTriggered += OnAlertTriggered;
@@ -111,6 +122,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     [RelayCommand]
     public async Task OpenLiveStream()
     {
+        CloseScheduledMessages();
         DisposeCorrelationExplorer();
         LiveStreamViewModel = new LiveStreamViewModel(
             _liveStreamService,
@@ -136,6 +148,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public void OpenCharts()
     {
+        CloseScheduledMessages();
         DisposeCorrelationExplorer();
         var queues = _getQueues();
         var subscriptions = _getSubscriptions();
@@ -157,6 +170,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public void OpenAlerts()
     {
+        CloseScheduledMessages();
         DisposeCorrelationExplorer();
         AlertsViewModel = new AlertsViewModel(_alertService, _notificationService, () => ShowAlerts = false);
         ShowAlerts = true;
@@ -172,6 +186,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
     public async Task OpenCorrelationExplorer()
     {
+        CloseScheduledMessages();
         if (_correlationCatalog == null ||
             _messageReplayService == null ||
             _replayAuditStore == null ||
@@ -202,6 +217,32 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     public void CloseCorrelationExplorer()
     {
         DisposeCorrelationExplorer();
+    }
+
+    public async Task OpenScheduledMessages()
+    {
+        if (_scheduledMessageManagementService is null || _cloneScheduledMessage is null)
+        {
+            _setStatus("Scheduled Messages is not available");
+            return;
+        }
+
+        CloseLiveStream();
+        CloseCharts();
+        CloseAlerts();
+        CloseCorrelationExplorer();
+        ScheduledMessagesViewModel = new ScheduledMessagesViewModel(
+            _scheduledMessageManagementService,
+            _cloneScheduledMessage,
+            _timeProvider);
+        await ScheduledMessagesViewModel.RefreshCommand.ExecuteAsync(null);
+        ShowScheduledMessages = true;
+    }
+
+    public void CloseScheduledMessages()
+    {
+        ShowScheduledMessages = false;
+        ScheduledMessagesViewModel = null;
     }
 
     [RelayCommand]
@@ -237,6 +278,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         CloseCharts();
         CloseAlerts();
         CloseCorrelationExplorer();
+        CloseScheduledMessages();
     }
 
     private void DisposeCorrelationExplorer()

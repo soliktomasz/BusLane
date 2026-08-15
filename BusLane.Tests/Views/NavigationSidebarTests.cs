@@ -153,6 +153,15 @@ public class NavigationSidebarTests
         xaml.Should().Contain("<TextBlock Text=\"Refresh\" VerticalAlignment=\"Center\"/>");
     }
 
+    [Fact]
+    public void NavigationSidebar_HasExpandedAndCollapsedScheduledMessagesButtons()
+    {
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        CountOccurrences(xaml, "Command=\"{Binding OpenScheduledMessagesCommand}\"").Should().Be(2);
+        xaml.Should().Contain("Kind=\"CalendarClock\"");
+    }
+
     private static string GetSidebarPath()
     {
         return Path.GetFullPath(Path.Combine(

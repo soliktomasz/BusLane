@@ -128,6 +128,36 @@
                 </Grid>
             </Border>
 
+            <!-- Scheduled Messages Panel -->
+            <Border Grid.Row="0" Grid.RowSpan="2"
+                    IsVisible="{Binding FeaturePanels.ShowScheduledMessages}"
+                    Background="{DynamicResource AppBackground}">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Classes="page-header-surface">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
+                                <LucideIcon Kind="CalendarClock" Size="18"
+                                            Foreground="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="Scheduled Messages" Classes="heading"/>
+                                <TextBlock Text="Manage messages scheduled through BusLane"
+                                           Classes="caption"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Classes="secondary small"
+                                    Command="{Binding CloseScheduledMessagesCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <LucideIcon Kind="X" Size="14"/>
+                                    <TextBlock Text="Close"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <controls:ScheduledMessagesView Grid.Row="1"
+                        DataContext="{Binding FeaturePanels.ScheduledMessagesViewModel}"/>
+                </Grid>
+            </Border>
+
             <!-- Charts Panel (overlay when active) -->
             <Border Grid.Row="0" Grid.RowSpan="2"
                     IsVisible="{Binding FeaturePanels.ShowCharts}"

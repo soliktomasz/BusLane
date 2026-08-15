@@ -281,7 +281,8 @@ public class MessageReplayServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(99);
         var time = new ManualTimeProvider(DateTimeOffset.Parse("2026-07-28T10:00:00Z"));
-        var sut = CreateSut(time);
+        var store = Substitute.For<IScheduledMessageStore>();
+        var sut = CreateSut(time, scheduledMessageStore: store);
         var scheduledAt = time.GetUtcNow().AddHours(1);
         var request = sut.CreateRequest(CreateSource(), CreateDestination()) with
         {
@@ -312,6 +313,10 @@ public class MessageReplayServiceTests
             request.PartitionKey,
             request.TimeToLive,
             Arg.Any<CancellationToken>());
+        await store.Received(1).AddAsync(
+            Arg.Is<ScheduledMessageIndexEntry>(entry => entry.SequenceNumber == 99),
+            Arg.Is<ScheduledMessagePayload>(payload => payload.Body == request.Body),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -340,12 +345,14 @@ public class MessageReplayServiceTests
     private static MessageReplayService CreateSut(
         TimeProvider? timeProvider = null,
         IReplayDelay? delay = null,
-        IReplayAuditStore? auditStore = null)
+        IReplayAuditStore? auditStore = null,
+        IScheduledMessageStore? scheduledMessageStore = null)
     {
         return new MessageReplayService(
             timeProvider ?? new ManualTimeProvider(DateTimeOffset.Parse("2026-07-28T10:00:00Z")),
             delay ?? Substitute.For<IReplayDelay>(),
-            auditStore);
+            auditStore,
+            scheduledMessageStore);
     }
 
     private static ReplayDestination CreateDestination()
@@ -355,7 +362,10 @@ public class MessageReplayServiceTests
             ConnectionEnvironment.Test,
             "orders-replay",
             "Queue",
-            RequiresSession: false);
+            RequiresSession: false,
+            new ScheduledMessageConnectionContext(
+                "connection-1", "Demo", "demo.servicebus.windows.net",
+                ConnectionEnvironment.Test, ScheduledMessageConnectionKind.ConnectionString));
     }
 
     private static CorrelationMessage CreateSource()

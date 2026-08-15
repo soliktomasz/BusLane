@@ -1,5 +1,6 @@
 namespace BusLane.Tests.ViewModels.Dashboard;
 
+using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using BusLane.ViewModels.Dashboard;
@@ -23,16 +24,25 @@ public class LineChartWidgetViewModelTests
                 TimeRange = "1 Hour"
             }
         };
-        var sut = new LineChartWidgetViewModel(widget, metricsService);
+        using var sut = new LineChartWidgetViewModel(widget, metricsService);
+        var series = sut.Series[0].Should().BeOfType<LineSeries<DateTimePoint>>().Subject;
+        var values = (ObservableCollection<DateTimePoint>)series.Values!;
+        var refreshed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        values.CollectionChanged += (_, _) =>
+        {
+            if (values.Count > 0)
+            {
+                refreshed.TrySetResult();
+            }
+        };
 
         // Act
         metricsService.RecordMetric("queue1", "ActiveMessageCount", 12);
         metricsService.EmitBatch();
-        await Task.Delay(150);
+        await refreshed.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         // Assert
-        var series = sut.Series[0].Should().BeOfType<LineSeries<DateTimePoint>>().Subject;
-        ((IEnumerable<DateTimePoint>)series.Values!).Should().ContainSingle();
+        values.Should().ContainSingle();
     }
 
     private sealed class BatchOnlyMetricsService : IMetricsService

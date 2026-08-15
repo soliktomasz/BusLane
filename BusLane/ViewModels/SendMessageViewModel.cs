@@ -23,6 +23,10 @@ public partial class SendMessageViewModel : ViewModelBase
     private readonly Action<string> _onStatusUpdate;
     private readonly string _savedMessagesPath;
     private readonly IScheduledMessageStore? _scheduledMessageStore;
+    private readonly ScheduledMessageConnectionContext? _scheduledConnectionContext;
+    private readonly string? _subscriptionName;
+    private readonly Dictionary<string, ScheduledMessagePropertyValue> _scheduledPropertyValues =
+        new(StringComparer.Ordinal);
 
     private static readonly string DefaultSavedMessagesPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -72,7 +76,9 @@ public partial class SendMessageViewModel : ViewModelBase
         Action<string> onStatusUpdate,
         IFileDialogService? fileDialogService = null,
         string? savedMessagesPath = null,
-        IScheduledMessageStore? scheduledMessageStore = null)
+        IScheduledMessageStore? scheduledMessageStore = null,
+        ScheduledMessageConnectionContext? scheduledConnectionContext = null,
+        string? subscriptionName = null)
     {
         _operations = operations;
         _fileDialogService = fileDialogService;
@@ -81,6 +87,8 @@ public partial class SendMessageViewModel : ViewModelBase
         _onStatusUpdate = onStatusUpdate;
         _savedMessagesPath = savedMessagesPath ?? DefaultSavedMessagesPath;
         _scheduledMessageStore = scheduledMessageStore;
+        _scheduledConnectionContext = scheduledConnectionContext;
+        _subscriptionName = subscriptionName;
 
         LoadSavedMessages();
     }
@@ -96,6 +104,7 @@ public partial class SendMessageViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveCustomProperty(CustomProperty property)
     {
+        _scheduledPropertyValues.Remove(property.Key);
         property.PropertyChanged -= OnCustomPropertyChanged;
         CustomProperties.Remove(property);
         if (ActiveTemplate != null)
@@ -142,7 +151,9 @@ public partial class SendMessageViewModel : ViewModelBase
             var properties = new Dictionary<string, object>();
             foreach (var prop in messageToSend.CustomProperties.Where(p => !string.IsNullOrWhiteSpace(p.Key)))
             {
-                properties[prop.Key] = prop.Value;
+                properties[prop.Key] = _scheduledPropertyValues.TryGetValue(prop.Key, out var original)
+                    ? (original with { Value = prop.Value }).ToObject() ?? prop.Value
+                    : prop.Value;
             }
 
             if (messageToSend.ScheduledEnqueueTime.HasValue)
@@ -164,26 +175,64 @@ public partial class SendMessageViewModel : ViewModelBase
                     messageToSend.TimeToLive
                 );
 
-                if (_scheduledMessageStore != null)
+                var indexWarning = false;
+                if (_scheduledMessageStore != null && _scheduledConnectionContext is null)
+                {
+                    indexWarning = true;
+                }
+                else if (_scheduledMessageStore != null && _scheduledConnectionContext != null)
                 {
                     try
                     {
-                        await _scheduledMessageStore.AddAsync(new ScheduledMessageIndexEntry(
-                            _entityName,
-                            SubscriptionName: null,
-                            sequenceNumber,
-                            messageToSend.ScheduledEnqueueTime.Value,
+                        var now = DateTimeOffset.UtcNow;
+                        var entry = new ScheduledMessageIndexEntry
+                        {
+                            ConnectionId = _scheduledConnectionContext.ConnectionId,
+                            ConnectionName = _scheduledConnectionContext.ConnectionName,
+                            NamespaceEndpoint = _scheduledConnectionContext.NamespaceEndpoint,
+                            NamespaceResourceId = _scheduledConnectionContext.NamespaceResourceId,
+                            Environment = _scheduledConnectionContext.Environment,
+                            ConnectionKind = _scheduledConnectionContext.Kind,
+                            EntityName = _entityName,
+                            SubscriptionName = _subscriptionName,
+                            SequenceNumber = sequenceNumber,
+                            ScheduledEnqueueTime = messageToSend.ScheduledEnqueueTime.Value,
+                            CreatedAt = now,
+                            UpdatedAt = now,
+                            MessageId = messageToSend.MessageId,
+                            CorrelationId = messageToSend.CorrelationId,
+                            Subject = messageToSend.Subject,
+                            BodyPreview = "",
+                            SearchableProperties = messageToSend.CustomProperties
+                                .ToDictionary(p => p.Key, _ => "")
+                        };
+                        var payload = new ScheduledMessagePayload(
+                            messageToSend.Body,
+                            messageToSend.ContentType,
+                            messageToSend.CorrelationId,
                             messageToSend.MessageId,
-                            BuildBodyPreview(messageToSend.Body),
-                            DateTimeOffset.UtcNow));
+                            messageToSend.SessionId,
+                            messageToSend.Subject,
+                            messageToSend.To,
+                            messageToSend.ReplyTo,
+                            messageToSend.ReplyToSessionId,
+                            messageToSend.PartitionKey,
+                            messageToSend.TimeToLive,
+                            properties.ToDictionary(
+                                p => p.Key,
+                                p => ScheduledMessagePropertyValue.FromObject(p.Value)));
+                        await _scheduledMessageStore.AddAsync(entry, payload);
                     }
                     catch (Exception ex)
                     {
                         Log.Warning(ex, "Failed to update scheduled message index for {EntityName}", _entityName);
+                        indexWarning = true;
                     }
                 }
 
-                _onStatusUpdate($"Message scheduled successfully (sequence {sequenceNumber})");
+                _onStatusUpdate(indexWarning
+                    ? $"Message scheduled successfully (sequence {sequenceNumber}). The local schedule index could not be updated."
+                    : $"Message scheduled successfully (sequence {sequenceNumber})");
             }
             else
             {
@@ -279,6 +328,7 @@ public partial class SendMessageViewModel : ViewModelBase
     [RelayCommand]
     private void LoadMessage(SavedMessage message)
     {
+        _scheduledPropertyValues.Clear();
         Body = message.Body;
         ContentType = message.ContentType;
         CorrelationId = message.CorrelationId;
@@ -545,6 +595,7 @@ public partial class SendMessageViewModel : ViewModelBase
     /// </summary>
     public void PopulateFromMessage(Models.MessageInfo message)
     {
+        _scheduledPropertyValues.Clear();
         Body = message.Body;
         ContentType = message.ContentType;
         CorrelationId = message.CorrelationId;
@@ -567,6 +618,31 @@ public partial class SendMessageViewModel : ViewModelBase
         }
     }
 
+    public void PopulateFromScheduledPayload(ScheduledMessagePayload payload)
+    {
+        Body = payload.Body;
+        ContentType = payload.ContentType;
+        CorrelationId = payload.CorrelationId;
+        MessageId = Guid.NewGuid().ToString();
+        SessionId = payload.SessionId;
+        Subject = payload.Subject;
+        To = payload.To;
+        ReplyTo = payload.ReplyTo;
+        ReplyToSessionId = payload.ReplyToSessionId;
+        PartitionKey = payload.PartitionKey;
+        TimeToLiveText = payload.TimeToLive?.ToString();
+        ScheduledEnqueueTimeText = null;
+        CustomProperties.Clear();
+        _scheduledPropertyValues.Clear();
+        foreach (var property in payload.Properties)
+        {
+            var customProperty = new CustomProperty { Key = property.Key, Value = property.Value.Value };
+            customProperty.PropertyChanged += OnCustomPropertyChanged;
+            CustomProperties.Add(customProperty);
+            _scheduledPropertyValues[property.Key] = property.Value;
+        }
+    }
+
     [RelayCommand]
     private void ClearForm()
     {
@@ -583,6 +659,7 @@ public partial class SendMessageViewModel : ViewModelBase
         TimeToLiveText = null;
         ScheduledEnqueueTimeText = null;
         CustomProperties.Clear();
+        _scheduledPropertyValues.Clear();
         TemplateTokenValues.Clear();
         ActiveTemplate = null;
         ErrorMessage = null;
