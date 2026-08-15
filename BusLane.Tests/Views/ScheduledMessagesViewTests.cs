@@ -76,4 +76,25 @@ public class ScheduledMessagesViewTests
             .Should()
             .NotContain(["Clone", "Cancel", "Reschedule", "Resolve"]);
     }
+
+    [Fact]
+    public void ScheduledMessagesView_DisplaysMessageStatusInline()
+    {
+        var path = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "BusLane",
+            "Views", "Controls", "ScheduledMessagesView.axaml"));
+        var document = XDocument.Parse(File.ReadAllText(path));
+
+        var messageId = document.Descendants()
+            .Single(element => element.Name.LocalName == "TextBlock" &&
+                               element.Attribute("Text")?.Value == "{Binding Entry.MessageId}");
+        var messageStatusContainer = messageId.Parent;
+
+        messageStatusContainer.Should().NotBeNull();
+        messageStatusContainer!.Name.LocalName.Should().Be("StackPanel");
+        var orientation = messageStatusContainer.Attribute("Orientation");
+
+        orientation.Should().NotBeNull();
+        orientation!.Value.Should().Be("Horizontal");
+    }
 }
