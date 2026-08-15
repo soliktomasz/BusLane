@@ -236,9 +236,38 @@ jobs:
         run: vpk download github --repoUrl https://github.com/${{ github.repository }} --channel ${{ matrix.runtime }} --token ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
+      - name: Install Apple certificates and notary profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          INSTALLER_CERTIFICATE_BASE64: ${{ secrets.INSTALLER_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM: ${{ secrets.APPLE_TEAM }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_BUILD_PATH=$RUNNER_TEMP/build_certificate.p12
+          CERT_INSTALLER_PATH=$RUNNER_TEMP/installer_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          # import certificates from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERT_BUILD_PATH
+          echo -n "$INSTALLER_CERTIFICATE_BASE64" | base64 --decode -o $CERT_INSTALLER_PATH
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          # import certificates to keychain
+          security import $CERT_BUILD_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $CERT_INSTALLER_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          # create notarytool profile (for notarization)
+          xcrun notarytool store-credentials --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM" --password "$APPLE_PASSWORD" velopack-profile
+
       - name: Create Velopack package
         env:
           PACK_VERSION: ${{ steps.version.outputs.version }}
+          SIGN_APP_IDENTITY: "Developer ID Application: Your Name"
+          SIGN_INSTALL_IDENTITY: "Developer ID Installer: Your Name"
         run: |
           vpk pack \
             --packId BusLane \
@@ -251,7 +280,11 @@ jobs:
             --channel ${{ matrix.runtime }} \
             --delta None \
             --noPortable \
-            --icon BusLane/Assets/icon.icns
+            --icon BusLane/Assets/icon.icns \
+            --signAppIdentity "$SIGN_APP_IDENTITY" \
+            --signInstallIdentity "$SIGN_INSTALL_IDENTITY" \
+            --notaryProfile velopack-profile \
+            --keychain $RUNNER_TEMP/app-signing.keychain-db
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -259,6 +292,10 @@ jobs:
           name: BusLane-${{ steps.version.outputs.version }}-${{ matrix.runtime }}
           path: Releases/**
           retention-days: 30
+
+      - name: Clean up keychain
+        if: ${{ always() }}
+        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
 
   create-release:
     needs: [build-linux, build-windows, build-macos]
