@@ -3,33 +3,95 @@
              x:Class="BusLane.Views.Controls.ScheduledMessagesView"
              x:CompileBindings="False">
     <Grid RowDefinitions="Auto,Auto,*">
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,12" ColumnSpacing="12">
-            <TextBox Text="{Binding SearchText, Mode=TwoWay}"
-                     PlaceholderText="Search connection, entity, message, body, or property"
-                     AutomationProperties.Name="Search scheduled messages"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                <Button Classes="secondary small" Command="{Binding ShowListCommand}" Content="List"/>
-                <Button Classes="secondary small" Command="{Binding ShowCalendarCommand}" Content="Calendar"/>
-                <Button Classes="secondary small" Command="{Binding RefreshCommand}">
+        <Border Grid.Row="0" Classes="dialog-section-surface" Margin="16,12,16,8" Padding="12">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Search" Classes="field-label"/>
+                    <TextBox Text="{Binding SearchText, Mode=TwoWay}"
+                             PlaceholderText="Connection, entity, message, body, or property"
+                             AutomationProperties.Name="Search scheduled messages"
+                             TabIndex="0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Bottom">
+                    <TextBlock Text="View" Classes="field-label"/>
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="RefreshCw" Size="13"/>
-                        <TextBlock Text="Refresh"/>
+                        <Button Classes="secondary small" Command="{Binding ShowListCommand}" Content="List" TabIndex="6"/>
+                        <Button Classes="secondary small" Command="{Binding ShowCalendarCommand}" Content="Calendar" TabIndex="7"/>
+                        <Button Classes="secondary small" Command="{Binding RefreshCommand}" TabIndex="8">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="RefreshCw" Size="13"/>
+                                <TextBlock Text="Refresh"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Button>
-            </StackPanel>
-        </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Margin="16,0,16,12" ColumnSpacing="8">
-            <ComboBox ItemsSource="{Binding ConnectionOptions}" SelectedItem="{Binding SelectedConnection}" PlaceholderText="Connection"/>
-            <ComboBox Grid.Column="1" ItemsSource="{Binding EntityOptions}" SelectedItem="{Binding SelectedEntity}" PlaceholderText="Entity"/>
-            <ComboBox Grid.Column="2" ItemsSource="{Binding EnvironmentOptions}" SelectedItem="{Binding SelectedEnvironment}" PlaceholderText="Environment"/>
-            <ComboBox Grid.Column="3" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" PlaceholderText="Status"/>
-            <ComboBox Grid.Column="4" ItemsSource="{Binding TimeRangeOptions}" SelectedItem="{Binding SelectedTimeRange}" PlaceholderText="Time range"/>
-        </Grid>
+        <Border Grid.Row="1" Classes="dialog-section-surface" Margin="16,0,16,12" Padding="12">
+            <StackPanel Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <LucideIcon Kind="ListFilter" Size="14"/>
+                    <TextBlock Text="Filters" Classes="body-strong"/>
+                </StackPanel>
+                <WrapPanel Orientation="Horizontal">
+                    <StackPanel Width="170" Margin="0,0,8,8">
+                        <TextBlock Text="Connection" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding ConnectionOptions}"
+                                  SelectedItem="{Binding SelectedConnection}"
+                                  AutomationProperties.Name="Connection filter" TabIndex="1"/>
+                    </StackPanel>
+                    <StackPanel Width="170" Margin="0,0,8,8">
+                        <TextBlock Text="Entity" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding EntityOptions}"
+                                  SelectedItem="{Binding SelectedEntity}"
+                                  AutomationProperties.Name="Entity filter" TabIndex="2"/>
+                    </StackPanel>
+                    <StackPanel Width="170" Margin="0,0,8,8">
+                        <TextBlock Text="Environment" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding EnvironmentOptions}"
+                                  SelectedItem="{Binding SelectedEnvironment}"
+                                  AutomationProperties.Name="Environment filter" TabIndex="3"/>
+                    </StackPanel>
+                    <StackPanel Width="170" Margin="0,0,8,8">
+                        <TextBlock Text="Status" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding SelectedStatus}"
+                                  AutomationProperties.Name="Status filter" TabIndex="4"/>
+                    </StackPanel>
+                    <StackPanel Width="170" Margin="0,0,0,8">
+                        <TextBlock Text="Time range" Classes="field-label"/>
+                        <ComboBox ItemsSource="{Binding TimeRangeOptions}"
+                                  SelectedItem="{Binding SelectedTimeRange}"
+                                  AutomationProperties.Name="Time range filter" TabIndex="5"/>
+                    </StackPanel>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
 
         <Grid Grid.Row="2">
-            <ScrollViewer IsVisible="{Binding !IsCalendarMode}">
-                <ItemsControl ItemsSource="{Binding FilteredEntries}">
+            <Grid IsVisible="{Binding !IsEmpty}" RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,0,16,8">
+                    <TextBlock Text="Scheduled messages" Classes="body-strong"/>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding FilteredEntries.Count, StringFormat='{}{0} results'}"
+                               Classes="caption"/>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" IsVisible="{Binding !IsCalendarMode}">
+                    <StackPanel>
+                        <Border Background="{DynamicResource SurfaceSubtle}"
+                                BorderBrush="{DynamicResource BorderDefault}"
+                                BorderThickness="0,0,0,1" Margin="16,0,16,8" Padding="12,8">
+                            <Grid ColumnDefinitions="150,160,160,*,Auto" ColumnSpacing="10">
+                                <TextBlock Text="Scheduled" Classes="field-label"/>
+                                <TextBlock Grid.Column="1" Text="Connection" Classes="field-label"/>
+                                <TextBlock Grid.Column="2" Text="Entity" Classes="field-label"/>
+                                <TextBlock Grid.Column="3" Text="Message / status" Classes="field-label"/>
+                                <TextBlock Grid.Column="4" Text="Actions" Classes="field-label"/>
+                            </Grid>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding FilteredEntries}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Classes="property-row" Margin="16,0,16,6" Padding="12">
@@ -66,10 +128,11 @@
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
 
-            <Grid IsVisible="{Binding IsCalendarMode}" RowDefinitions="Auto,*" Margin="16">
+                <Grid Grid.Row="1" IsVisible="{Binding IsCalendarMode}" RowDefinitions="Auto,*" Margin="16">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <Button Command="{Binding PreviousMonthCommand}" Content="Previous"/>
                     <TextBlock Grid.Column="1" Text="{Binding SelectedMonth, StringFormat='{}{0:MMMM yyyy}'}"
@@ -101,13 +164,17 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                </Grid>
             </Grid>
 
-            <Border Classes="empty-state" Margin="24" IsVisible="{Binding IsEmpty}">
-                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                    <LucideIcon Kind="CalendarClock" Size="24"/>
-                    <TextBlock Text="No scheduled messages"/>
-                    <TextBlock Text="Only messages scheduled through BusLane appear here." Classes="caption"/>
+            <Border Classes="empty-state" Margin="24" IsVisible="{Binding IsEmpty}"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                <StackPanel HorizontalAlignment="Center" Spacing="8" MaxWidth="420">
+                    <LucideIcon Kind="SearchX" Size="28" HorizontalAlignment="Center"/>
+                    <TextBlock Text="No scheduled messages match these filters"
+                               Classes="body-strong" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Adjust the filters above or refresh to check for newly scheduled messages."
+                               Classes="caption" TextAlignment="Center" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
