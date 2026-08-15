@@ -9,6 +9,22 @@ using NSubstitute;
 public class ScheduledMessagesViewModelTests
 {
     [Fact]
+    public void SelectedFilters_Changed_DoNotNotifyOptionSources()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+        var changedProperties = new List<string?>();
+        sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        sut.SelectedConnection = "Development";
+        sut.SelectedEntity = "orders";
+
+        changedProperties.Should().NotContain(nameof(sut.ConnectionOptions));
+        changedProperties.Should().NotContain(nameof(sut.EntityOptions));
+        changedProperties.Should().Contain(nameof(sut.FilteredEntries));
+    }
+
+    [Fact]
     public async Task RefreshAsync_LoadsResolvedEntriesAndDefaultsToUpcoming()
     {
         var service = Substitute.For<IScheduledMessageManagementService>();
