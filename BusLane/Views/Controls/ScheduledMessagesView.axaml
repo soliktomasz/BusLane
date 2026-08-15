@@ -110,20 +110,48 @@
                                                        IsVisible="{Binding !Entry.IsBrokerConfirmed}"/>
                                         </StackPanel>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4">
-                                        <Button Classes="secondary small" Content="Clone"
-                                                Command="{Binding $parent[UserControl].DataContext.CloneCommand}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Classes="secondary small" Content="Cancel"
-                                                Command="{Binding $parent[UserControl].DataContext.BeginCancelCommand}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Classes="secondary small" Content="Reschedule"
-                                                Command="{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Classes="secondary small" Content="Resolve"
-                                                Command="{Binding $parent[UserControl].DataContext.ResolveCommand}"
-                                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
+                                    <Button Grid.Column="4"
+                                            Classes="toolbar"
+                                            ToolTip.Tip="More scheduled message actions"
+                                            AutomationProperties.Name="Scheduled message actions"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
+                                        <Button.Flyout>
+                                            <Flyout Placement="BottomEdgeAlignedRight">
+                                                <StackPanel Spacing="4" MinWidth="160">
+                                                    <Button Classes="subtle small"
+                                                            Command="{Binding $parent[UserControl].DataContext.CloneCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left">
+                                                        <TextBlock Text="Clone"/>
+                                                    </Button>
+                                                    <Button Classes="subtle small"
+                                                            Command="{Binding $parent[UserControl].DataContext.BeginCancelCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left">
+                                                        <TextBlock Text="Cancel"/>
+                                                    </Button>
+                                                    <Button Classes="subtle small"
+                                                            Command="{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left">
+                                                        <TextBlock Text="Reschedule"/>
+                                                    </Button>
+                                                    <Button Classes="subtle small"
+                                                            Command="{Binding $parent[UserControl].DataContext.ResolveCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left">
+                                                        <TextBlock Text="Resolve"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Flyout>
+                                        </Button.Flyout>
+                                        <LucideIcon Kind="Ellipsis" Size="13"/>
+                                    </Button>
                                 </Grid>
                             </Border>
                         </DataTemplate>
