@@ -1,6 +1,7 @@
 namespace BusLane.Tests.Views;
 
 using FluentAssertions;
+using System.Xml.Linq;
 
 public class ScheduledMessagesViewTests
 {
@@ -37,5 +38,42 @@ public class ScheduledMessagesViewTests
         {
             xaml.Should().Contain(value);
         }
+    }
+
+    [Fact]
+    public void ScheduledMessagesView_CollapsesRowActionsIntoFlyout()
+    {
+        var path = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "BusLane",
+            "Views", "Controls", "ScheduledMessagesView.axaml"));
+        var document = XDocument.Parse(File.ReadAllText(path));
+
+        var actionButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" &&
+                               element.Attribute("ToolTip.Tip")?.Value == "More scheduled message actions");
+
+        actionButton.Descendants()
+            .Single(element => element.Name.LocalName == "Flyout")
+            .Attribute("Placement")
+            ?.Value
+            .Should()
+            .Be("BottomEdgeAlignedRight");
+
+        actionButton.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => element.Attribute("Command")?.Value)
+            .Should()
+            .Contain([
+                "{Binding $parent[UserControl].DataContext.CloneCommand}",
+                "{Binding $parent[UserControl].DataContext.BeginCancelCommand}",
+                "{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}",
+                "{Binding $parent[UserControl].DataContext.ResolveCommand}"
+            ]);
+
+        document.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => element.Attribute("Content")?.Value)
+            .Should()
+            .NotContain(["Clone", "Cancel", "Reschedule", "Resolve"]);
     }
 }
