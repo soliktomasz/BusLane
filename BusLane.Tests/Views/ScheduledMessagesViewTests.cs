@@ -25,5 +25,17 @@ public class ScheduledMessagesViewTests
         {
             xaml.Should().Contain(value);
         }
+
+        foreach (var value in new[]
+                 {
+                     "Filters", "Connection filter", "Entity filter", "Environment filter",
+                     "Status filter", "Time range filter", "FilteredEntries.Count",
+                     "Scheduled", "Message / status", "Actions",
+                     "No scheduled messages match these filters",
+                     "IsVisible=\"{Binding !IsEmpty}\""
+                 })
+        {
+            xaml.Should().Contain(value);
+        }
     }
 }
