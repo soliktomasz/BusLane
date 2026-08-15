@@ -162,6 +162,45 @@ public class NavigationSidebarTests
         xaml.Should().Contain("Kind=\"CalendarClock\"");
     }
 
+    [Fact]
+    public void NavigationSidebar_CollapsesSecondaryUtilitiesBehindMoreTools()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Act
+        var secondaryTools = ExtractRegion(
+            xaml,
+            "<!-- More Tools Panel -->",
+            "<!-- /More Tools Panel -->");
+
+        // Assert
+        xaml.Should().Contain("IsChecked=\"{Binding IsMoreToolsExpanded, Mode=TwoWay}\"");
+        xaml.Should().Contain("AutomationProperties.Name=\"More tools\"");
+        secondaryTools.Should().Contain("IsVisible=\"{Binding IsMoreToolsExpanded}\"");
+        secondaryTools.Should().Contain("OpenLiveStreamCommand");
+        secondaryTools.Should().Contain("OpenCorrelationExplorerCommand");
+        secondaryTools.Should().Contain("OpenScheduledMessagesCommand");
+    }
+
+    [Fact]
+    public void NavigationSidebar_KeepsFrequentUtilitiesOutsideMoreTools()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Act
+        var secondaryTools = ExtractRegion(
+            xaml,
+            "<!-- More Tools Panel -->",
+            "<!-- /More Tools Panel -->");
+
+        // Assert
+        secondaryTools.Should().NotContain("OpenChartsCommand");
+        secondaryTools.Should().NotContain("OpenAlertsCommand");
+        secondaryTools.Should().NotContain("OpenSettingsCommand");
+    }
+
     private static string GetSidebarPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -188,5 +227,16 @@ public class NavigationSidebarTests
         }
 
         return count;
+    }
+
+    private static string ExtractRegion(string text, string startMarker, string endMarker)
+    {
+        var start = text.IndexOf(startMarker, StringComparison.Ordinal);
+        start.Should().BeGreaterThanOrEqualTo(0);
+
+        var end = text.IndexOf(endMarker, start, StringComparison.Ordinal);
+        end.Should().BeGreaterThan(start);
+
+        return text[start..end];
     }
 }

@@ -1841,13 +1841,35 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
+    <Style Selector="Border.sidebar-more-tools-panel">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style Selector="ToggleButton.sidebar-more-tools-toggle">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="MinHeight" Value="44"/>
+    </Style>
+
+    <Style Selector="Border.sidebar-utility-divider">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="Margin" Value="0,4"/>
+    </Style>
+
     <Style Selector="Grid.sidebar-rail">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
     </Style>
 
     <Style Selector="Button.sidebar-utility-button">
         <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="MinHeight" Value="44"/>
     </Style>
 
     <Style Selector="Button.workspace-new-tab">

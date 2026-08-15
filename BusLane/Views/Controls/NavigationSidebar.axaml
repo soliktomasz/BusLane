@@ -381,34 +381,59 @@
 
             <Border Grid.Row="2" Classes="sidebar-utility-dock">
                 <StackPanel Margin="12,10,12,12" Spacing="4">
-                    <TextBlock Text="Utilities" Classes="sidebar-section-label" Margin="0,0,0,4"/>
+                    <!-- More Tools Panel -->
+                    <Border Classes="sidebar-more-tools-panel"
+                            IsVisible="{Binding IsMoreToolsExpanded}">
+                        <StackPanel Spacing="2">
+                            <Button Classes="subtle sidebar-utility-button"
+                                    Command="{Binding OpenLiveStreamCommand}"
+                                    HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="Radio" Size="16"/>
+                                    <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                    <Button Classes="subtle sidebar-utility-button"
-                            Command="{Binding OpenLiveStreamCommand}"
-                            HorizontalAlignment="Stretch">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="Radio" Size="16"/>
-                            <TextBlock Text="Live Stream" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+                            <Button Classes="subtle sidebar-utility-button"
+                                    Command="{Binding OpenCorrelationExplorerCommand}"
+                                    HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="GitBranch" Size="16"/>
+                                    <TextBlock Text="Correlation Explorer" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                    <Button Classes="subtle sidebar-utility-button"
-                            Command="{Binding OpenCorrelationExplorerCommand}"
-                            HorizontalAlignment="Stretch">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="GitBranch" Size="16"/>
-                            <TextBlock Text="Correlation Explorer" VerticalAlignment="Center"/>
+                            <Button Classes="subtle sidebar-utility-button"
+                                    Command="{Binding OpenScheduledMessagesCommand}"
+                                    HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="CalendarClock" Size="16"/>
+                                    <TextBlock Text="Scheduled Messages" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
-                    </Button>
+                    </Border>
+                    <!-- /More Tools Panel -->
 
-                    <Button Classes="subtle sidebar-utility-button"
-                            Command="{Binding OpenScheduledMessagesCommand}"
-                            HorizontalAlignment="Stretch">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="CalendarClock" Size="16"/>
-                            <TextBlock Text="Scheduled Messages" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+                    <ToggleButton Classes="subtle sidebar-more-tools-toggle"
+                                  IsChecked="{Binding IsMoreToolsExpanded, Mode=TwoWay}"
+                                  AutomationProperties.Name="More tools"
+                                  HorizontalAlignment="Stretch">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <LucideIcon Grid.Column="0" Kind="LayoutGrid" Size="16"/>
+                            <TextBlock Grid.Column="1" Text="More tools" VerticalAlignment="Center"/>
+                            <LucideIcon Grid.Column="2"
+                                        Kind="ChevronDown"
+                                        Size="16"
+                                        IsVisible="{Binding !IsMoreToolsExpanded}"/>
+                            <LucideIcon Grid.Column="2"
+                                        Kind="ChevronUp"
+                                        Size="16"
+                                        IsVisible="{Binding IsMoreToolsExpanded}"/>
+                        </Grid>
+                    </ToggleButton>
+
+                    <Border Classes="sidebar-utility-divider"/>
 
                     <Button Classes="subtle sidebar-utility-button"
                             Command="{Binding OpenChartsCommand}"
