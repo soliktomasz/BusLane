@@ -10,7 +10,7 @@
             Padding="10,8"
             BorderThickness="1"
             BorderBrush="{DynamicResource BorderDefault}"
-            CornerRadius="6"
+            CornerRadius="{StaticResource RadiusSmall}"
             Margin="0"
             MaxWidth="520"
             HorizontalAlignment="Left">
@@ -18,7 +18,7 @@
             <Border Grid.Column="0"
                     Width="24"
                     Height="24"
-                    CornerRadius="12"
+                    CornerRadius="{StaticResource RadiusLarge}"
                     Background="{DynamicResource AccentSubtle}"
                     VerticalAlignment="Top">
                 <LucideIcon Kind="Download" Size="12"

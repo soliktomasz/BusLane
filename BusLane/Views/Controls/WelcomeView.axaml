@@ -69,7 +69,7 @@
                                         Command="{Binding $parent[Window].DataContext.ConnectToSavedConnectionCommand}"
                                         CommandParameter="{Binding}">
                                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                        <Border Grid.Column="0" Classes="surface-brand" Padding="8" CornerRadius="4">
+                                        <Border Grid.Column="0" Classes="surface-brand" Padding="8" CornerRadius="{StaticResource RadiusSmall}">
                                             <LucideIcon Kind="Cable" Size="16" Foreground="{DynamicResource AccentBrand}" VerticalAlignment="Center"/>
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">

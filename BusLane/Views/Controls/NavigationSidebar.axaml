@@ -22,12 +22,12 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <Viewbox Width="28" Height="28">
                             <Canvas Width="512" Height="512">
-                                <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#18181b"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-                                <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#4F46E5"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#27272a"/>
-                                <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#27272a"/>
+                                <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="{DynamicResource BrandMarkTile}"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource AccentBrand}"/>
+                                <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="{DynamicResource BrandMarkBar}"/>
                             </Canvas>
                         </Viewbox>
                         <StackPanel VerticalAlignment="Center">
@@ -98,7 +98,7 @@
                                     <Border Grid.Column="1"
                                             Width="36"
                                             Height="36"
-                                            CornerRadius="10"
+                                            CornerRadius="{StaticResource RadiusMedium}"
                                             Background="{DynamicResource SurfaceBrand}"
                                             HorizontalAlignment="Right">
                                         <LucideIcon Kind="Waypoints"
@@ -169,7 +169,7 @@
                                 IsVisible="{Binding ShowNamespaceSelectionPrompt}">
                             <StackPanel Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource SurfaceBrand}">
+                                    <Border Width="40" Height="40" CornerRadius="{StaticResource RadiusMedium}" Background="{DynamicResource SurfaceBrand}">
                                         <LucideIcon Kind="Server"
                                                     Size="18"
                                                     Foreground="{DynamicResource AccentBrand}"
@@ -262,7 +262,7 @@
                                 <Border Grid.Column="0"
                                         Width="32"
                                         Height="32"
-                                        CornerRadius="8"
+                                        CornerRadius="{StaticResource RadiusMedium}"
                                         Background="{DynamicResource SurfaceBrand}">
                                     <LucideIcon Kind="Library"
                                                 Size="14"
@@ -323,7 +323,7 @@
                                                     <Border Grid.Column="0"
                                                             Width="30"
                                                             Height="30"
-                                                            CornerRadius="8"
+                                                            CornerRadius="{StaticResource RadiusMedium}"
                                                             Background="{DynamicResource SurfaceBrand}">
                                                         <LucideIcon Kind="Cable"
                                                                     Size="13"
@@ -454,7 +454,7 @@
                             </StackPanel>
                             <Border Grid.Column="2"
                                     Background="{DynamicResource DangerBackground}"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Padding="8,2"
                                     IsVisible="{Binding FeaturePanels.ActiveAlertCount}"
                                     VerticalAlignment="Center">
@@ -483,12 +483,12 @@
             <StackPanel Grid.Row="0" Spacing="12" HorizontalAlignment="Center" Margin="0,14">
                 <Viewbox Width="34" Height="34">
                     <Canvas Width="512" Height="512">
-                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="#27272A"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="#3F3F46"/>
-                        <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="#3F3F46"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="#4F46E5"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="#3F3F46"/>
-                        <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="#3F3F46"/>
+                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="{DynamicResource BrandMarkTile}"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource AccentBrand}"/>
+                        <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="{DynamicResource BrandMarkBar}"/>
                     </Canvas>
                 </Viewbox>
                 <Button Classes="entity-pane-restore-command"
@@ -537,7 +537,7 @@
                         <LucideIcon Kind="Bell" Size="17"/>
                         <Border Width="8"
                                 Height="8"
-                                CornerRadius="4"
+                                CornerRadius="{StaticResource RadiusSmall}"
                                 Background="{DynamicResource TextDanger}"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"

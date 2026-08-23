@@ -31,7 +31,7 @@
                         <Grid Grid.Row="0">
                             <StackPanel Orientation="Horizontal" Spacing="12">
                                 <Border Background="{DynamicResource SurfaceBrand}"
-                                        CornerRadius="8"
+                                        CornerRadius="{StaticResource RadiusMedium}"
                                         Width="40" Height="40">
                                     <LucideIcon Kind="FolderOpen" Size="20"
                                                 HorizontalAlignment="Center"

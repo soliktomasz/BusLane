@@ -16,7 +16,7 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="36" Height="36"
-                                CornerRadius="8"
+                                CornerRadius="{StaticResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,12,0">
                             <LucideIcon Kind="Info" Size="18"

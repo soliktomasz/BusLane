@@ -114,6 +114,10 @@
                     <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4"/>
                     <SolidColorBrush x:Key="CodeBorder" Color="#3C3C3C"/>
 
+                    <!-- Brand mark (logo tile + bars) - theme-aware so the tile separates in dark mode -->
+                    <SolidColorBrush x:Key="BrandMarkTile" Color="#18181B"/>
+                    <SolidColorBrush x:Key="BrandMarkBar" Color="#27272A"/>
+
                     <!-- Focus ring shadows -->
                     <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4F46E5</BoxShadows>
                     <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #E11D48</BoxShadows>
@@ -194,6 +198,10 @@
                     <SolidColorBrush x:Key="CodeBackground" Color="#18181B"/>
                     <SolidColorBrush x:Key="CodeForeground" Color="#E4E4E7"/>
                     <SolidColorBrush x:Key="CodeBorder" Color="#3F3F46"/>
+
+                    <!-- Brand mark (logo tile + bars) - theme-aware so the tile separates in dark mode -->
+                    <SolidColorBrush x:Key="BrandMarkTile" Color="#27272A"/>
+                    <SolidColorBrush x:Key="BrandMarkBar" Color="#3F3F46"/>
 
                     <!-- Focus ring shadows -->
                     <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #A5B4FC</BoxShadows>

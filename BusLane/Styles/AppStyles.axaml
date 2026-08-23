@@ -6,6 +6,18 @@
             <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4F46E5</BoxShadows>
             <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #E11D48</BoxShadows>
             <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
+
+            <!-- Radius scale (one documented system, applied everywhere).
+                 Xs=2    tiny accent bars / separators
+                 Small=6 chips, inputs, inner tiles, small list items
+                 Medium=8 buttons, icon buttons, control boxes
+                 Large=12 cards, dialogs, panel surfaces, detail headers
+                 Pill=999 badges, status dots, avatars, pills -->
+            <CornerRadius x:Key="RadiusXs">2</CornerRadius>
+            <CornerRadius x:Key="RadiusSmall">6</CornerRadius>
+            <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
+            <CornerRadius x:Key="RadiusLarge">12</CornerRadius>
+            <CornerRadius x:Key="RadiusPill">999</CornerRadius>
         </ResourceDictionary>
     </Styles.Resources>
 
@@ -663,7 +675,7 @@
         <Setter Property="Template">
             <ControlTemplate TargetType="RadioButton">
                 <Border Background="{TemplateBinding Background}"
-                        CornerRadius="4"
+                        CornerRadius="{StaticResource RadiusSmall}"
                         Padding="12,6"
                         BorderThickness="0,0,0,2"
                         BorderBrush="Transparent"
@@ -1407,7 +1419,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="Transparent"
                         BorderThickness="1"
-                        CornerRadius="6"
+                        CornerRadius="{StaticResource RadiusSmall}"
                         Padding="16,8">
                     <Border.Transitions>
                         <Transitions>
@@ -1464,7 +1476,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{DynamicResource BorderMuted}"
                         BorderThickness="1"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         ClipToBounds="True">
                     <Grid RowDefinitions="3,*">
                         <Border x:Name="PART_Accent"

@@ -17,7 +17,7 @@
                 Padding="24,20">
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <Border Width="40" Height="40"
-                        CornerRadius="10"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         Background="{DynamicResource SurfaceBrand}">
                     <LucideIcon Kind="Rocket" Size="20"
                                 Foreground="{DynamicResource AccentBrand}"

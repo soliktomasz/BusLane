@@ -26,7 +26,7 @@
                         <Border Grid.Column="0"
                                 Width="40"
                                 Height="40"
-                                CornerRadius="10"
+                                CornerRadius="{StaticResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,16,0">
                             <LucideIcon Kind="Cable"
@@ -104,7 +104,7 @@
                                                 Spacing="12">
                                         <Border Width="28"
                                                 Height="28"
-                                                CornerRadius="6"
+                                                CornerRadius="{StaticResource RadiusSmall}"
                                                 Background="{DynamicResource SurfaceBrand}">
                                             <Panel>
                                                 <LucideIcon Kind="Pencil"
@@ -192,7 +192,7 @@
                                         <StackPanel Orientation="Horizontal" Spacing="12">
                                             <Border Width="28"
                                                     Height="28"
-                                                    CornerRadius="14"
+                                                    CornerRadius="{StaticResource RadiusLarge}"
                                                     Background="{DynamicResource TextSuccess}">
                                                 <LucideIcon Kind="Check"
                                                             Size="16"
@@ -220,7 +220,7 @@
                                         <StackPanel Orientation="Horizontal" Spacing="12">
                                             <Border Width="28"
                                                     Height="28"
-                                                    CornerRadius="14"
+                                                    CornerRadius="{StaticResource RadiusLarge}"
                                                     Background="{DynamicResource TextDanger}">
                                                 <LucideIcon Kind="TriangleAlert"
                                                             Size="16"
@@ -273,7 +273,7 @@
                                         <Border Grid.Column="0"
                                                 Width="28"
                                                 Height="28"
-                                                CornerRadius="6"
+                                                CornerRadius="{StaticResource RadiusSmall}"
                                                 Background="{DynamicResource SurfaceBrand}">
                                             <LucideIcon Kind="Cable"
                                                         Size="16"
@@ -286,7 +286,7 @@
                                             <TextBlock Text="Saved Connections"
                                                        Classes="form-section-title"/>
                                             <Border Classes="badge-info"
-                                                    CornerRadius="10"
+                                                    CornerRadius="{StaticResource RadiusMedium}"
                                                     Padding="8,3"
                                                     IsVisible="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}">
                                                 <TextBlock Text="{Binding Connection.ConnectionLibraryViewModel.FilteredConnections.Count}"
@@ -305,7 +305,7 @@
                                                 Margin="0,12">
                                         <Border Width="64"
                                                 Height="64"
-                                                CornerRadius="32"
+                                                CornerRadius="{StaticResource RadiusPill}"
                                                 Background="{DynamicResource LayerBackground}"
                                                 HorizontalAlignment="Center"
                                                 BorderThickness="2"
@@ -330,7 +330,7 @@
                                             <DataTemplate x:DataType="models:SavedConnection">
                                                 <Border Padding="16"
                                                         Margin="0,0,0,8"
-                                                        CornerRadius="8"
+                                                        CornerRadius="{StaticResource RadiusMedium}"
                                                         Background="{DynamicResource CardBackground}"
                                                         BorderThickness="1"
                                                         BorderBrush="{DynamicResource BorderDefault}">
@@ -338,7 +338,7 @@
                                                         <Border Grid.Column="0"
                                                                 Width="40"
                                                                 Height="40"
-                                                                CornerRadius="10"
+                                                                CornerRadius="{StaticResource RadiusMedium}"
                                                                 Background="{DynamicResource SurfaceBrand}"
                                                                 Margin="0,0,16,0"
                                                                 VerticalAlignment="Center">
@@ -447,7 +447,7 @@
                                                 Spacing="12">
                                         <Border Width="28"
                                                 Height="28"
-                                                CornerRadius="6"
+                                                CornerRadius="{StaticResource RadiusSmall}"
                                                 Background="{DynamicResource SurfaceBrand}">
                                             <LucideIcon Kind="ShieldCheck"
                                                         Size="16"

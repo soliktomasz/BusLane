@@ -24,7 +24,7 @@
                             <TextBlock Text="Live Stream" Classes="heading" VerticalAlignment="Center"/>
 
                             <!-- Status indicator - Fluent 2 compliant -->
-                            <Border CornerRadius="4" Padding="8,4"
+                            <Border CornerRadius="{StaticResource RadiusSmall}" Padding="8,4"
                                     Background="{Binding IsStreaming, Converter={StaticResource BoolToColorConverter}}"
                                     BorderThickness="1"
                                     BorderBrush="{Binding IsStreaming, Converter={StaticResource BoolToStatusColorConverter}}"
@@ -83,7 +83,7 @@
                     Padding="16,12">
                 <Grid ColumnDefinitions="*,Auto">
                     <!-- Search/Filter -->
-                    <Border Grid.Column="0" Background="{DynamicResource InputBackground}" CornerRadius="6" Padding="8,8" Margin="0,0,12,0"
+                    <Border Grid.Column="0" Background="{DynamicResource InputBackground}" CornerRadius="{StaticResource RadiusSmall}" Padding="8,8" Margin="0,0,12,0"
                             BorderThickness="1" BorderBrush="{DynamicResource BorderDefault}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <LucideIcon Grid.Column="0" Kind="Search"
@@ -152,7 +152,7 @@
                     <!-- Header -->
                     <StackPanel Grid.Row="0" Spacing="8" Margin="0,4,0,16">
                         <Border Background="{DynamicResource SurfaceBrand}"
-                                CornerRadius="12"
+                                CornerRadius="{StaticResource RadiusLarge}"
                                 Padding="14"
                                 HorizontalAlignment="Center">
                             <LucideIcon Kind="Radio" Size="28"
@@ -182,7 +182,7 @@
                                          Background="{DynamicResource CardBackground}"
                                          BorderBrush="{DynamicResource BorderDefault}"
                                          BorderThickness="1"
-                                         CornerRadius="6"
+                                         CornerRadius="{StaticResource RadiusSmall}"
                                          Padding="4">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate DataType="models:QueueInfo">
@@ -218,7 +218,7 @@
                                                          Background="{DynamicResource CardBackground}"
                                                          BorderBrush="{DynamicResource BorderDefault}"
                                                          BorderThickness="1"
-                                                         CornerRadius="6"
+                                                         CornerRadius="{StaticResource RadiusSmall}"
                                                          Margin="24,4,0,0"
                                                          Padding="4"
                                                          IsVisible="{Binding Subscriptions.Count}">

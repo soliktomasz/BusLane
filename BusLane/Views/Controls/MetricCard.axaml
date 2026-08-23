@@ -14,7 +14,7 @@
             <TextBlock Text="{Binding Value, StringFormat='{}{0:N0}'}"
                        FontSize="28"
                        FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextPrimary}"/>
+                       Foreground="{DynamicResource AppForeground}"/>
             
             <StackPanel Orientation="Horizontal"
                        VerticalAlignment="Center"
@@ -41,7 +41,7 @@
         <Border Background="{DynamicResource SurfaceSubtle}"
                 BorderBrush="{DynamicResource BorderMuted}"
                 BorderThickness="1"
-                CornerRadius="6"
+                CornerRadius="{StaticResource RadiusSmall}"
                 Height="32"
                 Padding="8,0">
             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">

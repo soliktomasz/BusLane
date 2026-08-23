@@ -103,7 +103,7 @@
                                  PlaceholderText="Search queues, topics, or subscriptions"
                                  FontSize="12"
                                  Padding="4,4,4,4"
-                                 CornerRadius="8"
+                                 CornerRadius="{StaticResource RadiusMedium}"
                                  BorderBrush="{DynamicResource BorderMuted}">
                             <TextBox.InnerLeftContent>
                                 <LucideIcon Kind="Search"

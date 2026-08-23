@@ -174,3 +174,7 @@ BusLane.sln.DotSettings.user
 
 # Implementation plans (working notes)
 docs/plans/
+
+.reasonix/
+
+reasonix.toml

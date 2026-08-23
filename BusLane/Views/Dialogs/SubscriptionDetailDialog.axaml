@@ -8,7 +8,7 @@
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowSubscriptionDetailDialog}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="14"
+                CornerRadius="{StaticResource RadiusLarge}"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
                 BoxShadow="0 12 32 0 #38000000"
@@ -23,12 +23,12 @@
                 <!-- Header -->
                 <Border Grid.Row="0"
                         Background="{DynamicResource SurfaceSubtle}"
-                        CornerRadius="14,14,0,0"
+                        CornerRadius="12,12,0,0"
                         Padding="20,16">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="36" Height="36"
-                                CornerRadius="8"
+                                CornerRadius="{StaticResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceWarning}"
                                 Margin="0,0,12,0">
                             <LucideIcon Kind="Inbox" Size="18"
