@@ -23,7 +23,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                 <Border Background="{DynamicResource SurfaceBrand}"
-                                        CornerRadius="8"
+                                        CornerRadius="{StaticResource RadiusMedium}"
                                         Width="40"
                                         Height="40"
                                         VerticalAlignment="Center">
@@ -208,7 +208,7 @@
                             <Border Classes="dialog-section-surface">
                             <StackPanel Spacing="12">
                                 <Border Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12"
+                                        CornerRadius="{StaticResource RadiusLarge}"
                                         Padding="16"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BorderThickness="1">

@@ -15,7 +15,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <Border Grid.Column="0"
                         Width="40" Height="40"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         Background="{DynamicResource SurfaceBrand}"
                         Margin="0,0,16,0">
                     <LucideIcon Kind="LayoutDashboard" Size="20"
@@ -46,14 +46,14 @@
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         Padding="0"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         Background="{DynamicResource CardBackground}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="1">
                     <Border Padding="16">
                         <StackPanel Spacing="12">
                             <Border Width="44" Height="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     HorizontalAlignment="Left">
                                 <LucideIcon Kind="TrendingUp" Size="22"
@@ -76,14 +76,14 @@
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         Padding="0"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         Background="{DynamicResource CardBackground}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="1">
                     <Border Padding="16">
                         <StackPanel Spacing="12">
                             <Border Width="44" Height="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     HorizontalAlignment="Left">
                                 <LucideIcon Kind="Donut" Size="22"
@@ -106,14 +106,14 @@
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         Padding="0"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         Background="{DynamicResource CardBackground}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="1">
                     <Border Padding="16">
                         <StackPanel Spacing="12">
                             <Border Width="44" Height="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     HorizontalAlignment="Left">
                                 <LucideIcon Kind="ChartColumnBig" Size="22"
@@ -136,14 +136,14 @@
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         Padding="0"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource RadiusMedium}"
                         Background="{DynamicResource CardBackground}"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BorderThickness="1">
                     <Border Padding="16">
                         <StackPanel Spacing="12">
                             <Border Width="44" Height="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     HorizontalAlignment="Left">
                                 <LucideIcon Kind="Activity" Size="22"

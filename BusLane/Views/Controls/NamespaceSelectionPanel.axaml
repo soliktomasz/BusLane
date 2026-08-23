@@ -67,11 +67,11 @@
 
                         <!-- Subscription Picker Card -->
                         <Border Background="{DynamicResource SurfaceSubtle}"
-                                CornerRadius="8"
+                                CornerRadius="{StaticResource RadiusMedium}"
                                 Padding="16">
                             <StackPanel Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource SurfaceBrand}">
+                                    <Border Width="36" Height="36" CornerRadius="{StaticResource RadiusMedium}" Background="{DynamicResource SurfaceBrand}">
                                         <LucideIcon Kind="Cloud" Size="20"
                                                   Foreground="{DynamicResource AccentBrand}"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -101,7 +101,7 @@
                             <!-- Header with count -->
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource AccentBrand}">
+                                    <Border Width="32" Height="32" CornerRadius="{StaticResource RadiusMedium}" Background="{DynamicResource AccentBrand}">
                                         <LucideIcon Kind="Server" Size="16"
                                                   Foreground="{DynamicResource TextOnBrand}"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -127,7 +127,7 @@
 
                             <!-- Namespace List -->
                             <Border Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="8"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Padding="8"
                                     MinHeight="200"
                                     MaxHeight="400">
@@ -164,7 +164,7 @@
                                                     </Border>
 
                                                     <!-- Namespace content -->
-                                                    <Border Grid.Column="1" Padding="12,12" CornerRadius="8">
+                                                    <Border Grid.Column="1" Padding="12,12" CornerRadius="{StaticResource RadiusMedium}">
                                                         <Border.Background>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                 <Binding Path="."/>
@@ -175,7 +175,7 @@
                                                             <!-- Namespace Icon -->
                                                             <Border Grid.Column="0"
                                                                     Width="48" Height="48"
-                                                                    CornerRadius="10"
+                                                                    CornerRadius="{StaticResource RadiusMedium}"
                                                                     Background="{DynamicResource SurfaceBrand}"
                                                                     Margin="0,0,14,0">
                                                                 <TextBlock Text="SB" FontWeight="Bold" FontSize="15"
@@ -213,7 +213,7 @@
 
                             <!-- Empty state when no namespaces -->
                             <Border Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="8"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Padding="24"
                                     IsVisible="{Binding !Namespaces.Count}">
                                 <StackPanel HorizontalAlignment="Center" Spacing="8">

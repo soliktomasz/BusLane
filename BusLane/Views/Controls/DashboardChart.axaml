@@ -16,7 +16,7 @@
                     BorderThickness="0,0,0,1" 
                     Padding="20,14">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Border Grid.Column="0" Width="4" Height="18" CornerRadius="2"
+                    <Border Grid.Column="0" Width="4" Height="18" CornerRadius="{StaticResource RadiusXs}"
                             Background="{DynamicResource AccentBrand}"
                             Margin="0,0,10,0"
                             VerticalAlignment="Center"/>
@@ -28,7 +28,7 @@
                     <Border Grid.Column="2"
                             Classes="form-section"
                             Padding="4,2"
-                            CornerRadius="6">
+                            CornerRadius="{StaticResource RadiusSmall}">
                         <ComboBox ItemsSource="{Binding TimeRangeOptions}"
                                   SelectedItem="{Binding SelectedTimeRange}"
                                   Width="95"

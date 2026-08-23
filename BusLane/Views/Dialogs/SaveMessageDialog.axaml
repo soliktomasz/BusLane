@@ -16,7 +16,7 @@
                 <!-- Header with icon -->
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <Border Background="{DynamicResource SurfaceBrand}" 
-                            CornerRadius="8" 
+                            CornerRadius="{StaticResource RadiusMedium}" 
                             Width="40" Height="40">
                         <LucideIcon Kind="Save"
                                   Size="20"

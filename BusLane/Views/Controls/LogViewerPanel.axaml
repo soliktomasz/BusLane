@@ -177,7 +177,7 @@
                         <Border Grid.Column="0"
                                 Classes="search-box"
                                 Background="{DynamicResource InputBackground}"
-                                CornerRadius="6"
+                                CornerRadius="{StaticResource RadiusSmall}"
                                 Padding="0"
                                 Margin="0,0,6,0">
                             <Grid ColumnDefinitions="Auto,*,Auto">

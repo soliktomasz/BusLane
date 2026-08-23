@@ -3,7 +3,7 @@
              xmlns:models="using:BusLane.Models"
              x:Class="BusLane.Views.Dialogs.ReplayMessageDialog"
              x:CompileBindings="False">
-    <Border Background="{DynamicResource DialogOverlay}"
+    <Border Background="{DynamicResource ModalOverlay}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             IsHitTestVisible="True">

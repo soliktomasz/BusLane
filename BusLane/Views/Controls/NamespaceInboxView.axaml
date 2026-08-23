@@ -61,7 +61,7 @@
                                                 <TextBlock Text="{Binding EntityName}"
                                                            Classes="title-small"/>
                                                 <Border Padding="8,2"
-                                                        CornerRadius="999"
+                                                        CornerRadius="{StaticResource RadiusPill}"
                                                         Background="{DynamicResource AccentBrandSubtle}">
                                                     <TextBlock Text="{Binding EntityType}"
                                                                FontSize="11"/>

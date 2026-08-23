@@ -10,7 +10,7 @@
             Classes="modal-overlay"
             IsVisible="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="14"
+                CornerRadius="{StaticResource RadiusLarge}"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
                 BoxShadow="0 12 32 0 #38000000"
@@ -22,12 +22,12 @@
                 <!-- Header -->
                 <Border DockPanel.Dock="Top"
                         Background="{DynamicResource SurfaceSubtle}"
-                        CornerRadius="14,14,0,0"
+                        CornerRadius="12,12,0,0"
                         Padding="20,16">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="36" Height="36"
-                                CornerRadius="8"
+                                CornerRadius="{StaticResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,12,0">
                             <LucideIcon Kind="Mail" Size="18"
@@ -215,7 +215,7 @@
                                     IsVisible="{Binding CurrentMessageOps.FormattedApplicationProperties, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                             <TextBlock Text="APPLICATION PROPERTIES" Classes="field-group-header"/>
                             <Border Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="6"
+                                    CornerRadius="{StaticResource RadiusSmall}"
                                     Padding="0"
                                     BorderThickness="1"
                                     BorderBrush="{DynamicResource BorderMuted}">
@@ -255,7 +255,7 @@
                                 </Button>
                             </Grid>
                             <Border Background="{DynamicResource SurfaceSubtle}"
-                                    CornerRadius="6"
+                                    CornerRadius="{StaticResource RadiusSmall}"
                                     BorderThickness="1"
                                     BorderBrush="{DynamicResource BorderMuted}"
                                     Padding="0"

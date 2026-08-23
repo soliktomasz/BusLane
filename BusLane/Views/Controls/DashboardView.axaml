@@ -170,7 +170,7 @@
                 Background="{DynamicResource ModalOverlay}"
                 IsHitTestVisible="True">
             <Border Background="{DynamicResource CardBackground}"
-                    CornerRadius="12"
+                    CornerRadius="{StaticResource RadiusLarge}"
                     MaxWidth="500"
                     VerticalAlignment="Center" HorizontalAlignment="Center"
                     BoxShadow="0 8 24 0 #32000000">

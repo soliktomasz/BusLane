@@ -17,7 +17,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <Border Grid.Column="0"
                                     Width="36" Height="36"
-                                    CornerRadius="8"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     Margin="0,0,12,0">
                                 <LucideIcon Kind="ListPlus" Size="18"
@@ -48,7 +48,7 @@
                                                    VerticalAlignment="Center"/>
                                         <Border Grid.Column="1"
                                                 Background="{DynamicResource SurfaceBrand}"
-                                                CornerRadius="12"
+                                                CornerRadius="{StaticResource RadiusLarge}"
                                                 Padding="8,3">
                                             <TextBlock Text="Queue"
                                                        Classes="caption"
@@ -161,7 +161,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <Border Grid.Column="0"
                                     Width="36" Height="36"
-                                    CornerRadius="8"
+                                    CornerRadius="{StaticResource RadiusMedium}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     Margin="0,0,12,0">
                                 <LucideIcon Kind="Megaphone" Size="18"
@@ -192,7 +192,7 @@
                                                    VerticalAlignment="Center"/>
                                         <Border Grid.Column="1"
                                                 Background="{DynamicResource SurfaceBrand}"
-                                                CornerRadius="12"
+                                                CornerRadius="{StaticResource RadiusLarge}"
                                                 Padding="8,3">
                                             <TextBlock Text="Topic"
                                                        Classes="caption"
