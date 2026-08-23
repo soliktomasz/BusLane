@@ -10,41 +10,36 @@
              x:CompileBindings="False">
 
     <StackPanel Spacing="6">
-        <!-- Value and Trend -->
-        <StackPanel Orientation="Horizontal" Spacing="12">
-            <TextBlock Text="{Binding Value, StringFormat='{}{0:N0}'}"
-                       FontSize="28"
+        <!-- Label -->
+        <TextBlock Text="{Binding Title}"
+                   Classes="caption"
+                   FontWeight="SemiBold"/>
+
+        <!-- Big value -->
+        <TextBlock Text="{Binding ValueDisplay}"
+                   FontSize="34"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource AppForeground}"/>
+
+        <!-- Trend -->
+        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"/>
+            <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:+0.0;-0.0;0}%'}"
+                       FontSize="12"
                        FontWeight="SemiBold"
-                       Foreground="{DynamicResource AppForeground}"/>
-            
-            <StackPanel Orientation="Horizontal"
-                       VerticalAlignment="Center"
-                       ToolTip.Tip="Change compared to previous refresh">
-                <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
-                           FontSize="18"
-                           FontWeight="Bold"
-                           Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
-                           VerticalAlignment="Center"/>
-                
-                <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:+0.0;-0.0;0}%'}"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"
-                           VerticalAlignment="Center"
-                           Margin="4,0,0,0"/>
-                <TextBlock Text="vs prev"
-                           Classes="caption"
-                           VerticalAlignment="Center"
-                           Margin="4,0,0,0"/>
-            </StackPanel>
+                       Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"/>
+            <TextBlock Text="vs prev"
+                       Classes="caption"
+                       VerticalAlignment="Center"/>
         </StackPanel>
 
-        <Border Background="{DynamicResource SurfaceSubtle}"
-                BorderBrush="{DynamicResource BorderMuted}"
-                BorderThickness="1"
-                CornerRadius="{StaticResource RadiusSmall}"
-                Height="32"
-                Padding="6,0">
+        <!-- Quiet sparkline -->
+        <Border Height="30"
+                Padding="2,0"
+                Margin="0,6,0,0">
             <controls:SparklineView Values="{Binding SparklineData}"
                                     Stroke="{DynamicResource AccentBrand}"/>
         </Border>

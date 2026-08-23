@@ -35,6 +35,24 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
     public long ScheduledDelta { get; }
     public int AlertDelta { get; }
 
+    /// <summary>
+    /// Triage health driving the status dot and pill: a dead-letter accumulation takes
+    /// priority over a scheduled backlog; otherwise the entity is healthy.
+    /// </summary>
+    public BusLane.Models.Dashboard.InboxStatus Status => DeadLetterCount > 0
+        ? BusLane.Models.Dashboard.InboxStatus.Critical
+        : ScheduledCount > 0
+            ? BusLane.Models.Dashboard.InboxStatus.Warning
+            : BusLane.Models.Dashboard.InboxStatus.Healthy;
+
+    /// <summary>Short label shown in the status pill.</summary>
+    public string StatusLabel => Status switch
+    {
+        BusLane.Models.Dashboard.InboxStatus.Critical => "DLQ",
+        BusLane.Models.Dashboard.InboxStatus.Warning => "Scheduled",
+        _ => "OK"
+    };
+
     public NamespaceInboxItemViewModel(
         NamespaceInboxItem item,
         long activeMessageDelta,

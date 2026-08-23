@@ -11,12 +11,12 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-              Margin="24">
+              Margin="26">
 
             <!-- Header -->
             <Border Grid.Row="0"
                     Classes="page-header-surface"
-                    Margin="0,0,0,20">
+                    Margin="0,0,0,24">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
                         <LucideIcon Kind="LayoutDashboard" Size="16"
@@ -72,75 +72,35 @@
             <!-- Priority Inbox -->
             <controls:NamespaceInboxView Grid.Row="1"
                                          DataContext="{Binding Inbox}"
-                                         Margin="0,0,0,20"/>
+                                         Margin="0,0,0,24"/>
 
             <!-- Metric Cards Row -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="10" Margin="0,0,0,20">
+            <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="16" Margin="0,0,0,24">
                 <Border Grid.Column="0" Classes="dashboard-summary-surface">
-                    <StackPanel Spacing="10">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Border Classes="metric-icon-surface">
-                                <LucideIcon Kind="Inbox" Size="18" Foreground="{DynamicResource AccentBrand}"/>
-                            </Border>
-                            <TextBlock Text="Active Messages"
-                                       Classes="caption"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
-                    </StackPanel>
+                    <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
                 </Border>
 
                 <Border Grid.Column="1" Classes="dashboard-summary-surface">
-                    <StackPanel Spacing="10">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Border Classes="metric-icon-surface">
-                                <LucideIcon Kind="TriangleAlert" Size="18" Foreground="{DynamicResource TextDanger}"/>
-                            </Border>
-                            <TextBlock Text="Dead Letters"
-                                       Classes="caption"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
-                    </StackPanel>
+                    <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
                 </Border>
 
                 <Border Grid.Column="2" Classes="dashboard-summary-surface">
-                    <StackPanel Spacing="10">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Border Classes="metric-icon-surface">
-                                <LucideIcon Kind="Clock" Size="18" Foreground="{DynamicResource TextWarning}"/>
-                            </Border>
-                            <TextBlock Text="Scheduled"
-                                       Classes="caption"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <controls:MetricCard DataContext="{Binding ScheduledCard}"/>
-                    </StackPanel>
+                    <controls:MetricCard DataContext="{Binding ScheduledCard}"/>
                 </Border>
 
                 <Border Grid.Column="3" Classes="dashboard-summary-surface">
-                    <StackPanel Spacing="10">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Border Classes="metric-icon-surface">
-                                <LucideIcon Kind="HardDrive" Size="18" Foreground="{DynamicResource TextSuccess}"/>
-                            </Border>
-                            <TextBlock Text="Total Size"
-                                       Classes="caption"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <controls:MetricCard DataContext="{Binding SizeCard}"/>
-                    </StackPanel>
+                    <controls:MetricCard DataContext="{Binding SizeCard}"/>
                 </Border>
             </Grid>
 
             <!-- Top Entities Lists -->
-            <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,0,0,20">
+            <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,0,0,24">
                 <controls:TopEntitiesList Grid.Column="0"
                                           DataContext="{Binding TopQueues}"
-                                          Margin="0,0,10,0"/>
+                                          Margin="0,0,12,0"/>
                 <controls:TopEntitiesList Grid.Column="1"
                                           DataContext="{Binding TopTopics}"
-                                          Margin="10,0,0,0"/>
+                                          Margin="12,0,0,0"/>
             </Grid>
 
             <!-- Charts Grid -->
@@ -156,7 +116,7 @@
                     <DataTemplate>
                         <controls:DashboardChart DataContext="{Binding}"
                                                  HorizontalAlignment="Stretch"
-                                                 Margin="0,0,12,12"/>
+                                                 Margin="0,0,24,24"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

@@ -57,7 +57,7 @@ public class NamespaceDashboardViewTests
         var xaml = File.ReadAllText(GetDashboardPath());
 
         // Assert
-        xaml.Should().Contain("<Grid Grid.Row=\"2\" ColumnDefinitions=\"*,*,*,*\" ColumnSpacing=\"10\" Margin=\"0,0,0,20\">");
+        xaml.Should().Contain("<Grid Grid.Row=\"2\" ColumnDefinitions=\"*,*,*,*\" ColumnSpacing=\"16\" Margin=\"0,0,0,24\">");
         xaml.Should().NotContain("Classes=\"dashboard-summary-surface\" Margin=");
     }
 

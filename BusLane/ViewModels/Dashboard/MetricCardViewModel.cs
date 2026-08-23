@@ -9,9 +9,11 @@ public partial class MetricCardViewModel : ObservableObject
     private string _title;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValueDisplay))]
     private string _unit;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValueDisplay))]
     private double _value;
 
     [ObservableProperty]
@@ -22,6 +24,14 @@ public partial class MetricCardViewModel : ObservableObject
 
     [ObservableProperty]
     private double[] _sparklineData = [];
+
+    /// <summary>
+    /// Value formatted for display. Byte-size values render with one decimal,
+    /// everything else as an integer.
+    /// </summary>
+    public string ValueDisplay => Unit?.Equals("MB", StringComparison.OrdinalIgnoreCase) == true
+        ? Value.ToString("N1")
+        : Value.ToString("N0");
 
     private readonly Queue<double> _history = new(20);
     private double? _previousValue;

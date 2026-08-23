@@ -15,7 +15,7 @@
                         Background="{DynamicResource LayerBackground}"
                         BorderBrush="{DynamicResource BorderMuted}"
                         BorderThickness="0,0,0,1"
-                        Padding="20,16">
+                        Padding="22,18">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
                             <LucideIcon Kind="LayoutDashboard" Size="16"
@@ -54,7 +54,7 @@
                                 <Border Classes="card"
                                         Padding="0"
                                         Height="{Binding Height, Converter={StaticResource GridRowToHeightConverter}}"
-                                        Margin="0,0,8,8">
+                                        Margin="0,0,12,12">
                                     <Border.Width>
                                         <MultiBinding Converter="{StaticResource GridColumnToWidthConverter}">
                                             <Binding Path="Width"/>

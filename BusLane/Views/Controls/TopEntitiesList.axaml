@@ -36,50 +36,24 @@
                          VerticalScrollBarVisibility="Auto"
                          MaxHeight="350">
                 <ItemsControl ItemsSource="{Binding Entities}">
-                    <ItemsControl.Styles>
-                        <!-- Alternating row colors -->
-                        <Style Selector="ItemsControl > ContentPresenter:nth-child(2n)">
-                            <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-                        </Style>
-                    </ItemsControl.Styles>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:TopEntityInfo">
-                            <Border Padding="12,10">
-                                <Grid ColumnDefinitions="Auto,*"
-                                      RowDefinitions="Auto,Auto,Auto"
+                            <Border Padding="13,11"
+                                    BorderThickness="0,0,0,1"
+                                    BorderBrush="{DynamicResource BorderMuted}">
+                                <Grid RowDefinitions="Auto,Auto,Auto"
                                       VerticalAlignment="Center"
-                                      RowSpacing="6">
-                                    <!-- Entity Icon -->
-                                    <Border Grid.Column="0"
-                                           Grid.Row="0"
-                                           Grid.RowSpan="3"
-                                           Background="{DynamicResource InputBackground}"
-                                           CornerRadius="{StaticResource RadiusSmall}"
-                                           Width="28"
-                                           Height="28"
-                                           Margin="0,2,10,0"
-                                           VerticalAlignment="Top">
-                                        <LucideIcon VerticalAlignment="Center"
-                                                   HorizontalAlignment="Center"
-                                                   Size="14"
-                                                   Foreground="{DynamicResource AccentBrand}">
-                                            <LucideIcon.Kind>
-                                                <Binding Path="Type" Converter="{StaticResource EntityTypeToIconConverter}"/>
-                                            </LucideIcon.Kind>
-                                        </LucideIcon>
-                                    </Border>
-
-                                    <!-- Entity Name -->
-                                    <Grid Grid.Column="1"
-                                          Grid.Row="0"
+                                      RowSpacing="8">
+                                    <!-- Name + Count -->
+                                    <Grid Grid.Row="0"
                                           ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="8">
+                                          ColumnSpacing="10">
                                         <TextBlock Text="{Binding Name}"
                                                   FontSize="13"
                                                   FontWeight="Medium"
                                                   Foreground="{DynamicResource AppForeground}"
                                                   VerticalAlignment="Top"
-                                                  TextWrapping="Wrap"
+                                                  TextTrimming="CharacterEllipsis"
                                                   ToolTip.Tip="{Binding Name}"/>
                                         <TextBlock Grid.Column="1"
                                                   Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
@@ -91,8 +65,7 @@
                                     </Grid>
 
                                     <!-- Subtitle -->
-                                    <TextBlock Grid.Column="1"
-                                              Grid.Row="1"
+                                    <TextBlock Grid.Row="1"
                                               Text="{Binding DisplaySubtitle}"
                                               FontSize="11"
                                               Foreground="{DynamicResource SubtleForeground}"
@@ -100,8 +73,7 @@
                                               IsVisible="{Binding DisplaySubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
                                     <!-- Slim Progress -->
-                                    <Grid Grid.Column="1"
-                                          Grid.Row="2"
+                                    <Grid Grid.Row="2"
                                           ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8"
                                           VerticalAlignment="Center">

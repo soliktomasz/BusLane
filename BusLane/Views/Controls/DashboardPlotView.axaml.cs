@@ -192,9 +192,15 @@ public partial class DashboardPlotView : UserControl
 
         plot.FigureBackground.Color = ColorHex("#00000000");
         plot.DataBackground.Color = ColorHex("#00000000");
+        // Borderless plot area: the hosting card owns the frame.
+        plot.FigureBorder.Color = ColorHex("#00000000");
+        plot.DataBorder.Color = ColorHex("#00000000");
         plot.Axes.Color(axisColor);
 
+        // Horizontal gridlines only, quiet.
         plot.Grid.IsVisible = true;
+        plot.Grid.XAxisStyle.IsVisible = false;
+        plot.Grid.YAxisStyle.IsVisible = true;
         plot.Grid.MajorLineColor = gridColor;
         plot.Grid.MinorLineColor = ColorHex("#00000000");
         plot.Grid.MajorLineWidth = 1;
@@ -214,7 +220,8 @@ public partial class DashboardPlotView : UserControl
     {
         try
         {
-            if (this.TryFindResource(token, out var value) && value is ISolidColorBrush brush)
+            if (App.Current?.Resources.TryGetResource(token, App.Current.ActualThemeVariant, out var resource) == true
+                && resource is ISolidColorBrush brush)
             {
                 var color = brush.Color;
                 return ScottPlot.Color.FromSKColor(new SKColor(color.R, color.G, color.B, color.A));

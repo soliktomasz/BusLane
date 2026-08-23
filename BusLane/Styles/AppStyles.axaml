@@ -1347,7 +1347,7 @@
     <Style Selector="Border.dashboard-summary-surface">
         <Setter Property="Background" Value="{DynamicResource DashboardTileBackground}"/>
         <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="18,16"/>
+        <Setter Property="Padding" Value="20,18"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
@@ -1368,10 +1368,10 @@
     </Style>
 
     <Style Selector="Border.inbox-item-surface">
-        <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16"/>
-        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
 

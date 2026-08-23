@@ -23,6 +23,7 @@
             <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
             <converters:SeverityToColorConverter x:Key="SeverityToColorConverter"/>
             <converters:SeverityToBackgroundConverter x:Key="SeverityToBackgroundConverter"/>
+            <converters:InboxStatusToBrushConverter x:Key="InboxStatusToBrushConverter"/>
             
             <!-- Dashboard Metric Trend Converters -->
             <converters:TrendToArrowConverter x:Key="TrendToArrowConverter"/>
