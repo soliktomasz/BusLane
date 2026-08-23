@@ -668,7 +668,7 @@
                                                 VerticalAlignment="Top"
                                                 IsVisible="{Binding ReplayHistory.Count, Converter={StaticResource IntEqualsConverter}, ConverterParameter=0}">
                                             <StackPanel Spacing="8" HorizontalAlignment="Center">
-                                                <LucideIcon Kind="History"
+                                                <LucideIcon Kind="RotateCcwClock"
                                                             Size="24"
                                                             Foreground="{DynamicResource MutedForeground}"/>
                                                 <TextBlock Text="No replay activity yet"

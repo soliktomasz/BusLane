@@ -542,7 +542,7 @@
                                                 <Border Width="28" Height="28"
                                                         CornerRadius="{StaticResource RadiusSmall}"
                                                         Background="{DynamicResource SurfaceBrand}">
-                                                    <LucideIcon Kind="History" Size="16"
+                                                    <LucideIcon Kind="RotateCcwClock" Size="16"
                                                               Foreground="{DynamicResource AccentBrand}"/>
                                                 </Border>
                                                 <TextBlock Text="Alert History" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
