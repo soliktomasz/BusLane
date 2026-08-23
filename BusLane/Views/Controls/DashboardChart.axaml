@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.DashboardChart"
              x:DataType="vm:DashboardChartViewModel"
@@ -11,12 +12,12 @@
     <Border Classes="card" Padding="0" HorizontalAlignment="Stretch">
         <Grid RowDefinitions="Auto,*">
             <!-- Header with Title and Time Range -->
-            <Border Grid.Row="0" 
-                    BorderBrush="{DynamicResource BorderDefault}" 
-                    BorderThickness="0,0,0,1" 
-                    Padding="20,14">
+            <Border Grid.Row="0"
+                    BorderBrush="{DynamicResource BorderDefault}"
+                    BorderThickness="0,0,0,1"
+                    Padding="16,12">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Border Grid.Column="0" Width="4" Height="18" CornerRadius="{StaticResource RadiusXs}"
+                    <Border Grid.Column="0" Width="3" Height="16" CornerRadius="{StaticResource RadiusXs}"
                             Background="{DynamicResource AccentBrand}"
                             Margin="0,0,10,0"
                             VerticalAlignment="Center"/>
@@ -24,7 +25,6 @@
                                Text="{Binding Title}"
                                Classes="body-strong"
                                VerticalAlignment="Center"/>
-
                     <Border Grid.Column="2"
                             Classes="form-section"
                             Padding="4,2"
@@ -39,28 +39,8 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1"
-                    Margin="12"
-                    MinHeight="240"
-                    Classes="message-empty-state"
-                    Padding="16">
-                <StackPanel Spacing="8"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <LucideIcon Kind="ChartSpline" Size="28"
-                                Foreground="{DynamicResource SubtleForeground}"
-                                HorizontalAlignment="Center"
-                                Opacity="0.5"/>
-                    <TextBlock Text="Chart preview unavailable"
-                               Classes="body-strong"
-                               HorizontalAlignment="Center"/>
-                    <TextBlock Text="Metrics continue to refresh in the background"
-                               Classes="caption"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               MaxWidth="260"/>
-                </StackPanel>
-            </Border>
+            <!-- ScottPlot chart -->
+            <controls:DashboardPlotView Grid.Row="1" MinHeight="220" Data="{Binding PlotData}"/>
         </Grid>
     </Border>
 </UserControl>

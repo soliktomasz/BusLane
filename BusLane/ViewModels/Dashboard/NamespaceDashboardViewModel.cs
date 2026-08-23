@@ -6,7 +6,6 @@ using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Avalonia.Threading;
-using LiveChartsCore.Defaults;
 using System.Collections.ObjectModel;
 
 namespace BusLane.ViewModels.Dashboard;
@@ -325,16 +324,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
         var activeHistory = GetHistoryForRange(Charts[0].SelectedTimeRange);
-        Charts[0].UpdateData(activeHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalActiveMessages)));
+        Charts[0].UpdateData(activeHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalActiveMessages)));
 
         var deadLetterHistory = GetHistoryForRange(Charts[1].SelectedTimeRange);
-        Charts[1].UpdateData(deadLetterHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalDeadLetterMessages)));
+        Charts[1].UpdateData(deadLetterHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalDeadLetterMessages)));
 
         var scheduledHistory = GetHistoryForRange(Charts[2].SelectedTimeRange);
-        Charts[2].UpdateData(scheduledHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalScheduledMessages)));
+        Charts[2].UpdateData(scheduledHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalScheduledMessages)));
 
         var sizeHistory = GetHistoryForRange(Charts[3].SelectedTimeRange);
-        Charts[3].UpdateData(sizeHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalSizeInBytes / (1024.0 * 1024.0))));
+        Charts[3].UpdateData(sizeHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalSizeInBytes / (1024.0 * 1024.0))));
     }
 
     private static TimeSpan GetTimeSpan(string selectedTimeRange)

@@ -1,17 +1,15 @@
 namespace BusLane.Tests.ViewModels.Dashboard;
 
-using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.Services.Monitoring;
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
 
 public class LineChartWidgetViewModelTests
 {
     [Fact]
-    public async Task MetricsBatchRecorded_RefreshesSeries()
+    public async Task MetricsBatchRecorded_RefreshesPlotData()
     {
         // Arrange
         using var metricsService = new BatchOnlyMetricsService();
@@ -25,12 +23,10 @@ public class LineChartWidgetViewModelTests
             }
         };
         using var sut = new LineChartWidgetViewModel(widget, metricsService);
-        var series = sut.Series[0].Should().BeOfType<LineSeries<DateTimePoint>>().Subject;
-        var values = (ObservableCollection<DateTimePoint>)series.Values!;
         var refreshed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        values.CollectionChanged += (_, _) =>
+        sut.PropertyChanged += (_, e) =>
         {
-            if (values.Count > 0)
+            if (e.PropertyName == nameof(LineChartWidgetViewModel.PlotData) && sut.PlotData?.Points.Count > 0)
             {
                 refreshed.TrySetResult();
             }
@@ -42,7 +38,9 @@ public class LineChartWidgetViewModelTests
         await refreshed.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         // Assert
-        values.Should().ContainSingle();
+        sut.PlotData.Should().NotBeNull();
+        sut.PlotData!.Points.Should().NotBeEmpty();
+        sut.PlotData!.LineColorToken.Should().Be("AccentBrand");
     }
 
     private sealed class BatchOnlyMetricsService : IMetricsService

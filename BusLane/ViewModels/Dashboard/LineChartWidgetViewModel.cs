@@ -1,55 +1,23 @@
 namespace BusLane.ViewModels.Dashboard;
 
-using System.Collections.ObjectModel;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.Services.Monitoring;
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
 {
     private readonly IMetricsService _metricsService;
 
-    public ObservableCollection<ISeries> Series { get; } = [];
-    public Axis[] XAxes { get; }
-    public Axis[] YAxes { get; }
+    [ObservableProperty]
+    private LinePlotData? _plotData;
 
     public LineChartWidgetViewModel(DashboardWidget widget, IMetricsService metricsService) : base(widget)
     {
         _metricsService = metricsService;
-
-        XAxes = [new Axis
-        {
-            Name = "Time",
-            Labeler = value =>
-            {
-                try { return new DateTime((long)value).ToString("HH:mm"); }
-                catch { return ""; }
-            },
-            TextSize = 12,
-            LabelsPaint = new SolidColorPaint(SKColors.Gray)
-        }];
-
-        YAxes = [new Axis
-        {
-            Name = GetMetricDisplayName(),
-            TextSize = 12,
-            LabelsPaint = new SolidColorPaint(SKColors.Gray),
-            MinLimit = 0
-        }];
-
-        Series.Add(new LineSeries<DateTimePoint>
-        {
-            Name = GetMetricDisplayName(),
-            Values = new ObservableCollection<DateTimePoint>(),
-            Fill = null,
-            GeometrySize = 4,
-            Stroke = new SolidColorPaint(GetMetricColor(), 2),
-            GeometryStroke = new SolidColorPaint(GetMetricColor(), 2)
-        });
 
         _metricsService.MetricsBatchRecorded += OnMetricsBatchRecorded;
         RefreshData();
@@ -82,19 +50,11 @@ public partial class LineChartWidgetViewModel : DashboardWidgetViewModel
             var points = metrics
                 .GroupBy(m => new DateTime(m.Timestamp.Year, m.Timestamp.Month, m.Timestamp.Day,
                     m.Timestamp.Hour, m.Timestamp.Minute / 5 * 5, 0))
-                .Select(g => new DateTimePoint(g.Key, g.Sum(m => m.Value)))
-                .OrderBy(p => p.DateTime)
+                .Select(g => new LinePlotPoint(g.Key, g.Sum(m => m.Value)))
+                .OrderBy(p => p.Time)
                 .ToList();
 
-            if (Series.Count > 0 && Series[0] is LineSeries<DateTimePoint> series)
-            {
-                var values = (ObservableCollection<DateTimePoint>)series.Values!;
-                values.Clear();
-                foreach (var point in points)
-                {
-                    values.Add(point);
-                }
-            }
+            PlotData = new LinePlotData(Title, points, GetMetricColorToken());
         }
         catch (Exception ex)
         {

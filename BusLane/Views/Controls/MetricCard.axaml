@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
+             xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.MetricCard"
              x:DataType="vm:MetricCardViewModel"
@@ -43,15 +44,9 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusSmall}"
                 Height="32"
-                Padding="8,0">
-            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <LucideIcon Kind="TrendingUp" Size="12"
-                            Foreground="{DynamicResource SubtleForeground}"
-                            Opacity="0.5"/>
-                <TextBlock Text="Sparkline tracked"
-                           Classes="caption"
-                           VerticalAlignment="Center"/>
-            </StackPanel>
+                Padding="6,0">
+            <controls:SparklineView Values="{Binding SparklineData}"
+                                    Stroke="{DynamicResource AccentBrand}"/>
         </Border>
     </StackPanel>
 </UserControl>

@@ -1,9 +1,5 @@
 using BusLane.Models.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
 
 namespace BusLane.ViewModels.Dashboard;
 
@@ -27,21 +23,6 @@ public partial class MetricCardViewModel : ObservableObject
     [ObservableProperty]
     private double[] _sparklineData = [];
 
-    [ObservableProperty]
-    private ISeries[] _sparklineSeries = [];
-
-    [ObservableProperty]
-    private Axis[] _xAxes =
-    [
-        new Axis { IsVisible = false }
-    ];
-
-    [ObservableProperty]
-    private Axis[] _yAxes =
-    [
-        new Axis { IsVisible = false }
-    ];
-
     private readonly Queue<double> _history = new(20);
     private double? _previousValue;
 
@@ -50,7 +31,6 @@ public partial class MetricCardViewModel : ObservableObject
         _title = title;
         _unit = unit;
         _trend = MetricTrend.Stable;
-        UpdateSparklineSeries();
     }
 
     public void UpdateValue(double newValue)
@@ -80,21 +60,5 @@ public partial class MetricCardViewModel : ObservableObject
             _history.Dequeue();
         }
         SparklineData = _history.ToArray();
-        UpdateSparklineSeries();
-    }
-
-    private void UpdateSparklineSeries()
-    {
-        SparklineSeries =
-        [
-            new LineSeries<double>
-            {
-                Values = SparklineData,
-                Fill = new SolidColorPaint(SKColors.Transparent),
-                Stroke = new SolidColorPaint(new SKColor(96, 205, 255)) { StrokeThickness = 2 },
-                GeometryFill = null,
-                GeometryStroke = null
-            }
-        ];
     }
 }
