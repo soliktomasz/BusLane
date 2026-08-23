@@ -26,7 +26,7 @@ public class NamespaceDashboardViewTests
 
         // Act
         var inboxIndex = xaml.IndexOf("NamespaceInboxView", StringComparison.Ordinal);
-        var chartsIndex = xaml.IndexOf("ItemsControl Grid.Row=\"4\"", StringComparison.Ordinal);
+        var chartsIndex = xaml.IndexOf("Charts[0]", StringComparison.Ordinal);
 
         // Assert
         inboxIndex.Should().BeGreaterThanOrEqualTo(0);

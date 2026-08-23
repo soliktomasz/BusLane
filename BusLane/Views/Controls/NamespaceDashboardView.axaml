@@ -103,23 +103,17 @@
                                           Margin="12,0,0,0"/>
             </Grid>
 
-            <!-- Charts Grid -->
-            <ItemsControl Grid.Row="4"
-                          ItemsSource="{Binding Charts}"
-                          HorizontalAlignment="Stretch">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="2"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <controls:DashboardChart DataContext="{Binding}"
-                                                 HorizontalAlignment="Stretch"
-                                                 Margin="0,0,24,24"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <!-- Charts Grid: fixed 2x2 so every card is the same height and width -->
+            <Grid Grid.Row="4"
+                  ColumnDefinitions="*,*"
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="24"
+                  RowSpacing="24">
+                <controls:DashboardChart Grid.Row="0" Grid.Column="0" DataContext="{Binding Charts[0]}"/>
+                <controls:DashboardChart Grid.Row="0" Grid.Column="1" DataContext="{Binding Charts[1]}"/>
+                <controls:DashboardChart Grid.Row="1" Grid.Column="0" DataContext="{Binding Charts[2]}"/>
+                <controls:DashboardChart Grid.Row="1" Grid.Column="1" DataContext="{Binding Charts[3]}"/>
+            </Grid>
         </Grid>
     </ScrollViewer>
 </UserControl>
