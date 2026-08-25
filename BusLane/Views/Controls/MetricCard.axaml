@@ -5,43 +5,37 @@
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
              xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
              mc:Ignorable="d"
+             x:Name="Root"
              x:Class="BusLane.Views.Controls.MetricCard"
              x:DataType="vm:MetricCardViewModel"
              x:CompileBindings="False">
 
     <StackPanel Spacing="6">
-        <!-- Label -->
         <TextBlock Text="{Binding Title}"
                    Classes="caption"
                    FontWeight="SemiBold"/>
 
-        <!-- Big value -->
         <TextBlock Text="{Binding ValueDisplay}"
-                   FontSize="34"
+                   FontSize="30"
                    FontWeight="Bold"
+                   FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                    Foreground="{DynamicResource AppForeground}"/>
 
-        <!-- Trend -->
         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Trend, Converter={StaticResource TrendToArrowConverter}}"
-                       FontSize="13"
-                       FontWeight="Bold"
-                       Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"/>
             <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:+0.0;-0.0;0}%'}"
                        FontSize="12"
                        FontWeight="SemiBold"
-                       Foreground="{Binding Trend, Converter={StaticResource TrendToColorConverter}}"/>
+                       Foreground="{Binding TrendForeground, ElementName=Root}"/>
             <TextBlock Text="vs prev"
                        Classes="caption"
                        VerticalAlignment="Center"/>
         </StackPanel>
 
-        <!-- Quiet sparkline -->
         <Border Height="30"
                 Padding="2,0"
                 Margin="0,6,0,0">
             <controls:SparklineView Values="{Binding SparklineData}"
-                                    Stroke="{DynamicResource AccentBrand}"/>
+                                    Stroke="{Binding SparklineStroke, ElementName=Root}"/>
         </Border>
     </StackPanel>
 </UserControl>

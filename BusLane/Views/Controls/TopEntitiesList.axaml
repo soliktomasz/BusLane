@@ -4,93 +4,54 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
              xmlns:models="clr-namespace:BusLane.Models.Dashboard;assembly=BusLane"
-             xmlns:converters="clr-namespace:BusLane.Converters;assembly=BusLane"
              mc:Ignorable="d"
              x:Class="BusLane.Views.Controls.TopEntitiesList"
              x:DataType="vm:TopEntitiesListViewModel"
              x:CompileBindings="False">
 
-    <Border Classes="card" Padding="0">
+    <Border Classes="card dashboard-card" Padding="0">
         <Grid RowDefinitions="Auto,*">
-            <!-- Header -->
             <Border Grid.Row="0"
                     BorderBrush="{DynamicResource BorderDefault}"
                     BorderThickness="0,0,0,1"
-                    Padding="20,14"
-                    Background="{DynamicResource SurfaceSubtle}">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <Border Classes="metric-icon-surface">
-                        <LucideIcon Kind="ListOrdered" Size="14"
-                                    Foreground="{DynamicResource AccentBrand}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="{Binding Title}"
-                               Classes="body-strong"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
+                    Padding="14,12">
+                <TextBlock Text="{Binding Title}"
+                           Classes="body-strong"
+                           VerticalAlignment="Center"/>
             </Border>
 
-            <!-- Entities List -->
-            <ScrollViewer Grid.Row="1"
-                         VerticalScrollBarVisibility="Auto"
-                         MaxHeight="350">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Entities}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:TopEntityInfo">
-                            <Border Padding="13,11"
+                            <Border Padding="14,10"
                                     BorderThickness="0,0,0,1"
                                     BorderBrush="{DynamicResource BorderMuted}">
-                                <Grid RowDefinitions="Auto,Auto,Auto"
-                                      VerticalAlignment="Center"
-                                      RowSpacing="8">
-                                    <!-- Name + Count -->
-                                    <Grid Grid.Row="0"
-                                          ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="10">
-                                        <TextBlock Text="{Binding Name}"
-                                                  FontSize="13"
-                                                  FontWeight="Medium"
-                                                  Foreground="{DynamicResource AppForeground}"
-                                                  VerticalAlignment="Top"
-                                                  TextTrimming="CharacterEllipsis"
-                                                  ToolTip.Tip="{Binding Name}"/>
-                                        <TextBlock Grid.Column="1"
-                                                  Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
-                                                  FontSize="12"
-                                                  FontWeight="SemiBold"
-                                                  Foreground="{DynamicResource AppForeground}"
-                                                  VerticalAlignment="Top"
-                                                  HorizontalAlignment="Right"/>
-                                    </Grid>
-
-                                    <!-- Subtitle -->
-                                    <TextBlock Grid.Row="1"
-                                              Text="{Binding DisplaySubtitle}"
-                                              FontSize="11"
-                                              Foreground="{DynamicResource SubtleForeground}"
-                                              VerticalAlignment="Center"
-                                              IsVisible="{Binding DisplaySubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-
-                                    <!-- Slim Progress -->
-                                    <Grid Grid.Row="2"
-                                          ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="8"
-                                          VerticalAlignment="Center">
-                                        <ProgressBar Grid.Column="0"
-                                                    Value="{Binding PercentageOfTotal}"
-                                                    Maximum="100"
-                                                    Height="3"
-                                                    MinWidth="120"
-                                                    Background="{DynamicResource InputBackground}"
-                                                    Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Grid.Column="1"
-                                                  Text="{Binding PercentageOfTotal, StringFormat='{}{0:F0}%'}"
-                                                  FontSize="11"
-                                                  Foreground="{DynamicResource SubtleForeground}"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Right"/>
-                                    </Grid>
+                                <Grid ColumnDefinitions="2*,3*,Auto"
+                                      ColumnSpacing="10"
+                                      VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="13"
+                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                               Foreground="{DynamicResource AppForeground}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip.Tip="{Binding Name}"/>
+                                    <ProgressBar Grid.Column="1"
+                                                 Value="{Binding PercentageOfTotal}"
+                                                 Maximum="100"
+                                                 Height="4"
+                                                 MinWidth="80"
+                                                 Background="{DynamicResource SurfaceSubtle}"
+                                                 Foreground="{DynamicResource AccentBrand}"
+                                                 VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
+                                               FontSize="12"
+                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                               Foreground="{DynamicResource AppForeground}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"/>
                                 </Grid>
                             </Border>
                         </DataTemplate>

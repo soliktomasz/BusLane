@@ -321,10 +321,15 @@ public class DashboardRefreshService : IDashboardRefreshService
             ));
         }
 
-        // Keep both lists in this collection; each UI list filters by entity type.
+        // Rank each entity type independently so a busy queue set cannot starve topics.
         return entities
-            .OrderByDescending(e => e.MessageCount)
+            .Where(entity => entity.Type == EntityType.Queue)
+            .OrderByDescending(entity => entity.MessageCount)
             .Take(20)
+            .Concat(entities
+                .Where(entity => entity.Type == EntityType.Topic)
+                .OrderByDescending(entity => entity.MessageCount)
+                .Take(20))
             .ToList();
     }
 

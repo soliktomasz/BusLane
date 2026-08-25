@@ -1,3 +1,4 @@
+using System.Globalization;
 using BusLane.Models.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -26,12 +27,23 @@ public partial class MetricCardViewModel : ObservableObject
     private double[] _sparklineData = [];
 
     /// <summary>
-    /// Value formatted for display. Byte-size values render with one decimal,
-    /// everything else as an integer.
+    /// Value formatted for display. Size metrics include an adaptive MB/GB unit;
+    /// message metrics render as whole numbers.
     /// </summary>
-    public string ValueDisplay => Unit?.Equals("MB", StringComparison.OrdinalIgnoreCase) == true
-        ? Value.ToString("N1")
-        : Value.ToString("N0");
+    public string ValueDisplay
+    {
+        get
+        {
+            if (!Unit.Equals("MB", StringComparison.OrdinalIgnoreCase))
+            {
+                return Value.ToString("N0");
+            }
+
+            return Value >= 1024
+                ? $"{(Value / 1024).ToString("N1", CultureInfo.InvariantCulture)} GB"
+                : $"{Value.ToString("N1", CultureInfo.InvariantCulture)} MB";
+        }
+    }
 
     private readonly Queue<double> _history = new(20);
     private double? _previousValue;

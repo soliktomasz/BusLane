@@ -9,37 +9,26 @@
              x:DataType="vm:DashboardChartViewModel"
              x:CompileBindings="False">
 
-    <Border Classes="card" Padding="0" HorizontalAlignment="Stretch">
+    <Border Classes="card dashboard-card" Padding="0" HorizontalAlignment="Stretch">
         <Grid RowDefinitions="Auto,*">
-            <!-- Header with Title and Time Range -->
             <Border Grid.Row="0"
-                    BorderBrush="{DynamicResource BorderDefault}"
-                    BorderThickness="0,0,0,1"
-                    Padding="16,12">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Border Grid.Column="0" Width="3" Height="16" CornerRadius="{StaticResource RadiusXs}"
-                            Background="{DynamicResource AccentBrand}"
-                            Margin="0,0,10,0"
-                            VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding Title}"
+                    Padding="14,12,14,0">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Title}"
                                Classes="body-strong"
                                VerticalAlignment="Center"/>
-                    <Border Grid.Column="2"
-                            Classes="form-section"
-                            Padding="4,2"
-                            CornerRadius="{StaticResource RadiusSmall}">
-                        <ComboBox ItemsSource="{Binding TimeRangeOptions}"
-                                  SelectedItem="{Binding SelectedTimeRange}"
-                                  Width="95"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  FontSize="11"/>
-                    </Border>
+                    <ComboBox Grid.Column="1"
+                              ItemsSource="{Binding TimeRangeOptions}"
+                              SelectedItem="{Binding SelectedTimeRange}"
+                              Width="92"
+                              MinHeight="24"
+                              Padding="4,0"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              FontSize="11"/>
                 </Grid>
             </Border>
 
-            <!-- ScottPlot chart -->
             <controls:DashboardPlotView Grid.Row="1" Height="220" Data="{Binding PlotData}"/>
         </Grid>
     </Border>

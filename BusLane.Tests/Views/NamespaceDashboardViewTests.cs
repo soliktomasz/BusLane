@@ -1,5 +1,6 @@
 namespace BusLane.Tests.Views;
 
+using System.Xml.Linq;
 using FluentAssertions;
 
 public class NamespaceDashboardViewTests
@@ -34,31 +35,84 @@ public class NamespaceDashboardViewTests
     }
 
     [Fact]
-    public void Dashboard_UsesCalmerPrimarySurfaces()
+    public void Dashboard_UsesCalmOperatorPrimarySurfaces()
     {
         // Arrange
-        var dashboardXaml = File.ReadAllText(GetDashboardPath());
-        var inboxXaml = File.ReadAllText(GetInboxPath());
+        var dashboard = XDocument.Load(GetDashboardPath());
+        var inbox = XDocument.Load(GetInboxPath());
+
+        // Act
+        var dashboardClasses = dashboard.Descendants()
+            .Select(element => element.Attribute("Classes")?.Value)
+            .Where(value => value is not null)
+            .ToList();
+        var inboxClasses = inbox.Descendants()
+            .Select(element => element.Attribute("Classes")?.Value)
+            .Where(value => value is not null)
+            .ToList();
 
         // Assert
-        dashboardXaml.Should().Contain("Classes=\"page-header-surface\"");
-        dashboardXaml.Should().NotContain("Classes=\"card\"");
-        inboxXaml.Should().Contain("Classes=\"dashboard-inbox-surface\"");
-        inboxXaml.Should().Contain("Classes=\"inbox-item-surface\"");
-        inboxXaml.Should().NotContain("Classes=\"card\"");
-        inboxXaml.Should().NotContain("Padding=\"20\"");
-        inboxXaml.Should().NotContain("Background=\"{DynamicResource LayerBackground}\"");
+        dashboardClasses.Should().NotContain("page-header-surface");
+        dashboardClasses.Should().Contain("dashboard-summary-surface");
+        inboxClasses.Should().Contain("dashboard-inbox-surface");
+        inboxClasses.Should().Contain("inbox-item-surface");
+        inboxClasses.Should().NotContain("card");
     }
 
     [Fact]
     public void Dashboard_UsesSharedMetricGridSpacing()
     {
         // Arrange
-        var xaml = File.ReadAllText(GetDashboardPath());
+        var dashboard = XDocument.Load(GetDashboardPath());
+
+        // Act
+        var metricGrid = dashboard.Descendants()
+            .Single(element =>
+                element.Name.LocalName == "Grid"
+                && element.Elements().Count(child =>
+                    child.Name.LocalName == "Border"
+                    && child.Attribute("Classes")?.Value == "dashboard-summary-surface") == 4);
 
         // Assert
-        xaml.Should().Contain("<Grid Grid.Row=\"2\" ColumnDefinitions=\"*,*,*,*\" ColumnSpacing=\"16\" Margin=\"0,0,0,24\">");
-        xaml.Should().NotContain("Classes=\"dashboard-summary-surface\" Margin=");
+        metricGrid.Attribute("ColumnDefinitions")?.Value.Should().Be("*,*,*,*");
+        metricGrid.Attribute("ColumnSpacing")?.Value.Should().Be("16");
+        metricGrid.Elements()
+            .Where(element => element.Attribute("Classes")?.Value == "dashboard-summary-surface")
+            .Should().OnlyContain(element => element.Attribute("Margin") == null);
+    }
+
+    [Fact]
+    public void InboxHoverActions_ReserveLayoutWhileHidden()
+    {
+        // Arrange
+        var inbox = XDocument.Load(GetInboxPath());
+
+        // Act
+        var hiddenStyle = inbox.Descendants()
+            .Single(element =>
+                element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "StackPanel.inbox-actions");
+        var setters = hiddenStyle.Elements()
+            .Where(element => element.Name.LocalName == "Setter")
+            .ToDictionary(
+                element => element.Attribute("Property")!.Value,
+                element => element.Attribute("Value")!.Value);
+        var focusStyle = inbox.Descendants()
+            .Single(element =>
+                element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "StackPanel.inbox-actions:focus-within");
+        var focusSetters = focusStyle.Elements()
+            .Where(element => element.Name.LocalName == "Setter")
+            .ToDictionary(
+                element => element.Attribute("Property")!.Value,
+                element => element.Attribute("Value")!.Value);
+
+        // Assert
+        setters.Should().Contain("Opacity", "0");
+        setters.Should().Contain("IsHitTestVisible", "False");
+        setters.Should().NotContainKey("IsVisible");
+        focusSetters.Should().Contain("Opacity", "1");
+        focusSetters.Should().Contain("IsHitTestVisible", "True");
     }
 
     private static string GetAppPath()

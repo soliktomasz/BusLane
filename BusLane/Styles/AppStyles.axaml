@@ -1345,11 +1345,12 @@
     </Style>
 
     <Style Selector="Border.dashboard-summary-surface">
-        <Setter Property="Background" Value="{DynamicResource DashboardTileBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="20,18"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BoxShadow" Value="0 1 2 0 #0D000000"/>
     </Style>
 
     <Style Selector="Border.metric-icon-surface">
@@ -1361,10 +1362,12 @@
 
     <Style Selector="Border.dashboard-inbox-surface">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="20"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="0"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BoxShadow" Value="0 1 2 0 #0D000000"/>
+        <Setter Property="ClipToBounds" Value="True"/>
     </Style>
 
     <Style Selector="Border.inbox-item-surface">
@@ -1373,6 +1376,40 @@
         <Setter Property="Padding" Value="16,12"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+
+    <Style Selector="Border.inbox-item-surface:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+    </Style>
+
+    <Style Selector="TextBlock.dashboard-section-label">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource MutedForeground}"/>
+        <Setter Property="LetterSpacing" Value="1.4"/>
+    </Style>
+
+    <Style Selector="Border.dashboard-control-chip">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,3,10,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+
+    <Style Selector="Button.dashboard-refresh-button">
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="12,4"/>
+    </Style>
+
+    <Style Selector="Border.dashboard-card">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BoxShadow" Value="0 1 2 0 #0D000000"/>
+    </Style>
+
+    <Style Selector="Border.dashboard-card:pointerover">
+        <Setter Property="BoxShadow" Value="0 1 2 0 #0D000000"/>
     </Style>
 
     <Style Selector="Border.inbox-stat-block">

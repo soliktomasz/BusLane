@@ -60,7 +60,20 @@ public partial class DashboardChartViewModel : ObservableObject
         }
 
         var points = dataPoints.ToList();
-        PlotData = new LinePlotData(Title, points, GetColorToken());
+        var visibleEnd = DateTime.Now;
+        var visibleStart = visibleEnd - GetTimeSpan(SelectedTimeRange);
+        PlotData = new LinePlotData(Title, points, GetColorToken(), visibleStart, visibleEnd);
+    }
+
+    public void ClearData()
+    {
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(ClearData);
+            return;
+        }
+
+        PlotData = null;
     }
 
     private string GetColorToken()
@@ -81,5 +94,17 @@ public partial class DashboardChartViewModel : ObservableObject
         }
 
         return "AccentBrand";
+    }
+
+    private static TimeSpan GetTimeSpan(string selectedTimeRange)
+    {
+        return selectedTimeRange switch
+        {
+            "15 Minutes" => TimeSpan.FromMinutes(15),
+            "1 Hour" => TimeSpan.FromHours(1),
+            "6 Hours" => TimeSpan.FromHours(6),
+            "24 Hours" => TimeSpan.FromHours(24),
+            _ => TimeSpan.FromHours(1)
+        };
     }
 }

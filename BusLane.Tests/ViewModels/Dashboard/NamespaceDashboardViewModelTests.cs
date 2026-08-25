@@ -2,6 +2,7 @@ using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
 using BusLane.Services.Monitoring;
+using BusLane.Services.ServiceBus;
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
 using NSubstitute;
@@ -39,6 +40,8 @@ public class NamespaceDashboardViewModelTests
         vm.TopQueues.Should().NotBeNull();
         vm.TopTopics.Should().NotBeNull();
         vm.Charts.Should().HaveCount(4);
+        vm.DeadLetterCard.Title.Should().Be("Dead Letters");
+        vm.ScheduledCard.Title.Should().Be("Scheduled");
     }
 
     [Fact]
@@ -103,5 +106,53 @@ public class NamespaceDashboardViewModelTests
 
         // Assert
         sut.IsPartialSnapshot.Should().BeTrue();
+    }
+
+    [Fact]
+    public void RefreshedTopEntities_KeepThreeItemsPerList()
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var entities = Enumerable.Range(1, 5)
+            .Select(index => new TopEntityInfo($"queue-{index}", 100 - index, index * 10, EntityType.Queue))
+            .Concat(Enumerable.Range(1, 5)
+                .Select(index => new TopEntityInfo($"topic-{index}", 100 - index, index * 10, EntityType.Topic)))
+            .ToList();
+
+        // Act
+        _refreshService.TopEntitiesUpdated += Raise.Event<EventHandler<IReadOnlyList<TopEntityInfo>>>(this, entities);
+
+        // Assert
+        sut.TopQueues.Entities.Should().HaveCount(3);
+        sut.TopTopics.Entities.Should().HaveCount(3);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void SetOperations_ChangedContext_ClearsChartHistory(bool changeOperations, bool changeNamespace)
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var firstOperations = Substitute.For<IServiceBusOperations>();
+        var secondOperations = Substitute.For<IServiceBusOperations>();
+        sut.SetOperations(firstOperations, "namespace-a");
+        var now = DateTimeOffset.UtcNow;
+
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(
+            this,
+            new NamespaceDashboardSummary(10, 2, 3, 1_048_576, 0, 0, 0, 0, now.AddMinutes(-1)));
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(
+            this,
+            new NamespaceDashboardSummary(20, 4, 6, 2_097_152, 0, 0, 0, 0, now));
+        sut.Charts.Select(chart => chart.PlotData).Should().NotContainNulls();
+
+        // Act
+        sut.SetOperations(
+            changeOperations ? secondOperations : firstOperations,
+            changeNamespace ? "namespace-b" : "namespace-a");
+
+        // Assert
+        sut.Charts.Select(chart => chart.PlotData).Should().OnlyContain(plot => plot == null);
     }
 }

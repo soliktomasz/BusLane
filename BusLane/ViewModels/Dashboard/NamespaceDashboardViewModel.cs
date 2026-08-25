@@ -77,8 +77,8 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
         // Initialize metric cards
         ActiveMessagesCard = new MetricCardViewModel("Active Messages", "messages");
-        DeadLetterCard = new MetricCardViewModel("Dead Letter Messages", "messages");
-        ScheduledCard = new MetricCardViewModel("Scheduled Messages", "messages");
+        DeadLetterCard = new MetricCardViewModel("Dead Letters", "messages");
+        ScheduledCard = new MetricCardViewModel("Scheduled", "messages");
         SizeCard = new MetricCardViewModel("Total Size", "MB");
 
         // Initialize top entities lists
@@ -157,6 +157,15 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     /// </summary>
     public void SetOperations(IServiceBusOperations? operations, string? namespaceId = null)
     {
+        var contextChanged = !ReferenceEquals(_operations, operations)
+            || (!string.IsNullOrEmpty(namespaceId)
+                && !string.Equals(CurrentNamespaceId, namespaceId, StringComparison.Ordinal));
+
+        if (contextChanged)
+        {
+            ResetChartHistory();
+        }
+
         _operations = operations;
 
         if (!string.IsNullOrEmpty(namespaceId))
@@ -259,8 +268,8 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
 
-        var queues = entities.Where(e => e.Type == EntityType.Queue).Take(10).ToList();
-        var topics = entities.Where(e => e.Type == EntityType.Topic).Take(10).ToList();
+        var queues = entities.Where(e => e.Type == EntityType.Queue).Take(3).ToList();
+        var topics = entities.Where(e => e.Type == EntityType.Topic).Take(3).ToList();
 
         TopQueues.UpdateEntities(queues);
         TopTopics.UpdateEntities(topics);
@@ -315,6 +324,15 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     {
         var threshold = DateTimeOffset.UtcNow - TimeSpan.FromHours(24);
         _summaryHistory.RemoveAll(s => s.Timestamp < threshold);
+    }
+
+    private void ResetChartHistory()
+    {
+        _summaryHistory.Clear();
+        foreach (var chart in Charts)
+        {
+            chart.ClearData();
+        }
     }
 
     private void UpdateCharts()

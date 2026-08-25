@@ -34,9 +34,11 @@ public abstract record ChartPlotData(string Title)
 public sealed record LinePlotData(
     string Title,
     IReadOnlyList<LinePlotPoint> Points,
-    string LineColorToken) : ChartPlotData(Title)
+    string LineColorToken,
+    DateTime? VisibleStart = null,
+    DateTime? VisibleEnd = null) : ChartPlotData(Title)
 {
-    public override bool IsEmpty => Points.Count == 0;
+    public override bool IsEmpty => Points.Count < 2;
 }
 
 /// <summary>

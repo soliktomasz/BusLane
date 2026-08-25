@@ -80,4 +80,37 @@ public class DashboardChartViewModelTests
         // Assert
         ((LinePlotData)vm.PlotData!).LineColorToken.Should().Be("TextDanger");
     }
+
+    [Fact]
+    public void UpdateData_SinglePoint_IsNotRenderableTrend()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Test");
+
+        // Act
+        vm.UpdateData([new LinePlotPoint(DateTime.Now, 10)]);
+
+        // Assert
+        vm.PlotData!.IsEmpty.Should().BeTrue();
+    }
+
+    [Fact]
+    public void UpdateData_SelectedRange_DefinesVisibleWindow()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Test");
+        vm.SetGlobalTimeRange("6 Hours");
+
+        // Act
+        vm.UpdateData([
+            new LinePlotPoint(DateTime.Now.AddMinutes(-1), 10),
+            new LinePlotPoint(DateTime.Now, 15)
+        ]);
+
+        // Assert
+        var plot = vm.PlotData!;
+        plot.VisibleStart.Should().NotBeNull();
+        plot.VisibleEnd.Should().NotBeNull();
+        (plot.VisibleEnd - plot.VisibleStart).Should().Be(TimeSpan.FromHours(6));
+    }
 }

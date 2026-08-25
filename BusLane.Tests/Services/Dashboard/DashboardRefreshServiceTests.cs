@@ -80,6 +80,56 @@ public class DashboardRefreshServiceTests
     }
 
     [Fact]
+    public async Task RefreshAsync_ManyQueues_DoesNotRemoveTopicsFromTopEntities()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        IReadOnlyList<TopEntityInfo>? captured = null;
+        _sut.TopEntitiesUpdated += (_, entities) => captured = entities;
+
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 25)
+                .Select(index => new QueueInfo(
+                    $"queue-{index}",
+                    1000 - index,
+                    1000 - index,
+                    0,
+                    0,
+                    100,
+                    null,
+                    false,
+                    TimeSpan.FromMinutes(1),
+                    TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 3)
+                .Select(index => new TopicInfo(
+                    $"topic-{index}",
+                    sizeInBytes: 100,
+                    subscriptionCount: 1,
+                    accessedAt: null,
+                    defaultMessageTtl: TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                return Task.FromResult<IEnumerable<SubscriptionInfo>>(
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ]);
+            });
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        captured.Should().NotBeNull();
+        captured!.Where(entity => entity.Type == EntityType.Queue).Should().HaveCount(20);
+        captured.Where(entity => entity.Type == EntityType.Topic).Should().HaveCount(3);
+    }
+
+    [Fact]
     public async Task StartAutoRefresh_WhenRefreshTakesLongerThanInterval_DoesNotRunOverlappingRefreshes()
     {
         // Arrange

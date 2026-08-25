@@ -65,6 +65,7 @@ public partial class DashboardPlotView : UserControl
 
         if (data is null || data.IsEmpty)
         {
+            EmptyStateText.Text = GetEmptyStateText(data);
             PlotHost.IsVisible = false;
             EmptyState.IsVisible = true;
             return;
@@ -106,13 +107,37 @@ public partial class DashboardPlotView : UserControl
 
         PlotHost.Plot.Axes.DateTimeTicksBottom();
 
-        var xMin = xs.Min();
-        var xMax = xs.Max();
+        var horizontalLimits = GetHorizontalLimits(line, xs);
+        var xMin = horizontalLimits.Minimum;
+        var xMax = horizontalLimits.Maximum;
         var yMax = Math.Max(ys.Max(), 1);
         var xSpan = xMax - xMin is > 0 ? xMax - xMin : 1;
-        PlotHost.Plot.Axes.SetLimits(xMin - xSpan * 0.04, xMax + xSpan * 0.04, 0, yMax * 1.15);
+        var xPadding = horizontalLimits.UsesVisibleWindow ? 0 : xSpan * 0.04;
+        PlotHost.Plot.Axes.SetLimits(xMin - xPadding, xMax + xPadding, 0, yMax * 1.15);
 
         StyleAxes(PlotHost.Plot);
+    }
+
+    internal static string GetEmptyStateText(ChartPlotData? data)
+    {
+        return data is LinePlotData line && line.Points.Count == 1
+            ? "Collecting history"
+            : "No data yet";
+    }
+
+    internal static (double Minimum, double Maximum, bool UsesVisibleWindow) GetHorizontalLimits(
+        LinePlotData line,
+        IReadOnlyList<double> xValues)
+    {
+        var visibleStart = line.VisibleStart;
+        var visibleEnd = line.VisibleEnd;
+        var usesVisibleWindow = visibleStart.HasValue
+            && visibleEnd.HasValue
+            && visibleEnd.Value > visibleStart.Value;
+
+        return usesVisibleWindow
+            ? (visibleStart!.Value.ToOADate(), visibleEnd!.Value.ToOADate(), true)
+            : (xValues.Min(), xValues.Max(), false);
     }
 
     private void RenderBar(BarPlotData bar)

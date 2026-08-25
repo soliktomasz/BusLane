@@ -10,110 +10,142 @@
              x:CompileBindings="False">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-              Margin="26">
+        <StackPanel Margin="26">
+            <Grid ColumnDefinitions="*,Auto"
+                  Margin="0,0,0,26">
+                <StackPanel Grid.Column="0"
+                            Spacing="4"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Namespace Overview"
+                               Classes="heading"/>
+                    <TextBlock Text="Use the inbox first, then skim the summary and trends."
+                               Classes="caption"/>
+                    <TextBlock Text="Topic metrics loading progressively..."
+                               Classes="caption"
+                               IsVisible="{Binding IsPartialSnapshot}"/>
+                </StackPanel>
 
-            <!-- Header -->
-            <Border Grid.Row="0"
-                    Classes="page-header-surface"
-                    Margin="0,0,0,24">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
-                        <LucideIcon Kind="LayoutDashboard" Size="16"
-                                    Foreground="{DynamicResource AccentBrand}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel Grid.Column="1"
-                                Spacing="4"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="Namespace Overview"
-                                   Classes="heading"/>
-                        <TextBlock Text="Use the inbox first, then skim the summary and supporting trends."
-                                   Classes="caption"/>
-                        <TextBlock Text="Topic metrics loading progressively..."
-                                   Classes="caption"
-                                   IsVisible="{Binding IsPartialSnapshot}"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                Spacing="12"
-                                VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="10"
+                            VerticalAlignment="Top">
+                    <Border Classes="dashboard-control-chip">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="6"
+                                    VerticalAlignment="Center">
                             <ToggleSwitch IsChecked="{Binding AutoRefreshEnabled}"
-                                         OnContent="Auto"
-                                         OffContent="Auto"/>
-                            <StackPanel Orientation="Horizontal"
-                                        Spacing="4"
-                                        VerticalAlignment="Center"
-                                        IsVisible="{Binding AutoRefreshEnabled}">
-                                <ComboBox ItemsSource="{Binding RefreshIntervalOptions}"
-                                          SelectedItem="{Binding RefreshIntervalSeconds}"
-                                          Width="78"/>
-                                <TextBlock Text="sec"
-                                           Classes="caption"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
+                                          OnContent=""
+                                          OffContent=""
+                                          AutomationProperties.Name="Auto refresh"
+                                          MinWidth="40"
+                                          MinHeight="24"/>
+                            <TextBlock Text="Auto refresh"
+                                       Classes="caption"
+                                       VerticalAlignment="Center"/>
+                            <ComboBox ItemsSource="{Binding RefreshIntervalOptions}"
+                                      SelectedItem="{Binding RefreshIntervalSeconds}"
+                                      AutomationProperties.Name="Refresh interval in seconds"
+                                      Width="58"
+                                      MinHeight="24"
+                                      Padding="4,0"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      FontSize="11"
+                                      IsVisible="{Binding AutoRefreshEnabled}"/>
+                            <TextBlock Text="s"
+                                       Classes="caption"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding AutoRefreshEnabled}"/>
                         </StackPanel>
+                    </Border>
 
-                        <Button Classes="secondary small"
-                                Command="{Binding RefreshCommand}"
-                                IsEnabled="{Binding !IsRefreshing}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="RefreshCw" Size="14"/>
-                                <TextBlock Text="Refresh"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    <Button Classes="secondary small dashboard-refresh-button"
+                            Command="{Binding RefreshCommand}"
+                            IsEnabled="{Binding !IsRefreshing}">
+                        <TextBlock Text="Refresh"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
 
-            <!-- Priority Inbox -->
-            <controls:NamespaceInboxView Grid.Row="1"
-                                         DataContext="{Binding Inbox}"
-                                         Margin="0,0,0,24"/>
+            <Grid ColumnDefinitions="*,Auto"
+                  Margin="0,0,0,6">
+                <TextBlock Text="PRIORITY INBOX"
+                           Classes="dashboard-section-label"
+                           VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="10"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Inbox.Items.Count, StringFormat={}Items {0}}"
+                               Classes="caption"/>
+                    <Button Classes="subtle small"
+                            Command="{Binding Inbox.ToggleExpandedCommand}">
+                        <TextBlock Text="{Binding Inbox.ExpandButtonText}"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
 
-            <!-- Metric Cards Row -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="16" Margin="0,0,0,24">
+            <controls:NamespaceInboxView DataContext="{Binding Inbox}"
+                                         Margin="0,0,0,26"/>
+
+            <TextBlock Text="SUMMARY"
+                       Classes="dashboard-section-label"
+                       Margin="0,0,0,6"/>
+
+            <Grid ColumnDefinitions="*,*,*,*"
+                  ColumnSpacing="16"
+                  Margin="0,0,0,26">
                 <Border Grid.Column="0" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
+                    <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"
+                                         SparklineStroke="{DynamicResource AccentBrand}"
+                                         TrendForeground="{DynamicResource TextSuccess}"/>
                 </Border>
 
                 <Border Grid.Column="1" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
+                    <controls:MetricCard DataContext="{Binding DeadLetterCard}"
+                                         SparklineStroke="{DynamicResource TextDanger}"
+                                         TrendForeground="{DynamicResource TextDanger}"/>
                 </Border>
 
                 <Border Grid.Column="2" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding ScheduledCard}"/>
+                    <controls:MetricCard DataContext="{Binding ScheduledCard}"
+                                         SparklineStroke="{DynamicResource TextWarning}"
+                                         TrendForeground="{DynamicResource MutedForeground}"/>
                 </Border>
 
                 <Border Grid.Column="3" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding SizeCard}"/>
+                    <controls:MetricCard DataContext="{Binding SizeCard}"
+                                         SparklineStroke="{DynamicResource TextSuccess}"
+                                         TrendForeground="{DynamicResource TextSuccess}"/>
                 </Border>
             </Grid>
 
-            <!-- Top Entities Lists -->
-            <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,0,0,24">
+            <TextBlock Text="TOP ENTITIES"
+                       Classes="dashboard-section-label"
+                       Margin="0,0,0,6"/>
+
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="16"
+                  Margin="0,0,0,26">
                 <controls:TopEntitiesList Grid.Column="0"
-                                          DataContext="{Binding TopQueues}"
-                                          Margin="0,0,12,0"/>
+                                          DataContext="{Binding TopQueues}"/>
                 <controls:TopEntitiesList Grid.Column="1"
-                                          DataContext="{Binding TopTopics}"
-                                          Margin="12,0,0,0"/>
+                                          DataContext="{Binding TopTopics}"/>
             </Grid>
 
-            <!-- Charts Grid: fixed 2x2 so every card is the same height and width -->
-            <Grid Grid.Row="4"
-                  ColumnDefinitions="*,*"
+            <TextBlock Text="TRENDS"
+                       Classes="dashboard-section-label"
+                       Margin="0,0,0,6"/>
+
+            <Grid ColumnDefinitions="*,*"
                   RowDefinitions="Auto,Auto"
-                  ColumnSpacing="24"
-                  RowSpacing="24">
+                  ColumnSpacing="16"
+                  RowSpacing="16">
                 <controls:DashboardChart Grid.Row="0" Grid.Column="0" DataContext="{Binding Charts[0]}"/>
                 <controls:DashboardChart Grid.Row="0" Grid.Column="1" DataContext="{Binding Charts[1]}"/>
                 <controls:DashboardChart Grid.Row="1" Grid.Column="0" DataContext="{Binding Charts[2]}"/>
                 <controls:DashboardChart Grid.Row="1" Grid.Column="1" DataContext="{Binding Charts[3]}"/>
             </Grid>
-        </Grid>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

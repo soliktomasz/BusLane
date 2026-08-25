@@ -39,4 +39,19 @@ public class MetricCardViewModelTests
         vm.TrendPercentage.Should().Be(expectedTrend);
         vm.Trend.Should().Be(expectedDirection);
     }
+
+    [Theory]
+    [InlineData(512, "512.0 MB")]
+    [InlineData(1945.6, "1.9 GB")]
+    public void ValueDisplay_SizeMetric_IncludesReadableUnit(double valueInMegabytes, string expected)
+    {
+        // Arrange
+        var vm = new MetricCardViewModel("Total Size", "MB");
+
+        // Act
+        vm.UpdateValue(valueInMegabytes);
+
+        // Assert
+        vm.ValueDisplay.Should().Be(expected);
+    }
 }
