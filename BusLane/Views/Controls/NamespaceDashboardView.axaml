@@ -24,6 +24,10 @@
                     <Button Classes="subtle small" Command="{Binding ShowAnalyticsCommand}" Content="Analytics"/>
                     <Button Classes="secondary small" Command="{Binding RefreshCommand}"
                             IsEnabled="{Binding !IsRefreshing}" Content="Refresh"/>
+                    <Button Classes="subtle small"
+                            Command="{Binding $parent[Window].DataContext.CloseOverviewCommand}"
+                            Content="Close"
+                            AutomationProperties.Name="Close namespace overview"/>
                 </StackPanel>
             </Grid>
 

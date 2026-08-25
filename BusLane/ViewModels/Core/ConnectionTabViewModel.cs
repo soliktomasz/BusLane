@@ -32,7 +32,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isActive;
     [ObservableProperty] private bool _isEntityPaneVisible = true;
-    [ObservableProperty] private NamespaceWorkspaceMode _workspaceMode = NamespaceWorkspaceMode.Overview;
+    [ObservableProperty] private NamespaceWorkspaceMode _workspaceMode = NamespaceWorkspaceMode.Entity;
     [ObservableProperty] private NamespaceOverviewSection _overviewSection = NamespaceOverviewSection.Home;
     [ObservableProperty] private NamespaceNavigationRequest? _currentDestination;
     [ObservableProperty] private string? _statusMessage;
@@ -256,7 +256,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
     private void ResetWorkspace()
     {
-        WorkspaceMode = NamespaceWorkspaceMode.Overview;
+        WorkspaceMode = NamespaceWorkspaceMode.Entity;
         OverviewSection = NamespaceOverviewSection.Home;
         CurrentDestination = null;
     }

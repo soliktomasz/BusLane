@@ -22,13 +22,13 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
-    public void Constructor_DefaultsToOverviewHome()
+    public void Constructor_DefaultsToEntityExplorer()
     {
         // Act
         var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
 
         // Assert
-        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Overview);
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
         tab.OverviewSection.Should().Be(NamespaceOverviewSection.Home);
     }
 
@@ -175,7 +175,7 @@ public class ConnectionTabViewModelTests
         tab.IsConnected.Should().BeTrue();
         tab.Mode.Should().Be(ConnectionMode.ConnectionString);
         tab.SavedConnection.Should().Be(connection);
-        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Overview);
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
         tab.OverviewSection.Should().Be(NamespaceOverviewSection.Home);
     }
 
@@ -245,7 +245,7 @@ public class ConnectionTabViewModelTests
         // Assert
         tab.IsConnected.Should().BeFalse();
         tab.Mode.Should().Be(ConnectionMode.None);
-        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Overview);
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
         tab.OverviewSection.Should().Be(NamespaceOverviewSection.Home);
     }
 

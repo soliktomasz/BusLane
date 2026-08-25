@@ -56,16 +56,18 @@ public class MainWindowViewTests
     {
         // Arrange
         var xaml = File.ReadAllText(GetMainWindowPath());
+        var dashboardXaml = File.ReadAllText(GetControlPath("NamespaceDashboardView.axaml"));
 
         // Assert
         xaml.Should().Contain("<controls:NamespaceDashboardView");
         xaml.Should().Contain("IsVisible=\"{Binding IsNamespaceOverviewVisible}\"");
         xaml.Should().NotContain("FeaturePanels.ShowCharts");
         xaml.Should().NotContain("CloseChartsCommand");
+        dashboardXaml.Should().Contain("CloseOverviewCommand");
     }
 
     [Fact]
-    public void MainWindow_EntityWorkspaceStartsWithOverviewBreadcrumb()
+    public void MainWindow_EntityBreadcrumbDoesNotOpenOverview()
     {
         // Arrange
         var xaml = File.ReadAllText(GetMainWindowPath());
@@ -73,7 +75,9 @@ public class MainWindowViewTests
 
         // Assert
         xaml.Should().Contain("<controls:NamespaceWorkspaceBreadcrumb");
-        breadcrumbXaml.Should().Contain("BackToOverviewCommand");
+        breadcrumbXaml.Should().NotContain("BackToOverviewCommand");
+        breadcrumbXaml.Should().NotContain("Text=\"Overview\"");
+        breadcrumbXaml.Should().Contain("Text=\"Entity Explorer\"");
     }
 
     [Fact]

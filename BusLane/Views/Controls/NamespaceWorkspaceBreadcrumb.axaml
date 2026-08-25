@@ -8,12 +8,11 @@
             BorderBrush="{DynamicResource BorderDefault}"
             BorderThickness="0,0,0,1">
         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <Button Classes="subtle small"
-                    Command="{Binding BackToOverviewCommand}"
-                    AutomationProperties.Name="Back to namespace overview">
-                <TextBlock Text="Overview"/>
-            </Button>
-            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"/>
+            <TextBlock Text="Entity Explorer"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
             <TextBlock Text="{Binding WorkspaceTopicName}"
                        Classes="caption"
                        VerticalAlignment="Center"
@@ -28,11 +27,14 @@
                        FontWeight="SemiBold"
                        VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
-                       ToolTip.Tip="{Binding WorkspaceEntityName}"/>
-            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"/>
+                       ToolTip.Tip="{Binding WorkspaceEntityName}"
+                       IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
             <TextBlock Text="{Binding WorkspaceDestinationLabel}"
                        Classes="caption"
-                       VerticalAlignment="Center"/>
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         </StackPanel>
     </Border>
 </UserControl>

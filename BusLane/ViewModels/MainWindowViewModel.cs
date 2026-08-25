@@ -2297,7 +2297,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private void BackToOverview() => OpenOverview();
+    private void CloseOverview()
+    {
+        if (ActiveTab is null)
+        {
+            return;
+        }
+
+        ActiveTab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        NotifyActiveTabDependentProperties();
+        UpdateNamespaceDashboardLifecycle();
+    }
 
     [RelayCommand]
     private void OpenAlerts()

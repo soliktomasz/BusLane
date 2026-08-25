@@ -380,7 +380,29 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task ConnectionStringTab_ActivatesDashboardWhileOverviewIsVisible()
+    public void CloseOverviewCommand_ReturnsToEntityExplorer()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var tab = CreateTab("tab-1", preferences);
+        tab.IsConnected = true;
+        tab.Mode = ConnectionMode.ConnectionString;
+        tab.WorkspaceMode = NamespaceWorkspaceMode.Overview;
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+
+        // Act
+        sut.CloseOverviewCommand.Execute(null);
+
+        // Assert
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
+        sut.IsNamespaceOverviewVisible.Should().BeFalse();
+        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConnectionStringTab_StartsInEntityExplorerAndRefreshesDashboardOnlyWhileOverviewIsOpen()
     {
         // Arrange
         var preferences = new TestPreferencesService();
@@ -420,23 +442,12 @@ public class MainWindowViewModelTests
         sut.ActiveTab = tab;
 
         // Assert
-        _ = dashboardRefreshService.Received(1).RefreshAsync(
-            "Orders",
-            operations,
-            Arg.Any<CancellationToken>());
-        dashboardRefreshService.Received(1).StartAutoRefresh(
-            "Orders",
-            operations,
-            TimeSpan.FromSeconds(30));
-        sut.IsNamespaceOverviewVisible.Should().BeTrue();
-        dashboardRefreshService.ClearReceivedCalls();
-
-        // Act
-        tab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
-
-        // Assert
-        dashboardRefreshService.Received(1).StopAutoRefresh();
+        sut.IsNamespaceOverviewVisible.Should().BeFalse();
         sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
+        _ = dashboardRefreshService.DidNotReceive().RefreshAsync(
+            Arg.Any<string>(),
+            Arg.Any<IServiceBusOperations>(),
+            Arg.Any<CancellationToken>());
         dashboardRefreshService.ClearReceivedCalls();
 
         // Act
@@ -452,6 +463,13 @@ public class MainWindowViewModelTests
             operations,
             TimeSpan.FromSeconds(30));
         sut.IsNamespaceOverviewVisible.Should().BeTrue();
+
+        // Act
+        sut.CloseOverviewCommand.Execute(null);
+
+        // Assert
+        dashboardRefreshService.Received().StopAutoRefresh();
+        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
     }
 
     [Fact]
@@ -577,33 +595,25 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task BackToOverview_PreservesSectionAndSearchQuery()
+    public void CloseOverview_PreservesSectionAndSearchQuery()
     {
         // Arrange
         var preferences = new TestPreferencesService();
-        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
-        var operations = Substitute.For<IConnectionStringOperations>();
-        var queue = CreateQueue("orders");
-        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
-        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(queue);
-        operations.PeekMessagesAsync(
-                "orders", null, Arg.Any<int>(), null, false, false, null, Arg.Any<CancellationToken>())
-            .Returns([]);
-        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
-        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, "Orders", "orders");
+        using var sut = CreateSut(preferences);
+        var tab = CreateTab("tab-1", preferences);
+        tab.IsConnected = true;
+        tab.Mode = ConnectionMode.ConnectionString;
         sut.ConnectionTabs.Add(tab);
         sut.ActiveTab = tab;
+        sut.OpenOverviewCommand.Execute(null);
         sut.NamespaceDashboard.SelectedSection = NamespaceOverviewSection.Analytics;
         sut.NamespaceDashboard.EntitySearch.Query = "ord";
-        sut.NamespaceDashboard.EntitySearch.SelectedResult = sut.NamespaceDashboard.EntitySearch.Results.Single();
-        sut.NamespaceDashboard.EntitySearch.OpenSelectedCommand.Execute(null);
-        await WaitUntilAsync(() => tab.WorkspaceMode == NamespaceWorkspaceMode.Entity);
 
         // Act
-        sut.BackToOverviewCommand.Execute(null);
+        sut.CloseOverviewCommand.Execute(null);
 
         // Assert
-        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Overview);
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
         tab.OverviewSection.Should().Be(NamespaceOverviewSection.Analytics);
         sut.NamespaceDashboard.SelectedSection.Should().Be(NamespaceOverviewSection.Analytics);
         sut.NamespaceDashboard.EntitySearch.Query.Should().Be("ord");
