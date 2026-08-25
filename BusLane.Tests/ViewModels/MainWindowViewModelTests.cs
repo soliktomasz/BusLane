@@ -360,6 +360,70 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public void EntityExplorerSelection_UpdatesBreadcrumbForEntityAndMessageView()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var tab = CreateTab("tab-1", preferences);
+        tab.IsConnected = true;
+        tab.Mode = ConnectionMode.ConnectionString;
+        tab.CurrentDestination = new NamespaceNavigationRequest(
+            EntityType.Subscription,
+            "previous-topic/previous-subscription",
+            "previous-topic",
+            EntityWorkspaceView.DeadLetters);
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        var queue = CreateQueue("orders");
+        var topic = new TopicInfo("events", 128, 1, null, TimeSpan.FromDays(14));
+        var subscription = new SubscriptionInfo("processor", "events", 1, 1, 0, null, false);
+        var changedProperties = new List<string?>();
+        sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        // Act / Assert - queue
+        tab.Navigation.SelectedQueue = queue;
+
+        sut.WorkspaceTopicName.Should().BeNull();
+        sut.WorkspaceEntityName.Should().Be("orders");
+        sut.WorkspaceDestinationLabel.Should().Be("Active messages");
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceEntityName));
+
+        // Act / Assert - topic
+        changedProperties.Clear();
+        tab.Navigation.SelectedQueue = null;
+        tab.Navigation.SelectedTopic = topic;
+
+        sut.WorkspaceTopicName.Should().BeNull();
+        sut.WorkspaceEntityName.Should().Be("events");
+        sut.WorkspaceDestinationLabel.Should().Be("Subscriptions");
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceDestinationLabel));
+
+        // Act / Assert - subscription
+        changedProperties.Clear();
+        tab.Navigation.SelectedTopic = null;
+        tab.Navigation.SelectedSubscription = subscription;
+
+        sut.WorkspaceTopicName.Should().Be("events");
+        sut.WorkspaceEntityName.Should().Be("processor");
+        sut.WorkspaceDestinationLabel.Should().Be("Active messages");
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceTopicName));
+
+        // Act / Assert - message view
+        changedProperties.Clear();
+        tab.Navigation.SelectedMessageTabIndex = 1;
+
+        sut.WorkspaceDestinationLabel.Should().Be("Dead letters");
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceDestinationLabel));
+
+        changedProperties.Clear();
+        tab.Navigation.SelectedMessageTabIndex = 2;
+
+        sut.WorkspaceDestinationLabel.Should().Be("Sessions");
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceDestinationLabel));
+    }
+
+    [Fact]
     public void OpenOverviewCommand_UsesActiveNamespaceWorkspace()
     {
         // Arrange

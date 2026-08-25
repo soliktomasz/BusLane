@@ -145,16 +145,47 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IsActiveTabConnectionStringMode && ActiveTab?.WorkspaceMode == NamespaceWorkspaceMode.Entity;
 
     /// <summary>Gets optional topic segment for current entity breadcrumb.</summary>
-    public string? WorkspaceTopicName => ActiveTab?.CurrentDestination is
-        { EntityType: EntityType.Subscription } request
-            ? request.TopicName
-            : null;
+    public string? WorkspaceTopicName
+    {
+        get
+        {
+            if (CurrentNavigation.SelectedSubscription is { } subscription)
+            {
+                return subscription.TopicName;
+            }
+
+            if (CurrentNavigation.SelectedQueue is not null
+                || CurrentNavigation.SelectedTopic is not null)
+            {
+                return null;
+            }
+
+            return ActiveTab?.CurrentDestination is { EntityType: EntityType.Subscription } request
+                ? request.TopicName
+                : null;
+        }
+    }
 
     /// <summary>Gets entity segment for current entity breadcrumb.</summary>
     public string? WorkspaceEntityName
     {
         get
         {
+            if (CurrentNavigation.SelectedSubscription is { } subscription)
+            {
+                return subscription.Name;
+            }
+
+            if (CurrentNavigation.SelectedQueue is { } queue)
+            {
+                return queue.Name;
+            }
+
+            if (CurrentNavigation.SelectedTopic is { } topic)
+            {
+                return topic.Name;
+            }
+
             var request = ActiveTab?.CurrentDestination;
             if (request is null)
             {
@@ -174,14 +205,37 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     /// <summary>Gets destination segment for current entity breadcrumb.</summary>
-    public string? WorkspaceDestinationLabel => ActiveTab?.CurrentDestination?.View switch
+    public string? WorkspaceDestinationLabel
     {
-        EntityWorkspaceView.ActiveMessages => "Active messages",
-        EntityWorkspaceView.DeadLetters => "Dead letters",
-        EntityWorkspaceView.Sessions => "Sessions",
-        EntityWorkspaceView.TopicSubscriptions => "Subscriptions",
-        _ => null
-    };
+        get
+        {
+            if (CurrentNavigation.SelectedTopic is not null
+                && CurrentNavigation.SelectedSubscription is null)
+            {
+                return "Subscriptions";
+            }
+
+            if (CurrentNavigation.SelectedQueue is not null
+                || CurrentNavigation.SelectedSubscription is not null)
+            {
+                return CurrentNavigation.SelectedMessageTabIndex switch
+                {
+                    1 => "Dead letters",
+                    2 => "Sessions",
+                    _ => "Active messages"
+                };
+            }
+
+            return ActiveTab?.CurrentDestination?.View switch
+            {
+                EntityWorkspaceView.ActiveMessages => "Active messages",
+                EntityWorkspaceView.DeadLetters => "Dead letters",
+                EntityWorkspaceView.Sessions => "Sessions",
+                EntityWorkspaceView.TopicSubscriptions => "Subscriptions",
+                _ => null
+            };
+        }
+    }
 
     /// <summary>
     /// Gets a compact label describing the active workspace mode.
@@ -2544,6 +2598,16 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     private void OnActiveTabNavigationPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(NavigationState.SelectedQueue)
+            or nameof(NavigationState.SelectedTopic)
+            or nameof(NavigationState.SelectedSubscription)
+            or nameof(NavigationState.SelectedMessageTabIndex))
+        {
+            OnPropertyChanged(nameof(WorkspaceTopicName));
+            OnPropertyChanged(nameof(WorkspaceEntityName));
+            OnPropertyChanged(nameof(WorkspaceDestinationLabel));
+        }
+
         if (e.PropertyName == nameof(NavigationState.SelectedMessageTabIndex)
             && Volatile.Read(ref _suppressDeadLetterReload) != 0)
         {
