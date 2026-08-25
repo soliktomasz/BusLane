@@ -42,10 +42,14 @@
 
             <!-- Content when namespace selected (Azure mode) -->
                 <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding IsAzureEntityWorkspaceVisible}">
+                      RowDefinitions="Auto,*"
+                      IsVisible="{Binding IsAzureEntityWorkspaceVisible}">
+
+                <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
 
                 <!-- Main content grid -->
-                <Grid x:Name="AzureWorkspaceGrid"
+                <Grid Grid.Row="1"
+                      x:Name="AzureWorkspaceGrid"
                       ColumnDefinitions="0,1.2*,1.8*">
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="1"
@@ -58,10 +62,14 @@
 
             <!-- Content when connected via connection string -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
+                  RowDefinitions="Auto,*"
                   IsVisible="{Binding IsConnectionStringEntityWorkspaceVisible}">
 
+                <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
+
                 <!-- Main content for connection string mode -->
-                <Grid x:Name="ConnectionWorkspaceGrid"
+                <Grid Grid.Row="1"
+                      x:Name="ConnectionWorkspaceGrid"
                       ColumnDefinitions="0,1.2*,1.8*">
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="1"

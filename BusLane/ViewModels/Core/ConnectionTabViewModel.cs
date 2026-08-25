@@ -34,6 +34,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     [ObservableProperty] private bool _isEntityPaneVisible = true;
     [ObservableProperty] private NamespaceWorkspaceMode _workspaceMode = NamespaceWorkspaceMode.Overview;
     [ObservableProperty] private NamespaceOverviewSection _overviewSection = NamespaceOverviewSection.Home;
+    [ObservableProperty] private NamespaceNavigationRequest? _currentDestination;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private ConnectionHealthReport _connectionHealth = new(ConnectionHealthState.Healthy, "Connection healthy");
 
@@ -257,6 +258,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     {
         WorkspaceMode = NamespaceWorkspaceMode.Overview;
         OverviewSection = NamespaceOverviewSection.Home;
+        CurrentDestination = null;
     }
 
     private async Task LoadEntitiesAsync(SavedConnection connection, CancellationToken ct = default)

@@ -2,6 +2,7 @@ namespace BusLane.ViewModels.Dashboard;
 
 using System.Collections.ObjectModel;
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.Services.Monitoring;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,9 +15,7 @@ public partial class NamespaceInboxViewModel : ViewModelBase
 {
     private readonly INamespaceInboxScoringService _scoringService;
     private readonly INamespaceInboxReviewStore _reviewStore;
-    private Action<NamespaceInboxItem> _openMessages;
-    private Action<NamespaceInboxItem> _openDeadLetter;
-    private Action<NamespaceInboxItem> _openSessionInspector;
+    private Action<NamespaceNavigationRequest> _navigate;
     private string? _currentNamespaceId;
 
     [ObservableProperty]
@@ -31,22 +30,18 @@ public partial class NamespaceInboxViewModel : ViewModelBase
     public NamespaceInboxViewModel(
         INamespaceInboxScoringService scoringService,
         INamespaceInboxReviewStore reviewStore)
-        : this(scoringService, reviewStore, _ => { }, _ => { }, _ => { })
+        : this(scoringService, reviewStore, _ => { })
     {
     }
 
     public NamespaceInboxViewModel(
         INamespaceInboxScoringService scoringService,
         INamespaceInboxReviewStore reviewStore,
-        Action<NamespaceInboxItem> openMessages,
-        Action<NamespaceInboxItem> openDeadLetter,
-        Action<NamespaceInboxItem> openSessionInspector)
+        Action<NamespaceNavigationRequest> navigate)
     {
         _scoringService = scoringService;
         _reviewStore = reviewStore;
-        _openMessages = openMessages;
-        _openDeadLetter = openDeadLetter;
-        _openSessionInspector = openSessionInspector;
+        _navigate = navigate;
 
         Items.CollectionChanged += (_, _) =>
         {
@@ -55,14 +50,9 @@ public partial class NamespaceInboxViewModel : ViewModelBase
         };
     }
 
-    public void UpdateActions(
-        Action<NamespaceInboxItem> openMessages,
-        Action<NamespaceInboxItem> openDeadLetter,
-        Action<NamespaceInboxItem> openSessionInspector)
+    public void UpdateNavigation(Action<NamespaceNavigationRequest> navigate)
     {
-        _openMessages = openMessages;
-        _openDeadLetter = openDeadLetter;
-        _openSessionInspector = openSessionInspector;
+        _navigate = navigate;
     }
 
     public void Refresh(
@@ -89,9 +79,7 @@ public partial class NamespaceInboxViewModel : ViewModelBase
                 deadLetterDelta: item.DeadLetterCount - (reviewState?.DeadLetterCount ?? item.DeadLetterCount),
                 scheduledDelta: item.ScheduledCount - (reviewState?.ScheduledCount ?? item.ScheduledCount),
                 alertDelta: item.ActiveAlertCount - (reviewState?.ActiveAlertCount ?? item.ActiveAlertCount),
-                _openMessages,
-                _openDeadLetter,
-                _openSessionInspector,
+                _navigate,
                 MarkReviewed));
         }
     }

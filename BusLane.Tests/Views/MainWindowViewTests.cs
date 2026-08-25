@@ -64,6 +64,18 @@ public class MainWindowViewTests
         xaml.Should().NotContain("CloseChartsCommand");
     }
 
+    [Fact]
+    public void MainWindow_EntityWorkspaceStartsWithOverviewBreadcrumb()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMainWindowPath());
+        var breadcrumbXaml = File.ReadAllText(GetControlPath("NamespaceWorkspaceBreadcrumb.axaml"));
+
+        // Assert
+        xaml.Should().Contain("<controls:NamespaceWorkspaceBreadcrumb");
+        breadcrumbXaml.Should().Contain("BackToOverviewCommand");
+    }
+
     private static string GetMainWindowPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -75,5 +87,19 @@ public class MainWindowViewTests
             "BusLane",
             "Views",
             "MainWindow.axaml"));
+    }
+
+    private static string GetControlPath(string fileName)
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Views",
+            "Controls",
+            fileName));
     }
 }

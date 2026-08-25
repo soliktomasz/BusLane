@@ -21,7 +21,7 @@ public class NamespaceInboxViewModelTests
             CreateInboxItem("topic-a/sub-a", EntityType.Subscription, activeMessageCount: 8, deadLetterCount: 1, topicName: "topic-a")
         ];
 
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         // Act
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3)], [CreateSubscriptionInfo("topic-a", "sub-a", 8, 1)], []);
@@ -36,7 +36,7 @@ public class NamespaceInboxViewModelTests
     {
         // Arrange
         _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, activeMessageCount: 12, deadLetterCount: 3)];
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3)], [], []);
         var item = sut.Items.Single();
@@ -54,12 +54,10 @@ public class NamespaceInboxViewModelTests
     }
 
     [Fact]
-    public void OpenCommands_InvokeExpectedNavigationCallbacks()
+    public void OpenCommands_EmitTypedNavigationRequests()
     {
         // Arrange
-        NamespaceInboxItem? openedMessages = null;
-        NamespaceInboxItem? openedDeadLetter = null;
-        NamespaceInboxItem? openedSessionInspector = null;
+        var requests = new List<NamespaceNavigationRequest>();
 
         _scoringService.Items =
         [
@@ -69,9 +67,7 @@ public class NamespaceInboxViewModelTests
         var sut = new NamespaceInboxViewModel(
             _scoringService,
             _reviewStore,
-            item => openedMessages = item,
-            item => openedDeadLetter = item,
-            item => openedSessionInspector = item);
+            requests.Add);
 
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3, requiresSession: true)], [], []);
         var item = sut.Items.Single();
@@ -82,12 +78,10 @@ public class NamespaceInboxViewModelTests
         item.OpenSessionInspectorCommand.Execute(null);
 
         // Assert
-        openedMessages.Should().NotBeNull();
-        openedDeadLetter.Should().NotBeNull();
-        openedSessionInspector.Should().NotBeNull();
-        openedMessages!.EntityName.Should().Be("orders");
-        openedDeadLetter!.EntityName.Should().Be("orders");
-        openedSessionInspector!.EntityName.Should().Be("orders");
+        requests.Should().Equal(
+            new NamespaceNavigationRequest(EntityType.Queue, "orders", null, EntityWorkspaceView.ActiveMessages),
+            new NamespaceNavigationRequest(EntityType.Queue, "orders", null, EntityWorkspaceView.DeadLetters),
+            new NamespaceNavigationRequest(EntityType.Queue, "orders", null, EntityWorkspaceView.Sessions));
     }
 
     [Fact]
@@ -95,7 +89,7 @@ public class NamespaceInboxViewModelTests
     {
         // Arrange
         _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, activeMessageCount: 12, deadLetterCount: 3)];
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         // Act
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3)], [], []);
@@ -111,7 +105,7 @@ public class NamespaceInboxViewModelTests
     public void ToggleExpanded_DefaultsExpandedAndTogglesState()
     {
         // Arrange
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         // Act
         var initialState = sut.IsExpanded;
