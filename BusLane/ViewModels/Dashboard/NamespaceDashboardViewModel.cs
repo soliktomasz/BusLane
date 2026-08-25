@@ -19,6 +19,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private readonly List<NamespaceDashboardSummary> _summaryHistory = [];
     private bool _isActive;
     private Action<NamespaceNavigationRequest> _navigate = _ => { };
+    private Action<NamespaceOverviewSection> _overviewSectionChanged = _ => { };
     private IReadOnlyList<TopicInfo> _contextTopics = [];
 
     [ObservableProperty]
@@ -41,6 +42,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isPartialSnapshot;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsHomeSelected))]
+    [NotifyPropertyChangedFor(nameof(IsIssuesSelected))]
+    [NotifyPropertyChangedFor(nameof(IsAnalyticsSelected))]
+    private NamespaceOverviewSection _selectedSection = NamespaceOverviewSection.Home;
+
+    public bool IsHomeSelected => SelectedSection == NamespaceOverviewSection.Home;
+    public bool IsIssuesSelected => SelectedSection == NamespaceOverviewSection.Issues;
+    public bool IsAnalyticsSelected => SelectedSection == NamespaceOverviewSection.Analytics;
 
     // Metric Cards
     public MetricCardViewModel ActiveMessagesCard { get; }
@@ -114,6 +125,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         Inbox.UpdateNavigation(navigate);
         EntitySearch.UpdateNavigation(navigate);
     }
+
+    public void UpdateOverviewSection(Action<NamespaceOverviewSection> sectionChanged) =>
+        _overviewSectionChanged = sectionChanged;
+
+    partial void OnSelectedSectionChanged(NamespaceOverviewSection value) =>
+        _overviewSectionChanged(value);
+
+    [RelayCommand] private void ShowHome() => SelectedSection = NamespaceOverviewSection.Home;
+    [RelayCommand] private void ShowIssues() => SelectedSection = NamespaceOverviewSection.Issues;
+    [RelayCommand] private void ShowAnalytics() => SelectedSection = NamespaceOverviewSection.Analytics;
 
     public void SetNavigationContext(
         IEnumerable<QueueInfo> queues,

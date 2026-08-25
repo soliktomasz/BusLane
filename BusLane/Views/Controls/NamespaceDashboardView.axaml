@@ -1,154 +1,102 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:BusLane.ViewModels.Dashboard;assembly=BusLane"
-             xmlns:controls="clr-namespace:BusLane.Views.Controls;assembly=BusLane"
-             mc:Ignorable="d"
+             xmlns:vm="using:BusLane.ViewModels.Dashboard"
+             xmlns:models="using:BusLane.Models.Dashboard"
+             xmlns:controls="using:BusLane.Views.Controls"
              x:Class="BusLane.Views.Controls.NamespaceDashboardView"
              x:DataType="vm:NamespaceDashboardViewModel"
              x:CompileBindings="False">
-
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="26">
-            <Grid ColumnDefinitions="*,Auto"
-                  Margin="0,0,0,26">
-                <StackPanel Grid.Column="0"
-                            Spacing="4"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="Namespace Overview"
-                               Classes="heading"/>
-                    <TextBlock Text="Use the inbox first, then skim the summary and trends."
-                               Classes="caption"/>
-                    <TextBlock Text="Topic metrics loading progressively..."
-                               Classes="caption"
+        <StackPanel Margin="26" Spacing="20">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Namespace Overview" Classes="heading"/>
+                    <TextBlock Text="Find entities fast, then work highest-impact exceptions first." Classes="caption"/>
+                    <TextBlock Text="Topic metrics updating progressively" Classes="caption"
                                IsVisible="{Binding IsPartialSnapshot}"/>
                 </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Classes="subtle small" Command="{Binding ShowHomeCommand}" Content="Home"/>
+                    <Button Classes="subtle small" Command="{Binding ShowIssuesCommand}" Content="Issues"/>
+                    <Button Classes="subtle small" Command="{Binding ShowAnalyticsCommand}" Content="Analytics"/>
+                    <Button Classes="secondary small" Command="{Binding RefreshCommand}"
+                            IsEnabled="{Binding !IsRefreshing}" Content="Refresh"/>
+                </StackPanel>
+            </Grid>
 
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="10"
-                            VerticalAlignment="Top">
-                    <Border Classes="dashboard-control-chip">
-                        <StackPanel Orientation="Horizontal"
-                                    Spacing="6"
-                                    VerticalAlignment="Center">
-                            <ToggleSwitch IsChecked="{Binding AutoRefreshEnabled}"
-                                          OnContent=""
-                                          OffContent=""
-                                          AutomationProperties.Name="Auto refresh"
-                                          MinWidth="40"
-                                          MinHeight="24"/>
-                            <TextBlock Text="Auto refresh"
-                                       Classes="caption"
-                                       VerticalAlignment="Center"/>
-                            <ComboBox ItemsSource="{Binding RefreshIntervalOptions}"
-                                      SelectedItem="{Binding RefreshIntervalSeconds}"
-                                      AutomationProperties.Name="Refresh interval in seconds"
-                                      Width="58"
-                                      MinHeight="24"
-                                      Padding="4,0"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      FontSize="11"
-                                      IsVisible="{Binding AutoRefreshEnabled}"/>
-                            <TextBlock Text="s"
-                                       Classes="caption"
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding AutoRefreshEnabled}"/>
+            <StackPanel IsVisible="{Binding IsHomeSelected}" Spacing="20">
+                <controls:NamespaceEntitySearchView DataContext="{Binding EntitySearch}"/>
+
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                    <Border Grid.Column="0" Classes="dashboard-summary-surface">
+                        <StackPanel><TextBlock Text="NEEDS ACTION" Classes="dashboard-section-label"/>
+                            <TextBlock Text="{Binding Inbox.NeedsActionCount}" Classes="heading"/></StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="dashboard-summary-surface">
+                        <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
+                    </Border>
+                    <Border Grid.Column="2" Classes="dashboard-summary-surface">
+                        <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="2*,*" ColumnSpacing="16">
+                    <StackPanel Grid.Column="0" Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="PRIORITY WORK" Classes="dashboard-section-label"/>
+                            <Button Grid.Column="1" Classes="subtle small" Command="{Binding ShowIssuesCommand}"
+                                    Content="View all issues"/>
+                        </Grid>
+                        <controls:NamespaceInboxView DataContext="{Binding Inbox}"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" Classes="card">
+                        <StackPanel Spacing="14">
+                            <TextBlock Text="CONTINUE WORK" Classes="dashboard-section-label"/>
+                            <TextBlock Text="Pinned" FontWeight="SemiBold"/>
+                            <ItemsControl ItemsSource="{Binding PinnedDestinations}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
+                                        <Button Classes="subtle small" HorizontalAlignment="Stretch"
+                                                Command="{Binding $parent[UserControl].DataContext.OpenDestinationCommand}"
+                                                CommandParameter="{Binding}" Content="{Binding DisplayPath}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="Recent" FontWeight="SemiBold"/>
+                            <ItemsControl ItemsSource="{Binding RecentDestinations}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
+                                        <Button Classes="subtle small" HorizontalAlignment="Stretch"
+                                                Command="{Binding $parent[UserControl].DataContext.OpenDestinationCommand}"
+                                                CommandParameter="{Binding}" Content="{Binding DisplayPath}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button Classes="secondary small" Command="{Binding ShowAnalyticsCommand}" Content="Open Analytics"/>
                         </StackPanel>
                     </Border>
+                </Grid>
+            </StackPanel>
 
-                    <Button Classes="secondary small dashboard-refresh-button"
-                            Command="{Binding RefreshCommand}"
-                            IsEnabled="{Binding !IsRefreshing}">
-                        <TextBlock Text="Refresh"/>
-                    </Button>
-                </StackPanel>
-            </Grid>
+            <StackPanel IsVisible="{Binding IsIssuesSelected}" Spacing="10">
+                <TextBlock Text="All Issues" Classes="title"/>
+                <controls:NamespaceIssuesView DataContext="{Binding Inbox}"/>
+            </StackPanel>
 
-            <controls:NamespaceEntitySearchView DataContext="{Binding EntitySearch}"
-                                                Margin="0,0,0,20"/>
-
-            <Grid ColumnDefinitions="*,Auto"
-                  Margin="0,0,0,6">
-                <TextBlock Text="PRIORITY INBOX"
-                           Classes="dashboard-section-label"
-                           VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="10"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Inbox.Items.Count, StringFormat={}Items {0}}"
-                               Classes="caption"/>
-                    <Button Classes="subtle small"
-                            Command="{Binding Inbox.ToggleExpandedCommand}">
-                        <TextBlock Text="{Binding Inbox.ExpandButtonText}"/>
-                    </Button>
-                </StackPanel>
-            </Grid>
-
-            <controls:NamespaceInboxView DataContext="{Binding Inbox}"
-                                         Margin="0,0,0,26"/>
-
-            <TextBlock Text="SUMMARY"
-                       Classes="dashboard-section-label"
-                       Margin="0,0,0,6"/>
-
-            <Grid ColumnDefinitions="*,*,*,*"
-                  ColumnSpacing="16"
-                  Margin="0,0,0,26">
-                <Border Grid.Column="0" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"
-                                         SparklineStroke="{DynamicResource AccentBrand}"
-                                         TrendForeground="{DynamicResource TextSuccess}"/>
-                </Border>
-
-                <Border Grid.Column="1" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding DeadLetterCard}"
-                                         SparklineStroke="{DynamicResource TextDanger}"
-                                         TrendForeground="{DynamicResource TextDanger}"/>
-                </Border>
-
-                <Border Grid.Column="2" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding ScheduledCard}"
-                                         SparklineStroke="{DynamicResource TextWarning}"
-                                         TrendForeground="{DynamicResource MutedForeground}"/>
-                </Border>
-
-                <Border Grid.Column="3" Classes="dashboard-summary-surface">
-                    <controls:MetricCard DataContext="{Binding SizeCard}"
-                                         SparklineStroke="{DynamicResource TextSuccess}"
-                                         TrendForeground="{DynamicResource TextSuccess}"/>
-                </Border>
-            </Grid>
-
-            <TextBlock Text="TOP ENTITIES"
-                       Classes="dashboard-section-label"
-                       Margin="0,0,0,6"/>
-
-            <Grid ColumnDefinitions="*,*"
-                  ColumnSpacing="16"
-                  Margin="0,0,0,26">
-                <controls:TopEntitiesList Grid.Column="0"
-                                          DataContext="{Binding TopQueues}"/>
-                <controls:TopEntitiesList Grid.Column="1"
-                                          DataContext="{Binding TopTopics}"/>
-            </Grid>
-
-            <TextBlock Text="TRENDS"
-                       Classes="dashboard-section-label"
-                       Margin="0,0,0,6"/>
-
-            <Grid ColumnDefinitions="*,*"
-                  RowDefinitions="Auto,Auto"
-                  ColumnSpacing="16"
-                  RowSpacing="16">
-                <controls:DashboardChart Grid.Row="0" Grid.Column="0" DataContext="{Binding Charts[0]}"/>
-                <controls:DashboardChart Grid.Row="0" Grid.Column="1" DataContext="{Binding Charts[1]}"/>
-                <controls:DashboardChart Grid.Row="1" Grid.Column="0" DataContext="{Binding Charts[2]}"/>
-                <controls:DashboardChart Grid.Row="1" Grid.Column="1" DataContext="{Binding Charts[3]}"/>
-            </Grid>
+            <StackPanel IsVisible="{Binding IsAnalyticsSelected}" Spacing="16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Analytics" Classes="title"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding TimeRangeOptions}"
+                              SelectedItem="{Binding SelectedTimeRange}" Width="140"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="16">
+                    <controls:DashboardChart Grid.Row="0" Grid.Column="0" DataContext="{Binding Charts[0]}"/>
+                    <controls:DashboardChart Grid.Row="0" Grid.Column="1" DataContext="{Binding Charts[1]}"/>
+                    <controls:DashboardChart Grid.Row="1" Grid.Column="0" DataContext="{Binding Charts[2]}"/>
+                    <controls:DashboardChart Grid.Row="1" Grid.Column="1" DataContext="{Binding Charts[3]}"/>
+                </Grid>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -400,6 +400,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
         NamespaceDashboard.UpdateNavigation(OpenInboxDestination);
+        NamespaceDashboard.UpdateOverviewSection(section =>
+        {
+            if (ActiveTab is not null)
+            {
+                ActiveTab.OverviewSection = section;
+            }
+        });
 
         // Initialize composed components
         Navigation = new NavigationState(preferencesService);
@@ -2640,6 +2647,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             tab.Navigation.TopicSubscriptions,
             tab.Navigation.PinnedEntities,
             tab.RecentDestinations);
+        NamespaceDashboard.SelectedSection = tab.OverviewSection;
     }
 
     /// <summary>

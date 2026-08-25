@@ -55,6 +55,24 @@ public class NamespaceDashboardViewModelTests
     }
 
     [Fact]
+    public void OverviewSectionCommands_SelectRequestedSection()
+    {
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+
+        sut.ShowIssuesCommand.Execute(null);
+        sut.SelectedSection.Should().Be(NamespaceOverviewSection.Issues);
+        sut.IsIssuesSelected.Should().BeTrue();
+
+        sut.ShowAnalyticsCommand.Execute(null);
+        sut.SelectedSection.Should().Be(NamespaceOverviewSection.Analytics);
+        sut.IsAnalyticsSelected.Should().BeTrue();
+
+        sut.ShowHomeCommand.Execute(null);
+        sut.SelectedSection.Should().Be(NamespaceOverviewSection.Home);
+        sut.IsHomeSelected.Should().BeTrue();
+    }
+
+    [Fact]
     public void RefreshedEntities_UpdateInbox()
     {
         // Arrange

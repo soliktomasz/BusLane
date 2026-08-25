@@ -20,18 +20,22 @@ public class NamespaceDashboardViewTests
     }
 
     [Fact]
-    public void Dashboard_PlacesPriorityInboxBeforeSecondaryWidgets()
+    public void Dashboard_PlacesSearchBeforePriorityAndChartsInAnalytics()
     {
         // Arrange
         var xaml = File.ReadAllText(GetDashboardPath());
 
         // Act
+        var searchIndex = xaml.IndexOf("NamespaceEntitySearchView", StringComparison.Ordinal);
         var inboxIndex = xaml.IndexOf("NamespaceInboxView", StringComparison.Ordinal);
         var chartsIndex = xaml.IndexOf("Charts[0]", StringComparison.Ordinal);
 
         // Assert
+        searchIndex.Should().BeGreaterThanOrEqualTo(0);
+        inboxIndex.Should().BeGreaterThan(searchIndex);
         inboxIndex.Should().BeGreaterThanOrEqualTo(0);
         chartsIndex.Should().BeGreaterThan(inboxIndex);
+        xaml.Should().Contain("IsVisible=\"{Binding IsAnalyticsSelected}\"");
     }
 
     [Fact]
@@ -60,7 +64,7 @@ public class NamespaceDashboardViewTests
     }
 
     [Fact]
-    public void Dashboard_UsesSharedMetricGridSpacing()
+    public void Dashboard_UsesThreeValueHealthStrip()
     {
         // Arrange
         var dashboard = XDocument.Load(GetDashboardPath());
@@ -71,14 +75,23 @@ public class NamespaceDashboardViewTests
                 element.Name.LocalName == "Grid"
                 && element.Elements().Count(child =>
                     child.Name.LocalName == "Border"
-                    && child.Attribute("Classes")?.Value == "dashboard-summary-surface") == 4);
+                    && child.Attribute("Classes")?.Value == "dashboard-summary-surface") == 3);
 
         // Assert
-        metricGrid.Attribute("ColumnDefinitions")?.Value.Should().Be("*,*,*,*");
+        metricGrid.Attribute("ColumnDefinitions")?.Value.Should().Be("*,*,*");
         metricGrid.Attribute("ColumnSpacing")?.Value.Should().Be("16");
         metricGrid.Elements()
             .Where(element => element.Attribute("Classes")?.Value == "dashboard-summary-surface")
             .Should().OnlyContain(element => element.Attribute("Margin") == null);
+    }
+
+    [Fact]
+    public void Issues_UsesVirtualizedList()
+    {
+        var xaml = File.ReadAllText(GetControlPath("NamespaceIssuesView.axaml"));
+
+        xaml.Should().Contain("ItemsSource=\"{Binding AllIssues}\"");
+        xaml.Should().Contain("<VirtualizingStackPanel/>");
     }
 
     [Fact]
@@ -147,4 +160,10 @@ public class NamespaceDashboardViewTests
             "Controls",
             "NamespaceInboxView.axaml"));
     }
+
+    private static string GetControlPath(string fileName) =>
+        Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..",
+            "BusLane", "Views", "Controls", fileName));
 }
