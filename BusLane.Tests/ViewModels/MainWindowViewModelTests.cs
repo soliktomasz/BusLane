@@ -360,7 +360,27 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task ConnectionStringTab_DoesNotStartDashboardRefreshUntilChartsAreOpened()
+    public void OpenOverviewCommand_UsesActiveNamespaceWorkspace()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var tab = CreateTab("tab-1", preferences);
+        tab.IsConnected = true;
+        tab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+
+        // Act
+        sut.OpenOverviewCommand.Execute(null);
+
+        // Assert
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Overview);
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConnectionStringTab_ActivatesDashboardWhileOverviewIsVisible()
     {
         // Arrange
         var preferences = new TestPreferencesService();
@@ -400,17 +420,27 @@ public class MainWindowViewModelTests
         sut.ActiveTab = tab;
 
         // Assert
-        _ = dashboardRefreshService.DidNotReceive().RefreshAsync(
+        _ = dashboardRefreshService.Received(1).RefreshAsync(
             "Orders",
             operations,
             Arg.Any<CancellationToken>());
-        dashboardRefreshService.DidNotReceive().StartAutoRefresh(
+        dashboardRefreshService.Received(1).StartAutoRefresh(
             "Orders",
             operations,
             TimeSpan.FromSeconds(30));
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
+        dashboardRefreshService.ClearReceivedCalls();
 
         // Act
-        sut.OpenChartsCommand.Execute(null);
+        tab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+
+        // Assert
+        dashboardRefreshService.Received(1).StopAutoRefresh();
+        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
+        dashboardRefreshService.ClearReceivedCalls();
+
+        // Act
+        sut.OpenOverviewCommand.Execute(null);
 
         // Assert
         _ = dashboardRefreshService.Received(1).RefreshAsync(
@@ -421,15 +451,7 @@ public class MainWindowViewModelTests
             "Orders",
             operations,
             TimeSpan.FromSeconds(30));
-        sut.FeaturePanels.ShowCharts.Should().BeTrue();
-        dashboardRefreshService.ClearReceivedCalls();
-
-        // Act
-        sut.CloseChartsCommand.Execute(null);
-
-        // Assert
-        dashboardRefreshService.Received(1).StopAutoRefresh();
-        sut.FeaturePanels.ShowCharts.Should().BeFalse();
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
     }
 
     [Fact]
@@ -1456,13 +1478,11 @@ public class MainWindowViewModelTests
         biometricAuthService ??= Substitute.For<IBiometricAuthService>();
         var logSink = CreateLogSink();
 
-        var dashboardPersistenceService = Substitute.For<IDashboardPersistenceService>();
         dashboardRefreshService ??= Substitute.For<IDashboardRefreshService>();
         var inboxScoringService = Substitute.For<INamespaceInboxScoringService>();
         var inboxReviewStore = Substitute.For<INamespaceInboxReviewStore>();
 
         connectionStorage.GetConnectionsAsync().Returns(Task.FromResult<IEnumerable<SavedConnection>>([]));
-        dashboardPersistenceService.Load().Returns(new DashboardConfiguration());
         alertService.ActiveAlerts.Returns([]);
         alertService.Rules.Returns([]);
         alertService.History.Returns([]);
@@ -1476,10 +1496,6 @@ public class MainWindowViewModelTests
         if (ownsBiometricAuthService)
             biometricAuthService.GetAvailabilityAsync(Arg.Any<CancellationToken>()).Returns(BiometricAvailability.Unavailable);
 
-        var dashboardViewModel = new DashboardViewModel(
-            dashboardPersistenceService,
-            new DashboardLayoutEngine(),
-            new MetricsService());
         var namespaceDashboardViewModel = new NamespaceDashboardViewModel(
             dashboardRefreshService,
             alertService,
@@ -1505,7 +1521,6 @@ public class MainWindowViewModelTests
             appLockService,
             biometricAuthService,
             logSink,
-            dashboardViewModel,
             namespaceDashboardViewModel,
             correlationMessageCatalog: correlationCatalog,
             replayAuditStore: replayAuditStore,

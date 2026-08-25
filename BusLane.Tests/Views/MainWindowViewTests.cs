@@ -51,6 +51,19 @@ public class MainWindowViewTests
         xaml.Should().Contain("<controls:ScheduledMessagesView");
     }
 
+    [Fact]
+    public void MainWindow_HostsDashboardAsNamespaceWorkspaceContent()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMainWindowPath());
+
+        // Assert
+        xaml.Should().Contain("<controls:NamespaceDashboardView");
+        xaml.Should().Contain("IsVisible=\"{Binding IsNamespaceOverviewVisible}\"");
+        xaml.Should().NotContain("FeaturePanels.ShowCharts");
+        xaml.Should().NotContain("CloseChartsCommand");
+    }
+
     private static string GetMainWindowPath()
     {
         return Path.GetFullPath(Path.Combine(

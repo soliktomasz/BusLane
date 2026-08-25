@@ -35,9 +35,14 @@
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
 
+                <controls:NamespaceDashboardView Grid.Row="0"
+                                                 Grid.RowSpan="2"
+                                                 IsVisible="{Binding IsNamespaceOverviewVisible}"
+                                                 DataContext="{Binding NamespaceDashboard}"/>
+
             <!-- Content when namespace selected (Azure mode) -->
                 <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding IsActiveTabAzureMode}">
+                  IsVisible="{Binding IsAzureEntityWorkspaceVisible}">
 
                 <!-- Main content grid -->
                 <Grid x:Name="AzureWorkspaceGrid"
@@ -53,7 +58,7 @@
 
             <!-- Content when connected via connection string -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding IsActiveTabConnectionStringMode}">
+                  IsVisible="{Binding IsConnectionStringEntityWorkspaceVisible}">
 
                 <!-- Main content for connection string mode -->
                 <Grid x:Name="ConnectionWorkspaceGrid"
@@ -155,37 +160,6 @@
                     </Border>
                     <controls:ScheduledMessagesView Grid.Row="1"
                         DataContext="{Binding FeaturePanels.ScheduledMessagesViewModel}"/>
-                </Grid>
-            </Border>
-
-            <!-- Charts Panel (overlay when active) -->
-            <Border Grid.Row="0" Grid.RowSpan="2"
-                    IsVisible="{Binding FeaturePanels.ShowCharts}"
-                    Background="{DynamicResource AppBackground}">
-                <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
-                                <LucideIcon Kind="LayoutDashboard" Size="18"
-                                            Foreground="{DynamicResource AccentBrand}"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Dashboard" Classes="heading"/>
-                                <TextBlock Text="Namespace metrics, inbox, and entity summaries"
-                                           Classes="caption"/>
-                            </StackPanel>
-                            <Button Grid.Column="2" Classes="secondary small"
-                                    Command="{Binding CloseChartsCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="14"/>
-                                    <TextBlock Text="Close"/>
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                    </Border>
-                    <controls:NamespaceDashboardView Grid.Row="1" DataContext="{Binding NamespaceDashboard}"/>
                 </Grid>
             </Border>
 

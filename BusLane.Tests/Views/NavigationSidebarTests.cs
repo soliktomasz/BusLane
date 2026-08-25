@@ -201,6 +201,19 @@ public class NavigationSidebarTests
         secondaryTools.Should().NotContain("OpenSettingsCommand");
     }
 
+    [Fact]
+    public void NavigationSidebar_OpensNamespaceOverview()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("Command=\"{Binding OpenOverviewCommand}\"");
+        xaml.Should().Contain("Text=\"Overview\"");
+        xaml.Should().NotContain("OpenChartsCommand");
+        xaml.Should().NotContain("Text=\"Dashboard\"");
+    }
+
     private static string GetSidebarPath()
     {
         return Path.GetFullPath(Path.Combine(

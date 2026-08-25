@@ -101,7 +101,7 @@ public partial class MainWindow : Window
                 Execute(vm.OpenLiveStreamCommand),
 
             [KeyboardShortcutAction.OpenCharts] = vm =>
-                Execute(vm.OpenChartsCommand),
+                Execute(vm.OpenOverviewCommand),
 
             [KeyboardShortcutAction.OpenAlerts] = vm =>
                 Execute(vm.OpenAlertsCommand),

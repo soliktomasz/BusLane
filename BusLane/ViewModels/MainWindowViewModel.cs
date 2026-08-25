@@ -104,6 +104,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [NotifyPropertyChangedFor(nameof(HasActiveConnectionTab))]
     [NotifyPropertyChangedFor(nameof(IsActiveTabAzureMode))]
     [NotifyPropertyChangedFor(nameof(IsActiveTabConnectionStringMode))]
+    [NotifyPropertyChangedFor(nameof(IsNamespaceOverviewVisible))]
+    [NotifyPropertyChangedFor(nameof(IsAzureEntityWorkspaceVisible))]
+    [NotifyPropertyChangedFor(nameof(IsConnectionStringEntityWorkspaceVisible))]
     [NotifyPropertyChangedFor(nameof(ShowWelcome))]
     private ConnectionTabViewModel? _activeTab;
 
@@ -125,6 +128,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// Gets whether the active tab is connected via connection string.
     /// </summary>
     public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
+
+    /// <summary>Gets whether active namespace is displaying its Overview workspace.</summary>
+    public bool IsNamespaceOverviewVisible =>
+        ActiveTab?.IsConnected == true && ActiveTab.WorkspaceMode == NamespaceWorkspaceMode.Overview;
+
+    /// <summary>Gets whether active Azure namespace is displaying entity content.</summary>
+    public bool IsAzureEntityWorkspaceVisible =>
+        IsActiveTabAzureMode && ActiveTab?.WorkspaceMode == NamespaceWorkspaceMode.Entity;
+
+    /// <summary>Gets whether active connection-string namespace is displaying entity content.</summary>
+    public bool IsConnectionStringEntityWorkspaceVisible =>
+        IsActiveTabConnectionStringMode && ActiveTab?.WorkspaceMode == NamespaceWorkspaceMode.Entity;
 
     /// <summary>
     /// Gets a compact label describing the active workspace mode.
@@ -306,7 +321,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IAppLockService appLockService,
         IBiometricAuthService biometricAuthService,
         ILogSink logSink,
-        ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
         IScheduledMessageStore? scheduledMessageStore = null,
         INamespaceTopologyService? namespaceTopologyService = null,
@@ -387,7 +401,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         FeaturePanels = new FeaturePanelsViewModel(
             liveStreamService, alertService, notificationService,
-            dashboardViewModel,
             () => ActiveTab?.Operations ?? _operations,
             () => CurrentNavigation.Queues,
             () => CurrentNavigation.Topics,
@@ -496,11 +509,24 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// </summary>
     private void SetOperations(IServiceBusOperations? operations)
     {
+        NamespaceDashboard.Deactivate();
         _operations = operations;
 
-        // Update dashboard with operations and namespace info
         var namespaceId = ActiveTab?.Namespace?.Id ?? ActiveTab?.SavedConnection?.Name ?? "current-namespace";
         NamespaceDashboard.SetOperations(operations, namespaceId);
+        UpdateNamespaceDashboardLifecycle();
+    }
+
+    private void UpdateNamespaceDashboardLifecycle()
+    {
+        if (IsNamespaceOverviewVisible)
+        {
+            NamespaceDashboard.Activate();
+        }
+        else
+        {
+            NamespaceDashboard.Deactivate();
+        }
     }
 
     /// <summary>
@@ -1817,11 +1843,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
 
         yield return new CommandPaletteItem(
-            "Open Dashboard",
-            "Namespace metrics, inbox, and entity summaries",
+            "Open Overview",
+            "Namespace triage, search, metrics, and recent work",
             "Features",
             "LayoutDashboard",
-            Run(OpenCharts));
+            Run(OpenOverview));
 
         yield return new CommandPaletteItem(
             "Open Live Stream",
@@ -2023,36 +2049,56 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private void CloseLiveStream() => FeaturePanels.CloseLiveStream();
+    private void CloseLiveStream()
+    {
+        FeaturePanels.CloseLiveStream();
+        UpdateNamespaceDashboardLifecycle();
+    }
 
     [RelayCommand]
     private async Task OpenCorrelationExplorer()
     {
+        NamespaceDashboard.Deactivate();
         await FeaturePanels.OpenCorrelationExplorer();
     }
 
     [RelayCommand]
-    private void CloseCorrelationExplorer() => FeaturePanels.CloseCorrelationExplorer();
-
-    [RelayCommand]
-    private Task OpenScheduledMessages() => FeaturePanels.OpenScheduledMessages();
-
-    [RelayCommand]
-    private void CloseScheduledMessages() => FeaturePanels.CloseScheduledMessages();
-
-    [RelayCommand]
-    private void OpenCharts()
+    private void CloseCorrelationExplorer()
     {
-        FeaturePanels.OpenCharts();
-        NamespaceDashboard.Activate();
+        FeaturePanels.CloseCorrelationExplorer();
+        UpdateNamespaceDashboardLifecycle();
     }
 
     [RelayCommand]
-    private void CloseCharts()
+    private Task OpenScheduledMessages()
     {
-        FeaturePanels.CloseCharts();
         NamespaceDashboard.Deactivate();
+        return FeaturePanels.OpenScheduledMessages();
     }
+
+    [RelayCommand]
+    private void CloseScheduledMessages()
+    {
+        FeaturePanels.CloseScheduledMessages();
+        UpdateNamespaceDashboardLifecycle();
+    }
+
+    [RelayCommand]
+    private void OpenOverview()
+    {
+        if (ActiveTab is null)
+        {
+            return;
+        }
+
+        FeaturePanels.CloseAll();
+        ActiveTab.WorkspaceMode = NamespaceWorkspaceMode.Overview;
+        NotifyActiveTabDependentProperties();
+        UpdateNamespaceDashboardLifecycle();
+    }
+
+    [RelayCommand]
+    private void BackToOverview() => OpenOverview();
 
     [RelayCommand]
     private void OpenAlerts()
@@ -2062,7 +2108,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private void CloseAlerts() => FeaturePanels.CloseAlerts();
+    private void CloseAlerts()
+    {
+        FeaturePanels.CloseAlerts();
+        UpdateNamespaceDashboardLifecycle();
+    }
 
     [RelayCommand]
     private async Task StartLiveStreamForSelectedEntity() => await FeaturePanels.StartLiveStreamForSelectedEntity();
@@ -2306,7 +2356,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
 
         // When the active tab's IsConnected or Mode changes, notify computed properties
-        if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected) or nameof(ConnectionTabViewModel.Mode))
+        if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected)
+            or nameof(ConnectionTabViewModel.Mode)
+            or nameof(ConnectionTabViewModel.WorkspaceMode))
         {
             NotifyActiveTabDependentProperties();
         }
@@ -2319,11 +2371,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (e.PropertyName == nameof(ConnectionTabViewModel.IsConnected))
         {
             var tab = sender as ConnectionTabViewModel;
-            if (tab?.IsConnected == true)
-            {
-                var namespaceId = tab.Namespace?.Id ?? tab.SavedConnection?.Name ?? "current-namespace";
-                NamespaceDashboard.SetOperations(tab.Operations, namespaceId);
-            }
+            SetOperations(tab?.IsConnected == true ? tab.Operations : null);
+        }
+        else if (e.PropertyName == nameof(ConnectionTabViewModel.WorkspaceMode))
+        {
+            UpdateNamespaceDashboardLifecycle();
         }
 
         // Also notify for SavedConnection and Namespace so bindings update properly
@@ -2350,6 +2402,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(HasActiveConnectionTab));
         OnPropertyChanged(nameof(IsActiveTabAzureMode));
         OnPropertyChanged(nameof(IsActiveTabConnectionStringMode));
+        OnPropertyChanged(nameof(IsNamespaceOverviewVisible));
+        OnPropertyChanged(nameof(IsAzureEntityWorkspaceVisible));
+        OnPropertyChanged(nameof(IsConnectionStringEntityWorkspaceVisible));
         OnPropertyChanged(nameof(ActiveWorkspaceModeLabel));
         OnPropertyChanged(nameof(IsCurrentEntityPaneVisible));
         OnPropertyChanged(nameof(ShowWelcome));
