@@ -14,6 +14,9 @@
                     <TextBlock Text="Find entities fast, then work highest-impact exceptions first." Classes="caption"/>
                     <TextBlock Text="Topic metrics updating progressively" Classes="caption"
                                IsVisible="{Binding IsPartialSnapshot}"/>
+                    <TextBlock Text="Updating namespace data" Classes="caption"
+                               IsVisible="{Binding IsRefreshing}"
+                               AutomationProperties.Name="Updating namespace data"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                     <Button Classes="subtle small" Command="{Binding ShowHomeCommand}" Content="Home"/>
@@ -23,6 +26,38 @@
                             IsEnabled="{Binding !IsRefreshing}" Content="Refresh"/>
                 </StackPanel>
             </Grid>
+
+            <Border Classes="infobar-error"
+                    IsVisible="{Binding RefreshErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    AutomationProperties.Name="Dashboard refresh error">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBlock Text="{Binding RefreshErrorMessage}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextDanger}"/>
+                    <Button Grid.Column="1" Classes="secondary small"
+                            Command="{Binding RetryFailedSectionCommand}"
+                            IsEnabled="{Binding !IsRetryingFailedSection}"
+                            Content="Retry section"
+                            AutomationProperties.Name="Retry failed dashboard section"/>
+                </Grid>
+            </Border>
+
+            <Border Classes="card" IsVisible="{Binding IsInitialLoading}"
+                    AutomationProperties.Name="Loading namespace overview">
+                <StackPanel Spacing="14">
+                    <ProgressBar IsIndeterminate="True" Height="4"/>
+                    <Border Height="38" Background="{DynamicResource DashboardTileBackground}"
+                            CornerRadius="{StaticResource RadiusMedium}"/>
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                        <Border Height="72" Background="{DynamicResource DashboardTileBackground}"
+                                CornerRadius="{StaticResource RadiusMedium}"/>
+                        <Border Grid.Column="1" Height="72" Background="{DynamicResource DashboardTileBackground}"
+                                CornerRadius="{StaticResource RadiusMedium}"/>
+                        <Border Grid.Column="2" Height="72" Background="{DynamicResource DashboardTileBackground}"
+                                CornerRadius="{StaticResource RadiusMedium}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
 
             <StackPanel IsVisible="{Binding IsHomeSelected}" Spacing="20">
                 <controls:NamespaceEntitySearchView DataContext="{Binding EntitySearch}"/>

@@ -21,6 +21,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private Action<NamespaceNavigationRequest> _navigate = _ => { };
     private Action<NamespaceOverviewSection> _overviewSectionChanged = _ => { };
     private IReadOnlyList<TopicInfo> _contextTopics = [];
+    private readonly Dictionary<DashboardRefreshSection, string> _refreshErrors = [];
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
@@ -33,6 +34,21 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isRefreshing;
+
+    [ObservableProperty]
+    private bool _isInitialLoading;
+
+    [ObservableProperty]
+    private bool _hasSnapshot;
+
+    [ObservableProperty]
+    private string? _refreshErrorMessage;
+
+    [ObservableProperty]
+    private DashboardRefreshSection? _failedSection;
+
+    [ObservableProperty]
+    private bool _isRetryingFailedSection;
 
     [ObservableProperty]
     private DateTimeOffset? _lastRefreshTime;
@@ -92,6 +108,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         _refreshService.SummaryUpdated += OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated += OnTopEntitiesUpdated;
         _refreshService.EntitiesUpdated += OnEntitiesUpdated;
+        _refreshService.RefreshFailed += OnRefreshFailed;
 
         // Initialize metric cards
         ActiveMessagesCard = new MetricCardViewModel("Active Messages", "messages");
@@ -199,15 +216,42 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private async Task RefreshAsync()
     {
         IsRefreshing = true;
+        IsInitialLoading = !HasSnapshot;
         try
         {
             var namespaceId = CurrentNamespaceId ?? "current-namespace";
             await _refreshService.RefreshAsync(namespaceId, _operations);
         }
+        catch (Exception)
+        {
+            RefreshErrorMessage = "Namespace data could not be refreshed.";
+        }
         finally
         {
             IsRefreshing = false;
-            LastRefreshTime = DateTimeOffset.Now;
+            IsInitialLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RetryFailedSectionAsync()
+    {
+        if (FailedSection is not { } section || _operations is null)
+        {
+            return;
+        }
+
+        IsRetryingFailedSection = true;
+        try
+        {
+            await _refreshService.RefreshSectionAsync(
+                CurrentNamespaceId ?? "current-namespace",
+                section,
+                _operations);
+        }
+        finally
+        {
+            IsRetryingFailedSection = false;
         }
     }
 
@@ -224,6 +268,11 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         if (contextChanged)
         {
             ResetChartHistory();
+            HasSnapshot = false;
+            IsInitialLoading = false;
+            _refreshErrors.Clear();
+            RefreshErrorMessage = null;
+            FailedSection = null;
         }
 
         _operations = operations;
@@ -343,12 +392,50 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
 
+        HasSnapshot = true;
+        IsInitialLoading = false;
+        LastRefreshTime = snapshot.Timestamp;
+        foreach (var section in snapshot.RefreshedSections)
+        {
+            _refreshErrors.Remove(section);
+        }
+        UpdateRefreshErrorPresentation();
+
         Inbox.Refresh(
             CurrentNamespaceId ?? "current-namespace",
             snapshot.Queues,
             snapshot.Subscriptions,
             _alertService.ActiveAlerts);
         EntitySearch.UpdateInventory(snapshot.Queues, _contextTopics, snapshot.Subscriptions);
+    }
+
+    private void OnRefreshFailed(object? sender, DashboardRefreshFailure failure)
+    {
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => OnRefreshFailed(sender, failure));
+            return;
+        }
+
+        _refreshErrors[failure.Section] = failure.Message;
+        FailedSection = failure.Section;
+        UpdateRefreshErrorPresentation();
+    }
+
+    private void UpdateRefreshErrorPresentation()
+    {
+        if (_refreshErrors.Count == 0)
+        {
+            RefreshErrorMessage = null;
+            FailedSection = null;
+            return;
+        }
+
+        RefreshErrorMessage = string.Join(" ", _refreshErrors.Values.Distinct());
+        if (FailedSection is null || !_refreshErrors.ContainsKey(FailedSection.Value))
+        {
+            FailedSection = _refreshErrors.Keys.First();
+        }
     }
 
     private static void ReplaceQuickLinks(
@@ -395,6 +482,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         _refreshService.SummaryUpdated -= OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated -= OnTopEntitiesUpdated;
         _refreshService.EntitiesUpdated -= OnEntitiesUpdated;
+        _refreshService.RefreshFailed -= OnRefreshFailed;
     }
 
     private void OnChartTimeRangeChanged(object? sender, string value)

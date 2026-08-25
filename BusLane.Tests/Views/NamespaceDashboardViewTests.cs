@@ -108,6 +108,18 @@ public class NamespaceDashboardViewTests
         xaml.Should().Contain("MarkReviewedCommand");
     }
 
+    [Fact]
+    public void Dashboard_ExposesLoadingUpdatingAndAccessibleRetryStates()
+    {
+        var xaml = File.ReadAllText(GetDashboardPath());
+
+        xaml.Should().Contain("IsInitialLoading");
+        xaml.Should().Contain("Updating namespace data");
+        xaml.Should().Contain("RetryFailedSectionCommand");
+        xaml.Should().Contain("AutomationProperties.Name=\"Retry failed dashboard section\"");
+        xaml.Should().Contain("AutomationProperties.Name=\"Dashboard refresh error\"");
+    }
+
     private static string GetAppPath()
     {
         return Path.GetFullPath(Path.Combine(

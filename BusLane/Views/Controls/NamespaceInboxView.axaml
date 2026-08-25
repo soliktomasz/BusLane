@@ -36,7 +36,10 @@
                                             Margin="0,6,0,0"/>
                                     <StackPanel Grid.Column="1" Spacing="3">
                                         <TextBlock Text="{Binding EntityName}"
-                                                   Classes="title-small"/>
+                                                   Classes="title-small"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding EntityName}"
+                                                   AutomationProperties.Name="{Binding EntityName}"/>
                                         <TextBlock Text="{Binding ReasonSummary}"
                                                    Classes="caption"
                                                    TextWrapping="Wrap"/>
@@ -58,20 +61,24 @@
                                             Margin="20,14,0,0"
                                             Classes="inbox-actions">
                                     <Button Classes="secondary small"
-                                            Command="{Binding OpenMessagesCommand}">
+                                            Command="{Binding OpenMessagesCommand}"
+                                            AutomationProperties.Name="Open active messages">
                                         <TextBlock Text="Open Messages"/>
                                     </Button>
                                     <Button Classes="secondary small"
-                                            Command="{Binding OpenDeadLetterCommand}">
+                                            Command="{Binding OpenDeadLetterCommand}"
+                                            AutomationProperties.Name="Open dead-letter messages">
                                         <TextBlock Text="Open DLQ"/>
                                     </Button>
                                     <Button Classes="secondary small"
                                             Command="{Binding OpenSessionInspectorCommand}"
-                                            IsVisible="{Binding CanOpenSessionInspector}">
+                                            IsVisible="{Binding CanOpenSessionInspector}"
+                                            AutomationProperties.Name="Open session inspector">
                                         <TextBlock Text="Open Sessions"/>
                                     </Button>
                                     <Button Classes="subtle small"
-                                            Command="{Binding MarkReviewedCommand}">
+                                            Command="{Binding MarkReviewedCommand}"
+                                            AutomationProperties.Name="Mark issue reviewed">
                                         <TextBlock Text="Mark Reviewed"/>
                                     </Button>
                                 </StackPanel>

@@ -127,6 +127,55 @@ public class NamespaceDashboardViewModelTests
     }
 
     [Fact]
+    public void RefreshFailure_AfterSnapshot_PreservesContentAndShowsContextualError()
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var summary = new NamespaceDashboardSummary(42, 3, 0, 100, 0, 0, 0, 0, DateTimeOffset.UtcNow);
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(this, summary);
+        _refreshService.EntitiesUpdated += Raise.Event<EventHandler<NamespaceEntitySnapshot>>(
+            this,
+            new NamespaceEntitySnapshot([], [], DateTimeOffset.UtcNow, [DashboardRefreshSection.Queues, DashboardRefreshSection.Topics]));
+
+        // Act
+        _refreshService.RefreshFailed += Raise.Event<EventHandler<DashboardRefreshFailure>>(
+            this,
+            new DashboardRefreshFailure(DashboardRefreshSection.Topics, "Topics could not be refreshed.", DateTimeOffset.UtcNow));
+
+        // Assert
+        sut.HasSnapshot.Should().BeTrue();
+        sut.ActiveMessagesCard.Value.Should().Be(42);
+        sut.RefreshErrorMessage.Should().Contain("Topics");
+        sut.FailedSection.Should().Be(DashboardRefreshSection.Topics);
+    }
+
+    [Fact]
+    public async Task RetryFailedSection_RetriesOnlyFailedSectionWithoutClearingSnapshot()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        sut.SetOperations(operations, "namespace-a");
+        _refreshService.EntitiesUpdated += Raise.Event<EventHandler<NamespaceEntitySnapshot>>(
+            this,
+            new NamespaceEntitySnapshot([], [], DateTimeOffset.UtcNow, [DashboardRefreshSection.Queues]));
+        _refreshService.RefreshFailed += Raise.Event<EventHandler<DashboardRefreshFailure>>(
+            this,
+            new DashboardRefreshFailure(DashboardRefreshSection.Topics, "Topics unavailable.", DateTimeOffset.UtcNow));
+
+        // Act
+        await sut.RetryFailedSectionCommand.ExecuteAsync(null);
+
+        // Assert
+        await _refreshService.Received(1).RefreshSectionAsync(
+            "namespace-a",
+            DashboardRefreshSection.Topics,
+            operations,
+            Arg.Any<CancellationToken>());
+        sut.HasSnapshot.Should().BeTrue();
+    }
+
+    [Fact]
     public void RefreshedTopEntities_KeepThreeItemsPerList()
     {
         // Arrange

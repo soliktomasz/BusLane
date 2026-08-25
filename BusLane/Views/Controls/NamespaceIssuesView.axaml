@@ -14,11 +14,13 @@
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <StackPanel>
                             <TextBlock Text="{Binding EntityName}" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EntityName}"/>
+                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EntityName}"
+                                       AutomationProperties.Name="{Binding EntityName}"/>
                             <TextBlock Text="{Binding ReasonSummary}" Classes="caption"/>
                         </StackPanel>
                         <Button Grid.Column="1" Classes="secondary small"
-                                Command="{Binding OpenMessagesCommand}" Content="Open"/>
+                                Command="{Binding OpenMessagesCommand}" Content="Open"
+                                AutomationProperties.Name="Open entity messages"/>
                     </Grid>
                 </Border>
             </DataTemplate>
