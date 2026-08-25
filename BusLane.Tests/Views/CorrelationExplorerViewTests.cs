@@ -38,7 +38,7 @@ public class CorrelationExplorerViewTests
         // Arrange
         var mainWindowXaml = File.ReadAllText(GetPath("MainWindow.axaml"));
         var panelStart = mainWindowXaml.IndexOf("<!-- Correlation Explorer Panel -->", StringComparison.Ordinal);
-        var panelEnd = mainWindowXaml.IndexOf("<!-- Charts Panel", panelStart, StringComparison.Ordinal);
+        var panelEnd = mainWindowXaml.IndexOf("<!-- Scheduled Messages Panel -->", panelStart, StringComparison.Ordinal);
 
         panelStart.Should().BeGreaterThanOrEqualTo(0);
         panelEnd.Should().BeGreaterThan(panelStart);

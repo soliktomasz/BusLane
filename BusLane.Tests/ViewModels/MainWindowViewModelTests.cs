@@ -534,6 +534,112 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task OpenInboxSessions_SwitchesToVisibleSessionInspector()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var scoringService = Substitute.For<INamespaceInboxScoringService>();
+        var queue = new QueueInfo(
+            "session-orders", 12, 12, 0, 0, 1024, DateTimeOffset.UtcNow,
+            true, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+        scoringService.Rank(
+                Arg.Any<IEnumerable<QueueInfo>>(),
+                Arg.Any<IEnumerable<SubscriptionInfo>>(),
+                Arg.Any<IEnumerable<AlertEvent>>(),
+                Arg.Any<TimeSpan?>())
+            .Returns([CreateRankedQueue("session-orders", requiresSession: true)]);
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("session-orders", Arg.Any<CancellationToken>()).Returns(queue);
+        operations.GetSessionInspectorItemsAsync("session-orders", null, Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        using var sut = CreateSut(
+            preferences,
+            operationsFactory: operationsFactory,
+            inboxScoringService: scoringService);
+        var tab = CreateConnectedQueueTab(
+            "tab-1", preferences, operationsFactory, "Orders", "session-orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        sut.NamespaceDashboard.Inbox.Refresh("Orders", [queue], [], []);
+
+        // Act
+        sut.NamespaceDashboard.Inbox.Items.Single().OpenSessionInspectorCommand.Execute(null);
+
+        // Assert
+        await WaitUntilAsync(() => tab.StatusMessage == "No sessions discovered");
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
+        tab.Navigation.SelectedMessageTabIndex.Should().Be(2);
+        sut.IsNamespaceOverviewVisible.Should().BeFalse();
+        sut.WorkspaceDestinationLabel.Should().Be("Sessions");
+    }
+
+    [Fact]
+    public async Task BackToOverview_PreservesSectionAndSearchQuery()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var queue = CreateQueue("orders");
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(queue);
+        operations.PeekMessagesAsync(
+                "orders", null, Arg.Any<int>(), null, false, false, null, Arg.Any<CancellationToken>())
+            .Returns([]);
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, "Orders", "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        sut.NamespaceDashboard.SelectedSection = NamespaceOverviewSection.Analytics;
+        sut.NamespaceDashboard.EntitySearch.Query = "ord";
+        sut.NamespaceDashboard.EntitySearch.SelectedResult = sut.NamespaceDashboard.EntitySearch.Results.Single();
+        sut.NamespaceDashboard.EntitySearch.OpenSelectedCommand.Execute(null);
+        await WaitUntilAsync(() => tab.WorkspaceMode == NamespaceWorkspaceMode.Entity);
+
+        // Act
+        sut.BackToOverviewCommand.Execute(null);
+
+        // Assert
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Overview);
+        tab.OverviewSection.Should().Be(NamespaceOverviewSection.Analytics);
+        sut.NamespaceDashboard.SelectedSection.Should().Be(NamespaceOverviewSection.Analytics);
+        sut.NamespaceDashboard.EntitySearch.Query.Should().Be("ord");
+    }
+
+    [Fact]
+    public void SwitchingTabs_RestoresEachWorkspaceModeAndOverviewSection()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        using var sut = CreateSut(preferences);
+        var entityTab = CreateTab("tab-1", preferences);
+        entityTab.IsConnected = true;
+        entityTab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        var overviewTab = CreateTab("tab-2", preferences);
+        overviewTab.IsConnected = true;
+        overviewTab.WorkspaceMode = NamespaceWorkspaceMode.Overview;
+        overviewTab.OverviewSection = NamespaceOverviewSection.Issues;
+        sut.ConnectionTabs.Add(entityTab);
+        sut.ConnectionTabs.Add(overviewTab);
+
+        // Act / Assert
+        sut.ActiveTab = overviewTab;
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
+        sut.NamespaceDashboard.SelectedSection.Should().Be(NamespaceOverviewSection.Issues);
+
+        sut.ActiveTab = entityTab;
+        sut.IsNamespaceOverviewVisible.Should().BeFalse();
+        entityTab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
+
+        sut.ActiveTab = overviewTab;
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
+        sut.NamespaceDashboard.SelectedSection.Should().Be(NamespaceOverviewSection.Issues);
+    }
+
+    [Fact]
     public async Task OpenInboxMessages_WhenSecondRequestWins_DoesNotRestoreFirstDestination()
     {
         // Arrange
@@ -1776,12 +1882,12 @@ public class MainWindowViewModelTests
             DefaultMessageTtl: TimeSpan.FromDays(14),
             LockDuration: TimeSpan.FromMinutes(1));
 
-    private static NamespaceInboxItem CreateRankedQueue(string name) =>
+    private static NamespaceInboxItem CreateRankedQueue(string name, bool requiresSession = false) =>
         new(
             name,
             EntityType.Queue,
             TopicName: null,
-            RequiresSession: false,
+            RequiresSession: requiresSession,
             ActiveMessageCount: 1,
             DeadLetterCount: 0,
             ScheduledCount: 0,
