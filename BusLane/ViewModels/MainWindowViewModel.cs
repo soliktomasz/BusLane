@@ -399,7 +399,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
-        NamespaceDashboard.Inbox.UpdateNavigation(OpenInboxDestination);
+        NamespaceDashboard.UpdateNavigation(OpenInboxDestination);
 
         // Initialize composed components
         Navigation = new NavigationState(preferencesService);
@@ -1157,12 +1157,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void ToggleSelectedEntityPin()
     {
         CurrentNavigation.TogglePin(CurrentNavigation.SelectedEntity);
+        UpdateNamespaceDashboardNavigationContext();
     }
 
     [RelayCommand]
     private void ToggleEntityPin(object? entity)
     {
         CurrentNavigation.TogglePin(entity);
+        UpdateNamespaceDashboardNavigationContext();
     }
 
     [RelayCommand]
@@ -1173,49 +1175,25 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             return;
         }
 
-        switch (pin.Type)
+        var entityType = pin.Type switch
         {
-            case PinnedEntityType.Queue:
-                var queue = CurrentNavigation.Queues.FirstOrDefault(q => q.Name == pin.Name);
-                if (queue != null)
-                {
-                    await SelectQueueAsync(queue);
-                }
-                break;
-            case PinnedEntityType.Topic:
-                var topic = CurrentNavigation.Topics.FirstOrDefault(t => t.Name == pin.Name);
-                if (topic != null)
-                {
-                    await SelectTopicAsync(topic);
-                }
-                break;
-            case PinnedEntityType.Subscription:
-                await SelectPinnedSubscriptionAsync(pin);
-                break;
-        }
-    }
+            PinnedEntityType.Queue => EntityType.Queue,
+            PinnedEntityType.Topic => EntityType.Topic,
+            PinnedEntityType.Subscription => EntityType.Subscription,
+            _ => EntityType.Queue
+        };
+        var entityName = pin.Type == PinnedEntityType.Subscription
+            ? $"{pin.TopicName}/{pin.Name}"
+            : pin.Name;
+        var view = entityType == EntityType.Topic
+            ? EntityWorkspaceView.TopicSubscriptions
+            : EntityWorkspaceView.ActiveMessages;
 
-    private async Task SelectPinnedSubscriptionAsync(PinnedEntity pin)
-    {
-        if (string.IsNullOrWhiteSpace(pin.TopicName))
-        {
-            return;
-        }
-
-        var topic = CurrentNavigation.Topics.FirstOrDefault(t => t.Name == pin.TopicName);
-        if (topic == null)
-        {
-            return;
-        }
-
-        await SelectTopicAsync(topic);
-        var subscription = CurrentNavigation.TopicSubscriptions.FirstOrDefault(sub =>
-            sub.TopicName == pin.TopicName &&
-            sub.Name == pin.Name);
-        if (subscription != null)
-        {
-            await SelectSubscriptionAsync(subscription);
-        }
+        await NavigateToNamespaceDestinationAsync(new NamespaceNavigationRequest(
+            entityType,
+            entityName,
+            pin.TopicName,
+            view));
     }
 
     private void OpenInboxDestination(NamespaceNavigationRequest request)
@@ -1250,6 +1228,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             if (resolved && IsCurrentNamespaceNavigation(tab, generation))
             {
                 tab.RecordRecentDestination(request);
+                UpdateNamespaceDashboardNavigationContext();
             }
         }
         catch (OperationCanceledException) when (navigationCts.IsCancellationRequested)
@@ -2537,6 +2516,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         // Keep fallback operations in sync with active tab operations.
         SetOperations(newValue?.Operations);
+        UpdateNamespaceDashboardNavigationContext();
 
         if (CurrentNavigation.IsSessionInspectorTabSelected)
         {
@@ -2593,6 +2573,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         {
             var tab = sender as ConnectionTabViewModel;
             SetOperations(tab?.IsConnected == true ? tab.Operations : null);
+            UpdateNamespaceDashboardNavigationContext();
         }
         else if (e.PropertyName == nameof(ConnectionTabViewModel.WorkspaceMode))
         {
@@ -2642,6 +2623,23 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(CurrentNavigation));
         OnPropertyChanged(nameof(CurrentMessageOps));
         OnPropertyChanged(nameof(CurrentSessionInspector));
+    }
+
+    private void UpdateNamespaceDashboardNavigationContext()
+    {
+        var tab = ActiveTab;
+        if (tab is null)
+        {
+            NamespaceDashboard.SetNavigationContext([], [], [], [], []);
+            return;
+        }
+
+        NamespaceDashboard.SetNavigationContext(
+            tab.Navigation.Queues,
+            tab.Navigation.Topics,
+            tab.Navigation.TopicSubscriptions,
+            tab.Navigation.PinnedEntities,
+            tab.RecentDestinations);
     }
 
     /// <summary>

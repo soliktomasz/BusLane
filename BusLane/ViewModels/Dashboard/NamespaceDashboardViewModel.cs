@@ -1,4 +1,5 @@
 using Avalonia;
+using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
 using BusLane.Services.Monitoring;
@@ -17,6 +18,8 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private IServiceBusOperations? _operations;
     private readonly List<NamespaceDashboardSummary> _summaryHistory = [];
     private bool _isActive;
+    private Action<NamespaceNavigationRequest> _navigate = _ => { };
+    private IReadOnlyList<TopicInfo> _contextTopics = [];
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
@@ -49,6 +52,9 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     public TopEntitiesListViewModel TopQueues { get; }
     public TopEntitiesListViewModel TopTopics { get; }
     public NamespaceInboxViewModel Inbox { get; }
+    public NamespaceEntitySearchViewModel EntitySearch { get; }
+    public ObservableCollection<NamespaceEntitySearchResult> PinnedDestinations { get; } = [];
+    public ObservableCollection<NamespaceEntitySearchResult> RecentDestinations { get; } = [];
 
     // Charts
     public ObservableCollection<DashboardChartViewModel> Charts { get; }
@@ -71,6 +77,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         _refreshService = refreshService;
         _alertService = alertService;
         Inbox = inboxViewModel;
+        EntitySearch = new NamespaceEntitySearchViewModel(request => _navigate(request));
         _refreshService.SummaryUpdated += OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated += OnTopEntitiesUpdated;
         _refreshService.EntitiesUpdated += OnEntitiesUpdated;
@@ -98,6 +105,38 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         {
             chart.TimeRangeChanged += OnChartTimeRangeChanged;
             chart.SetGlobalTimeRange(SelectedTimeRange);
+        }
+    }
+
+    public void UpdateNavigation(Action<NamespaceNavigationRequest> navigate)
+    {
+        _navigate = navigate;
+        Inbox.UpdateNavigation(navigate);
+        EntitySearch.UpdateNavigation(navigate);
+    }
+
+    public void SetNavigationContext(
+        IEnumerable<QueueInfo> queues,
+        IEnumerable<TopicInfo> topics,
+        IEnumerable<SubscriptionInfo> subscriptions,
+        IEnumerable<PinnedEntity> pins,
+        IEnumerable<RecentEntityDestination> recents)
+    {
+        var queueList = queues.ToList();
+        _contextTopics = topics.ToList();
+        var subscriptionList = subscriptions.ToList();
+        EntitySearch.UpdateInventory(queueList, _contextTopics, subscriptionList);
+
+        ReplaceQuickLinks(PinnedDestinations, pins.Select(CreatePinnedResult));
+        ReplaceQuickLinks(RecentDestinations, recents.Select(item => CreateQuickLink(item.Request)));
+    }
+
+    [RelayCommand]
+    private void OpenDestination(NamespaceEntitySearchResult? result)
+    {
+        if (result is not null)
+        {
+            _navigate(result.Request);
         }
     }
 
@@ -288,7 +327,42 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             snapshot.Queues,
             snapshot.Subscriptions,
             _alertService.ActiveAlerts);
+        EntitySearch.UpdateInventory(snapshot.Queues, _contextTopics, snapshot.Subscriptions);
     }
+
+    private static void ReplaceQuickLinks(
+        ObservableCollection<NamespaceEntitySearchResult> target,
+        IEnumerable<NamespaceEntitySearchResult> values)
+    {
+        target.Clear();
+        foreach (var value in values)
+        {
+            target.Add(value);
+        }
+    }
+
+    private static NamespaceEntitySearchResult CreatePinnedResult(PinnedEntity pin)
+    {
+        var type = pin.Type switch
+        {
+            PinnedEntityType.Queue => EntityType.Queue,
+            PinnedEntityType.Topic => EntityType.Topic,
+            PinnedEntityType.Subscription => EntityType.Subscription,
+            _ => EntityType.Queue
+        };
+        var path = pin.DisplayName;
+        var view = type == EntityType.Topic
+            ? EntityWorkspaceView.TopicSubscriptions
+            : EntityWorkspaceView.ActiveMessages;
+        return new NamespaceEntitySearchResult(
+            path,
+            path,
+            type.ToString(),
+            new NamespaceNavigationRequest(type, path, pin.TopicName, view));
+    }
+
+    private static NamespaceEntitySearchResult CreateQuickLink(NamespaceNavigationRequest request) =>
+        new(request.EntityName, request.EntityName, request.EntityType.ToString(), request);
 
     public void Dispose()
     {

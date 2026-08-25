@@ -67,6 +67,9 @@
                 </StackPanel>
             </Grid>
 
+            <controls:NamespaceEntitySearchView DataContext="{Binding EntitySearch}"
+                                                Margin="0,0,0,20"/>
+
             <Grid ColumnDefinitions="*,Auto"
                   Margin="0,0,0,6">
                 <TextBlock Text="PRIORITY INBOX"
