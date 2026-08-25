@@ -32,6 +32,49 @@ public class NamespaceInboxViewModelTests
     }
 
     [Fact]
+    public void Refresh_PriorityContainsOnlyTopEightActionableItems()
+    {
+        // Arrange
+        _scoringService.Items = Enumerable.Range(0, 10)
+            .Select(index => CreateInboxItem($"queue-{index}", EntityType.Queue, 10, index + 1))
+            .Append(CreateInboxItem("healthy", EntityType.Queue, 0, 0) with { Score = 0, Reasons = [] })
+            .ToList();
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
+
+        // Act
+        sut.Refresh("namespace-a", [], [], []);
+
+        // Assert
+        sut.PriorityItems.Should().HaveCount(8);
+        sut.PriorityItems.Should().NotContain(item => item.EntityName == "healthy");
+        sut.AllIssues.Should().HaveCount(10);
+        sut.NeedsActionCount.Should().Be(8);
+    }
+
+    [Fact]
+    public void MarkReviewed_RemovesItemUntilCountsWorsen()
+    {
+        // Arrange
+        _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, 10, 3)];
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
+        sut.Refresh("namespace-a", [], [], []);
+
+        // Act
+        sut.PriorityItems.Single().MarkReviewedCommand.Execute(null);
+
+        // Assert
+        sut.PriorityItems.Should().BeEmpty();
+        sut.AllIssues.Should().ContainSingle(item => item.IsReviewed);
+
+        sut.Refresh("namespace-a", [], [], []);
+        sut.PriorityItems.Should().BeEmpty();
+
+        _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, 10, 4)];
+        sut.Refresh("namespace-a", [], [], []);
+        sut.PriorityItems.Should().ContainSingle();
+    }
+
+    [Fact]
     public void MarkReviewed_UpdatesDeltaBaseline()
     {
         // Arrange

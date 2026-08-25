@@ -33,6 +33,7 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
     public long DeadLetterDelta { get; }
     public long ScheduledDelta { get; }
     public int AlertDelta { get; }
+    public bool IsReviewed { get; }
 
     /// <summary>
     /// Triage health driving the status dot and pill: a dead-letter accumulation takes
@@ -58,6 +59,7 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
         long deadLetterDelta,
         long scheduledDelta,
         int alertDelta,
+        bool isReviewed,
         Action<NamespaceNavigationRequest> navigate,
         Action<NamespaceInboxItem> markReviewed)
     {
@@ -66,6 +68,7 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
         DeadLetterDelta = deadLetterDelta;
         ScheduledDelta = scheduledDelta;
         AlertDelta = alertDelta;
+        IsReviewed = isReviewed;
         _navigate = navigate;
         _markReviewed = markReviewed;
     }

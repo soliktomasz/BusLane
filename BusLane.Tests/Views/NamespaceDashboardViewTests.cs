@@ -82,37 +82,17 @@ public class NamespaceDashboardViewTests
     }
 
     [Fact]
-    public void InboxHoverActions_ReserveLayoutWhileHidden()
+    public void InboxActions_AreAlwaysReachableWithoutHover()
     {
         // Arrange
-        var inbox = XDocument.Load(GetInboxPath());
-
-        // Act
-        var hiddenStyle = inbox.Descendants()
-            .Single(element =>
-                element.Name.LocalName == "Style"
-                && element.Attribute("Selector")?.Value == "StackPanel.inbox-actions");
-        var setters = hiddenStyle.Elements()
-            .Where(element => element.Name.LocalName == "Setter")
-            .ToDictionary(
-                element => element.Attribute("Property")!.Value,
-                element => element.Attribute("Value")!.Value);
-        var focusStyle = inbox.Descendants()
-            .Single(element =>
-                element.Name.LocalName == "Style"
-                && element.Attribute("Selector")?.Value == "StackPanel.inbox-actions:focus-within");
-        var focusSetters = focusStyle.Elements()
-            .Where(element => element.Name.LocalName == "Setter")
-            .ToDictionary(
-                element => element.Attribute("Property")!.Value,
-                element => element.Attribute("Value")!.Value);
+        var xaml = File.ReadAllText(GetInboxPath());
 
         // Assert
-        setters.Should().Contain("Opacity", "0");
-        setters.Should().Contain("IsHitTestVisible", "False");
-        setters.Should().NotContainKey("IsVisible");
-        focusSetters.Should().Contain("Opacity", "1");
-        focusSetters.Should().Contain("IsHitTestVisible", "True");
+        xaml.Should().Contain("ItemsSource=\"{Binding PriorityItems}\"");
+        xaml.Should().NotContain(":pointerover");
+        xaml.Should().NotContain("Opacity\" Value=\"0");
+        xaml.Should().Contain("OpenDeadLetterCommand");
+        xaml.Should().Contain("MarkReviewedCommand");
     }
 
     private static string GetAppPath()

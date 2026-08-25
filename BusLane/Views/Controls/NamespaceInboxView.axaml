@@ -7,22 +7,6 @@
              x:Class="BusLane.Views.Controls.NamespaceInboxView"
              x:DataType="vm:NamespaceInboxViewModel"
              x:CompileBindings="False">
-    <UserControl.Styles>
-        <!-- Keep actions measured so revealing them cannot resize the row under the pointer. -->
-        <Style Selector="StackPanel.inbox-actions">
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="IsHitTestVisible" Value="False"/>
-        </Style>
-        <Style Selector="Border.inbox-item-surface:pointerover StackPanel.inbox-actions">
-            <Setter Property="Opacity" Value="1"/>
-            <Setter Property="IsHitTestVisible" Value="True"/>
-        </Style>
-        <Style Selector="StackPanel.inbox-actions:focus-within">
-            <Setter Property="Opacity" Value="1"/>
-            <Setter Property="IsHitTestVisible" Value="True"/>
-        </Style>
-    </UserControl.Styles>
-
     <Border Classes="dashboard-inbox-surface"
             IsVisible="{Binding IsExpanded}">
         <StackPanel>
@@ -30,7 +14,7 @@
                     Margin="16"
                     IsVisible="{Binding IsEmpty}">
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Nothing needs attention right now."
+                    <TextBlock Text="No issues need attention."
                                Classes="title-small"/>
                     <TextBlock Text="The inbox will populate on the next namespace refresh when queues or subscriptions start changing."
                                Classes="caption"
@@ -38,7 +22,7 @@
                 </StackPanel>
             </Border>
 
-            <ItemsControl ItemsSource="{Binding Items}">
+            <ItemsControl ItemsSource="{Binding PriorityItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
                         <Border Classes="inbox-item-surface">

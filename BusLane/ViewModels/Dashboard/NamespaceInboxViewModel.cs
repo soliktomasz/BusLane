@@ -13,18 +13,25 @@ using CommunityToolkit.Mvvm.Input;
 /// </summary>
 public partial class NamespaceInboxViewModel : ViewModelBase
 {
+    private const int MaxPriorityItems = 8;
     private readonly INamespaceInboxScoringService _scoringService;
     private readonly INamespaceInboxReviewStore _reviewStore;
     private Action<NamespaceNavigationRequest> _navigate;
     private string? _currentNamespaceId;
+    private IReadOnlyList<NamespaceInboxItem> _latestRankedItems = [];
+    private IReadOnlyDictionary<string, NamespaceInboxReviewState> _reviewStates =
+        new Dictionary<string, NamespaceInboxReviewState>(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ExpandButtonText))]
     private bool _isExpanded = true;
 
-    public ObservableCollection<NamespaceInboxItemViewModel> Items { get; } = [];
-    public bool HasItems => Items.Count > 0;
-    public bool IsEmpty => Items.Count == 0;
+    public ObservableCollection<NamespaceInboxItemViewModel> PriorityItems { get; } = [];
+    public ObservableCollection<NamespaceInboxItemViewModel> AllIssues { get; } = [];
+    public ObservableCollection<NamespaceInboxItemViewModel> Items => PriorityItems;
+    public int NeedsActionCount => PriorityItems.Count;
+    public bool HasItems => PriorityItems.Count > 0;
+    public bool IsEmpty => PriorityItems.Count == 0;
     public string ExpandButtonText => IsExpanded ? "Collapse" : "Expand";
 
     public NamespaceInboxViewModel(
@@ -43,8 +50,9 @@ public partial class NamespaceInboxViewModel : ViewModelBase
         _reviewStore = reviewStore;
         _navigate = navigate;
 
-        Items.CollectionChanged += (_, _) =>
+        PriorityItems.CollectionChanged += (_, _) =>
         {
+            OnPropertyChanged(nameof(NeedsActionCount));
             OnPropertyChanged(nameof(HasItems));
             OnPropertyChanged(nameof(IsEmpty));
         };
@@ -63,26 +71,46 @@ public partial class NamespaceInboxViewModel : ViewModelBase
     {
         _currentNamespaceId = namespaceId;
 
-        var rankedItems = _scoringService.Rank(queues, subscriptions, activeAlerts);
-        var reviewStates = _reviewStore.LoadAll()
+        _latestRankedItems = _scoringService.Rank(queues, subscriptions, activeAlerts);
+        _reviewStates = _reviewStore.LoadAll()
             .Where(review => string.Equals(review.NamespaceId, namespaceId, StringComparison.OrdinalIgnoreCase))
             .ToDictionary(review => review.EntityName, StringComparer.OrdinalIgnoreCase);
 
-        Items.Clear();
+        RebuildProjections();
+    }
 
-        foreach (var item in rankedItems)
+    private void RebuildProjections()
+    {
+        PriorityItems.Clear();
+        AllIssues.Clear();
+
+        foreach (var item in _latestRankedItems.Where(IsActionable))
         {
-            reviewStates.TryGetValue(item.EntityName, out var reviewState);
-            Items.Add(new NamespaceInboxItemViewModel(
-                item,
-                activeMessageDelta: item.ActiveMessageCount - (reviewState?.ActiveMessageCount ?? item.ActiveMessageCount),
-                deadLetterDelta: item.DeadLetterCount - (reviewState?.DeadLetterCount ?? item.DeadLetterCount),
-                scheduledDelta: item.ScheduledCount - (reviewState?.ScheduledCount ?? item.ScheduledCount),
-                alertDelta: item.ActiveAlertCount - (reviewState?.ActiveAlertCount ?? item.ActiveAlertCount),
-                _navigate,
-                MarkReviewed));
+            _reviewStates.TryGetValue(item.EntityName, out var reviewState);
+            var hasWorsened = reviewState is not null && HasWorsened(item, reviewState);
+            var viewModel = CreateItemViewModel(item, reviewState, isReviewed: reviewState is not null && !hasWorsened);
+            AllIssues.Add(viewModel);
+
+            if ((reviewState is null || hasWorsened) && PriorityItems.Count < MaxPriorityItems)
+            {
+                PriorityItems.Add(viewModel);
+            }
         }
     }
+
+    private NamespaceInboxItemViewModel CreateItemViewModel(
+        NamespaceInboxItem item,
+        NamespaceInboxReviewState? reviewState,
+        bool isReviewed) =>
+        new(
+            item,
+            activeMessageDelta: item.ActiveMessageCount - (reviewState?.ActiveMessageCount ?? item.ActiveMessageCount),
+            deadLetterDelta: item.DeadLetterCount - (reviewState?.DeadLetterCount ?? item.DeadLetterCount),
+            scheduledDelta: item.ScheduledCount - (reviewState?.ScheduledCount ?? item.ScheduledCount),
+            alertDelta: item.ActiveAlertCount - (reviewState?.ActiveAlertCount ?? item.ActiveAlertCount),
+            isReviewed,
+            _navigate,
+            MarkReviewed);
 
     private void MarkReviewed(NamespaceInboxItem item)
     {
@@ -91,15 +119,32 @@ public partial class NamespaceInboxViewModel : ViewModelBase
             return;
         }
 
-        _reviewStore.Save(new NamespaceInboxReviewState(
+        var reviewState = new NamespaceInboxReviewState(
             _currentNamespaceId,
             item.EntityName,
             DateTimeOffset.UtcNow,
             item.ActiveMessageCount,
             item.DeadLetterCount,
             item.ScheduledCount,
-            item.ActiveAlertCount));
+            item.ActiveAlertCount);
+        _reviewStore.Save(reviewState);
+
+        var updatedStates = new Dictionary<string, NamespaceInboxReviewState>(_reviewStates, StringComparer.OrdinalIgnoreCase)
+        {
+            [item.EntityName] = reviewState
+        };
+        _reviewStates = updatedStates;
+        RebuildProjections();
     }
+
+    private static bool IsActionable(NamespaceInboxItem item) =>
+        item.Score > 0 && item.Reasons.Count > 0;
+
+    private static bool HasWorsened(NamespaceInboxItem item, NamespaceInboxReviewState review) =>
+        item.ActiveMessageCount > review.ActiveMessageCount
+        || item.DeadLetterCount > review.DeadLetterCount
+        || item.ScheduledCount > review.ScheduledCount
+        || item.ActiveAlertCount > review.ActiveAlertCount;
 
     [RelayCommand]
     private void ToggleExpanded()
