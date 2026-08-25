@@ -76,6 +76,28 @@ public class MainWindowViewTests
         breadcrumbXaml.Should().Contain("BackToOverviewCommand");
     }
 
+    [Fact]
+    public void MainWindow_EntityWorkspaces_OccludeUnderlyingOverview()
+    {
+        // Removing either background exposes the Overview header beneath the breadcrumb.
+        var document = System.Xml.Linq.XDocument.Load(GetMainWindowPath());
+        var workspaceBindings = new[]
+        {
+            "{Binding IsAzureEntityWorkspaceVisible}",
+            "{Binding IsConnectionStringEntityWorkspaceVisible}"
+        };
+
+        var workspaces = document.Descendants()
+            .Where(element => element.Name.LocalName == "Grid")
+            .Where(element => workspaceBindings.Contains(element.Attribute("IsVisible")?.Value))
+            .ToList();
+
+        workspaces.Should().HaveCount(2);
+        workspaces.Should().OnlyContain(element =>
+            element.Attribute("Background") != null
+            && element.Attribute("Background")!.Value == "{DynamicResource AppBackground}");
+    }
+
     private static string GetMainWindowPath()
     {
         return Path.GetFullPath(Path.Combine(

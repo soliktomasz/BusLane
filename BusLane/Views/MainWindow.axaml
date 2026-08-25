@@ -43,7 +43,8 @@
             <!-- Content when namespace selected (Azure mode) -->
                 <Grid Grid.Row="0" Grid.RowSpan="2"
                       RowDefinitions="Auto,*"
-                      IsVisible="{Binding IsAzureEntityWorkspaceVisible}">
+                      IsVisible="{Binding IsAzureEntityWorkspaceVisible}"
+                      Background="{DynamicResource AppBackground}">
 
                 <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
 
@@ -63,7 +64,8 @@
             <!-- Content when connected via connection string -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
                   RowDefinitions="Auto,*"
-                  IsVisible="{Binding IsConnectionStringEntityWorkspaceVisible}">
+                  IsVisible="{Binding IsConnectionStringEntityWorkspaceVisible}"
+                  Background="{DynamicResource AppBackground}">
 
                 <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
 
