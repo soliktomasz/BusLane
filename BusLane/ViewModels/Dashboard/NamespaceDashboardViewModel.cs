@@ -249,6 +249,10 @@ public partial class NamespaceDashboardViewModel : ObservableObject
                 section,
                 _operations);
         }
+        catch (Exception)
+        {
+            RefreshErrorMessage = "Namespace data could not be refreshed.";
+        }
         finally
         {
             IsRetryingFailedSection = false;

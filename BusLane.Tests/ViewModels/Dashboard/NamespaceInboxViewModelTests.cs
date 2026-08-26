@@ -160,6 +160,40 @@ public class NamespaceInboxViewModelTests
         sut.ExpandButtonText.Should().Be("Expand");
     }
 
+    [Theory]
+    [InlineData(1, 0, 0, 0, InboxStatus.Critical)]
+    [InlineData(0, 1, 0, 0, InboxStatus.Warning)]
+    [InlineData(0, 0, 1, 0, InboxStatus.Warning)]
+    [InlineData(0, 0, 0, 1, InboxStatus.Warning)]
+    [InlineData(0, 0, 0, 0, InboxStatus.Healthy)]
+    public void Status_PrioritySignals_ReturnsExpectedStatus(
+        long deadLetterCount,
+        long scheduledCount,
+        long activeMessageCount,
+        int activeAlertCount,
+        InboxStatus expected)
+    {
+        // Arrange
+        var item = new NamespaceInboxItem(
+            "orders",
+            EntityType.Queue,
+            TopicName: null,
+            RequiresSession: false,
+            ActiveMessageCount: activeMessageCount,
+            DeadLetterCount: deadLetterCount,
+            ScheduledCount: scheduledCount,
+            ActiveAlertCount: activeAlertCount,
+            Score: 10,
+            Reasons: ["Needs attention"]);
+        var sut = new NamespaceInboxItemViewModel(item, 0, 0, 0, 0, false, _ => { }, _ => { });
+
+        // Act
+        var status = sut.Status;
+
+        // Assert
+        status.Should().Be(expected);
+    }
+
     private static NamespaceInboxItem CreateInboxItem(
         string entityName,
         EntityType entityType,

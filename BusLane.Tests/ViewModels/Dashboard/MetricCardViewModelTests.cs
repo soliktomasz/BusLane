@@ -11,14 +11,14 @@ public class MetricCardViewModelTests
     public void Constructor_SetsProperties()
     {
         // Act
-        var vm = new MetricCardViewModel("Active Messages", "messages");
+        var _sut = new MetricCardViewModel("Active Messages", "messages");
 
         // Assert
-        vm.Title.Should().Be("Active Messages");
-        vm.Unit.Should().Be("messages");
-        vm.Value.Should().Be(0);
-        vm.TrendPercentage.Should().Be(0);
-        vm.Trend.Should().Be(MetricTrend.Stable);
+        _sut.Title.Should().Be("Active Messages");
+        _sut.Unit.Should().Be("messages");
+        _sut.Value.Should().Be(0);
+        _sut.TrendPercentage.Should().Be(0);
+        _sut.Trend.Should().Be(MetricTrend.Stable);
     }
 
     [Theory]
@@ -28,16 +28,16 @@ public class MetricCardViewModelTests
     public void UpdateValue_CalculatesTrend(double previous, double current, double expectedTrend, MetricTrend expectedDirection)
     {
         // Arrange
-        var vm = new MetricCardViewModel("Test", "units");
-        vm.UpdateValue(previous);
+        var _sut = new MetricCardViewModel("Test", "units");
+        _sut.UpdateValue(previous);
 
         // Act
-        vm.UpdateValue(current);
+        _sut.UpdateValue(current);
 
         // Assert
-        vm.Value.Should().Be(current);
-        vm.TrendPercentage.Should().Be(expectedTrend);
-        vm.Trend.Should().Be(expectedDirection);
+        _sut.Value.Should().Be(current);
+        _sut.TrendPercentage.Should().Be(expectedTrend);
+        _sut.Trend.Should().Be(expectedDirection);
     }
 
     [Theory]
@@ -46,12 +46,12 @@ public class MetricCardViewModelTests
     public void ValueDisplay_SizeMetric_IncludesReadableUnit(double valueInMegabytes, string expected)
     {
         // Arrange
-        var vm = new MetricCardViewModel("Total Size", "MB");
+        var _sut = new MetricCardViewModel("Total Size", "MB");
 
         // Act
-        vm.UpdateValue(valueInMegabytes);
+        _sut.UpdateValue(valueInMegabytes);
 
         // Assert
-        vm.ValueDisplay.Should().Be(expected);
+        _sut.ValueDisplay.Should().Be(expected);
     }
 }

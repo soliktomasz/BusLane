@@ -137,7 +137,8 @@ public class DashboardRefreshService : IDashboardRefreshService
                 }
             }
 
-            var subscriptionsPartial = false;
+            var subscriptionsPartial = context.Cache.Topics.Any(topic =>
+                !context.Cache.SubscriptionsByTopic.ContainsKey(topic.Name));
             if (topicsTask is not null)
             {
                 var result = await topicsTask;

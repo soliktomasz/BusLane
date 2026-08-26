@@ -1,8 +1,8 @@
+namespace BusLane.Views.Controls;
+
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-
-namespace BusLane.Views.Controls;
 
 public partial class MetricCard : UserControl
 {

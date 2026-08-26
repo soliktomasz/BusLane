@@ -78,8 +78,8 @@ public class NamespaceDashboardViewTests
                     && child.Attribute("Classes")?.Value == "dashboard-summary-surface") == 3);
 
         // Assert
-        metricGrid.Attribute("ColumnDefinitions")?.Value.Should().Be("*,*,*");
-        metricGrid.Attribute("ColumnSpacing")?.Value.Should().Be("16");
+        metricGrid.Attribute("ColumnDefinitions")!.Value.Should().Be("*,*,*");
+        metricGrid.Attribute("ColumnSpacing")!.Value.Should().Be("16");
         metricGrid.Elements()
             .Where(element => element.Attribute("Classes")?.Value == "dashboard-summary-surface")
             .Should().OnlyContain(element => element.Attribute("Margin") == null);
@@ -88,10 +88,17 @@ public class NamespaceDashboardViewTests
     [Fact]
     public void Issues_UsesVirtualizedList()
     {
-        var xaml = File.ReadAllText(GetControlPath("NamespaceIssuesView.axaml"));
+        // Arrange
+        var path = GetControlPath("NamespaceIssuesView.axaml");
 
+        // Act
+        var xaml = File.ReadAllText(path);
+
+        // Assert
         xaml.Should().Contain("ItemsSource=\"{Binding AllIssues}\"");
         xaml.Should().Contain("<VirtualizingStackPanel/>");
+        xaml.Should().Contain("IsVisible=\"{Binding !AllIssues.Count}\"");
+        xaml.Should().Contain("Text=\"No issues found.\"");
     }
 
     [Fact]
@@ -111,8 +118,13 @@ public class NamespaceDashboardViewTests
     [Fact]
     public void Dashboard_ExposesLoadingUpdatingAndAccessibleRetryStates()
     {
-        var xaml = File.ReadAllText(GetDashboardPath());
+        // Arrange
+        var path = GetDashboardPath();
 
+        // Act
+        var xaml = File.ReadAllText(path);
+
+        // Assert
         xaml.Should().Contain("IsInitialLoading");
         xaml.Should().Contain("Updating namespace data");
         xaml.Should().Contain("RetryFailedSectionCommand");

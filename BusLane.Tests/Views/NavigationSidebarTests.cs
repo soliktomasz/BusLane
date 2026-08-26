@@ -202,7 +202,7 @@ public class NavigationSidebarTests
     }
 
     [Fact]
-    public void NavigationSidebar_OpensNamespaceOverview()
+    public void NavigationSidebar_OverviewAction_OpensNamespaceOverview()
     {
         // Arrange
         var xaml = File.ReadAllText(GetSidebarPath());

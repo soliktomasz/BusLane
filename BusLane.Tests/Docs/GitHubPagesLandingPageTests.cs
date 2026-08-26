@@ -4,8 +4,12 @@ using System.IO;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 
+/// <summary>
+/// Verifies the published GitHub Pages landing page remains accessible, local, and product-focused.
+/// </summary>
 public partial class GitHubPagesLandingPageTests
 {
+    /// <summary>Verifies the hero presents the approved product-led message.</summary>
     [Fact]
     public void LandingPage_ApprovedHero_UsesProductLedMessage()
     {
@@ -21,6 +25,7 @@ public partial class GitHubPagesLandingPageTests
         html.Should().Contain("class=\"hero-media\"");
     }
 
+    /// <summary>Verifies the page supports system dark mode and reduced-motion preferences.</summary>
     [Fact]
     public void LandingPage_DisplayPreferences_ProvideDarkAndReducedMotionModes()
     {
@@ -36,6 +41,7 @@ public partial class GitHubPagesLandingPageTests
         supportsReducedMotion.Should().BeTrue("the page should avoid forced motion");
     }
 
+    /// <summary>Verifies the screenshot gallery uses accessible tabs and local image assets.</summary>
     [Fact]
     public void LandingPage_ScreenshotGallery_UsesAccessibleLocalTabs()
     {
@@ -55,6 +61,7 @@ public partial class GitHubPagesLandingPageTests
             "every rendered image should ship inside the GitHub Pages artifact");
     }
 
+    /// <summary>Verifies visible landing-page copy contains no banned dash characters.</summary>
     [Fact]
     public void LandingPage_VisibleCopy_ContainsNoBannedDashCharacters()
     {
@@ -70,6 +77,7 @@ public partial class GitHubPagesLandingPageTests
         visibleCopy.Should().NotContain("–");
     }
 
+    /// <summary>Verifies production markup has no dependency on remote fonts or scripts.</summary>
     [Fact]
     public void LandingPage_ProductionMarkup_RequiresNoRemoteFontOrScript()
     {
@@ -77,7 +85,7 @@ public partial class GitHubPagesLandingPageTests
         var html = ReadLandingPage();
 
         // Act
-        var hasRemoteFont = html.Contains("fonts.googleapis.com", StringComparison.OrdinalIgnoreCase);
+        var hasRemoteFont = RemoteFontRegex().IsMatch(html);
         var hasRemoteScript = RemoteScriptRegex().IsMatch(html);
 
         // Assert
@@ -129,6 +137,9 @@ public partial class GitHubPagesLandingPageTests
     [GeneratedRegex("\\s+")]
     private static partial Regex WhitespaceRegex();
 
-    [GeneratedRegex("<script[^>]+src=\"https?://", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?:fonts\.(?:googleapis|gstatic)\.com|fonts\.bunny\.net)", RegexOptions.IgnoreCase)]
+    private static partial Regex RemoteFontRegex();
+
+    [GeneratedRegex("""<script\b[^>]*\bsrc\s*=\s*["'](?:https?:)?//""", RegexOptions.IgnoreCase)]
     private static partial Regex RemoteScriptRegex();
 }

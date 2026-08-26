@@ -4,14 +4,23 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using BusLane.ViewModels.Dashboard;
 
+/// <summary>
+/// Provides namespace-wide queue, topic, and subscription search.
+/// </summary>
 public partial class NamespaceEntitySearchView : UserControl
 {
+    /// <summary>Initializes namespace entity search.</summary>
     public NamespaceEntitySearchView()
     {
         InitializeComponent();
     }
 
-    public void FocusSearch() => SearchBox.Focus();
+    /// <summary>Moves keyboard focus to namespace search and selects its current query.</summary>
+    public void FocusSearch()
+    {
+        SearchBox.Focus();
+        SearchBox.SelectAll();
+    }
 
     private void OnSearchKeyDown(object? sender, KeyEventArgs e)
     {

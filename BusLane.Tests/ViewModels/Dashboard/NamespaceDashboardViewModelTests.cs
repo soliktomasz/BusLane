@@ -57,19 +57,29 @@ public class NamespaceDashboardViewModelTests
     [Fact]
     public void OverviewSectionCommands_SelectRequestedSection()
     {
+        // Arrange
         var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
 
+        // Act
         sut.ShowIssuesCommand.Execute(null);
-        sut.SelectedSection.Should().Be(NamespaceOverviewSection.Issues);
-        sut.IsIssuesSelected.Should().BeTrue();
+        var issuesSection = sut.SelectedSection;
+        var isIssuesSelected = sut.IsIssuesSelected;
 
         sut.ShowAnalyticsCommand.Execute(null);
-        sut.SelectedSection.Should().Be(NamespaceOverviewSection.Analytics);
-        sut.IsAnalyticsSelected.Should().BeTrue();
+        var analyticsSection = sut.SelectedSection;
+        var isAnalyticsSelected = sut.IsAnalyticsSelected;
 
         sut.ShowHomeCommand.Execute(null);
-        sut.SelectedSection.Should().Be(NamespaceOverviewSection.Home);
-        sut.IsHomeSelected.Should().BeTrue();
+        var homeSection = sut.SelectedSection;
+        var isHomeSelected = sut.IsHomeSelected;
+
+        // Assert
+        issuesSection.Should().Be(NamespaceOverviewSection.Issues);
+        isIssuesSelected.Should().BeTrue();
+        analyticsSection.Should().Be(NamespaceOverviewSection.Analytics);
+        isAnalyticsSelected.Should().BeTrue();
+        homeSection.Should().Be(NamespaceOverviewSection.Home);
+        isHomeSelected.Should().BeTrue();
     }
 
     [Fact]
@@ -173,6 +183,31 @@ public class NamespaceDashboardViewModelTests
             operations,
             Arg.Any<CancellationToken>());
         sut.HasSnapshot.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RetryFailedSection_WhenRefreshThrows_ShowsRefreshErrorAndResetsRetryState()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        sut.SetOperations(operations, "namespace-a");
+        _refreshService.RefreshFailed += Raise.Event<EventHandler<DashboardRefreshFailure>>(
+            this,
+            new DashboardRefreshFailure(DashboardRefreshSection.Topics, "Topics unavailable.", DateTimeOffset.UtcNow));
+        _refreshService.RefreshSectionAsync(
+                "namespace-a",
+                DashboardRefreshSection.Topics,
+                operations,
+                Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new InvalidOperationException("service unavailable"));
+
+        // Act
+        await sut.RetryFailedSectionCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.RefreshErrorMessage.Should().Be("Namespace data could not be refreshed.");
+        sut.IsRetryingFailedSection.Should().BeFalse();
     }
 
     [Fact]

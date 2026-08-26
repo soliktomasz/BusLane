@@ -37,13 +37,15 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
 
     /// <summary>
     /// Triage health driving the status dot and pill: a dead-letter accumulation takes
-    /// priority over a scheduled backlog; otherwise the entity is healthy.
+    /// priority over scheduled, active-message, and alert warning signals.
     /// </summary>
     public BusLane.Models.Dashboard.InboxStatus Status => DeadLetterCount > 0
         ? BusLane.Models.Dashboard.InboxStatus.Critical
         : ScheduledCount > 0
             ? BusLane.Models.Dashboard.InboxStatus.Warning
-            : BusLane.Models.Dashboard.InboxStatus.Healthy;
+            : HasActiveAlerts || ActiveMessageCount > 0
+                ? BusLane.Models.Dashboard.InboxStatus.Warning
+                : BusLane.Models.Dashboard.InboxStatus.Healthy;
 
     /// <summary>Short label shown in the status pill.</summary>
     public string StatusLabel => Status switch

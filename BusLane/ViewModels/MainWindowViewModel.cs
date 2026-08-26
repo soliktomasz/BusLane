@@ -38,6 +38,7 @@ public enum ConnectionMode
 /// </summary>
 public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDisposable
 {
+    private static readonly TimeSpan NamespaceNavigationLoadWaitTimeout = TimeSpan.FromSeconds(1);
     private bool _disposed;
 
     // Services (injected)
@@ -1406,10 +1407,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
         finally
         {
-            if (IsCurrentNamespaceNavigation(tab, generation))
-            {
-                IsLoading = false;
-            }
+            IsLoading = false;
         }
     }
 
@@ -1480,13 +1478,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
         else
         {
-            while (tab.MessageOps.IsLoadingMessages)
+            var waitDeadline = DateTimeOffset.UtcNow + NamespaceNavigationLoadWaitTimeout;
+            while (tab.MessageOps.IsLoadingMessages && DateTimeOffset.UtcNow < waitDeadline)
             {
                 await Task.Delay(10, ct);
             }
 
             if (!IsCurrentNamespaceNavigation(tab, generation))
             {
+                return false;
+            }
+
+            if (tab.MessageOps.IsLoadingMessages)
+            {
+                tab.StatusMessage = "Timed out waiting for the current message load to finish.";
                 return false;
             }
 

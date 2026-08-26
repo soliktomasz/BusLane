@@ -466,7 +466,7 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task ConnectionStringTab_StartsInEntityExplorerAndRefreshesDashboardOnlyWhileOverviewIsOpen()
+    public async Task ConnectionStringTab_SuccessfulConnection_StartsInOverviewAndRefreshesDashboard()
     {
         // Arrange
         var preferences = new TestPreferencesService();
@@ -506,18 +506,8 @@ public class MainWindowViewModelTests
         sut.ActiveTab = tab;
 
         // Assert
-        sut.IsNamespaceOverviewVisible.Should().BeFalse();
-        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
-        _ = dashboardRefreshService.DidNotReceive().RefreshAsync(
-            Arg.Any<string>(),
-            Arg.Any<IServiceBusOperations>(),
-            Arg.Any<CancellationToken>());
-        dashboardRefreshService.ClearReceivedCalls();
-
-        // Act
-        sut.OpenOverviewCommand.Execute(null);
-
-        // Assert
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
+        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeFalse();
         _ = dashboardRefreshService.Received(1).RefreshAsync(
             "Orders",
             operations,
@@ -526,7 +516,6 @@ public class MainWindowViewModelTests
             "Orders",
             operations,
             TimeSpan.FromSeconds(30));
-        sut.IsNamespaceOverviewVisible.Should().BeTrue();
 
         // Act
         sut.CloseOverviewCommand.Execute(null);
@@ -534,6 +523,86 @@ public class MainWindowViewModelTests
         // Assert
         dashboardRefreshService.Received().StopAutoRefresh();
         sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task OpenTopicSubscriptions_WhenNavigationIsSuperseded_ResetsGlobalLoadingState()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var topic = new TopicInfo("events", 128, 1, null, TimeSpan.FromDays(14));
+        var loadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>()).Returns([topic]);
+        operations.GetSubscriptionsAsync("events", Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var ct = callInfo.ArgAt<CancellationToken>(1);
+                var completion = new TaskCompletionSource<IEnumerable<SubscriptionInfo>>(TaskCreationOptions.RunContinuationsAsynchronously);
+                ct.Register(() => completion.TrySetCanceled(ct));
+                loadStarted.TrySetResult();
+                return completion.Task;
+            });
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateTab("tab-1", preferences);
+        await tab.ConnectWithConnectionStringAsync(
+            SavedConnection.Create(
+                "Orders",
+                "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=key;SharedAccessKey=value",
+                ConnectionType.Namespace),
+            operationsFactory);
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        sut.NamespaceDashboard.EntitySearch.UpdateInventory([], [topic], []);
+        sut.NamespaceDashboard.EntitySearch.Query = "events";
+        sut.NamespaceDashboard.EntitySearch.SelectedResult = sut.NamespaceDashboard.EntitySearch.Results.Single();
+
+        // Act
+        sut.NamespaceDashboard.EntitySearch.OpenSelectedCommand.Execute(null);
+        await loadStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        sut.OpenOverviewCommand.Execute(null);
+        await WaitUntilAsync(() => !sut.IsLoading);
+
+        // Assert
+        sut.IsLoading.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task OpenQueueMessages_WhenPreviousLoadDoesNotFinish_ReportsTimeout()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var queue = CreateQueue("orders");
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([queue]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>()).Returns([]);
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory);
+        var tab = CreateTab("tab-1", preferences);
+        await tab.ConnectWithConnectionStringAsync(
+            SavedConnection.Create(
+                "Orders",
+                "Endpoint=sb://orders.servicebus.windows.net/;SharedAccessKeyName=key;SharedAccessKey=value",
+                ConnectionType.Namespace),
+            operationsFactory);
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        sut.NamespaceDashboard.EntitySearch.UpdateInventory([queue], [], []);
+        sut.NamespaceDashboard.EntitySearch.Query = "orders";
+        sut.NamespaceDashboard.EntitySearch.SelectedResult = sut.NamespaceDashboard.EntitySearch.Results.Single();
+        tab.MessageOps.IsLoadingMessages = true;
+
+        // Act
+        sut.NamespaceDashboard.EntitySearch.OpenSelectedCommand.Execute(null);
+        await WaitUntilAsync(() => tab.StatusMessage?.Contains("Timed out", StringComparison.Ordinal) == true);
+
+        // Assert
+        tab.StatusMessage.Should().Contain("Timed out");
+        tab.RecentDestinations.Should().BeEmpty();
     }
 
     [Fact]

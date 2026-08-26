@@ -2,7 +2,6 @@ namespace BusLane.ViewModels.Dashboard;
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using BusLane.Models;
 using BusLane.Models.Dashboard;
@@ -10,8 +9,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 public partial class BarChartWidgetViewModel : DashboardWidgetViewModel
 {
-    private readonly ObservableCollection<QueueInfo> _queues = [];
-    private readonly ObservableCollection<SubscriptionInfo> _subscriptions = [];
+    private readonly List<QueueInfo> _queues = [];
+    private readonly List<SubscriptionInfo> _subscriptions = [];
 
     [ObservableProperty]
     private BarPlotData? _plotData;
@@ -24,16 +23,10 @@ public partial class BarChartWidgetViewModel : DashboardWidgetViewModel
     public void UpdateEntityData(IEnumerable<QueueInfo> queues, IEnumerable<SubscriptionInfo> subscriptions)
     {
         _queues.Clear();
-        foreach (var q in queues)
-        {
-            _queues.Add(q);
-        }
+        _queues.AddRange(queues);
 
         _subscriptions.Clear();
-        foreach (var s in subscriptions)
-        {
-            _subscriptions.Add(s);
-        }
+        _subscriptions.AddRange(subscriptions);
 
         RefreshData();
     }

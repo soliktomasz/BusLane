@@ -11,7 +11,7 @@
                  Text="{Binding Query, Mode=TwoWay}"
                  PlaceholderText="Find queue, topic, or subscription"
                  AutomationProperties.Name="Search queues, topics, and subscriptions"
-                 ToolTip.Tip="Press / to search"
+                 ToolTip.Tip="Press Cmd/Ctrl+F to search"
                  KeyDown="OnSearchKeyDown"/>
         <Border Grid.Row="1"
                 Margin="0,6,0,0"

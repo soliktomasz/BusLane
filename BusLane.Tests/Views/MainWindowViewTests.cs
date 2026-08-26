@@ -52,7 +52,7 @@ public class MainWindowViewTests
     }
 
     [Fact]
-    public void MainWindow_HostsDashboardAsNamespaceWorkspaceContent()
+    public void MainWindow_NamespaceWorkspace_HostsDashboardContent()
     {
         // Arrange
         var xaml = File.ReadAllText(GetMainWindowPath());
@@ -67,7 +67,7 @@ public class MainWindowViewTests
     }
 
     [Fact]
-    public void MainWindow_EntityBreadcrumbDoesNotOpenOverview()
+    public void MainWindow_EntityWorkspace_ShowsBreadcrumbWithoutOverviewLink()
     {
         // Arrange
         var xaml = File.ReadAllText(GetMainWindowPath());

@@ -138,7 +138,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
                 primary, Key.B),
             
             [KeyboardShortcutAction.FocusSearch] = new(
-                KeyboardShortcutAction.FocusSearch, "Navigation", "Focus message search",
+                KeyboardShortcutAction.FocusSearch, "Navigation", "Focus namespace search",
                 primary, Key.F),
             
             // Message shortcuts

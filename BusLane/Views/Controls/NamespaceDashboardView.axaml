@@ -5,7 +5,7 @@
              xmlns:controls="using:BusLane.Views.Controls"
              x:Class="BusLane.Views.Controls.NamespaceDashboardView"
              x:DataType="vm:NamespaceDashboardViewModel"
-             x:CompileBindings="False">
+             x:CompileBindings="True">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="26" Spacing="20">
             <Grid ColumnDefinitions="*,Auto">
@@ -25,7 +25,7 @@
                     <Button Classes="secondary small" Command="{Binding RefreshCommand}"
                             IsEnabled="{Binding !IsRefreshing}" Content="Refresh"/>
                     <Button Classes="subtle small"
-                            Command="{Binding $parent[Window].DataContext.CloseOverviewCommand}"
+                            Command="{ReflectionBinding $parent[Window].DataContext.CloseOverviewCommand}"
                             Content="Close"
                             AutomationProperties.Name="Close namespace overview"/>
                 </StackPanel>
@@ -97,7 +97,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
                                         <Button Classes="subtle small" HorizontalAlignment="Stretch"
-                                                Command="{Binding $parent[UserControl].DataContext.OpenDestinationCommand}"
+                                                Command="{ReflectionBinding $parent[UserControl].DataContext.OpenDestinationCommand}"
                                                 CommandParameter="{Binding}" Content="{Binding DisplayPath}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -107,7 +107,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
                                         <Button Classes="subtle small" HorizontalAlignment="Stretch"
-                                                Command="{Binding $parent[UserControl].DataContext.OpenDestinationCommand}"
+                                                Command="{ReflectionBinding $parent[UserControl].DataContext.OpenDestinationCommand}"
                                                 CommandParameter="{Binding}" Content="{Binding DisplayPath}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

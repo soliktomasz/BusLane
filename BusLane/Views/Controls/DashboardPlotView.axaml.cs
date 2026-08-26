@@ -199,7 +199,7 @@ public partial class DashboardPlotView : UserControl
         PlotHost.Plot.HideAxesAndGrid();
 
         PlotHost.Plot.Legend.IsVisible = true;
-        PlotHost.Plot.Legend.Location = Alignment.UpperRight;
+        PlotHost.Plot.Legend.Alignment = Alignment.UpperRight;
         PlotHost.Plot.Legend.FontSize = 10;
         PlotHost.Plot.Legend.FontColor = ResolveColor("SubtleForeground");
         PlotHost.Plot.Legend.BackgroundColor = ColorHex("#00000000");

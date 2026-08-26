@@ -1,10 +1,10 @@
+namespace BusLane.Converters;
+
 using System.Globalization;
+using BusLane.Models.Dashboard;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
-using BusLane.Models.Dashboard;
-
-namespace BusLane.Converters;
 
 /// <summary>
 /// Converts an <see cref="InboxStatus"/> to a themed brush.

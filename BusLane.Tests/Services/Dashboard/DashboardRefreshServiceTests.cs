@@ -310,6 +310,37 @@ public class DashboardRefreshServiceTests
     }
 
     [Fact]
+    public async Task RefreshSectionAsync_QueuesOnlyWithIncompleteSubscriptionCache_PreservesPartialSummary()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var summaries = new List<NamespaceDashboardSummary>();
+        _sut.SummaryUpdated += (_, summary) => summaries.Add(summary);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 5)
+                .Select(index => new TopicInfo($"topic-{index}", 1, 1, null, TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                return Task.FromResult<IEnumerable<SubscriptionInfo>>(
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ]);
+            });
+        await _sut.RefreshAsync("ns", operations);
+
+        // Act
+        await _sut.RefreshSectionAsync("ns", DashboardRefreshSection.Queues, operations);
+
+        // Assert
+        summaries.Select(summary => summary.IsPartial).Should().Equal(true, true);
+        await operations.Received(4).GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task RefreshAsync_WhenSubscriptionFetchFails_RetriesWithoutCachingEmptyBaseline()
     {
         // Arrange

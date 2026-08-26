@@ -10,26 +10,26 @@ public class NamespaceEntitySearchViewModelTests
     [Theory]
     [InlineData("ord", "orders")]
     [InlineData("oreu", "orders-eu")]
-    public void Query_MatchesSubstringAndSubsequence(string query, string expected)
+    public void Query_SubstringOrSubsequence_MatchesExpectedEntity(string query, string expected)
     {
-        var sut = new NamespaceEntitySearchViewModel(_ => { });
-        sut.UpdateInventory([Queue("orders"), Queue("orders-eu")], [], []);
+        var _sut = new NamespaceEntitySearchViewModel(_ => { });
+        _sut.UpdateInventory([Queue("orders"), Queue("orders-eu")], [], []);
 
-        sut.Query = query;
+        _sut.Query = query;
 
-        sut.Results.Should().Contain(item => item.EntityName == expected);
+        _sut.Results.Should().Contain(item => item.EntityName == expected);
     }
 
     [Fact]
     public void OpenSelected_SubscriptionUsesFullPathAndActiveDestination()
     {
         NamespaceNavigationRequest? opened = null;
-        var sut = new NamespaceEntitySearchViewModel(request => opened = request);
-        sut.UpdateInventory([], [], [Subscription("payments", "fraud-indexer")]);
-        sut.Query = "fraud";
-        sut.SelectedResult = sut.Results.Single();
+        var _sut = new NamespaceEntitySearchViewModel(request => opened = request);
+        _sut.UpdateInventory([], [], [Subscription("payments", "fraud-indexer")]);
+        _sut.Query = "fraud";
+        _sut.SelectedResult = _sut.Results.Single();
 
-        sut.OpenSelectedCommand.Execute(null);
+        _sut.OpenSelectedCommand.Execute(null);
 
         opened.Should().Be(new NamespaceNavigationRequest(
             EntityType.Subscription,
@@ -42,17 +42,17 @@ public class NamespaceEntitySearchViewModelTests
     public void Query_CapsResultsAtThirtyAndTopicsOpenSubscriptions()
     {
         NamespaceNavigationRequest? opened = null;
-        var sut = new NamespaceEntitySearchViewModel(request => opened = request);
+        var _sut = new NamespaceEntitySearchViewModel(request => opened = request);
         var topics = Enumerable.Range(0, 40)
             .Select(index => new TopicInfo($"topic-{index:00}", 0, 0, null, TimeSpan.FromDays(14)))
             .ToList();
-        sut.UpdateInventory([], topics, []);
+        _sut.UpdateInventory([], topics, []);
 
-        sut.Query = "topic";
-        sut.SelectedResult = sut.Results[0];
-        sut.OpenSelectedCommand.Execute(null);
+        _sut.Query = "topic";
+        _sut.SelectedResult = _sut.Results[0];
+        _sut.OpenSelectedCommand.Execute(null);
 
-        sut.Results.Should().HaveCount(30);
+        _sut.Results.Should().HaveCount(30);
         opened!.View.Should().Be(EntityWorkspaceView.TopicSubscriptions);
         opened.EntityType.Should().Be(EntityType.Topic);
     }

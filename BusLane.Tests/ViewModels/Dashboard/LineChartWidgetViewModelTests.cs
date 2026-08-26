@@ -22,11 +22,11 @@ public class LineChartWidgetViewModelTests
                 TimeRange = "1 Hour"
             }
         };
-        using var sut = new LineChartWidgetViewModel(widget, metricsService);
+        using var _sut = new LineChartWidgetViewModel(widget, metricsService);
         var refreshed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        sut.PropertyChanged += (_, e) =>
+        _sut.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(LineChartWidgetViewModel.PlotData) && sut.PlotData?.Points.Count > 0)
+            if (e.PropertyName == nameof(LineChartWidgetViewModel.PlotData) && _sut.PlotData?.Points.Count > 0)
             {
                 refreshed.TrySetResult();
             }
@@ -38,9 +38,9 @@ public class LineChartWidgetViewModelTests
         await refreshed.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         // Assert
-        sut.PlotData.Should().NotBeNull();
-        sut.PlotData!.Points.Should().NotBeEmpty();
-        sut.PlotData!.LineColorToken.Should().Be("AccentBrand");
+        _sut.PlotData.Should().NotBeNull();
+        _sut.PlotData!.Points.Should().NotBeEmpty();
+        _sut.PlotData!.LineColorToken.Should().Be("AccentBrand");
     }
 
     private sealed class BatchOnlyMetricsService : IMetricsService

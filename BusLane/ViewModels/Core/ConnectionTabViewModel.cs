@@ -3,12 +3,12 @@ namespace BusLane.ViewModels.Core;
 // BusLane/ViewModels/Core/ConnectionTabViewModel.cs
 using System.Collections.ObjectModel;
 
-using Azure.Core;
 using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
+using Azure.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
@@ -32,7 +32,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isActive;
     [ObservableProperty] private bool _isEntityPaneVisible = true;
-    [ObservableProperty] private NamespaceWorkspaceMode _workspaceMode = NamespaceWorkspaceMode.Entity;
+    [ObservableProperty] private NamespaceWorkspaceMode _workspaceMode = NamespaceWorkspaceMode.Overview;
     [ObservableProperty] private NamespaceOverviewSection _overviewSection = NamespaceOverviewSection.Home;
     [ObservableProperty] private NamespaceNavigationRequest? _currentDestination;
     [ObservableProperty] private string? _statusMessage;
@@ -256,9 +256,10 @@ public partial class ConnectionTabViewModel : ViewModelBase
 
     private void ResetWorkspace()
     {
-        WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        WorkspaceMode = NamespaceWorkspaceMode.Overview;
         OverviewSection = NamespaceOverviewSection.Home;
         CurrentDestination = null;
+        RecentDestinations.Clear();
     }
 
     private async Task LoadEntitiesAsync(SavedConnection connection, CancellationToken ct = default)
