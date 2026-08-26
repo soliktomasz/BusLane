@@ -35,10 +35,11 @@
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
 
-                <controls:NamespaceDashboardView Grid.Row="0"
-                                                 Grid.RowSpan="2"
-                                                 IsVisible="{Binding IsNamespaceOverviewVisible}"
-                                                 DataContext="{Binding NamespaceDashboard}"/>
+                <Grid Grid.Row="0"
+                      Grid.RowSpan="2"
+                      IsVisible="{Binding IsNamespaceOverviewVisible}">
+                    <controls:NamespaceDashboardView DataContext="{Binding NamespaceDashboard}"/>
+                </Grid>
 
             <!-- Content when namespace selected (Azure mode) -->
                 <Grid Grid.Row="0" Grid.RowSpan="2"

@@ -466,7 +466,7 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task ConnectionStringTab_SuccessfulConnection_StartsInOverviewAndRefreshesDashboard()
+    public async Task ConnectionStringTab_SuccessfulConnection_StartsInEntityWorkspaceUntilOverviewIsOpened()
     {
         // Arrange
         var preferences = new TestPreferencesService();
@@ -506,8 +506,18 @@ public class MainWindowViewModelTests
         sut.ActiveTab = tab;
 
         // Assert
-        sut.IsNamespaceOverviewVisible.Should().BeTrue();
-        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeFalse();
+        sut.IsNamespaceOverviewVisible.Should().BeFalse();
+        sut.IsConnectionStringEntityWorkspaceVisible.Should().BeTrue();
+        _ = dashboardRefreshService.DidNotReceive().RefreshAsync(
+            Arg.Any<string>(),
+            Arg.Any<IServiceBusOperations>(),
+            Arg.Any<CancellationToken>());
+        dashboardRefreshService.ClearReceivedCalls();
+
+        // Act
+        sut.OpenOverviewCommand.Execute(null);
+
+        // Assert
         _ = dashboardRefreshService.Received(1).RefreshAsync(
             "Orders",
             operations,
@@ -516,6 +526,7 @@ public class MainWindowViewModelTests
             "Orders",
             operations,
             TimeSpan.FromSeconds(30));
+        sut.IsNamespaceOverviewVisible.Should().BeTrue();
 
         // Act
         sut.CloseOverviewCommand.Execute(null);

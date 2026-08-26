@@ -55,14 +55,18 @@ public class MainWindowViewTests
     public void MainWindow_NamespaceWorkspace_HostsDashboardContent()
     {
         // Arrange
-        var xaml = File.ReadAllText(GetMainWindowPath());
+        var document = System.Xml.Linq.XDocument.Load(GetMainWindowPath());
         var dashboardXaml = File.ReadAllText(GetControlPath("NamespaceDashboardView.axaml"));
+        var dashboard = document.Descendants()
+            .Single(element => element.Name.LocalName == "NamespaceDashboardView");
 
         // Assert
-        xaml.Should().Contain("<controls:NamespaceDashboardView");
-        xaml.Should().Contain("IsVisible=\"{Binding IsNamespaceOverviewVisible}\"");
-        xaml.Should().NotContain("FeaturePanels.ShowCharts");
-        xaml.Should().NotContain("CloseChartsCommand");
+        dashboard.Parent.Should().NotBeNull();
+        dashboard.Parent!.Attribute("IsVisible")?.Value.Should().Be("{Binding IsNamespaceOverviewVisible}");
+        dashboard.Attribute("IsVisible").Should().BeNull();
+        dashboard.Attribute("DataContext")?.Value.Should().Be("{Binding NamespaceDashboard}");
+        document.ToString().Should().NotContain("FeaturePanels.ShowCharts");
+        document.ToString().Should().NotContain("CloseChartsCommand");
         dashboardXaml.Should().Contain("CloseOverviewCommand");
     }
 

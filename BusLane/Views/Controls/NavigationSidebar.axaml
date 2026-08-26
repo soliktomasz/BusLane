@@ -437,6 +437,7 @@
 
                     <Button Classes="subtle sidebar-utility-button"
                             Command="{Binding OpenOverviewCommand}"
+                            IsVisible="{Binding HasActiveConnectionTab}"
                             HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <LucideIcon Kind="ChartBar" Size="16"/>
@@ -527,6 +528,7 @@
                 </Button>
                 <Button Classes="subtle icon-button"
                         Command="{Binding OpenOverviewCommand}"
+                        IsVisible="{Binding HasActiveConnectionTab}"
                         ToolTip.Tip="Overview">
                     <LucideIcon Kind="ChartBar" Size="17"/>
                 </Button>
