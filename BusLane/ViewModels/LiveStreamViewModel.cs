@@ -119,6 +119,11 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
                 FilteredMessages.Add(message);
             }
         }
+
+        if (SelectedMessage != null && !FilteredMessages.Contains(SelectedMessage))
+        {
+            SelectedMessage = null;
+        }
     }
 
     private bool MatchesFilter(LiveStreamMessage message)
@@ -206,6 +211,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private async Task StopStreamAsync()
     {
         await _liveStreamService.StopStreamAsync();
+        SelectedMessage = null;
         CurrentEntityName = null;
         CurrentEntityType = null;
     }
@@ -221,6 +227,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
         Messages.Clear();
         FilteredMessages.Clear();
+        SelectedMessage = null;
         MessageCount = 0;
     }
 
@@ -407,6 +414,11 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             {
                 _correlationCatalog.Add(CorrelationMessageFactory.FromLiveStream(message, correlationContext));
             }
+        }
+
+        if (AutoScroll && FilteredMessages.Count > 0)
+        {
+            SelectedMessage = FilteredMessages[0];
         }
 
         MessageCount = _messageBuffer.Count;
