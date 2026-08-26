@@ -23,6 +23,7 @@
             <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
             <converters:SeverityToColorConverter x:Key="SeverityToColorConverter"/>
             <converters:SeverityToBackgroundConverter x:Key="SeverityToBackgroundConverter"/>
+            <converters:InboxStatusToBrushConverter x:Key="InboxStatusToBrushConverter"/>
             
             <!-- Dashboard Metric Trend Converters -->
             <converters:TrendToArrowConverter x:Key="TrendToArrowConverter"/>
@@ -118,6 +119,14 @@
                     <SolidColorBrush x:Key="BrandMarkTile" Color="#18181B"/>
                     <SolidColorBrush x:Key="BrandMarkBar" Color="#27272A"/>
 
+                    <!-- Chart palette (muted categorical colors) -->
+                    <SolidColorBrush x:Key="PaletteChart1" Color="#6D5BD0"/>
+                    <SolidColorBrush x:Key="PaletteChart2" Color="#2F8F6B"/>
+                    <SolidColorBrush x:Key="PaletteChart3" Color="#C8791F"/>
+                    <SolidColorBrush x:Key="PaletteChart4" Color="#C14D5E"/>
+                    <SolidColorBrush x:Key="PaletteChart5" Color="#3F7FC4"/>
+                    <SolidColorBrush x:Key="PaletteChart6" Color="#2E8A87"/>
+
                     <!-- Focus ring shadows -->
                     <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4F46E5</BoxShadows>
                     <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #E11D48</BoxShadows>
@@ -202,6 +211,14 @@
                     <!-- Brand mark (logo tile + bars) - theme-aware so the tile separates in dark mode -->
                     <SolidColorBrush x:Key="BrandMarkTile" Color="#27272A"/>
                     <SolidColorBrush x:Key="BrandMarkBar" Color="#3F3F46"/>
+
+                    <!-- Chart palette (muted categorical colors) -->
+                    <SolidColorBrush x:Key="PaletteChart1" Color="#9D90F0"/>
+                    <SolidColorBrush x:Key="PaletteChart2" Color="#5FB88E"/>
+                    <SolidColorBrush x:Key="PaletteChart3" Color="#E3A94E"/>
+                    <SolidColorBrush x:Key="PaletteChart4" Color="#E07B8C"/>
+                    <SolidColorBrush x:Key="PaletteChart5" Color="#84AEE8"/>
+                    <SolidColorBrush x:Key="PaletteChart6" Color="#63BDB6"/>
 
                     <!-- Focus ring shadows -->
                     <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #A5B4FC</BoxShadows>

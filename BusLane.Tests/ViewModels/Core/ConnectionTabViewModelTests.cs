@@ -3,6 +3,7 @@ namespace BusLane.Tests.ViewModels.Core;
 // BusLane.Tests/ViewModels/Core/ConnectionTabViewModelTests.cs
 using Azure.Core;
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
@@ -18,6 +19,44 @@ public class ConnectionTabViewModelTests
         var logSink = Substitute.For<ILogSink>();
         logSink.GetLogs().Returns(new List<LogEntry>());
         return logSink;
+    }
+
+    [Fact]
+    public void Constructor_DefaultState_UsesEntityWorkspace()
+    {
+        // Act
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+
+        // Assert
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
+        tab.OverviewSection.Should().Be(NamespaceOverviewSection.Home);
+    }
+
+    [Fact]
+    public void RecordRecentDestination_DuplicateAndOverCapacity_DeduplicatesAndCapsAtFive()
+    {
+        // Arrange
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net");
+        for (var index = 0; index < 6; index++)
+        {
+            tab.RecordRecentDestination(new NamespaceNavigationRequest(
+                EntityType.Queue,
+                $"queue-{index}",
+                null,
+                EntityWorkspaceView.ActiveMessages));
+        }
+
+        // Act
+        tab.RecordRecentDestination(new NamespaceNavigationRequest(
+            EntityType.Queue,
+            "queue-3",
+            null,
+            EntityWorkspaceView.ActiveMessages));
+
+        // Assert
+        tab.RecentDestinations.Should().HaveCount(5);
+        tab.RecentDestinations[0].Request.EntityName.Should().Be("queue-3");
+        tab.RecentDestinations.Select(item => item.Request.EntityName).Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
@@ -123,7 +162,11 @@ public class ConnectionTabViewModelTests
             Type = ConnectionType.Namespace
         };
 
-        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
+        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink)
+        {
+            WorkspaceMode = NamespaceWorkspaceMode.Entity,
+            OverviewSection = NamespaceOverviewSection.Analytics
+        };
 
         // Act
         await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
@@ -132,6 +175,45 @@ public class ConnectionTabViewModelTests
         tab.IsConnected.Should().BeTrue();
         tab.Mode.Should().Be(ConnectionMode.ConnectionString);
         tab.SavedConnection.Should().Be(connection);
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
+        tab.OverviewSection.Should().Be(NamespaceOverviewSection.Home);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_WithRecentDestination_ClearsNamespaceLocalHistory()
+    {
+        // Arrange
+        var preferencesService = Substitute.For<IPreferencesService>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns([]);
+        operations.GetTopicsAsync().Returns([]);
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+        var tab = new ConnectionTabViewModel(
+            "test-id",
+            "Test Tab",
+            "test.servicebus.windows.net",
+            preferencesService,
+            CreateMockLogSink());
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+        tab.RecordRecentDestination(new NamespaceNavigationRequest(
+            EntityType.Queue,
+            "orders",
+            null,
+            EntityWorkspaceView.ActiveMessages));
+
+        // Act
+        await tab.DisconnectAsync();
+
+        // Assert
+        tab.RecentDestinations.Should().BeEmpty();
     }
 
     [Fact]
@@ -191,6 +273,8 @@ public class ConnectionTabViewModelTests
 
         var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
         await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+        tab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        tab.OverviewSection = NamespaceOverviewSection.Issues;
 
         // Act
         await tab.DisconnectAsync();
@@ -198,6 +282,8 @@ public class ConnectionTabViewModelTests
         // Assert
         tab.IsConnected.Should().BeFalse();
         tab.Mode.Should().Be(ConnectionMode.None);
+        tab.WorkspaceMode.Should().Be(NamespaceWorkspaceMode.Entity);
+        tab.OverviewSection.Should().Be(NamespaceOverviewSection.Home);
     }
 
     [Fact]

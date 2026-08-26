@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels.Dashboard"
+             x:Class="BusLane.Views.Controls.NamespaceIssuesView"
+             x:DataType="vm:NamespaceInboxViewModel"
+             x:CompileBindings="False">
+    <Grid>
+        <ListBox ItemsSource="{Binding AllIssues}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
+                    <Border Classes="inbox-item-surface">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <StackPanel>
+                                <TextBlock Text="{Binding EntityName}" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EntityName}"
+                                           AutomationProperties.Name="{Binding EntityName}"/>
+                                <TextBlock Text="{Binding ReasonSummary}" Classes="caption"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="secondary small"
+                                    Command="{Binding OpenMessagesCommand}" Content="Open"
+                                    AutomationProperties.Name="Open entity messages"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Classes="dialog-section-surface"
+                IsVisible="{Binding !AllIssues.Count}">
+            <TextBlock Text="No issues found."
+                       Classes="caption"
+                       HorizontalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>

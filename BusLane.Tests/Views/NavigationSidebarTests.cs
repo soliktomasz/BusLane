@@ -201,6 +201,39 @@ public class NavigationSidebarTests
         secondaryTools.Should().NotContain("OpenSettingsCommand");
     }
 
+    [Fact]
+    public void NavigationSidebar_OverviewAction_OpensNamespaceOverview()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetSidebarPath());
+
+        // Assert
+        xaml.Should().Contain("Command=\"{Binding OpenOverviewCommand}\"");
+        xaml.Should().Contain("Text=\"Overview\"");
+        xaml.Should().NotContain("OpenChartsCommand");
+        xaml.Should().NotContain("Text=\"Dashboard\"");
+    }
+
+    [Fact]
+    public void NavigationSidebar_WithoutActiveConnection_HidesOverviewActions()
+    {
+        // Arrange
+        var document = System.Xml.Linq.XDocument.Load(GetSidebarPath());
+
+        // Act
+        var overviewActions = document.Descendants()
+            .Where(element =>
+                element.Name.LocalName == "Button"
+                && element.Attribute("Command")?.Value == "{Binding OpenOverviewCommand}")
+            .ToList();
+
+        // Assert
+        overviewActions.Should().HaveCount(2);
+        overviewActions.Should().OnlyContain(element =>
+            element.Attribute("IsVisible") != null
+            && element.Attribute("IsVisible")!.Value == "{Binding HasActiveConnectionTab}");
+    }
+
     private static string GetSidebarPath()
     {
         return Path.GetFullPath(Path.Combine(

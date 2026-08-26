@@ -35,12 +35,23 @@
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
 
+                <Grid Grid.Row="0"
+                      Grid.RowSpan="2"
+                      IsVisible="{Binding IsNamespaceOverviewVisible}">
+                    <controls:NamespaceDashboardView DataContext="{Binding NamespaceDashboard}"/>
+                </Grid>
+
             <!-- Content when namespace selected (Azure mode) -->
                 <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding IsActiveTabAzureMode}">
+                      RowDefinitions="Auto,*"
+                      IsVisible="{Binding IsAzureEntityWorkspaceVisible}"
+                      Background="{DynamicResource AppBackground}">
+
+                <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
 
                 <!-- Main content grid -->
-                <Grid x:Name="AzureWorkspaceGrid"
+                <Grid Grid.Row="1"
+                      x:Name="AzureWorkspaceGrid"
                       ColumnDefinitions="0,1.2*,1.8*">
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="1"
@@ -53,10 +64,15 @@
 
             <!-- Content when connected via connection string -->
             <Grid Grid.Row="0" Grid.RowSpan="2"
-                  IsVisible="{Binding IsActiveTabConnectionStringMode}">
+                  RowDefinitions="Auto,*"
+                  IsVisible="{Binding IsConnectionStringEntityWorkspaceVisible}"
+                  Background="{DynamicResource AppBackground}">
+
+                <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
 
                 <!-- Main content for connection string mode -->
-                <Grid x:Name="ConnectionWorkspaceGrid"
+                <Grid Grid.Row="1"
+                      x:Name="ConnectionWorkspaceGrid"
                       ColumnDefinitions="0,1.2*,1.8*">
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="1"
@@ -155,37 +171,6 @@
                     </Border>
                     <controls:ScheduledMessagesView Grid.Row="1"
                         DataContext="{Binding FeaturePanels.ScheduledMessagesViewModel}"/>
-                </Grid>
-            </Border>
-
-            <!-- Charts Panel (overlay when active) -->
-            <Border Grid.Row="0" Grid.RowSpan="2"
-                    IsVisible="{Binding FeaturePanels.ShowCharts}"
-                    Background="{DynamicResource AppBackground}">
-                <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
-                                <LucideIcon Kind="LayoutDashboard" Size="18"
-                                            Foreground="{DynamicResource AccentBrand}"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Dashboard" Classes="heading"/>
-                                <TextBlock Text="Namespace metrics, inbox, and entity summaries"
-                                           Classes="caption"/>
-                            </StackPanel>
-                            <Button Grid.Column="2" Classes="secondary small"
-                                    Command="{Binding CloseChartsCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="14"/>
-                                    <TextBlock Text="Close"/>
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                    </Border>
-                    <controls:NamespaceDashboardView Grid.Row="1" DataContext="{Binding NamespaceDashboard}"/>
                 </Grid>
             </Border>
 

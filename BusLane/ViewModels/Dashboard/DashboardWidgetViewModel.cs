@@ -6,7 +6,6 @@ using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SkiaSharp;
 
 /// <summary>
 /// Base class for all dashboard widget ViewModels. Provides grid positioning,
@@ -99,15 +98,14 @@ public abstract partial class DashboardWidgetViewModel : ViewModelBase, IDisposa
         };
     }
 
-    protected SKColor GetMetricColor()
+    protected string GetMetricColorToken()
     {
         return Widget.Configuration.MetricName switch
         {
-            "ActiveMessageCount" => SKColors.DodgerBlue,
-            "DeadLetterCount" => SKColors.OrangeRed,
-            "ScheduledCount" => SKColors.Green,
-            "SizeInBytes" => SKColors.Purple,
-            _ => SKColors.DodgerBlue
+            "DeadLetterCount" => "TextDanger",
+            "ScheduledCount" => "TextWarning",
+            "SizeInBytes" => "TextSuccess",
+            _ => "AccentBrand"
         };
     }
 

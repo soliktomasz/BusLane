@@ -436,11 +436,12 @@
                     <Border Classes="sidebar-utility-divider"/>
 
                     <Button Classes="subtle sidebar-utility-button"
-                            Command="{Binding OpenChartsCommand}"
+                            Command="{Binding OpenOverviewCommand}"
+                            IsVisible="{Binding HasActiveConnectionTab}"
                             HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <LucideIcon Kind="ChartBar" Size="16"/>
-                            <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
+                            <TextBlock Text="Overview" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
@@ -526,8 +527,9 @@
                     <LucideIcon Kind="CalendarClock" Size="17"/>
                 </Button>
                 <Button Classes="subtle icon-button"
-                        Command="{Binding OpenChartsCommand}"
-                        ToolTip.Tip="Dashboard">
+                        Command="{Binding OpenOverviewCommand}"
+                        IsVisible="{Binding HasActiveConnectionTab}"
+                        ToolTip.Tip="Overview">
                     <LucideIcon Kind="ChartBar" Size="17"/>
                 </Button>
                 <Button Classes="subtle icon-button"

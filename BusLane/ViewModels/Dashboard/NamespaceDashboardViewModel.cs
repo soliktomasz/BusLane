@@ -1,4 +1,5 @@
 using Avalonia;
+using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
 using BusLane.Services.Monitoring;
@@ -6,7 +7,6 @@ using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Avalonia.Threading;
-using LiveChartsCore.Defaults;
 using System.Collections.ObjectModel;
 
 namespace BusLane.ViewModels.Dashboard;
@@ -18,6 +18,10 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private IServiceBusOperations? _operations;
     private readonly List<NamespaceDashboardSummary> _summaryHistory = [];
     private bool _isActive;
+    private Action<NamespaceNavigationRequest> _navigate = _ => { };
+    private Action<NamespaceOverviewSection> _overviewSectionChanged = _ => { };
+    private IReadOnlyList<TopicInfo> _contextTopics = [];
+    private readonly Dictionary<DashboardRefreshSection, string> _refreshErrors = [];
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
@@ -32,6 +36,21 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private bool _isRefreshing;
 
     [ObservableProperty]
+    private bool _isInitialLoading;
+
+    [ObservableProperty]
+    private bool _hasSnapshot;
+
+    [ObservableProperty]
+    private string? _refreshErrorMessage;
+
+    [ObservableProperty]
+    private DashboardRefreshSection? _failedSection;
+
+    [ObservableProperty]
+    private bool _isRetryingFailedSection;
+
+    [ObservableProperty]
     private DateTimeOffset? _lastRefreshTime;
 
     [ObservableProperty]
@@ -39,6 +58,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isPartialSnapshot;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsHomeSelected))]
+    [NotifyPropertyChangedFor(nameof(IsIssuesSelected))]
+    [NotifyPropertyChangedFor(nameof(IsAnalyticsSelected))]
+    private NamespaceOverviewSection _selectedSection = NamespaceOverviewSection.Home;
+
+    public bool IsHomeSelected => SelectedSection == NamespaceOverviewSection.Home;
+    public bool IsIssuesSelected => SelectedSection == NamespaceOverviewSection.Issues;
+    public bool IsAnalyticsSelected => SelectedSection == NamespaceOverviewSection.Analytics;
 
     // Metric Cards
     public MetricCardViewModel ActiveMessagesCard { get; }
@@ -50,6 +79,9 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     public TopEntitiesListViewModel TopQueues { get; }
     public TopEntitiesListViewModel TopTopics { get; }
     public NamespaceInboxViewModel Inbox { get; }
+    public NamespaceEntitySearchViewModel EntitySearch { get; }
+    public ObservableCollection<NamespaceEntitySearchResult> PinnedDestinations { get; } = [];
+    public ObservableCollection<NamespaceEntitySearchResult> RecentDestinations { get; } = [];
 
     // Charts
     public ObservableCollection<DashboardChartViewModel> Charts { get; }
@@ -72,14 +104,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         _refreshService = refreshService;
         _alertService = alertService;
         Inbox = inboxViewModel;
+        EntitySearch = new NamespaceEntitySearchViewModel(request => _navigate(request));
         _refreshService.SummaryUpdated += OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated += OnTopEntitiesUpdated;
         _refreshService.EntitiesUpdated += OnEntitiesUpdated;
+        _refreshService.RefreshFailed += OnRefreshFailed;
 
         // Initialize metric cards
         ActiveMessagesCard = new MetricCardViewModel("Active Messages", "messages");
-        DeadLetterCard = new MetricCardViewModel("Dead Letter Messages", "messages");
-        ScheduledCard = new MetricCardViewModel("Scheduled Messages", "messages");
+        DeadLetterCard = new MetricCardViewModel("Dead Letters", "messages");
+        ScheduledCard = new MetricCardViewModel("Scheduled", "messages");
         SizeCard = new MetricCardViewModel("Total Size", "MB");
 
         // Initialize top entities lists
@@ -99,6 +133,48 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         {
             chart.TimeRangeChanged += OnChartTimeRangeChanged;
             chart.SetGlobalTimeRange(SelectedTimeRange);
+        }
+    }
+
+    public void UpdateNavigation(Action<NamespaceNavigationRequest> navigate)
+    {
+        _navigate = navigate;
+        Inbox.UpdateNavigation(navigate);
+        EntitySearch.UpdateNavigation(navigate);
+    }
+
+    public void UpdateOverviewSection(Action<NamespaceOverviewSection> sectionChanged) =>
+        _overviewSectionChanged = sectionChanged;
+
+    partial void OnSelectedSectionChanged(NamespaceOverviewSection value) =>
+        _overviewSectionChanged(value);
+
+    [RelayCommand] private void ShowHome() => SelectedSection = NamespaceOverviewSection.Home;
+    [RelayCommand] private void ShowIssues() => SelectedSection = NamespaceOverviewSection.Issues;
+    [RelayCommand] private void ShowAnalytics() => SelectedSection = NamespaceOverviewSection.Analytics;
+
+    public void SetNavigationContext(
+        IEnumerable<QueueInfo> queues,
+        IEnumerable<TopicInfo> topics,
+        IEnumerable<SubscriptionInfo> subscriptions,
+        IEnumerable<PinnedEntity> pins,
+        IEnumerable<RecentEntityDestination> recents)
+    {
+        var queueList = queues.ToList();
+        _contextTopics = topics.ToList();
+        var subscriptionList = subscriptions.ToList();
+        EntitySearch.UpdateInventory(queueList, _contextTopics, subscriptionList);
+
+        ReplaceQuickLinks(PinnedDestinations, pins.Select(CreatePinnedResult));
+        ReplaceQuickLinks(RecentDestinations, recents.Select(item => CreateQuickLink(item.Request)));
+    }
+
+    [RelayCommand]
+    private void OpenDestination(NamespaceEntitySearchResult? result)
+    {
+        if (result is not null)
+        {
+            _navigate(result.Request);
         }
     }
 
@@ -140,15 +216,46 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     private async Task RefreshAsync()
     {
         IsRefreshing = true;
+        IsInitialLoading = !HasSnapshot;
         try
         {
             var namespaceId = CurrentNamespaceId ?? "current-namespace";
             await _refreshService.RefreshAsync(namespaceId, _operations);
         }
+        catch (Exception)
+        {
+            RefreshErrorMessage = "Namespace data could not be refreshed.";
+        }
         finally
         {
             IsRefreshing = false;
-            LastRefreshTime = DateTimeOffset.Now;
+            IsInitialLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RetryFailedSectionAsync()
+    {
+        if (FailedSection is not { } section || _operations is null)
+        {
+            return;
+        }
+
+        IsRetryingFailedSection = true;
+        try
+        {
+            await _refreshService.RefreshSectionAsync(
+                CurrentNamespaceId ?? "current-namespace",
+                section,
+                _operations);
+        }
+        catch (Exception)
+        {
+            RefreshErrorMessage = "Namespace data could not be refreshed.";
+        }
+        finally
+        {
+            IsRetryingFailedSection = false;
         }
     }
 
@@ -158,6 +265,20 @@ public partial class NamespaceDashboardViewModel : ObservableObject
     /// </summary>
     public void SetOperations(IServiceBusOperations? operations, string? namespaceId = null)
     {
+        var contextChanged = !ReferenceEquals(_operations, operations)
+            || (!string.IsNullOrEmpty(namespaceId)
+                && !string.Equals(CurrentNamespaceId, namespaceId, StringComparison.Ordinal));
+
+        if (contextChanged)
+        {
+            ResetChartHistory();
+            HasSnapshot = false;
+            IsInitialLoading = false;
+            _refreshErrors.Clear();
+            RefreshErrorMessage = null;
+            FailedSection = null;
+        }
+
         _operations = operations;
 
         if (!string.IsNullOrEmpty(namespaceId))
@@ -260,8 +381,8 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
 
-        var queues = entities.Where(e => e.Type == EntityType.Queue).Take(10).ToList();
-        var topics = entities.Where(e => e.Type == EntityType.Topic).Take(10).ToList();
+        var queues = entities.Where(e => e.Type == EntityType.Queue).Take(3).ToList();
+        var topics = entities.Where(e => e.Type == EntityType.Topic).Take(3).ToList();
 
         TopQueues.UpdateEntities(queues);
         TopTopics.UpdateEntities(topics);
@@ -275,12 +396,85 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
 
+        HasSnapshot = true;
+        IsInitialLoading = false;
+        LastRefreshTime = snapshot.Timestamp;
+        foreach (var section in snapshot.RefreshedSections)
+        {
+            _refreshErrors.Remove(section);
+        }
+        UpdateRefreshErrorPresentation();
+
         Inbox.Refresh(
             CurrentNamespaceId ?? "current-namespace",
             snapshot.Queues,
             snapshot.Subscriptions,
             _alertService.ActiveAlerts);
+        EntitySearch.UpdateInventory(snapshot.Queues, _contextTopics, snapshot.Subscriptions);
     }
+
+    private void OnRefreshFailed(object? sender, DashboardRefreshFailure failure)
+    {
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => OnRefreshFailed(sender, failure));
+            return;
+        }
+
+        _refreshErrors[failure.Section] = failure.Message;
+        FailedSection = failure.Section;
+        UpdateRefreshErrorPresentation();
+    }
+
+    private void UpdateRefreshErrorPresentation()
+    {
+        if (_refreshErrors.Count == 0)
+        {
+            RefreshErrorMessage = null;
+            FailedSection = null;
+            return;
+        }
+
+        RefreshErrorMessage = string.Join(" ", _refreshErrors.Values.Distinct());
+        if (FailedSection is null || !_refreshErrors.ContainsKey(FailedSection.Value))
+        {
+            FailedSection = _refreshErrors.Keys.First();
+        }
+    }
+
+    private static void ReplaceQuickLinks(
+        ObservableCollection<NamespaceEntitySearchResult> target,
+        IEnumerable<NamespaceEntitySearchResult> values)
+    {
+        target.Clear();
+        foreach (var value in values)
+        {
+            target.Add(value);
+        }
+    }
+
+    private static NamespaceEntitySearchResult CreatePinnedResult(PinnedEntity pin)
+    {
+        var type = pin.Type switch
+        {
+            PinnedEntityType.Queue => EntityType.Queue,
+            PinnedEntityType.Topic => EntityType.Topic,
+            PinnedEntityType.Subscription => EntityType.Subscription,
+            _ => EntityType.Queue
+        };
+        var path = pin.DisplayName;
+        var view = type == EntityType.Topic
+            ? EntityWorkspaceView.TopicSubscriptions
+            : EntityWorkspaceView.ActiveMessages;
+        return new NamespaceEntitySearchResult(
+            path,
+            path,
+            type.ToString(),
+            new NamespaceNavigationRequest(type, path, pin.TopicName, view));
+    }
+
+    private static NamespaceEntitySearchResult CreateQuickLink(NamespaceNavigationRequest request) =>
+        new(request.EntityName, request.EntityName, request.EntityType.ToString(), request);
 
     public void Dispose()
     {
@@ -292,6 +486,7 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         _refreshService.SummaryUpdated -= OnSummaryUpdated;
         _refreshService.TopEntitiesUpdated -= OnTopEntitiesUpdated;
         _refreshService.EntitiesUpdated -= OnEntitiesUpdated;
+        _refreshService.RefreshFailed -= OnRefreshFailed;
     }
 
     private void OnChartTimeRangeChanged(object? sender, string value)
@@ -318,6 +513,15 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         _summaryHistory.RemoveAll(s => s.Timestamp < threshold);
     }
 
+    private void ResetChartHistory()
+    {
+        _summaryHistory.Clear();
+        foreach (var chart in Charts)
+        {
+            chart.ClearData();
+        }
+    }
+
     private void UpdateCharts()
     {
         if (Charts.Count < 4 || _summaryHistory.Count == 0)
@@ -325,16 +529,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
             return;
         }
         var activeHistory = GetHistoryForRange(Charts[0].SelectedTimeRange);
-        Charts[0].UpdateData(activeHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalActiveMessages)));
+        Charts[0].UpdateData(activeHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalActiveMessages)));
 
         var deadLetterHistory = GetHistoryForRange(Charts[1].SelectedTimeRange);
-        Charts[1].UpdateData(deadLetterHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalDeadLetterMessages)));
+        Charts[1].UpdateData(deadLetterHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalDeadLetterMessages)));
 
         var scheduledHistory = GetHistoryForRange(Charts[2].SelectedTimeRange);
-        Charts[2].UpdateData(scheduledHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalScheduledMessages)));
+        Charts[2].UpdateData(scheduledHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalScheduledMessages)));
 
         var sizeHistory = GetHistoryForRange(Charts[3].SelectedTimeRange);
-        Charts[3].UpdateData(sizeHistory.Select(s => new DateTimePoint(s.Timestamp.LocalDateTime, s.TotalSizeInBytes / (1024.0 * 1024.0))));
+        Charts[3].UpdateData(sizeHistory.Select(s => new LinePlotPoint(s.Timestamp.LocalDateTime, s.TotalSizeInBytes / (1024.0 * 1024.0))));
     }
 
     private static TimeSpan GetTimeSpan(string selectedTimeRange)

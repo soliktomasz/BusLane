@@ -15,8 +15,14 @@ public interface IDashboardRefreshService
     event EventHandler<NamespaceDashboardSummary>? SummaryUpdated;
     event EventHandler<IReadOnlyList<TopEntityInfo>>? TopEntitiesUpdated;
     event EventHandler<NamespaceEntitySnapshot>? EntitiesUpdated;
+    event EventHandler<DashboardRefreshFailure>? RefreshFailed;
 
     Task RefreshAsync(string namespaceId, IServiceBusOperations? operations = null, CancellationToken ct = default);
+    Task RefreshSectionAsync(
+        string namespaceId,
+        DashboardRefreshSection section,
+        IServiceBusOperations? operations = null,
+        CancellationToken ct = default);
     void StartAutoRefresh(string namespaceId, IServiceBusOperations? operations = null, TimeSpan? interval = null);
     void StopAutoRefresh();
 }

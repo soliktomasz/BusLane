@@ -38,6 +38,7 @@ public enum ConnectionMode
 /// </summary>
 public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDisposable
 {
+    private static readonly TimeSpan NamespaceNavigationLoadWaitTimeout = TimeSpan.FromSeconds(1);
     private bool _disposed;
 
     // Services (injected)
@@ -104,6 +105,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [NotifyPropertyChangedFor(nameof(HasActiveConnectionTab))]
     [NotifyPropertyChangedFor(nameof(IsActiveTabAzureMode))]
     [NotifyPropertyChangedFor(nameof(IsActiveTabConnectionStringMode))]
+    [NotifyPropertyChangedFor(nameof(IsNamespaceOverviewVisible))]
+    [NotifyPropertyChangedFor(nameof(IsAzureEntityWorkspaceVisible))]
+    [NotifyPropertyChangedFor(nameof(IsConnectionStringEntityWorkspaceVisible))]
+    [NotifyPropertyChangedFor(nameof(WorkspaceTopicName))]
+    [NotifyPropertyChangedFor(nameof(WorkspaceEntityName))]
+    [NotifyPropertyChangedFor(nameof(WorkspaceDestinationLabel))]
     [NotifyPropertyChangedFor(nameof(ShowWelcome))]
     private ConnectionTabViewModel? _activeTab;
 
@@ -125,6 +132,111 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// Gets whether the active tab is connected via connection string.
     /// </summary>
     public bool IsActiveTabConnectionStringMode => ActiveTab?.IsConnected == true && ActiveTab?.Mode == ConnectionMode.ConnectionString;
+
+    /// <summary>Gets whether active namespace is displaying its Overview workspace.</summary>
+    public bool IsNamespaceOverviewVisible =>
+        ActiveTab?.IsConnected == true && ActiveTab.WorkspaceMode == NamespaceWorkspaceMode.Overview;
+
+    /// <summary>Gets whether active Azure namespace is displaying entity content.</summary>
+    public bool IsAzureEntityWorkspaceVisible =>
+        IsActiveTabAzureMode && ActiveTab?.WorkspaceMode == NamespaceWorkspaceMode.Entity;
+
+    /// <summary>Gets whether active connection-string namespace is displaying entity content.</summary>
+    public bool IsConnectionStringEntityWorkspaceVisible =>
+        IsActiveTabConnectionStringMode && ActiveTab?.WorkspaceMode == NamespaceWorkspaceMode.Entity;
+
+    /// <summary>Gets optional topic segment for current entity breadcrumb.</summary>
+    public string? WorkspaceTopicName
+    {
+        get
+        {
+            if (CurrentNavigation.SelectedSubscription is { } subscription)
+            {
+                return subscription.TopicName;
+            }
+
+            if (CurrentNavigation.SelectedQueue is not null
+                || CurrentNavigation.SelectedTopic is not null)
+            {
+                return null;
+            }
+
+            return ActiveTab?.CurrentDestination is { EntityType: EntityType.Subscription } request
+                ? request.TopicName
+                : null;
+        }
+    }
+
+    /// <summary>Gets entity segment for current entity breadcrumb.</summary>
+    public string? WorkspaceEntityName
+    {
+        get
+        {
+            if (CurrentNavigation.SelectedSubscription is { } subscription)
+            {
+                return subscription.Name;
+            }
+
+            if (CurrentNavigation.SelectedQueue is { } queue)
+            {
+                return queue.Name;
+            }
+
+            if (CurrentNavigation.SelectedTopic is { } topic)
+            {
+                return topic.Name;
+            }
+
+            var request = ActiveTab?.CurrentDestination;
+            if (request is null)
+            {
+                return null;
+            }
+
+            if (request.EntityType != EntityType.Subscription || string.IsNullOrWhiteSpace(request.TopicName))
+            {
+                return request.EntityName;
+            }
+
+            var prefix = $"{request.TopicName}/";
+            return request.EntityName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                ? request.EntityName[prefix.Length..]
+                : request.EntityName;
+        }
+    }
+
+    /// <summary>Gets destination segment for current entity breadcrumb.</summary>
+    public string? WorkspaceDestinationLabel
+    {
+        get
+        {
+            if (CurrentNavigation.SelectedTopic is not null
+                && CurrentNavigation.SelectedSubscription is null)
+            {
+                return "Subscriptions";
+            }
+
+            if (CurrentNavigation.SelectedQueue is not null
+                || CurrentNavigation.SelectedSubscription is not null)
+            {
+                return CurrentNavigation.SelectedMessageTabIndex switch
+                {
+                    1 => "Dead letters",
+                    2 => "Sessions",
+                    _ => "Active messages"
+                };
+            }
+
+            return ActiveTab?.CurrentDestination?.View switch
+            {
+                EntityWorkspaceView.ActiveMessages => "Active messages",
+                EntityWorkspaceView.DeadLetters => "Dead letters",
+                EntityWorkspaceView.Sessions => "Sessions",
+                EntityWorkspaceView.TopicSubscriptions => "Subscriptions",
+                _ => null
+            };
+        }
+    }
 
     /// <summary>
     /// Gets a compact label describing the active workspace mode.
@@ -269,6 +381,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private System.Timers.Timer? _autoRefreshTimer;
     private int _autoRefreshTickInProgress;
     private int _suppressDeadLetterReload;
+    private long _namespaceNavigationGeneration;
+    private CancellationTokenSource? _namespaceNavigationCts;
 
     // Settings-driven computed properties
     public bool ShowDeadLetterBadges => _preferencesService.ShowDeadLetterBadges;
@@ -306,7 +420,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         IAppLockService appLockService,
         IBiometricAuthService biometricAuthService,
         ILogSink logSink,
-        ViewModels.Dashboard.DashboardViewModel dashboardViewModel,
         ViewModels.Dashboard.NamespaceDashboardViewModel namespaceDashboardViewModel,
         IScheduledMessageStore? scheduledMessageStore = null,
         INamespaceTopologyService? namespaceTopologyService = null,
@@ -341,7 +454,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         // Initialize dashboard components
         NamespaceDashboard = namespaceDashboardViewModel;
-        NamespaceDashboard.Inbox.UpdateActions(OpenInboxMessages, OpenInboxDeadLetter, OpenInboxSessionInspector);
+        NamespaceDashboard.UpdateNavigation(OpenInboxDestination);
+        NamespaceDashboard.UpdateOverviewSection(section =>
+        {
+            if (ActiveTab is not null)
+            {
+                ActiveTab.OverviewSection = section;
+            }
+        });
 
         // Initialize composed components
         Navigation = new NavigationState(preferencesService);
@@ -387,7 +507,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         FeaturePanels = new FeaturePanelsViewModel(
             liveStreamService, alertService, notificationService,
-            dashboardViewModel,
             () => ActiveTab?.Operations ?? _operations,
             () => CurrentNavigation.Queues,
             () => CurrentNavigation.Topics,
@@ -496,11 +615,24 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     /// </summary>
     private void SetOperations(IServiceBusOperations? operations)
     {
+        NamespaceDashboard.Deactivate();
         _operations = operations;
 
-        // Update dashboard with operations and namespace info
         var namespaceId = ActiveTab?.Namespace?.Id ?? ActiveTab?.SavedConnection?.Name ?? "current-namespace";
         NamespaceDashboard.SetOperations(operations, namespaceId);
+        UpdateNamespaceDashboardLifecycle();
+    }
+
+    private void UpdateNamespaceDashboardLifecycle()
+    {
+        if (IsNamespaceOverviewVisible)
+        {
+            NamespaceDashboard.Activate();
+        }
+        else
+        {
+            NamespaceDashboard.Deactivate();
+        }
     }
 
     /// <summary>
@@ -1087,12 +1219,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void ToggleSelectedEntityPin()
     {
         CurrentNavigation.TogglePin(CurrentNavigation.SelectedEntity);
+        UpdateNamespaceDashboardNavigationContext();
     }
 
     [RelayCommand]
     private void ToggleEntityPin(object? entity)
     {
         CurrentNavigation.TogglePin(entity);
+        UpdateNamespaceDashboardNavigationContext();
     }
 
     [RelayCommand]
@@ -1103,144 +1237,293 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             return;
         }
 
-        switch (pin.Type)
+        var entityType = pin.Type switch
         {
-            case PinnedEntityType.Queue:
-                var queue = CurrentNavigation.Queues.FirstOrDefault(q => q.Name == pin.Name);
-                if (queue != null)
-                {
-                    await SelectQueueAsync(queue);
-                }
-                break;
-            case PinnedEntityType.Topic:
-                var topic = CurrentNavigation.Topics.FirstOrDefault(t => t.Name == pin.Name);
-                if (topic != null)
-                {
-                    await SelectTopicAsync(topic);
-                }
-                break;
-            case PinnedEntityType.Subscription:
-                await SelectPinnedSubscriptionAsync(pin);
-                break;
-        }
+            PinnedEntityType.Queue => EntityType.Queue,
+            PinnedEntityType.Topic => EntityType.Topic,
+            PinnedEntityType.Subscription => EntityType.Subscription,
+            _ => EntityType.Queue
+        };
+        var entityName = pin.Type == PinnedEntityType.Subscription
+            ? $"{pin.TopicName}/{pin.Name}"
+            : pin.Name;
+        var view = entityType == EntityType.Topic
+            ? EntityWorkspaceView.TopicSubscriptions
+            : EntityWorkspaceView.ActiveMessages;
+
+        await NavigateToNamespaceDestinationAsync(new NamespaceNavigationRequest(
+            entityType,
+            entityName,
+            pin.TopicName,
+            view));
     }
 
-    private async Task SelectPinnedSubscriptionAsync(PinnedEntity pin)
+    private void OpenInboxDestination(NamespaceNavigationRequest request)
     {
-        if (string.IsNullOrWhiteSpace(pin.TopicName))
+        FireAndForget(
+            NavigateToNamespaceDestinationAsync(request),
+            nameof(NavigateToNamespaceDestinationAsync));
+    }
+
+    private async Task NavigateToNamespaceDestinationAsync(NamespaceNavigationRequest request)
+    {
+        var tab = ActiveTab;
+        if (tab is null)
         {
             return;
         }
 
-        var topic = CurrentNavigation.Topics.FirstOrDefault(t => t.Name == pin.TopicName);
-        if (topic == null)
+        var generation = Interlocked.Increment(ref _namespaceNavigationGeneration);
+        var navigationCts = new CancellationTokenSource();
+        var previousCts = Interlocked.Exchange(ref _namespaceNavigationCts, navigationCts);
+        previousCts?.Cancel();
+        previousCts?.Dispose();
+
+        tab.CurrentDestination = request;
+        tab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        NotifyActiveTabDependentProperties();
+        NamespaceDashboard.Deactivate();
+
+        try
         {
-            return;
-        }
-
-        await SelectTopicAsync(topic);
-        var subscription = CurrentNavigation.TopicSubscriptions.FirstOrDefault(sub =>
-            sub.TopicName == pin.TopicName &&
-            sub.Name == pin.Name);
-        if (subscription != null)
-        {
-            await SelectSubscriptionAsync(subscription);
-        }
-    }
-
-    private void OpenInboxMessages(NamespaceInboxItem item)
-    {
-        FireAndForget(OpenInboxEntityAsync(item, selectedTabIndex: 0), nameof(OpenInboxMessages));
-    }
-
-    private void OpenInboxDeadLetter(NamespaceInboxItem item)
-    {
-        FireAndForget(OpenInboxEntityAsync(item, selectedTabIndex: 1), nameof(OpenInboxDeadLetter));
-    }
-
-    private void OpenInboxSessionInspector(NamespaceInboxItem item)
-    {
-        FireAndForget(OpenInboxEntityAsync(item, selectedTabIndex: 2), nameof(OpenInboxSessionInspector));
-    }
-
-    private async Task OpenInboxEntityAsync(NamespaceInboxItem item, int selectedTabIndex)
-    {
-        switch (item.EntityType)
-        {
-            case EntityType.Queue:
+            var resolved = await SelectRequestedEntityAsync(tab, request, generation, navigationCts.Token);
+            if (resolved && IsCurrentNamespaceNavigation(tab, generation))
             {
-                var queue = CurrentNavigation.Queues.FirstOrDefault(q =>
-                    string.Equals(q.Name, item.EntityName, StringComparison.OrdinalIgnoreCase));
-
-                if (queue == null)
-                {
-                    StatusMessage = $"Queue not found: {item.EntityName}";
-                    return;
-                }
-
-                CurrentNavigation.SelectedQueue = queue;
-                CurrentNavigation.SelectedTopic = null;
-                CurrentNavigation.SelectedSubscription = null;
-                CurrentNavigation.SelectedEntity = queue;
-                CurrentNavigation.TopicSubscriptions.Clear();
-                break;
+                tab.RecordRecentDestination(request);
+                UpdateNamespaceDashboardNavigationContext();
             }
-            case EntityType.Subscription:
-            {
-                var subscriptionName = GetInboxSubscriptionName(item);
-                if (string.IsNullOrWhiteSpace(item.TopicName) || string.IsNullOrWhiteSpace(subscriptionName))
-                {
-                    StatusMessage = $"Subscription not found: {item.EntityName}";
-                    return;
-                }
-
-                var selectedTopic = CurrentNavigation.Topics.FirstOrDefault(topic =>
-                    string.Equals(topic.Name, item.TopicName, StringComparison.OrdinalIgnoreCase));
-
-                var subscription = new SubscriptionInfo(
-                    subscriptionName,
-                    item.TopicName,
-                    MessageCount: item.ActiveMessageCount + item.DeadLetterCount,
-                    ActiveMessageCount: item.ActiveMessageCount,
-                    DeadLetterCount: item.DeadLetterCount,
-                    AccessedAt: DateTimeOffset.UtcNow,
-                    RequiresSession: item.RequiresSession);
-
-                CurrentNavigation.SelectedTopic = selectedTopic;
-                CurrentNavigation.SelectedQueue = null;
-                CurrentNavigation.SelectedSubscription = subscription;
-                CurrentNavigation.SelectedEntity = subscription;
-                break;
-            }
-            default:
-                StatusMessage = $"Inbox navigation does not support {item.EntityType}";
-                return;
         }
-
-        CurrentMessageOps.ClearSessionScope();
-        CurrentSessionInspector.Clear();
-        CurrentNavigation.SelectedMessageTabIndex = selectedTabIndex;
-
-        if (selectedTabIndex == 2)
+        catch (OperationCanceledException) when (navigationCts.IsCancellationRequested)
         {
-            await CurrentSessionInspector.LoadSessionsAsync();
-            return;
+            // A newer destination or Overview return superseded this request.
         }
-
-        await CurrentMessageOps.LoadMessagesAsync();
+        catch (Exception ex)
+        {
+            if (IsCurrentNamespaceNavigation(tab, generation))
+            {
+                tab.StatusMessage = $"Unable to open {request.EntityName}: {ex.Message}";
+            }
+        }
+        finally
+        {
+            if (Interlocked.CompareExchange(ref _namespaceNavigationCts, null, navigationCts) == navigationCts)
+            {
+                navigationCts.Dispose();
+            }
+        }
     }
 
-    private static string? GetInboxSubscriptionName(NamespaceInboxItem item)
+    private async Task<bool> SelectRequestedEntityAsync(
+        ConnectionTabViewModel tab,
+        NamespaceNavigationRequest request,
+        long generation,
+        CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(item.TopicName))
+        return request.EntityType switch
+        {
+            EntityType.Queue => await SelectRequestedQueueAsync(tab, request, generation, ct),
+            EntityType.Topic => await SelectRequestedTopicAsync(tab, request, generation, ct),
+            EntityType.Subscription => await SelectRequestedSubscriptionAsync(tab, request, generation, ct),
+            _ => SetUnsupportedDestinationError(tab, request)
+        };
+    }
+
+    private async Task<bool> SelectRequestedQueueAsync(
+        ConnectionTabViewModel tab,
+        NamespaceNavigationRequest request,
+        long generation,
+        CancellationToken ct)
+    {
+        var queue = tab.Navigation.Queues.FirstOrDefault(item =>
+            string.Equals(item.Name, request.EntityName, StringComparison.OrdinalIgnoreCase));
+        if (queue is null)
+        {
+            tab.StatusMessage = $"Queue no longer available: {request.EntityName}";
+            return false;
+        }
+
+        tab.Navigation.SelectedQueue = queue;
+        tab.Navigation.SelectedTopic = null;
+        tab.Navigation.SelectedSubscription = null;
+        tab.Navigation.SelectedEntity = queue;
+        tab.Navigation.TopicSubscriptions.Clear();
+        return await LoadRequestedDestinationAsync(tab, request, generation, ct);
+    }
+
+    private async Task<bool> SelectRequestedTopicAsync(
+        ConnectionTabViewModel tab,
+        NamespaceNavigationRequest request,
+        long generation,
+        CancellationToken ct)
+    {
+        if (request.View != EntityWorkspaceView.TopicSubscriptions)
+        {
+            tab.StatusMessage = $"Topic destination is not supported: {request.View}";
+            return false;
+        }
+
+        var topic = tab.Navigation.Topics.FirstOrDefault(item =>
+            string.Equals(item.Name, request.EntityName, StringComparison.OrdinalIgnoreCase));
+        if (topic is null || tab.Operations is null)
+        {
+            tab.StatusMessage = $"Topic no longer available: {request.EntityName}";
+            return false;
+        }
+
+        tab.Navigation.SelectedTopic = topic;
+        tab.Navigation.SelectedQueue = null;
+        tab.Navigation.SelectedSubscription = null;
+        tab.Navigation.SelectedEntity = topic;
+        tab.MessageOps.Clear();
+        tab.SessionInspector.Clear();
+        tab.Navigation.TopicSubscriptions.Clear();
+        IsLoading = true;
+        tab.StatusMessage = $"Loading subscriptions for {topic.Name}...";
+
+        try
+        {
+            var subscriptions = await tab.Operations.GetSubscriptionsAsync(topic.Name, ct);
+            if (!IsCurrentNamespaceNavigation(tab, generation))
+            {
+                return false;
+            }
+
+            foreach (var subscription in subscriptions)
+            {
+                tab.Navigation.TopicSubscriptions.Add(subscription);
+            }
+
+            tab.StatusMessage = $"{tab.Navigation.TopicSubscriptions.Count} subscription(s)";
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            if (IsCurrentNamespaceNavigation(tab, generation))
+            {
+                tab.StatusMessage = $"Unable to load subscriptions: {ex.Message}";
+            }
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task<bool> SelectRequestedSubscriptionAsync(
+        ConnectionTabViewModel tab,
+        NamespaceNavigationRequest request,
+        long generation,
+        CancellationToken ct)
+    {
+        var subscriptionName = GetSubscriptionName(request);
+        if (string.IsNullOrWhiteSpace(request.TopicName)
+            || string.IsNullOrWhiteSpace(subscriptionName)
+            || tab.Operations is null)
+        {
+            tab.StatusMessage = $"Subscription no longer available: {request.EntityName}";
+            return false;
+        }
+
+        var subscriptions = await tab.Operations.GetSubscriptionsAsync(request.TopicName, ct);
+        if (!IsCurrentNamespaceNavigation(tab, generation))
+        {
+            return false;
+        }
+
+        var subscription = subscriptions.FirstOrDefault(item =>
+            string.Equals(item.Name, subscriptionName, StringComparison.OrdinalIgnoreCase));
+        if (subscription is null)
+        {
+            tab.StatusMessage = $"Subscription no longer available: {request.EntityName}";
+            return false;
+        }
+
+        tab.Navigation.SelectedTopic = null;
+        tab.Navigation.SelectedQueue = null;
+        tab.Navigation.SelectedSubscription = subscription;
+        tab.Navigation.SelectedEntity = subscription;
+        return await LoadRequestedDestinationAsync(tab, request, generation, ct);
+    }
+
+    private async Task<bool> LoadRequestedDestinationAsync(
+        ConnectionTabViewModel tab,
+        NamespaceNavigationRequest request,
+        long generation,
+        CancellationToken ct)
+    {
+        tab.MessageOps.ClearSessionScope();
+        tab.SessionInspector.Clear();
+
+        Interlocked.Increment(ref _suppressDeadLetterReload);
+        try
+        {
+            tab.Navigation.SelectedMessageTabIndex = request.View switch
+            {
+                EntityWorkspaceView.ActiveMessages => 0,
+                EntityWorkspaceView.DeadLetters => 1,
+                EntityWorkspaceView.Sessions => 2,
+                _ => 0
+            };
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _suppressDeadLetterReload);
+        }
+
+        if (request.View == EntityWorkspaceView.Sessions)
+        {
+            await tab.SessionInspector.LoadSessionsAsync();
+        }
+        else
+        {
+            var waitDeadline = DateTimeOffset.UtcNow + NamespaceNavigationLoadWaitTimeout;
+            while (tab.MessageOps.IsLoadingMessages && DateTimeOffset.UtcNow < waitDeadline)
+            {
+                await Task.Delay(10, ct);
+            }
+
+            if (!IsCurrentNamespaceNavigation(tab, generation))
+            {
+                return false;
+            }
+
+            if (tab.MessageOps.IsLoadingMessages)
+            {
+                tab.StatusMessage = "Timed out waiting for the current message load to finish.";
+                return false;
+            }
+
+            await tab.MessageOps.LoadMessagesAsync(ct);
+        }
+
+        return IsCurrentNamespaceNavigation(tab, generation);
+    }
+
+    private bool IsCurrentNamespaceNavigation(ConnectionTabViewModel tab, long generation) =>
+        ReferenceEquals(ActiveTab, tab)
+        && Volatile.Read(ref _namespaceNavigationGeneration) == generation;
+
+    private static bool SetUnsupportedDestinationError(
+        ConnectionTabViewModel tab,
+        NamespaceNavigationRequest request)
+    {
+        tab.StatusMessage = $"Navigation does not support {request.EntityType}";
+        return false;
+    }
+
+    private static string? GetSubscriptionName(NamespaceNavigationRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.TopicName))
         {
             return null;
         }
 
-        var prefix = $"{item.TopicName}/";
-        return item.EntityName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? item.EntityName[prefix.Length..]
-            : null;
+        var prefix = $"{request.TopicName}/";
+        return request.EntityName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? request.EntityName[prefix.Length..]
+            : request.EntityName;
     }
 
     #endregion
@@ -1817,11 +2100,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
 
         yield return new CommandPaletteItem(
-            "Open Dashboard",
-            "Namespace metrics, inbox, and entity summaries",
+            "Open Overview",
+            "Namespace triage, search, metrics, and recent work",
             "Features",
             "LayoutDashboard",
-            Run(OpenCharts));
+            Run(OpenOverview));
 
         yield return new CommandPaletteItem(
             "Open Live Stream",
@@ -2023,35 +2306,66 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private void CloseLiveStream() => FeaturePanels.CloseLiveStream();
+    private void CloseLiveStream()
+    {
+        FeaturePanels.CloseLiveStream();
+        UpdateNamespaceDashboardLifecycle();
+    }
 
     [RelayCommand]
     private async Task OpenCorrelationExplorer()
     {
+        NamespaceDashboard.Deactivate();
         await FeaturePanels.OpenCorrelationExplorer();
     }
 
     [RelayCommand]
-    private void CloseCorrelationExplorer() => FeaturePanels.CloseCorrelationExplorer();
-
-    [RelayCommand]
-    private Task OpenScheduledMessages() => FeaturePanels.OpenScheduledMessages();
-
-    [RelayCommand]
-    private void CloseScheduledMessages() => FeaturePanels.CloseScheduledMessages();
-
-    [RelayCommand]
-    private void OpenCharts()
+    private void CloseCorrelationExplorer()
     {
-        FeaturePanels.OpenCharts();
-        NamespaceDashboard.Activate();
+        FeaturePanels.CloseCorrelationExplorer();
+        UpdateNamespaceDashboardLifecycle();
     }
 
     [RelayCommand]
-    private void CloseCharts()
+    private Task OpenScheduledMessages()
     {
-        FeaturePanels.CloseCharts();
         NamespaceDashboard.Deactivate();
+        return FeaturePanels.OpenScheduledMessages();
+    }
+
+    [RelayCommand]
+    private void CloseScheduledMessages()
+    {
+        FeaturePanels.CloseScheduledMessages();
+        UpdateNamespaceDashboardLifecycle();
+    }
+
+    [RelayCommand]
+    private void OpenOverview()
+    {
+        if (ActiveTab is null)
+        {
+            return;
+        }
+
+        CancelNamespaceNavigation();
+        FeaturePanels.CloseAll();
+        ActiveTab.WorkspaceMode = NamespaceWorkspaceMode.Overview;
+        NotifyActiveTabDependentProperties();
+        UpdateNamespaceDashboardLifecycle();
+    }
+
+    [RelayCommand]
+    private void CloseOverview()
+    {
+        if (ActiveTab is null)
+        {
+            return;
+        }
+
+        ActiveTab.WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        NotifyActiveTabDependentProperties();
+        UpdateNamespaceDashboardLifecycle();
     }
 
     [RelayCommand]
@@ -2062,7 +2376,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
-    private void CloseAlerts() => FeaturePanels.CloseAlerts();
+    private void CloseAlerts()
+    {
+        FeaturePanels.CloseAlerts();
+        UpdateNamespaceDashboardLifecycle();
+    }
 
     [RelayCommand]
     private async Task StartLiveStreamForSelectedEntity() => await FeaturePanels.StartLiveStreamForSelectedEntity();
@@ -2243,6 +2561,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     partial void OnActiveTabChanged(ConnectionTabViewModel? oldValue, ConnectionTabViewModel? newValue)
     {
+        CancelNamespaceNavigation();
+
         foreach (var tab in ConnectionTabs)
         {
             tab.IsActive = tab == newValue;
@@ -2272,6 +2592,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         // Keep fallback operations in sync with active tab operations.
         SetOperations(newValue?.Operations);
+        UpdateNamespaceDashboardNavigationContext();
 
         if (CurrentNavigation.IsSessionInspectorTabSelected)
         {
@@ -2282,6 +2603,22 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
     private void OnActiveTabNavigationPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(NavigationState.SelectedQueue)
+            or nameof(NavigationState.SelectedTopic)
+            or nameof(NavigationState.SelectedSubscription)
+            or nameof(NavigationState.SelectedMessageTabIndex))
+        {
+            OnPropertyChanged(nameof(WorkspaceTopicName));
+            OnPropertyChanged(nameof(WorkspaceEntityName));
+            OnPropertyChanged(nameof(WorkspaceDestinationLabel));
+        }
+
+        if (e.PropertyName == nameof(NavigationState.SelectedMessageTabIndex)
+            && Volatile.Read(ref _suppressDeadLetterReload) != 0)
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(NavigationState.ShowDeadLetter))
         {
             TriggerDeadLetterReloadIfNeeded(CurrentMessageOps);
@@ -2306,7 +2643,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
 
         // When the active tab's IsConnected or Mode changes, notify computed properties
-        if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected) or nameof(ConnectionTabViewModel.Mode))
+        if (e.PropertyName is nameof(ConnectionTabViewModel.IsConnected)
+            or nameof(ConnectionTabViewModel.Mode)
+            or nameof(ConnectionTabViewModel.WorkspaceMode))
         {
             NotifyActiveTabDependentProperties();
         }
@@ -2319,11 +2658,18 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (e.PropertyName == nameof(ConnectionTabViewModel.IsConnected))
         {
             var tab = sender as ConnectionTabViewModel;
-            if (tab?.IsConnected == true)
-            {
-                var namespaceId = tab.Namespace?.Id ?? tab.SavedConnection?.Name ?? "current-namespace";
-                NamespaceDashboard.SetOperations(tab.Operations, namespaceId);
-            }
+            SetOperations(tab?.IsConnected == true ? tab.Operations : null);
+            UpdateNamespaceDashboardNavigationContext();
+        }
+        else if (e.PropertyName == nameof(ConnectionTabViewModel.WorkspaceMode))
+        {
+            UpdateNamespaceDashboardLifecycle();
+        }
+        else if (e.PropertyName == nameof(ConnectionTabViewModel.CurrentDestination))
+        {
+            OnPropertyChanged(nameof(WorkspaceTopicName));
+            OnPropertyChanged(nameof(WorkspaceEntityName));
+            OnPropertyChanged(nameof(WorkspaceDestinationLabel));
         }
 
         // Also notify for SavedConnection and Namespace so bindings update properly
@@ -2350,6 +2696,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(HasActiveConnectionTab));
         OnPropertyChanged(nameof(IsActiveTabAzureMode));
         OnPropertyChanged(nameof(IsActiveTabConnectionStringMode));
+        OnPropertyChanged(nameof(IsNamespaceOverviewVisible));
+        OnPropertyChanged(nameof(IsAzureEntityWorkspaceVisible));
+        OnPropertyChanged(nameof(IsConnectionStringEntityWorkspaceVisible));
+        OnPropertyChanged(nameof(WorkspaceTopicName));
+        OnPropertyChanged(nameof(WorkspaceEntityName));
+        OnPropertyChanged(nameof(WorkspaceDestinationLabel));
         OnPropertyChanged(nameof(ActiveWorkspaceModeLabel));
         OnPropertyChanged(nameof(IsCurrentEntityPaneVisible));
         OnPropertyChanged(nameof(ShowWelcome));
@@ -2357,6 +2709,24 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(CurrentNavigation));
         OnPropertyChanged(nameof(CurrentMessageOps));
         OnPropertyChanged(nameof(CurrentSessionInspector));
+    }
+
+    private void UpdateNamespaceDashboardNavigationContext()
+    {
+        var tab = ActiveTab;
+        if (tab is null)
+        {
+            NamespaceDashboard.SetNavigationContext([], [], [], [], []);
+            return;
+        }
+
+        NamespaceDashboard.SetNavigationContext(
+            tab.Navigation.Queues,
+            tab.Navigation.Topics,
+            tab.Navigation.TopicSubscriptions,
+            tab.Navigation.PinnedEntities,
+            tab.RecentDestinations);
+        NamespaceDashboard.SelectedSection = tab.OverviewSection;
     }
 
     /// <summary>
@@ -2416,6 +2786,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         FireAndForget(ReloadMessagesForDeadLetterAsync(messageOperations), nameof(ReloadMessagesForDeadLetterAsync));
     }
 
+    private void CancelNamespaceNavigation()
+    {
+        Interlocked.Increment(ref _namespaceNavigationGeneration);
+        var navigationCts = Interlocked.Exchange(ref _namespaceNavigationCts, null);
+        navigationCts?.Cancel();
+        navigationCts?.Dispose();
+    }
+
     private static Task ReloadMessagesForDeadLetterAsync(MessageOperationsViewModel messageOperations)
     {
         return messageOperations.LoadMessagesAsync();
@@ -2430,6 +2808,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         if (_disposed) return;
         _disposed = true;
 
+        CancelNamespaceNavigation();
         _autoRefreshTimer?.Stop();
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;

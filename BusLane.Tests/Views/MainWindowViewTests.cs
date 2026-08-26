@@ -51,6 +51,61 @@ public class MainWindowViewTests
         xaml.Should().Contain("<controls:ScheduledMessagesView");
     }
 
+    [Fact]
+    public void MainWindow_NamespaceWorkspace_HostsDashboardContent()
+    {
+        // Arrange
+        var document = System.Xml.Linq.XDocument.Load(GetMainWindowPath());
+        var dashboardXaml = File.ReadAllText(GetControlPath("NamespaceDashboardView.axaml"));
+        var dashboard = document.Descendants()
+            .Single(element => element.Name.LocalName == "NamespaceDashboardView");
+
+        // Assert
+        dashboard.Parent.Should().NotBeNull();
+        dashboard.Parent!.Attribute("IsVisible")?.Value.Should().Be("{Binding IsNamespaceOverviewVisible}");
+        dashboard.Attribute("IsVisible").Should().BeNull();
+        dashboard.Attribute("DataContext")?.Value.Should().Be("{Binding NamespaceDashboard}");
+        document.ToString().Should().NotContain("FeaturePanels.ShowCharts");
+        document.ToString().Should().NotContain("CloseChartsCommand");
+        dashboardXaml.Should().Contain("CloseOverviewCommand");
+    }
+
+    [Fact]
+    public void MainWindow_EntityWorkspace_ShowsBreadcrumbWithoutOverviewLink()
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetMainWindowPath());
+        var breadcrumbXaml = File.ReadAllText(GetControlPath("NamespaceWorkspaceBreadcrumb.axaml"));
+
+        // Assert
+        xaml.Should().Contain("<controls:NamespaceWorkspaceBreadcrumb");
+        breadcrumbXaml.Should().NotContain("BackToOverviewCommand");
+        breadcrumbXaml.Should().NotContain("Text=\"Overview\"");
+        breadcrumbXaml.Should().Contain("Text=\"Entity Explorer\"");
+    }
+
+    [Fact]
+    public void MainWindow_EntityWorkspaces_OccludeUnderlyingOverview()
+    {
+        // Removing either background exposes the Overview header beneath the breadcrumb.
+        var document = System.Xml.Linq.XDocument.Load(GetMainWindowPath());
+        var workspaceBindings = new[]
+        {
+            "{Binding IsAzureEntityWorkspaceVisible}",
+            "{Binding IsConnectionStringEntityWorkspaceVisible}"
+        };
+
+        var workspaces = document.Descendants()
+            .Where(element => element.Name.LocalName == "Grid")
+            .Where(element => workspaceBindings.Contains(element.Attribute("IsVisible")?.Value))
+            .ToList();
+
+        workspaces.Should().HaveCount(2);
+        workspaces.Should().OnlyContain(element =>
+            element.Attribute("Background") != null
+            && element.Attribute("Background")!.Value == "{DynamicResource AppBackground}");
+    }
+
     private static string GetMainWindowPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -62,5 +117,19 @@ public class MainWindowViewTests
             "BusLane",
             "Views",
             "MainWindow.axaml"));
+    }
+
+    private static string GetControlPath(string fileName)
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Views",
+            "Controls",
+            fileName));
     }
 }

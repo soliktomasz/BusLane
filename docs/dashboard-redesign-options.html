@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BusLane Dashboard - redesign options</title>
+<style>
+  :root{
+    --bg:#FAF9F5; --fg:#27272A; --sfg:#52525B; --muted:#71717A;
+    --card:#FFFFFF; --surface:#F7F7F8; --layer:#ECECEF; --sidebar:#F4F4F5;
+    --border:#E4E4E7; --border-strong:#D4D4D8;
+    --accent:#4F46E5; --accent-soft:#EEF2FF; --text-on-accent:#FFFFFF;
+    --danger:#E11D48; --warning:#D97706; --success:#16A34A;
+    --danger-soft:#FFE4E6; --warning-soft:#FEF3C7; --success-soft:#DCFCE7;
+    --r-xs:2px; --r-sm:6px; --r-md:8px; --r-lg:12px;
+    --shadow:0 1px 2px rgba(0,0,0,.05);
+  }
+  body.dark{
+    --bg:#18181B; --fg:#F4F4F5; --sfg:#A1A1AA; --muted:#71717A;
+    --card:#27272A; --surface:#27272A; --layer:#3F3F46; --sidebar:#18181B;
+    --border:#3F3F46; --border-strong:#52525B;
+    --accent:#A5B4FC; --accent-soft:#312E81; --text-on-accent:#18181B;
+    --danger:#FB7185; --warning:#FBBF24; --success:#4ADE80;
+    --danger-soft:#4C1724; --warning-soft:#3A2A0A; --success-soft:#12351F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .tabs{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--border)}
+  .tabs .brand{display:flex;align-items:center;gap:10px;margin-right:auto;font-weight:600}
+  .tabs .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#7C6FE8,#4F46E5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+  .tab{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;color:var(--sfg);font-weight:500}
+  .tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .toggle{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;color:var(--sfg)}
+  .app{display:flex;min-height:100vh}
+  aside{width:216px;padding:18px 14px;border-right:1px solid var(--border);background:var(--sidebar);flex:none}
+  aside .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--sfg);margin-bottom:2px;font-weight:500}
+  aside .nav-item.active{background:var(--accent-soft);color:var(--accent)}
+  aside .nav-item.dim{opacity:.55}
+  main{flex:1;min-width:0;padding:22px 26px 60px}
+  .topbar{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .topbar .crumb{color:var(--sfg)}
+  .topbar .crumb b{color:var(--fg);font-weight:600}
+  .topbar .spacer{flex:1}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--sfg);font-size:12px}
+  .h{font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .sub{color:var(--sfg);font-size:13px;margin-top:2px}
+  .grid{display:grid;gap:16px}
+  .gap-24{gap:24px}
+  .block{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+  .pad{padding:18px}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .kpi .block{padding:16px}
+  .kpi .label{color:var(--sfg);font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .kpi .value{font-size:30px;font-weight:750;letter-spacing:-.03em;margin-top:8px}
+  .kpi .delta{font-size:12px;font-weight:600;margin-top:2px}
+  .up{color:var(--success)} .down{color:var(--danger)} .flat{color:var(--muted)}
+  .spark{height:30px;margin-top:12px}
+  .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .chart-card{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow);padding:14px;min-height:190px}
+  .chart-card .t{font-weight:600;margin-bottom:10px}
+  .pin{display:flex;gap:3px;align-items:flex-end;margin-top:10px}
+  .pin i{background:var(--accent);border-radius:2px;width:6px}
+  .pin i.alt{background:var(--danger)}
+  .inbox{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow)}
+  .inbox .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)}
+  .inbox .row:first-child{border-top:none}
+  .status{width:8px;height:8px;border-radius:99px;flex:none}
+  .status.red{background:var(--danger)} .status.amber{background:var(--warning)} .status.green{background:var(--success)}
+  .pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+  .pill.red{background:var(--danger-soft);color:var(--danger)}
+  .pill.amber{background:var(--warning-soft);color:var(--warning)}
+  .pill.green{background:var(--success-soft);color:var(--success)}
+  .lists{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .list .row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--border)}
+  .list .row:first-child{border-top:none}
+  .rank{width:20px;height:20px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--sfg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .bar-mini{display:block;height:6px;border-radius:99px;background:var(--accent);flex:none}
+  .bar-track{flex:1;height:6px;border-radius:99px;background:var(--surface);min-width:40px}
+  .health{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+  .health .big{font-size:42px;font-weight:800;letter-spacing:-.04em}
+  .health .cap{color:var(--sfg);font-size:12px;font-weight:600;margin-top:2px}
+  .hero-stat{background:linear-gradient(135deg,var(--accent-soft),transparent 70%);border:1px solid var(--border)}
+  .attention{display:flex;flex-direction:column;gap:10px}
+  .attention .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--card)}
+  .note{color:var(--sfg);font-size:12px;margin-top:4px}
+  section.preview{display:none}
+  section.preview.show{display:block}
+  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:26px 0 6px}
+  @media(max-width:900px){.kpi,.charts,.health{grid-template-columns:1fr}.lists{grid-template-columns:1fr}aside{display:none}}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <div class="brand"><div class="logo">B</div> BusLane</div>
+  <button class="tab active" data-p="calm">Calm Operator</button>
+  <button class="tab" data-p="cockpit">Signal Cockpit</button>
+  <button class="tab" data-p="health">Health Story</button>
+  <button class="toggle" id="theme">Dark</button>
+</div>
+
+<!-- ============ CALM OPERATOR ============ -->
+<section class="preview show" id="p-calm">
+  <div class="app">
+    <aside>
+      <div class="nav-item active">Dashboard</div>
+      <div class="nav-item dim">Queues</div>
+      <div class="nav-item dim">Topics</div>
+      <div class="nav-item dim">Subscriptions</div>
+      <div class="nav-item dim">Scheduled</div>
+      <div class="nav-item dim">Alerts</div>
+      <div class="nav-item dim">Settings</div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <div class="crumb">prodsb-prod / <b>Namespace Overview</b></div>
+        <div class="spacer"></div>
+        <div class="chip">Auto refresh 30s</div>
+        <div class="chip">Refresh</div>
+      </div>
+      <div class="h">Namespace Overview</div>
+      <div class="sub">Use the inbox first, then skim the summary and trends.</div>
+
+      <div class="section-label">Priority inbox</div>
+      <div class="inbox" style="margin-bottom:26px">
+        <div class="row"><span class="status red"></span><div style="flex:1"><div style="font-weight:600">orders-ingress</div><div class="note">Dead letter queue growing - 214 messages over the last hour</div></div><span class="pill red">DLQ</span></div>
+        <div class="row"><span class="status amber"></span><div style="flex:1"><div style="font-weight:600">billing-events</div><div class="note">Scheduled backlog peaked - reschedule or cancel to clear</div></div><span class="pill amber">Scheduled</span></div>
+        <div class="row"><span class="status green"></span><div style="flex:1"><div style="font-weight:600">inventory-sync</div><div class="note">Healthy - 0 dead letters, stable backlog</div></div><span class="pill green">OK</span></div>
+      </div>
+
+      <div class="section-label">Summary</div>
+      <div class="kpi" style="margin-bottom:26px">
+        <div class="block"><div class="label">Active Messages</div><div class="value mono">8,412</div><div class="delta up">+3.2% vs prev</div><svg class="spark" viewBox="0 0 120 30"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="0,22 14,20 28,24 42,16 56,18 70,12 84,15 98,8 120,6"/></svg></div>
+        <div class="block"><div class="label">Dead Letters</div><div class="value mono">47</div><div class="delta down">+12.1% vs prev</div><svg class="spark" viewBox="0 0 120 30"><polyline fill="none" stroke="var(--danger)" stroke-width="2" points="0,26 14,22 28,24 42,18 56,20 70,14 84,16 98,10 120,9"/></svg></div>
+        <div class="block"><div class="label">Scheduled</div><div class="value mono">1,204</div><div class="delta flat">+0.4% vs prev</div><svg class="spark" viewBox="0 0 120 30"><polyline fill="none" stroke="var(--warning)" stroke-width="2" points="0,20 14,20 28,22 42,21 56,23 70,19 84,20 98,17 120,18"/></svg></div>
+        <div class="block"><div class="label">Total Size</div><div class="value mono">1.9 GB</div><div class="delta up">+2.0% vs prev</div><svg class="spark" viewBox="0 0 120 30"><polyline fill="none" stroke="var(--success)" stroke-width="2" points="0,24 14,23 28,25 42,20 56,22 70,17 84,19 98,12 120,11"/></svg></div>
+      </div>
+
+      <div class="section-label">Top entities</div>
+      <div class="lists" style="margin-bottom:26px">
+        <div class="block list"><div style="padding:12px 14px;font-weight:600">Top Queues</div>
+          <div class="row"><span class="rank">1</span><div class="mono">orders-ingress</div><span class="bar-track"><span class="bar-mini" style="width:86%"></span></span><span class="mono">6,102</span></div>
+          <div class="row"><span class="rank">2</span><div class="mono">billing-events</div><span class="bar-track"><span class="bar-mini" style="width:64%"></span></span><span class="mono">4,520</span></div>
+          <div class="row"><span class="rank">3</span><div class="mono">inventory-sync</div><span class="bar-track"><span class="bar-mini" style="width:41%"></span></span><span class="mono">2,914</span></div>
+        </div>
+        <div class="block list"><div style="padding:12px 14px;font-weight:600">Top Topics</div>
+          <div class="row"><span class="rank">1</span><div class="mono">audit-stream</div><span class="bar-track"><span class="bar-mini" style="width:91%"></span></span><span class="mono">7,220</span></div>
+          <div class="row"><span class="rank">2</span><div class="mono">click-events</div><span class="bar-track"><span class="bar-mini" style="width:58%"></span></span><span class="mono">4,188</span></div>
+          <div class="row"><span class="rank">3</span><div class="mono">notification</div><span class="bar-track"><span class="bar-mini" style="width:33%"></span></span><span class="mono">2,405</span></div>
+        </div>
+      </div>
+
+      <div class="section-label">Trends</div>
+      <div class="charts">
+        <div class="chart-card"><div class="t">Active Messages Over Time</div><svg viewBox="0 0 320 120" style="width:100%"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="0,88 40,72 80,80 120,52 160,60 200,34 240,42 280,20 320,16"/></svg></div>
+        <div class="chart-card"><div class="t">Dead Letters Over Time</div><svg viewBox="0 0 320 120" style="width:100%"><polyline fill="none" stroke="var(--danger)" stroke-width="2" points="0,104 40,92 80,96 120,74 160,82 200,60 240,66 280,44 320,40"/></svg></div>
+        <div class="chart-card"><div class="t">Scheduled Messages Over Time</div><svg viewBox="0 0 320 120" style="width:100%"><polyline fill="none" stroke="var(--warning)" stroke-width="2" points="0,78 40,80 80,84 120,82 160,86 200,74 240,78 280,68 320,72"/></svg></div>
+        <div class="chart-card"><div class="t">Total Size (MB) Over Time</div><svg viewBox="0 0 320 120" style="width:100%"><polyline fill="none" stroke="var(--success)" stroke-width="2" points="0,96 40,90 80,94 120,78 160,82 200,64 240,70 280,46 320,40"/></svg></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ============ SIGNAL COCKPIT ============ -->
+<section class="preview" id="p-cockpit">
+  <div class="app">
+    <aside>
+      <div class="nav-item active">Dashboard</div>
+      <div class="nav-item dim">Queues</div>
+      <div class="nav-item dim">Topics</div>
+      <div class="nav-item dim">Subscriptions</div>
+      <div class="nav-item dim">Scheduled</div>
+      <div class="nav-item dim">Alerts</div>
+      <div class="nav-item dim">Settings</div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <div class="crumb">prodsb-prod / <b>Namespace Overview</b></div>
+        <div class="spacer"></div>
+        <div class="chip">Alerts: <span class="pill red">2</span> <span class="pill amber">1</span></div>
+        <div class="chip">Refresh 30s</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:10px"><div class="h">Namespace Overview</div><span class="mono" style="color:var(--muted);font-size:12px">updated 6s ago</span></div>
+
+      <div class="section-label">Signal strip</div>
+      <div class="kpi" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px">
+        <div class="block"><div class="label">Active</div><div class="value mono" style="font-size:22px">8,412</div><div class="pin"><i style="height:12px"></i><i style="height:16px"></i><i style="height:10px"></i><i style="height:18px"></i><i style="height:14px"></i></div></div>
+        <div class="block"><div class="label">DLQ</div><div class="value mono" style="font-size:22px;color:var(--danger)">47</div><div class="pin"><i class="alt" style="height:6px"></i><i class="alt" style="height:9px"></i><i class="alt" style="height:8px"></i><i class="alt" style="height:12px"></i><i class="alt" style="height:14px"></i></div></div>
+        <div class="block"><div class="label">Scheduled</div><div class="value mono" style="font-size:22px">1,204</div><div class="pin"><i style="height:10px"></i><i style="height:12px"></i><i style="height:11px"></i><i style="height:14px"></i><i style="height:12px"></i></div></div>
+        <div class="block"><div class="label">Size</div><div class="value mono" style="font-size:22px">1.9 GB</div><div class="pin"><i style="height:13px"></i><i style="height:12px"></i><i style="height:14px"></i><i style="height:16px"></i><i style="height:15px"></i></div></div>
+        <div class="block"><div class="label">Throughput</div><div class="value mono" style="font-size:22px">342/s</div><div class="pin"><i style="height:9px"></i><i style="height:14px"></i><i style="height:11px"></i><i style="height:17px"></i><i style="height:13px"></i></div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:16px">
+        <div class="block list">
+          <div style="padding:10px 14px;font-weight:600">Top entities <span class="mono" style="color:var(--muted);font-weight:400;font-size:11px">by volume</span></div>
+          <div class="row"><span class="rank">1</span><div class="mono">orders-ingress</div><span class="pill red" style="margin-left:auto">DLQ 214</span><span class="mono">6,102</span></div>
+          <div class="row"><span class="rank">2</span><div class="mono">billing-events</div><span class="pill amber" style="margin-left:auto">Schd 1,204</span><span class="mono">4,520</span></div>
+          <div class="row"><span class="rank">3</span><div class="mono">audit-stream</div><span class="pill green" style="margin-left:auto">OK</span><span class="mono">4,188</span></div>
+          <div class="row"><span class="rank">4</span><div class="mono">inventory-sync</div><span class="pill green" style="margin-left:auto">OK</span><span class="mono">2,914</span></div>
+        </div>
+        <div class="block" style="padding:14px">
+          <div style="font-weight:600;margin-bottom:10px">Distribution by entity</div>
+          <svg viewBox="0 0 120 120" style="width:88px;height:88px;display:block;margin:0 auto">
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--accent)" stroke-width="18" stroke-dasharray="170 106" transform="rotate(-90 60 60)"/>
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--success)" stroke-width="18" stroke-dasharray="66 210" stroke-dashoffset="-170" transform="rotate(-90 60 60)"/>
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--warning)" stroke-width="18" stroke-dasharray="40 236" stroke-dashoffset="-236" transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="note" style="text-align:center">orders 62% - billing 24% - other 14%</div>
+        </div>
+      </div>
+
+      <div class="charts" style="grid-template-columns:repeat(4,1fr)">
+        <div class="chart-card"><div class="t">Active</div><svg viewBox="0 0 160 80" style="width:100%"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="0,58 20,46 40,52 60,34 80,40 100,24 120,30 140,14 160,10"/></svg></div>
+        <div class="chart-card"><div class="t">Dead Letter</div><svg viewBox="0 0 160 80" style="width:100%"><polyline fill="none" stroke="var(--danger)" stroke-width="2" points="0,66 20,58 40,62 60,46 80,52 100,36 120,42 140,26 160,22"/></svg></div>
+        <div class="chart-card"><div class="t">Scheduled</div><svg viewBox="0 0 160 80" style="width:100%"><polyline fill="none" stroke="var(--warning)" stroke-width="2" points="0,50 20,52 40,54 60,52 80,56 100,46 120,50 140,44 160,46"/></svg></div>
+        <div class="chart-card"><div class="t">Size</div><svg viewBox="0 0 160 80" style="width:100%"><polyline fill="none" stroke="var(--success)" stroke-width="2" points="0,60 20,56 40,60 60,46 80,50 100,36 120,42 140,26 160,22"/></svg></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ============ HEALTH STORY ============ -->
+<section class="preview" id="p-health">
+  <div class="app">
+    <aside>
+      <div class="nav-item active">Dashboard</div>
+      <div class="nav-item dim">Queues</div>
+      <div class="nav-item dim">Topics</div>
+      <div class="nav-item dim">Subscriptions</div>
+      <div class="nav-item dim">Scheduled</div>
+      <div class="nav-item dim">Alerts</div>
+      <div class="nav-item dim">Settings</div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <div class="crumb">prodsb-prod / <b>Namespace Overview</b></div>
+        <div class="spacer"></div>
+        <div class="chip">Last refresh 6s ago</div>
+      </div>
+
+      <div class="h" style="font-size:26px">Namespace health</div>
+      <div class="sub" style="margin-bottom:24px">Everything is steady except two queues worth a look.</div>
+
+      <div class="health">
+        <div class="block hero-stat pad"><div class="cap">Total messages in flight</div><div class="big mono">9,663</div><div class="delta up" style="margin-top:8px">+2.4% since last refresh</div></div>
+        <div class="block hero-stat pad"><div class="cap">Needs attention</div><div class="big mono">2</div><div class="note">orders-ingress (DLQ) - billing-events (scheduled)</div></div>
+        <div class="block hero-stat pad"><div class="cap">Healthy entities</div><div class="big mono" style="color:var(--success)">18</div><div class="note">of 20 checked</div></div>
+      </div>
+
+      <div class="section-label">Needs attention</div>
+      <div class="attention" style="margin-bottom:26px">
+        <div class="row"><span class="status red"></span><div style="flex:1"><div style="font-weight:600">orders-ingress</div><div class="note">214 dead letters accumulated, up 12% this hour. 6,102 active.</div></div><span class="pill red">Inspect</span></div>
+        <div class="row"><span class="status amber"></span><div style="flex:1"><div style="font-weight:600">billing-events</div><div class="note">1,204 scheduled messages waiting, 4,520 active. Backlog holding steady.</div></div><span class="pill amber">Reschedule</span></div>
+      </div>
+
+      <div class="section-label">Trends</div>
+      <div class="charts" style="grid-template-columns:1fr 1fr">
+        <div class="chart-card"><div class="t">Active vs Dead Letter</div><svg viewBox="0 0 320 140" style="width:100%"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="0,100 40,80 80,88 120,60 160,70 200,40 240,48 280,24 320,20"/><polyline fill="none" stroke="var(--danger)" stroke-width="2" points="0,122 40,110 80,116 120,92 160,100 200,74 240,82 280,58 320,52"/></svg><div class="note">Active (violet) versus dead letters (rose)</div></div>
+        <div class="chart-card"><div class="t">Backlog by queue</div>
+          <div class="pin" style="align-items:center;gap:8px;flex-direction:column">
+            <div style="width:100%"><div class="note">orders-ingress</div><div class="bar-track" style="margin-top:4px"><span class="bar-mini" style="width:88%;display:block"></span></div></div>
+            <div style="width:100%"><div class="note">billing-events</div><div class="bar-track" style="margin-top:4px"><span class="bar-mini" style="width:64%;display:block"></span></div></div>
+            <div style="width:100%"><div class="note">inventory-sync</div><div class="bar-track" style="margin-top:4px"><span class="bar-mini" style="width:38%;display:block"></span></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  var btns=document.querySelectorAll('.tab');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.classList.remove('active')});b.classList.add('active');
+    document.querySelectorAll('section.preview').forEach(function(s){s.classList.remove('show')});
+    document.getElementById('p-'+b.dataset.p).classList.add('show');
+  });});
+  var th=document.getElementById('theme');th.addEventListener('click',function(){
+    document.body.classList.toggle('dark');th.textContent=document.body.classList.contains('dark')?'Light':'Dark';
+  });
+</script>
+</body>
+</html>

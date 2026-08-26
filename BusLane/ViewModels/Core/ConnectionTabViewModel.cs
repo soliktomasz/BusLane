@@ -1,11 +1,14 @@
 namespace BusLane.ViewModels.Core;
 
 // BusLane/ViewModels/Core/ConnectionTabViewModel.cs
-using Azure.Core;
+using System.Collections.ObjectModel;
+
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.Models.Logging;
 using BusLane.Services.Abstractions;
 using BusLane.Services.ServiceBus;
+using Azure.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
@@ -29,6 +32,9 @@ public partial class ConnectionTabViewModel : ViewModelBase
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isActive;
     [ObservableProperty] private bool _isEntityPaneVisible = true;
+    [ObservableProperty] private NamespaceWorkspaceMode _workspaceMode = NamespaceWorkspaceMode.Entity;
+    [ObservableProperty] private NamespaceOverviewSection _overviewSection = NamespaceOverviewSection.Home;
+    [ObservableProperty] private NamespaceNavigationRequest? _currentDestination;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private ConnectionHealthReport _connectionHealth = new(ConnectionHealthState.Healthy, "Connection healthy");
 
@@ -36,6 +42,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
     public NavigationState Navigation { get; }
     public MessageOperationsViewModel MessageOps { get; }
     public SessionInspectorViewModel SessionInspector { get; }
+    public ObservableCollection<RecentEntityDestination> RecentDestinations { get; } = [];
 
     // Connection resources (set after connection)
     private IServiceBusOperations? _operations;
@@ -141,6 +148,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             Navigation.SetPinScope(connection.Id ?? connection.Name);
 
             IsConnected = true;
+            ResetWorkspace();
             StatusMessage = "Connected";
             ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Healthy, "Connection healthy");
             LogActivity(LogLevel.Info, $"Tab '{TabTitle}': connection established");
@@ -186,6 +194,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
             await LoadNamespaceEntitiesAsync();
 
             IsConnected = true;
+            ResetWorkspace();
             StatusMessage = "Connected";
             ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Healthy, "Connection healthy");
             LogActivity(LogLevel.Info, $"Tab '{TabTitle}': Azure connection established");
@@ -217,6 +226,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         Namespace = null;
         Mode = ConnectionMode.None;
         IsConnected = false;
+        ResetWorkspace();
 
         Navigation.Clear();
         MessageOps.Clear();
@@ -226,6 +236,30 @@ public partial class ConnectionTabViewModel : ViewModelBase
         ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, "Disconnected");
         LogActivity(LogLevel.Info, $"Tab '{tabTitle}': disconnected");
         return Task.CompletedTask;
+    }
+
+    /// <summary>Records a successful destination for namespace-local quick access.</summary>
+    public void RecordRecentDestination(NamespaceNavigationRequest request)
+    {
+        var existing = RecentDestinations.FirstOrDefault(item => item.Request == request);
+        if (existing is not null)
+        {
+            RecentDestinations.Remove(existing);
+        }
+
+        RecentDestinations.Insert(0, new RecentEntityDestination(request, DateTimeOffset.UtcNow));
+        while (RecentDestinations.Count > 5)
+        {
+            RecentDestinations.RemoveAt(RecentDestinations.Count - 1);
+        }
+    }
+
+    private void ResetWorkspace()
+    {
+        WorkspaceMode = NamespaceWorkspaceMode.Entity;
+        OverviewSection = NamespaceOverviewSection.Home;
+        CurrentDestination = null;
+        RecentDestinations.Clear();
     }
 
     private async Task LoadEntitiesAsync(SavedConnection connection, CancellationToken ct = default)

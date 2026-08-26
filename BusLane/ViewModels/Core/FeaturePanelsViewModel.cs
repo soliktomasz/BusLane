@@ -4,12 +4,11 @@ using System.Collections.ObjectModel;
 using BusLane.Models;
 using BusLane.Services.Monitoring;
 using BusLane.Services.ServiceBus;
-using BusLane.ViewModels.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 /// <summary>
-/// Manages feature panel visibility and lifecycle (Live Stream, Charts, Alerts).
+/// Manages feature panel visibility and lifecycle for auxiliary operator tools.
 /// Follows single responsibility - just panel orchestration.
 /// </summary>
 public partial class FeaturePanelsViewModel : ViewModelBase
@@ -37,12 +36,10 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly TimeProvider _timeProvider;
 
     [ObservableProperty] private bool _showLiveStream;
-    [ObservableProperty] private bool _showCharts;
     [ObservableProperty] private bool _showAlerts;
     [ObservableProperty] private bool _showCorrelationExplorer;
     [ObservableProperty] private bool _showScheduledMessages;
     [ObservableProperty] private LiveStreamViewModel? _liveStreamViewModel;
-    [ObservableProperty] private DashboardViewModel? _dashboardViewModel;
     [ObservableProperty] private AlertsViewModel? _alertsViewModel;
     [ObservableProperty] private CorrelationExplorerViewModel? _correlationExplorerViewModel;
     [ObservableProperty] private ScheduledMessagesViewModel? _scheduledMessagesViewModel;
@@ -52,7 +49,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         ILiveStreamService liveStreamService,
         IAlertService alertService,
         INotificationService notificationService,
-        DashboardViewModel dashboardViewModel,
         Func<IServiceBusOperations?> getOperations,
         Func<ObservableCollection<QueueInfo>> getQueues,
         Func<ObservableCollection<TopicInfo>> getTopics,
@@ -93,8 +89,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         _scheduledMessageManagementService = scheduledMessageManagementService;
         _cloneScheduledMessage = cloneScheduledMessage;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        DashboardViewModel = dashboardViewModel;
-
         _alertService.AlertTriggered += OnAlertTriggered;
         _alertService.AlertsChanged += OnAlertsChanged;
         ActiveAlertCount = _alertService.ActiveAlerts.Count(a => !a.IsAcknowledged);
@@ -132,7 +126,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         LiveStreamViewModel.SetAvailableEntities(_getQueues(), _getTopics());
 
         ShowLiveStream = true;
-        ShowCharts = false;
         ShowAlerts = false;
         ShowCorrelationExplorer = false;
 
@@ -146,28 +139,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         LiveStreamViewModel = null;
     }
 
-    public void OpenCharts()
-    {
-        CloseScheduledMessages();
-        DisposeCorrelationExplorer();
-        var queues = _getQueues();
-        var subscriptions = _getSubscriptions();
-
-        DashboardViewModel?.UpdateEntityData(queues, subscriptions);
-        DashboardViewModel?.RecordCurrentMetrics(queues, subscriptions);
-
-        ShowCharts = true;
-        ShowLiveStream = false;
-        ShowAlerts = false;
-        ShowCorrelationExplorer = false;
-    }
-
-    public void CloseCharts()
-    {
-        ShowCharts = false;
-        ShowCorrelationExplorer = false;
-    }
-
     public void OpenAlerts()
     {
         CloseScheduledMessages();
@@ -175,7 +146,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         AlertsViewModel = new AlertsViewModel(_alertService, _notificationService, () => ShowAlerts = false);
         ShowAlerts = true;
         ShowLiveStream = false;
-        ShowCharts = false;
     }
 
     public void CloseAlerts()
@@ -210,7 +180,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
 
         ShowCorrelationExplorer = true;
         ShowLiveStream = false;
-        ShowCharts = false;
         ShowAlerts = false;
     }
 
@@ -228,7 +197,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
         }
 
         CloseLiveStream();
-        CloseCharts();
         CloseAlerts();
         CloseCorrelationExplorer();
         ScheduledMessagesViewModel = new ScheduledMessagesViewModel(
@@ -275,7 +243,6 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     public void CloseAll()
     {
         CloseLiveStream();
-        CloseCharts();
         CloseAlerts();
         CloseCorrelationExplorer();
         CloseScheduledMessages();

@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels"
+             x:Class="BusLane.Views.Controls.NamespaceWorkspaceBreadcrumb"
+             x:DataType="vm:MainWindowViewModel"
+             x:CompileBindings="False">
+    <Border Padding="16,10"
+            BorderBrush="{DynamicResource BorderDefault}"
+            BorderThickness="0,0,0,1">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock Text="Entity Explorer"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding WorkspaceTopicName}"
+                       Classes="caption"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding WorkspaceTopicName}"
+                       IsVisible="{Binding WorkspaceTopicName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="/"
+                       Classes="caption"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceTopicName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding WorkspaceEntityName}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding WorkspaceEntityName}"
+                       IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding WorkspaceDestinationLabel}"
+                       Classes="caption"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

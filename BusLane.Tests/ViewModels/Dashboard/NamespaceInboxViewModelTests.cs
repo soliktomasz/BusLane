@@ -21,7 +21,7 @@ public class NamespaceInboxViewModelTests
             CreateInboxItem("topic-a/sub-a", EntityType.Subscription, activeMessageCount: 8, deadLetterCount: 1, topicName: "topic-a")
         ];
 
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         // Act
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3)], [CreateSubscriptionInfo("topic-a", "sub-a", 8, 1)], []);
@@ -32,11 +32,54 @@ public class NamespaceInboxViewModelTests
     }
 
     [Fact]
+    public void Refresh_PriorityContainsOnlyTopEightActionableItems()
+    {
+        // Arrange
+        _scoringService.Items = Enumerable.Range(0, 10)
+            .Select(index => CreateInboxItem($"queue-{index}", EntityType.Queue, 10, index + 1))
+            .Append(CreateInboxItem("healthy", EntityType.Queue, 0, 0) with { Score = 0, Reasons = [] })
+            .ToList();
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
+
+        // Act
+        sut.Refresh("namespace-a", [], [], []);
+
+        // Assert
+        sut.PriorityItems.Should().HaveCount(8);
+        sut.PriorityItems.Should().NotContain(item => item.EntityName == "healthy");
+        sut.AllIssues.Should().HaveCount(10);
+        sut.NeedsActionCount.Should().Be(8);
+    }
+
+    [Fact]
+    public void MarkReviewed_RemovesItemUntilCountsWorsen()
+    {
+        // Arrange
+        _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, 10, 3)];
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
+        sut.Refresh("namespace-a", [], [], []);
+
+        // Act
+        sut.PriorityItems.Single().MarkReviewedCommand.Execute(null);
+
+        // Assert
+        sut.PriorityItems.Should().BeEmpty();
+        sut.AllIssues.Should().ContainSingle(item => item.IsReviewed);
+
+        sut.Refresh("namespace-a", [], [], []);
+        sut.PriorityItems.Should().BeEmpty();
+
+        _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, 10, 4)];
+        sut.Refresh("namespace-a", [], [], []);
+        sut.PriorityItems.Should().ContainSingle();
+    }
+
+    [Fact]
     public void MarkReviewed_UpdatesDeltaBaseline()
     {
         // Arrange
         _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, activeMessageCount: 12, deadLetterCount: 3)];
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3)], [], []);
         var item = sut.Items.Single();
@@ -54,12 +97,10 @@ public class NamespaceInboxViewModelTests
     }
 
     [Fact]
-    public void OpenCommands_InvokeExpectedNavigationCallbacks()
+    public void OpenCommands_EmitTypedNavigationRequests()
     {
         // Arrange
-        NamespaceInboxItem? openedMessages = null;
-        NamespaceInboxItem? openedDeadLetter = null;
-        NamespaceInboxItem? openedSessionInspector = null;
+        var requests = new List<NamespaceNavigationRequest>();
 
         _scoringService.Items =
         [
@@ -69,9 +110,7 @@ public class NamespaceInboxViewModelTests
         var sut = new NamespaceInboxViewModel(
             _scoringService,
             _reviewStore,
-            item => openedMessages = item,
-            item => openedDeadLetter = item,
-            item => openedSessionInspector = item);
+            requests.Add);
 
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3, requiresSession: true)], [], []);
         var item = sut.Items.Single();
@@ -82,12 +121,10 @@ public class NamespaceInboxViewModelTests
         item.OpenSessionInspectorCommand.Execute(null);
 
         // Assert
-        openedMessages.Should().NotBeNull();
-        openedDeadLetter.Should().NotBeNull();
-        openedSessionInspector.Should().NotBeNull();
-        openedMessages!.EntityName.Should().Be("orders");
-        openedDeadLetter!.EntityName.Should().Be("orders");
-        openedSessionInspector!.EntityName.Should().Be("orders");
+        requests.Should().Equal(
+            new NamespaceNavigationRequest(EntityType.Queue, "orders", null, EntityWorkspaceView.ActiveMessages),
+            new NamespaceNavigationRequest(EntityType.Queue, "orders", null, EntityWorkspaceView.DeadLetters),
+            new NamespaceNavigationRequest(EntityType.Queue, "orders", null, EntityWorkspaceView.Sessions));
     }
 
     [Fact]
@@ -95,7 +132,7 @@ public class NamespaceInboxViewModelTests
     {
         // Arrange
         _scoringService.Items = [CreateInboxItem("orders", EntityType.Queue, activeMessageCount: 12, deadLetterCount: 3)];
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         // Act
         sut.Refresh("namespace-a", [CreateQueueInfo("orders", 12, 3)], [], []);
@@ -111,7 +148,7 @@ public class NamespaceInboxViewModelTests
     public void ToggleExpanded_DefaultsExpandedAndTogglesState()
     {
         // Arrange
-        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { }, _ => { }, _ => { });
+        var sut = new NamespaceInboxViewModel(_scoringService, _reviewStore, _ => { });
 
         // Act
         var initialState = sut.IsExpanded;
@@ -121,6 +158,40 @@ public class NamespaceInboxViewModelTests
         initialState.Should().BeTrue();
         sut.IsExpanded.Should().BeFalse();
         sut.ExpandButtonText.Should().Be("Expand");
+    }
+
+    [Theory]
+    [InlineData(1, 0, 0, 0, InboxStatus.Critical)]
+    [InlineData(0, 1, 0, 0, InboxStatus.Warning)]
+    [InlineData(0, 0, 1, 0, InboxStatus.Warning)]
+    [InlineData(0, 0, 0, 1, InboxStatus.Warning)]
+    [InlineData(0, 0, 0, 0, InboxStatus.Healthy)]
+    public void Status_PrioritySignals_ReturnsExpectedStatus(
+        long deadLetterCount,
+        long scheduledCount,
+        long activeMessageCount,
+        int activeAlertCount,
+        InboxStatus expected)
+    {
+        // Arrange
+        var item = new NamespaceInboxItem(
+            "orders",
+            EntityType.Queue,
+            TopicName: null,
+            RequiresSession: false,
+            ActiveMessageCount: activeMessageCount,
+            DeadLetterCount: deadLetterCount,
+            ScheduledCount: scheduledCount,
+            ActiveAlertCount: activeAlertCount,
+            Score: 10,
+            Reasons: ["Needs attention"]);
+        var sut = new NamespaceInboxItemViewModel(item, 0, 0, 0, 0, false, _ => { }, _ => { });
+
+        // Act
+        var status = sut.Status;
+
+        // Assert
+        status.Should().Be(expected);
     }
 
     private static NamespaceInboxItem CreateInboxItem(

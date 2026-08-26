@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:BusLane.ViewModels.Dashboard"
+             xmlns:models="using:BusLane.Models.Dashboard"
+             x:Class="BusLane.Views.Controls.NamespaceEntitySearchView"
+             x:DataType="vm:NamespaceEntitySearchViewModel"
+             x:CompileBindings="False">
+    <Grid RowDefinitions="Auto,Auto">
+        <TextBox x:Name="SearchBox"
+                 Grid.Row="0"
+                 Text="{Binding Query, Mode=TwoWay}"
+                 PlaceholderText="Find queue, topic, or subscription"
+                 AutomationProperties.Name="Search queues, topics, and subscriptions"
+                 ToolTip.Tip="Press Cmd/Ctrl+F to search"
+                 KeyDown="OnSearchKeyDown"/>
+        <Border Grid.Row="1"
+                Margin="0,6,0,0"
+                Classes="card"
+                IsVisible="{Binding HasResults}">
+            <ListBox ItemsSource="{Binding Results}"
+                     SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
+                     MaxHeight="280">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
+                        <Button Classes="subtle"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                Command="{Binding $parent[UserControl].DataContext.OpenResultCommand}"
+                                CommandParameter="{Binding}">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <TextBlock Text="{Binding DisplayPath}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding DisplayPath}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding TypeLabel}" Classes="caption"/>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+    </Grid>
+</UserControl>

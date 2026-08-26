@@ -15,7 +15,7 @@ public class FeaturePanelsViewModelTests
     {
         // Arrange
         var sut = CreateSut();
-        sut.OpenCharts();
+        await sut.OpenLiveStream();
 
         // Act
         await sut.OpenCorrelationExplorer();
@@ -23,7 +23,6 @@ public class FeaturePanelsViewModelTests
         // Assert
         sut.ShowCorrelationExplorer.Should().BeTrue();
         sut.CorrelationExplorerViewModel.Should().NotBeNull();
-        sut.ShowCharts.Should().BeFalse();
         sut.ShowLiveStream.Should().BeFalse();
         sut.ShowAlerts.Should().BeFalse();
     }
@@ -94,7 +93,7 @@ public class FeaturePanelsViewModelTests
     }
 
     [Fact]
-    public async Task OpenCharts_WhenExplorerIsOpen_DisposesExplorerSubscription()
+    public async Task OpenLiveStream_WhenExplorerIsOpen_DisposesExplorerSubscription()
     {
         // Arrange
         var catalog = new CorrelationMessageCatalog();
@@ -103,7 +102,7 @@ public class FeaturePanelsViewModelTests
         await sut.OpenCorrelationExplorer();
 
         // Act
-        sut.OpenCharts();
+        await sut.OpenLiveStream();
         catalog.Add(CreateMessage());
 
         // Assert
@@ -136,18 +135,10 @@ public class FeaturePanelsViewModelTests
         auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
         var replayService = Substitute.For<IMessageReplayService>();
         var destination = new ReplayDestination("namespace", ConnectionEnvironment.Test, "orders", "Queue", false);
-        var persistence = Substitute.For<BusLane.Services.Dashboard.IDashboardPersistenceService>();
-        persistence.Load().Returns(new DashboardConfiguration());
-        var dashboard = new DashboardViewModel(
-            persistence,
-            new BusLane.Services.Dashboard.DashboardLayoutEngine(),
-            Substitute.For<BusLane.Services.Monitoring.IMetricsService>());
-
         return new FeaturePanelsViewModel(
             Substitute.For<ILiveStreamService>(),
             Substitute.For<IAlertService>(),
             Substitute.For<INotificationService>(),
-            dashboard,
             () => Substitute.For<IServiceBusOperations>(),
             () => [],
             () => [],

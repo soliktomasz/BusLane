@@ -1,18 +1,30 @@
 namespace BusLane.ViewModels.Dashboard;
 
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using BusLane.Models;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
+using BusLane.Models.Dashboard;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 public partial class PieChartWidgetViewModel : DashboardWidgetViewModel
 {
-    public ObservableCollection<ISeries> Series { get; } = [];
+    [ObservableProperty]
+    private PiePlotData? _plotData;
 
     private readonly ObservableCollection<QueueInfo> _queues = [];
     private readonly ObservableCollection<SubscriptionInfo> _subscriptions = [];
+
+    private static readonly string[] Palette =
+    [
+        "PaletteChart1",
+        "PaletteChart2",
+        "PaletteChart3",
+        "PaletteChart4",
+        "PaletteChart5",
+        "PaletteChart6"
+    ];
 
     public PieChartWidgetViewModel(DashboardWidget widget) : base(widget)
     {
@@ -23,11 +35,15 @@ public partial class PieChartWidgetViewModel : DashboardWidgetViewModel
     {
         _queues.Clear();
         foreach (var q in queues)
+        {
             _queues.Add(q);
+        }
 
         _subscriptions.Clear();
         foreach (var s in subscriptions)
+        {
             _subscriptions.Add(s);
+        }
 
         RefreshData();
     }
@@ -37,33 +53,29 @@ public partial class PieChartWidgetViewModel : DashboardWidgetViewModel
         try
         {
             ClearError();
-            Series.Clear();
 
             var data = _queues.Select(q => (Name: q.Name, Value: GetMetricValue(q)))
                 .Concat(_subscriptions.Select(s => (Name: $"{s.TopicName}/{s.Name}", Value: GetMetricValue(s))))
+                .Where(e => e.Value > 0)
                 .OrderByDescending(e => e.Value)
-                .Take(Widget.Configuration.TopEntities)
                 .ToList();
 
-            var colors = new[]
-            {
-                SKColors.DodgerBlue, SKColors.Orange, SKColors.Green, SKColors.Purple,
-                SKColors.Red, SKColors.Teal, SKColors.Gold, SKColors.Pink,
-                SKColors.LimeGreen, SKColors.Coral
-            };
+            var topCount = Widget.Configuration.TopEntities <= 0 ? 10 : Widget.Configuration.TopEntities;
+            var top = data.Take(topCount).ToList();
+            var slices = new List<PiePlotSlice>();
 
-            for (var i = 0; i < data.Count && i < colors.Length; i++)
+            for (var i = 0; i < top.Count; i++)
             {
-                Series.Add(new PieSeries<double>
-                {
-                    Name = data[i].Name,
-                    Values = [data[i].Value],
-                    Fill = new SolidColorPaint(colors[i]),
-                    DataLabelsSize = 12,
-                    DataLabelsPaint = new SolidColorPaint(SKColors.White),
-                    DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle
-                });
+                slices.Add(new PiePlotSlice(top[i].Name, top[i].Value, Palette[i % Palette.Length]));
             }
+
+            if (top.Count < data.Count)
+            {
+                var rest = data.Skip(top.Count).Sum(e => e.Value);
+                slices.Add(new PiePlotSlice("Other", rest, "SubtleForeground"));
+            }
+
+            PlotData = new PiePlotData(Title, slices);
         }
         catch (Exception ex)
         {
@@ -76,15 +88,9 @@ public partial class PieChartWidgetViewModel : DashboardWidgetViewModel
         return $"{GetMetricDisplayName()} Distribution";
     }
 
-    private double GetMetricValue(QueueInfo queue)
-    {
-        return GetPrimaryMetricValue(queue);
-    }
+    private double GetMetricValue(QueueInfo queue) => GetPrimaryMetricValue(queue);
 
-    private double GetMetricValue(SubscriptionInfo sub)
-    {
-        return GetPrimaryMetricValue(sub);
-    }
+    private double GetMetricValue(SubscriptionInfo sub) => GetPrimaryMetricValue(sub);
 
     private new string GetMetricDisplayName()
     {

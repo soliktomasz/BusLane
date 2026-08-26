@@ -170,7 +170,6 @@ class Program
         // Dashboard services
         services.AddSingleton<IDashboardPersistenceService, DashboardPersistenceService>();
         services.AddSingleton<DashboardLayoutEngine>();
-        services.AddSingleton<ViewModels.Dashboard.DashboardViewModel>();
 
         // Add dashboard services
         services.AddSingleton<IDashboardRefreshService, DashboardRefreshService>();
@@ -196,7 +195,6 @@ class Program
             sp.GetRequiredService<IAppLockService>(),
             sp.GetRequiredService<IBiometricAuthService>(),
             sp.GetRequiredService<ILogSink>(),
-            sp.GetRequiredService<ViewModels.Dashboard.DashboardViewModel>(),
             sp.GetRequiredService<ViewModels.Dashboard.NamespaceDashboardViewModel>(),
             sp.GetRequiredService<IScheduledMessageStore>(),
             sp.GetRequiredService<INamespaceTopologyService>(),

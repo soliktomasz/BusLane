@@ -7,157 +7,86 @@
              x:Class="BusLane.Views.Controls.NamespaceInboxView"
              x:DataType="vm:NamespaceInboxViewModel"
              x:CompileBindings="False">
-    <Border Classes="dashboard-inbox-surface">
-        <StackPanel Spacing="16">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                <Border Grid.Column="0" Classes="metric-icon-surface">
-                    <LucideIcon Kind="Inbox" Size="16"
-                                Foreground="{DynamicResource AccentBrand}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Text="Priority Inbox"
-                               Classes="heading"/>
-                    <TextBlock Text="Queues and subscriptions ranked for daily triage."
-                               Classes="caption"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2"
-                            Orientation="Horizontal"
-                            Spacing="10"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Items.Count, StringFormat={}Items {0}}"
+    <Border Classes="dashboard-inbox-surface"
+            IsVisible="{Binding IsExpanded}">
+        <StackPanel>
+            <Border Classes="dialog-section-surface"
+                    Margin="16"
+                    IsVisible="{Binding IsEmpty}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="No issues need attention."
+                               Classes="title-small"/>
+                    <TextBlock Text="The inbox will populate on the next namespace refresh when queues or subscriptions start changing."
                                Classes="caption"
-                               VerticalAlignment="Center"/>
-                    <Button Classes="subtle small"
-                            Command="{Binding ToggleExpandedCommand}">
-                        <TextBlock Text="{Binding ExpandButtonText}"/>
-                    </Button>
+                               TextWrapping="Wrap"/>
                 </StackPanel>
-            </Grid>
+            </Border>
 
-            <StackPanel Spacing="16"
-                        IsVisible="{Binding IsExpanded}">
-                <Border Classes="dialog-section-surface"
-                        IsVisible="{Binding IsEmpty}">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Nothing needs attention right now."
-                                   Classes="title-small"/>
-                        <TextBlock Text="The inbox will populate on the next namespace refresh when queues or subscriptions start changing."
-                                   Classes="caption"
-                                   TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
-
-                <ItemsControl ItemsSource="{Binding Items}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
-                            <Border Classes="inbox-item-surface"
-                                    Margin="0,0,0,12">
-                                <StackPanel Spacing="12">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                        <StackPanel Grid.Column="0" Spacing="4">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="{Binding EntityName}"
-                                                           Classes="title-small"/>
-                                                <Border Padding="8,2"
-                                                        CornerRadius="{StaticResource RadiusPill}"
-                                                        Background="{DynamicResource AccentBrandSubtle}">
-                                                    <TextBlock Text="{Binding EntityType}"
-                                                               FontSize="11"/>
-                                                </Border>
-                                            </StackPanel>
-                                            <TextBlock Text="{Binding ReasonSummary}"
-                                                       Classes="caption"
-                                                       TextWrapping="Wrap"/>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="1"
-                                                    HorizontalAlignment="Right"
-                                                    Spacing="4">
-                                            <TextBlock Text="{Binding Score, StringFormat={}Priority {0:0}}"
-                                                       FontWeight="SemiBold"
-                                                       HorizontalAlignment="Right"/>
-                                            <TextBlock Text="{Binding ActiveAlertCount, StringFormat={}Alerts {0}}"
-                                                       Classes="caption"
-                                                       HorizontalAlignment="Right"
-                                                       IsVisible="{Binding HasActiveAlerts}"/>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <Grid ColumnDefinitions="*,*,*,*"
-                                          ColumnSpacing="12">
-                                        <Border Grid.Column="0"
-                                                Classes="inbox-stat-block">
-                                            <StackPanel Spacing="2">
-                                                <TextBlock Text="Active"
-                                                           Classes="caption"/>
-                                                <TextBlock Text="{Binding ActiveMessageCount}"/>
-                                                <TextBlock Text="{Binding ActiveMessageDelta, StringFormat={}Δ {0}}"
-                                                           Classes="caption"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Column="1"
-                                                Classes="inbox-stat-block">
-                                            <StackPanel Spacing="2">
-                                                <TextBlock Text="DLQ"
-                                                           Classes="caption"/>
-                                                <TextBlock Text="{Binding DeadLetterCount}"/>
-                                                <TextBlock Text="{Binding DeadLetterDelta, StringFormat={}Δ {0}}"
-                                                           Classes="caption"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Column="2"
-                                                Classes="inbox-stat-block">
-                                            <StackPanel Spacing="2">
-                                                <TextBlock Text="Scheduled"
-                                                           Classes="caption"/>
-                                                <TextBlock Text="{Binding ScheduledCount}"/>
-                                                <TextBlock Text="{Binding ScheduledDelta, StringFormat={}Δ {0}}"
-                                                           Classes="caption"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Column="3"
-                                                Classes="inbox-stat-block">
-                                            <StackPanel Spacing="2">
-                                                <TextBlock Text="Alert Delta"
-                                                           Classes="caption"/>
-                                                <TextBlock Text="{Binding AlertDelta}"/>
-                                                <TextBlock Text="Since review"
-                                                           Classes="caption"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-
-                                    <StackPanel Orientation="Horizontal"
-                                                Spacing="8">
-                                        <Button Classes="secondary small"
-                                                Command="{Binding OpenMessagesCommand}">
-                                            <TextBlock Text="Open Messages"/>
-                                        </Button>
-                                        <Button Classes="secondary small"
-                                                Command="{Binding OpenDeadLetterCommand}">
-                                            <TextBlock Text="Open DLQ"/>
-                                        </Button>
-                                        <Button Classes="secondary small"
-                                                Command="{Binding OpenSessionInspectorCommand}"
-                                                IsVisible="{Binding CanOpenSessionInspector}">
-                                            <TextBlock Text="Open Sessions"/>
-                                        </Button>
-                                        <Button Classes="subtle small"
-                                                Command="{Binding MarkReviewedCommand}">
-                                            <TextBlock Text="Mark Reviewed"/>
-                                        </Button>
+            <ItemsControl ItemsSource="{Binding PriorityItems}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
+                        <Border Classes="inbox-item-surface">
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0"
+                                            Width="8" Height="8"
+                                            CornerRadius="{StaticResource RadiusPill}"
+                                            Background="{Binding Status, Converter={StaticResource InboxStatusToBrushConverter}}"
+                                            VerticalAlignment="Top"
+                                            Margin="0,6,0,0"/>
+                                    <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBlock Text="{Binding EntityName}"
+                                                   Classes="title-small"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding EntityName}"
+                                                   AutomationProperties.Name="{Binding EntityName}"/>
+                                        <TextBlock Text="{Binding ReasonSummary}"
+                                                   Classes="caption"
+                                                   TextWrapping="Wrap"/>
                                     </StackPanel>
+                                    <Border Grid.Column="2"
+                                            CornerRadius="{StaticResource RadiusPill}"
+                                            Padding="8,2"
+                                            VerticalAlignment="Center"
+                                            Background="{Binding Status, Converter={StaticResource InboxStatusToBrushConverter}, ConverterParameter=Background}">
+                                        <TextBlock Text="{Binding StatusLabel}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{Binding Status, Converter={StaticResource InboxStatusToBrushConverter}}"/>
+                                    </Border>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8"
+                                            Margin="20,14,0,0"
+                                            Classes="inbox-actions">
+                                    <Button Classes="secondary small"
+                                            Command="{Binding OpenMessagesCommand}"
+                                            AutomationProperties.Name="Open active messages">
+                                        <TextBlock Text="Open Messages"/>
+                                    </Button>
+                                    <Button Classes="secondary small"
+                                            Command="{Binding OpenDeadLetterCommand}"
+                                            AutomationProperties.Name="Open dead-letter messages">
+                                        <TextBlock Text="Open DLQ"/>
+                                    </Button>
+                                    <Button Classes="secondary small"
+                                            Command="{Binding OpenSessionInspectorCommand}"
+                                            IsVisible="{Binding CanOpenSessionInspector}"
+                                            AutomationProperties.Name="Open session inspector">
+                                        <TextBlock Text="Open Sessions"/>
+                                    </Button>
+                                    <Button Classes="subtle small"
+                                            Command="{Binding MarkReviewedCommand}"
+                                            AutomationProperties.Name="Mark issue reviewed">
+                                        <TextBlock Text="Mark Reviewed"/>
+                                    </Button>
                                 </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
     </Border>
 </UserControl>

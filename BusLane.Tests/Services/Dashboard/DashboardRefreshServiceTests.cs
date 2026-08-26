@@ -80,6 +80,56 @@ public class DashboardRefreshServiceTests
     }
 
     [Fact]
+    public async Task RefreshAsync_ManyQueues_DoesNotRemoveTopicsFromTopEntities()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        IReadOnlyList<TopEntityInfo>? captured = null;
+        _sut.TopEntitiesUpdated += (_, entities) => captured = entities;
+
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 25)
+                .Select(index => new QueueInfo(
+                    $"queue-{index}",
+                    1000 - index,
+                    1000 - index,
+                    0,
+                    0,
+                    100,
+                    null,
+                    false,
+                    TimeSpan.FromMinutes(1),
+                    TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 3)
+                .Select(index => new TopicInfo(
+                    $"topic-{index}",
+                    sizeInBytes: 100,
+                    subscriptionCount: 1,
+                    accessedAt: null,
+                    defaultMessageTtl: TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                return Task.FromResult<IEnumerable<SubscriptionInfo>>(
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ]);
+            });
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        captured.Should().NotBeNull();
+        captured!.Where(entity => entity.Type == EntityType.Queue).Should().HaveCount(20);
+        captured.Where(entity => entity.Type == EntityType.Topic).Should().HaveCount(3);
+    }
+
+    [Fact]
     public async Task StartAutoRefresh_WhenRefreshTakesLongerThanInterval_DoesNotRunOverlappingRefreshes()
     {
         // Arrange
@@ -260,6 +310,37 @@ public class DashboardRefreshServiceTests
     }
 
     [Fact]
+    public async Task RefreshSectionAsync_QueuesOnlyWithIncompleteSubscriptionCache_PreservesPartialSummary()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var summaries = new List<NamespaceDashboardSummary>();
+        _sut.SummaryUpdated += (_, summary) => summaries.Add(summary);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(Enumerable.Range(1, 5)
+                .Select(index => new TopicInfo($"topic-{index}", 1, 1, null, TimeSpan.FromMinutes(1)))
+                .ToList());
+        operations.GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var topicName = callInfo.ArgAt<string>(0);
+                return Task.FromResult<IEnumerable<SubscriptionInfo>>(
+                [
+                    new SubscriptionInfo($"sub-{topicName}", topicName, 1, 1, 0, null, false)
+                ]);
+            });
+        await _sut.RefreshAsync("ns", operations);
+
+        // Act
+        await _sut.RefreshSectionAsync("ns", DashboardRefreshSection.Queues, operations);
+
+        // Assert
+        summaries.Select(summary => summary.IsPartial).Should().Equal(true, true);
+        await operations.Received(4).GetSubscriptionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task RefreshAsync_WhenSubscriptionFetchFails_RetriesWithoutCachingEmptyBaseline()
     {
         // Arrange
@@ -285,6 +366,62 @@ public class DashboardRefreshServiceTests
         summaries.Select(summary => summary.IsPartial).Should().Equal(true, false);
         summaries.Select(summary => summary.TotalActiveMessages).Should().Equal(0, 5);
         await operations.Received(2).GetSubscriptionsAsync("topic-a", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTopicsFail_PublishesQueuesAndScopedFailure()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        NamespaceDashboardSummary? summary = null;
+        NamespaceEntitySnapshot? snapshot = null;
+        DashboardRefreshFailure? failure = null;
+        _sut.SummaryUpdated += (_, value) => summary = value;
+        _sut.EntitiesUpdated += (_, value) => snapshot = value;
+        _sut.RefreshFailed += (_, value) => failure = value;
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([new QueueInfo("orders", 12, 10, 2, 0, 100, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns<Task<IEnumerable<TopicInfo>>>(_ => throw new InvalidOperationException("topics unavailable"));
+
+        // Act
+        await _sut.RefreshAsync("ns", operations);
+
+        // Assert
+        summary.Should().NotBeNull();
+        summary!.TotalActiveMessages.Should().Be(10);
+        summary.IsPartial.Should().BeTrue();
+        snapshot!.Queues.Should().ContainSingle(queue => queue.Name == "orders");
+        snapshot.RefreshedSections.Should().Contain(DashboardRefreshSection.Queues);
+        failure.Should().NotBeNull();
+        failure!.Section.Should().Be(DashboardRefreshSection.Topics);
+    }
+
+    [Fact]
+    public async Task RefreshSectionAsync_WhenTopicsPreviouslyFailed_RetainsQueuesAndRetriesTopicSection()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var snapshots = new List<NamespaceEntitySnapshot>();
+        _sut.EntitiesUpdated += (_, value) => snapshots.Add(value);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([new QueueInfo("orders", 12, 10, 2, 0, 100, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1))]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns(
+                _ => throw new InvalidOperationException("topics unavailable"),
+                _ => Task.FromResult<IEnumerable<TopicInfo>>([new TopicInfo("events", 100, 1, null, TimeSpan.FromMinutes(1))]));
+        operations.GetSubscriptionsAsync("events", Arg.Any<CancellationToken>())
+            .Returns([new SubscriptionInfo("processor", "events", 5, 5, 0, null, false)]);
+        await _sut.RefreshAsync("ns", operations);
+
+        // Act
+        await _sut.RefreshSectionAsync("ns", DashboardRefreshSection.Topics, operations);
+
+        // Assert
+        snapshots[^1].Queues.Should().ContainSingle(queue => queue.Name == "orders");
+        snapshots[^1].Subscriptions.Should().ContainSingle(subscription => subscription.Name == "processor");
+        await operations.Received(1).GetQueuesAsync(Arg.Any<CancellationToken>());
+        await operations.Received(2).GetTopicsAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

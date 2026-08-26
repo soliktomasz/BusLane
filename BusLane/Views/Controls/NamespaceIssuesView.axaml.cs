@@ -2,9 +2,9 @@ namespace BusLane.Views.Controls;
 
 using Avalonia.Controls;
 
-public partial class DashboardView : UserControl
+public partial class NamespaceIssuesView : UserControl
 {
-    public DashboardView()
+    public NamespaceIssuesView()
     {
         InitializeComponent();
     }

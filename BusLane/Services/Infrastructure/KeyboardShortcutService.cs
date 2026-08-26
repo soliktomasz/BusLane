@@ -138,7 +138,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
                 primary, Key.B),
             
             [KeyboardShortcutAction.FocusSearch] = new(
-                KeyboardShortcutAction.FocusSearch, "Navigation", "Focus message search",
+                KeyboardShortcutAction.FocusSearch, "Navigation", "Focus namespace search",
                 primary, Key.F),
             
             // Message shortcuts
@@ -176,7 +176,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
                 primary | KeyModifiers.Shift, Key.L),
             
             [KeyboardShortcutAction.OpenCharts] = new(
-                KeyboardShortcutAction.OpenCharts, "Features", "Open charts & metrics",
+                KeyboardShortcutAction.OpenCharts, "Features", "Open namespace overview",
                 primary | KeyModifiers.Shift, Key.O),
             
             [KeyboardShortcutAction.OpenAlerts] = new(

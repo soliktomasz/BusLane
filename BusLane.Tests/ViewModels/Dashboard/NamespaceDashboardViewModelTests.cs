@@ -2,6 +2,7 @@ using BusLane.Models;
 using BusLane.Models.Dashboard;
 using BusLane.Services.Dashboard;
 using BusLane.Services.Monitoring;
+using BusLane.Services.ServiceBus;
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
 using NSubstitute;
@@ -39,6 +40,8 @@ public class NamespaceDashboardViewModelTests
         vm.TopQueues.Should().NotBeNull();
         vm.TopTopics.Should().NotBeNull();
         vm.Charts.Should().HaveCount(4);
+        vm.DeadLetterCard.Title.Should().Be("Dead Letters");
+        vm.ScheduledCard.Title.Should().Be("Scheduled");
     }
 
     [Fact]
@@ -49,6 +52,34 @@ public class NamespaceDashboardViewModelTests
 
         // Assert
         vm.SelectedTimeRange.Should().Be("1 Hour");
+    }
+
+    [Fact]
+    public void OverviewSectionCommands_SelectRequestedSection()
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+
+        // Act
+        sut.ShowIssuesCommand.Execute(null);
+        var issuesSection = sut.SelectedSection;
+        var isIssuesSelected = sut.IsIssuesSelected;
+
+        sut.ShowAnalyticsCommand.Execute(null);
+        var analyticsSection = sut.SelectedSection;
+        var isAnalyticsSelected = sut.IsAnalyticsSelected;
+
+        sut.ShowHomeCommand.Execute(null);
+        var homeSection = sut.SelectedSection;
+        var isHomeSelected = sut.IsHomeSelected;
+
+        // Assert
+        issuesSection.Should().Be(NamespaceOverviewSection.Issues);
+        isIssuesSelected.Should().BeTrue();
+        analyticsSection.Should().Be(NamespaceOverviewSection.Analytics);
+        isAnalyticsSelected.Should().BeTrue();
+        homeSection.Should().Be(NamespaceOverviewSection.Home);
+        isHomeSelected.Should().BeTrue();
     }
 
     [Fact]
@@ -103,5 +134,127 @@ public class NamespaceDashboardViewModelTests
 
         // Assert
         sut.IsPartialSnapshot.Should().BeTrue();
+    }
+
+    [Fact]
+    public void RefreshFailure_AfterSnapshot_PreservesContentAndShowsContextualError()
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var summary = new NamespaceDashboardSummary(42, 3, 0, 100, 0, 0, 0, 0, DateTimeOffset.UtcNow);
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(this, summary);
+        _refreshService.EntitiesUpdated += Raise.Event<EventHandler<NamespaceEntitySnapshot>>(
+            this,
+            new NamespaceEntitySnapshot([], [], DateTimeOffset.UtcNow, [DashboardRefreshSection.Queues, DashboardRefreshSection.Topics]));
+
+        // Act
+        _refreshService.RefreshFailed += Raise.Event<EventHandler<DashboardRefreshFailure>>(
+            this,
+            new DashboardRefreshFailure(DashboardRefreshSection.Topics, "Topics could not be refreshed.", DateTimeOffset.UtcNow));
+
+        // Assert
+        sut.HasSnapshot.Should().BeTrue();
+        sut.ActiveMessagesCard.Value.Should().Be(42);
+        sut.RefreshErrorMessage.Should().Contain("Topics");
+        sut.FailedSection.Should().Be(DashboardRefreshSection.Topics);
+    }
+
+    [Fact]
+    public async Task RetryFailedSection_RetriesOnlyFailedSectionWithoutClearingSnapshot()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        sut.SetOperations(operations, "namespace-a");
+        _refreshService.EntitiesUpdated += Raise.Event<EventHandler<NamespaceEntitySnapshot>>(
+            this,
+            new NamespaceEntitySnapshot([], [], DateTimeOffset.UtcNow, [DashboardRefreshSection.Queues]));
+        _refreshService.RefreshFailed += Raise.Event<EventHandler<DashboardRefreshFailure>>(
+            this,
+            new DashboardRefreshFailure(DashboardRefreshSection.Topics, "Topics unavailable.", DateTimeOffset.UtcNow));
+
+        // Act
+        await sut.RetryFailedSectionCommand.ExecuteAsync(null);
+
+        // Assert
+        await _refreshService.Received(1).RefreshSectionAsync(
+            "namespace-a",
+            DashboardRefreshSection.Topics,
+            operations,
+            Arg.Any<CancellationToken>());
+        sut.HasSnapshot.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RetryFailedSection_WhenRefreshThrows_ShowsRefreshErrorAndResetsRetryState()
+    {
+        // Arrange
+        var operations = Substitute.For<IServiceBusOperations>();
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        sut.SetOperations(operations, "namespace-a");
+        _refreshService.RefreshFailed += Raise.Event<EventHandler<DashboardRefreshFailure>>(
+            this,
+            new DashboardRefreshFailure(DashboardRefreshSection.Topics, "Topics unavailable.", DateTimeOffset.UtcNow));
+        _refreshService.RefreshSectionAsync(
+                "namespace-a",
+                DashboardRefreshSection.Topics,
+                operations,
+                Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new InvalidOperationException("service unavailable"));
+
+        // Act
+        await sut.RetryFailedSectionCommand.ExecuteAsync(null);
+
+        // Assert
+        sut.RefreshErrorMessage.Should().Be("Namespace data could not be refreshed.");
+        sut.IsRetryingFailedSection.Should().BeFalse();
+    }
+
+    [Fact]
+    public void RefreshedTopEntities_KeepThreeItemsPerList()
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var entities = Enumerable.Range(1, 5)
+            .Select(index => new TopEntityInfo($"queue-{index}", 100 - index, index * 10, EntityType.Queue))
+            .Concat(Enumerable.Range(1, 5)
+                .Select(index => new TopEntityInfo($"topic-{index}", 100 - index, index * 10, EntityType.Topic)))
+            .ToList();
+
+        // Act
+        _refreshService.TopEntitiesUpdated += Raise.Event<EventHandler<IReadOnlyList<TopEntityInfo>>>(this, entities);
+
+        // Assert
+        sut.TopQueues.Entities.Should().HaveCount(3);
+        sut.TopTopics.Entities.Should().HaveCount(3);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void SetOperations_ChangedContext_ClearsChartHistory(bool changeOperations, bool changeNamespace)
+    {
+        // Arrange
+        var sut = new NamespaceDashboardViewModel(_refreshService, _alertService, _inboxViewModel);
+        var firstOperations = Substitute.For<IServiceBusOperations>();
+        var secondOperations = Substitute.For<IServiceBusOperations>();
+        sut.SetOperations(firstOperations, "namespace-a");
+        var now = DateTimeOffset.UtcNow;
+
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(
+            this,
+            new NamespaceDashboardSummary(10, 2, 3, 1_048_576, 0, 0, 0, 0, now.AddMinutes(-1)));
+        _refreshService.SummaryUpdated += Raise.Event<EventHandler<NamespaceDashboardSummary>>(
+            this,
+            new NamespaceDashboardSummary(20, 4, 6, 2_097_152, 0, 0, 0, 0, now));
+        sut.Charts.Select(chart => chart.PlotData).Should().NotContainNulls();
+
+        // Act
+        sut.SetOperations(
+            changeOperations ? secondOperations : firstOperations,
+            changeNamespace ? "namespace-b" : "namespace-a");
+
+        // Assert
+        sut.Charts.Select(chart => chart.PlotData).Should().OnlyContain(plot => plot == null);
     }
 }

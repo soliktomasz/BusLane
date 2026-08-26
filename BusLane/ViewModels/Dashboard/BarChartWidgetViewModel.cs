@@ -1,51 +1,32 @@
 namespace BusLane.ViewModels.Dashboard;
 
-using System.Collections.ObjectModel;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using BusLane.Models;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
+using BusLane.Models.Dashboard;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 public partial class BarChartWidgetViewModel : DashboardWidgetViewModel
 {
-    public ObservableCollection<ISeries> Series { get; } = [];
-    public Axis[] XAxes { get; }
-    public Axis[] YAxes { get; }
+    private readonly List<QueueInfo> _queues = [];
+    private readonly List<SubscriptionInfo> _subscriptions = [];
 
-    private readonly ObservableCollection<QueueInfo> _queues = [];
-    private readonly ObservableCollection<SubscriptionInfo> _subscriptions = [];
+    [ObservableProperty]
+    private BarPlotData? _plotData;
 
     public BarChartWidgetViewModel(DashboardWidget widget) : base(widget)
     {
-        XAxes = [new Axis
-        {
-            Name = "Entity",
-            TextSize = 12,
-            LabelsPaint = new SolidColorPaint(SKColors.Gray),
-            Labels = []
-        }];
-
-        YAxes = [new Axis
-        {
-            Name = "Count",
-            TextSize = 12,
-            LabelsPaint = new SolidColorPaint(SKColors.Gray),
-            MinLimit = 0
-        }];
-
         RefreshData();
     }
 
     public void UpdateEntityData(IEnumerable<QueueInfo> queues, IEnumerable<SubscriptionInfo> subscriptions)
     {
         _queues.Clear();
-        foreach (var q in queues)
-            _queues.Add(q);
+        _queues.AddRange(queues);
 
         _subscriptions.Clear();
-        foreach (var s in subscriptions)
-            _subscriptions.Add(s);
+        _subscriptions.AddRange(subscriptions);
 
         RefreshData();
     }
@@ -55,32 +36,29 @@ public partial class BarChartWidgetViewModel : DashboardWidgetViewModel
         try
         {
             ClearError();
-            Series.Clear();
 
+            var topCount = Widget.Configuration.TopEntities <= 0 ? 10 : Widget.Configuration.TopEntities;
             var entities = _queues.Select(q => (Name: q.Name, Active: (double)GetPrimaryMetric(q), DeadLetter: (double)GetSecondaryMetric(q)))
                 .Concat(_subscriptions.Select(s => (Name: $"{s.TopicName}/{s.Name}", Active: (double)GetPrimaryMetric(s), DeadLetter: (double)GetSecondaryMetric(s))))
                 .OrderByDescending(e => e.Active + e.DeadLetter)
-                .Take(Widget.Configuration.TopEntities)
+                .Take(topCount)
                 .ToList();
 
-            XAxes[0].Labels = entities.Select(e => e.Name).ToArray();
+            var labels = entities.Select(e => ShortLabel(e.Name)).ToArray();
+            var activeValues = entities.Select(e => e.Active).ToArray();
+            var deadValues = entities.Select(e => e.DeadLetter).ToArray();
 
-            Series.Add(new ColumnSeries<double>
+            var series = new List<BarPlotSeries>
             {
-                Name = GetPrimaryMetricName(),
-                Values = entities.Select(e => e.Active).ToList(),
-                Fill = new SolidColorPaint(SKColors.DodgerBlue)
-            });
+                new(GetPrimaryMetricName(), activeValues, GetMetricColorToken())
+            };
 
             if (Widget.Configuration.ShowSecondaryMetric)
             {
-                Series.Add(new ColumnSeries<double>
-                {
-                    Name = GetSecondaryMetricName(),
-                    Values = entities.Select(e => e.DeadLetter).ToList(),
-                    Fill = new SolidColorPaint(SKColors.OrangeRed)
-                });
+                series.Add(new BarPlotSeries(GetSecondaryMetricName(), deadValues, "TextDanger"));
             }
+
+            PlotData = new BarPlotData(Title, labels, series);
         }
         catch (Exception ex)
         {
@@ -109,4 +87,14 @@ public partial class BarChartWidgetViewModel : DashboardWidgetViewModel
     };
 
     private string GetSecondaryMetricName() => "Dead Letters";
+
+    private static string ShortLabel(string name)
+    {
+        if (name.Length <= 14)
+        {
+            return name;
+        }
+
+        return name[..13] + "\u2026";
+    }
 }

@@ -1,7 +1,6 @@
+using BusLane.Models.Dashboard;
 using BusLane.ViewModels.Dashboard;
 using FluentAssertions;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
 using Xunit;
 
 namespace BusLane.Tests.ViewModels.Dashboard;
@@ -9,14 +8,14 @@ namespace BusLane.Tests.ViewModels.Dashboard;
 public class DashboardChartViewModelTests
 {
     [Fact]
-    public void Constructor_SetsTitleAndInitializesSeries()
+    public void Constructor_SetsTitleAndNoPlotData()
     {
         // Act
         var vm = new DashboardChartViewModel("Active Messages");
 
         // Assert
         vm.Title.Should().Be("Active Messages");
-        vm.Series.Should().BeEmpty();
+        vm.PlotData.Should().BeNull();
         vm.TimeRangeOptions.Should().NotBeEmpty();
     }
 
@@ -34,22 +33,84 @@ public class DashboardChartViewModelTests
     }
 
     [Fact]
-    public void UpdateData_CreatesLineSeriesWithPoints()
+    public void SetGlobalTimeRange_DoesNotOverrideWhenUsingLocalRange()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Test") { UseGlobalTimeRange = false, SelectedTimeRange = "6 Hours" };
+
+        // Act
+        vm.SetGlobalTimeRange("1 Hour");
+
+        // Assert
+        vm.SelectedTimeRange.Should().Be("6 Hours");
+    }
+
+    [Fact]
+    public void UpdateData_SetsLinePlotData()
     {
         // Arrange
         var vm = new DashboardChartViewModel("Test");
         var now = DateTime.Now;
         var points = new[]
         {
-            new DateTimePoint(now.AddMinutes(-5), 10),
-            new DateTimePoint(now, 15)
+            new LinePlotPoint(now.AddMinutes(-5), 10),
+            new LinePlotPoint(now, 15)
         };
 
         // Act
         vm.UpdateData(points);
 
         // Assert
-        vm.Series.Should().ContainSingle();
-        vm.Series[0].Should().BeOfType<LineSeries<DateTimePoint>>();
+        vm.PlotData.Should().BeOfType<LinePlotData>();
+        var plot = (LinePlotData)vm.PlotData!;
+        plot.Points.Should().HaveCount(2);
+        plot.LineColorToken.Should().Be("AccentBrand");
+    }
+
+    [Fact]
+    public void UpdateData_DangerTitle_UsesDangerToken()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Dead Letters Over Time");
+        var now = DateTime.Now;
+
+        // Act
+        vm.UpdateData(new[] { new LinePlotPoint(now.AddMinutes(-5), 10), new LinePlotPoint(now, 15) });
+
+        // Assert
+        ((LinePlotData)vm.PlotData!).LineColorToken.Should().Be("TextDanger");
+    }
+
+    [Fact]
+    public void UpdateData_SinglePoint_IsNotRenderableTrend()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Test");
+
+        // Act
+        vm.UpdateData([new LinePlotPoint(DateTime.Now, 10)]);
+
+        // Assert
+        vm.PlotData!.IsEmpty.Should().BeTrue();
+    }
+
+    [Fact]
+    public void UpdateData_SelectedRange_DefinesVisibleWindow()
+    {
+        // Arrange
+        var vm = new DashboardChartViewModel("Test");
+        vm.SetGlobalTimeRange("6 Hours");
+
+        // Act
+        vm.UpdateData([
+            new LinePlotPoint(DateTime.Now.AddMinutes(-1), 10),
+            new LinePlotPoint(DateTime.Now, 15)
+        ]);
+
+        // Assert
+        var plot = vm.PlotData!;
+        plot.VisibleStart.Should().NotBeNull();
+        plot.VisibleEnd.Should().NotBeNull();
+        (plot.VisibleEnd - plot.VisibleStart).Should().Be(TimeSpan.FromHours(6));
     }
 }

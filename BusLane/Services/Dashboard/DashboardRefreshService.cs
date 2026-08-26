@@ -21,6 +21,7 @@ public class DashboardRefreshService : IDashboardRefreshService
     public event EventHandler<NamespaceDashboardSummary>? SummaryUpdated;
     public event EventHandler<IReadOnlyList<TopEntityInfo>>? TopEntitiesUpdated;
     public event EventHandler<NamespaceEntitySnapshot>? EntitiesUpdated;
+    public event EventHandler<DashboardRefreshFailure>? RefreshFailed;
 
     private Timer? _refreshTimer;
     private readonly object _stateLock = new();
@@ -36,10 +37,28 @@ public class DashboardRefreshService : IDashboardRefreshService
     public async Task RefreshAsync(string namespaceId, IServiceBusOperations? operations = null, CancellationToken ct = default)
     {
         var context = GetOrCreateRefreshContext(namespaceId, operations);
+        await ExecuteRefreshAsync(context, section: null, ct);
+    }
+
+    public async Task RefreshSectionAsync(
+        string namespaceId,
+        DashboardRefreshSection section,
+        IServiceBusOperations? operations = null,
+        CancellationToken ct = default)
+    {
+        var context = GetOrCreateRefreshContext(namespaceId, operations);
+        await ExecuteRefreshAsync(context, section, ct);
+    }
+
+    private async Task ExecuteRefreshAsync(
+        RefreshContext context,
+        DashboardRefreshSection? section,
+        CancellationToken ct)
+    {
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, context.CancellationToken);
         try
         {
-            await RefreshCoreAsync(context, linkedCts.Token);
+            await RefreshCoreAsync(context, section, linkedCts.Token);
         }
         catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested && !ct.IsCancellationRequested)
         {
@@ -47,7 +66,10 @@ public class DashboardRefreshService : IDashboardRefreshService
         }
     }
 
-    private async Task RefreshCoreAsync(RefreshContext context, CancellationToken ct)
+    private async Task RefreshCoreAsync(
+        RefreshContext context,
+        DashboardRefreshSection? requestedSection,
+        CancellationToken ct)
     {
         await _refreshGate.WaitAsync(ct);
         IsRefreshing = true;
@@ -80,20 +102,89 @@ public class DashboardRefreshService : IDashboardRefreshService
                 return;
             }
 
-            // Fetch all queues and topics
-            var queuesTask = operations.GetQueuesAsync(ct);
-            var topicsTask = operations.GetTopicsAsync(ct);
+            var refreshQueues = requestedSection is null or DashboardRefreshSection.Queues;
+            var refreshTopics = requestedSection is null or DashboardRefreshSection.Topics or DashboardRefreshSection.Subscriptions;
+            var queuesTask = refreshQueues ? FetchQueuesAsync(operations, ct) : null;
+            var topicsTask = refreshTopics ? FetchTopicsAsync(operations, ct) : null;
+            if (queuesTask is not null && topicsTask is not null)
+            {
+                await Task.WhenAll(queuesTask, topicsTask);
+            }
+            else if (queuesTask is not null)
+            {
+                await queuesTask;
+            }
+            else if (topicsTask is not null)
+            {
+                await topicsTask;
+            }
 
-            await Task.WhenAll(queuesTask, topicsTask);
+            var refreshedSections = new List<DashboardRefreshSection>();
+            var rootFailure = false;
+            if (queuesTask is not null)
+            {
+                var result = await queuesTask;
+                if (result.Succeeded)
+                {
+                    context.Cache.Queues = result.Items;
+                    context.Cache.HasQueues = true;
+                    refreshedSections.Add(DashboardRefreshSection.Queues);
+                }
+                else
+                {
+                    rootFailure = true;
+                    PublishFailure(context, DashboardRefreshSection.Queues, "Queues could not be refreshed.");
+                }
+            }
 
-            var queues = queuesTask.Result.ToList();
-            var topics = topicsTask.Result.ToList();
+            var subscriptionsPartial = context.Cache.Topics.Any(topic =>
+                !context.Cache.SubscriptionsByTopic.ContainsKey(topic.Name));
+            if (topicsTask is not null)
+            {
+                var result = await topicsTask;
+                if (result.Succeeded)
+                {
+                    context.Cache.Topics = result.Items;
+                    context.Cache.HasTopics = true;
+                    refreshedSections.Add(DashboardRefreshSection.Topics);
+                    var subscriptionResult = await RefreshSubscriptionsAsync(
+                        operations,
+                        context.Cache.Topics,
+                        context.Cache,
+                        ct);
+                    subscriptionsPartial = subscriptionResult.IsPartial;
+                    if (subscriptionResult.HadFailures)
+                    {
+                        PublishFailure(context, DashboardRefreshSection.Subscriptions, "Some subscriptions could not be refreshed.");
+                    }
+                    else
+                    {
+                        refreshedSections.Add(DashboardRefreshSection.Subscriptions);
+                    }
+                }
+                else
+                {
+                    rootFailure = true;
+                    subscriptionsPartial = true;
+                    PublishFailure(context, DashboardRefreshSection.Topics, "Topics could not be refreshed.");
+                }
+            }
 
-            var (allSubscriptions, isPartial) = await RefreshSubscriptionsAsync(
-                operations,
-                topics,
-                context.Cache,
-                ct);
+            if (!IsCurrent(context.Generation) || refreshedSections.Count == 0)
+            {
+                return;
+            }
+
+            var queues = context.Cache.Queues;
+            var topics = context.Cache.Topics;
+            var allSubscriptions = context.Cache.Topics
+                .Where(topic => context.Cache.SubscriptionsByTopic.ContainsKey(topic.Name))
+                .SelectMany(topic => context.Cache.SubscriptionsByTopic[topic.Name])
+                .ToList();
+            var isPartial = rootFailure
+                || subscriptionsPartial
+                || !context.Cache.HasQueues
+                || !context.Cache.HasTopics;
 
             // Calculate totals from queues
             long totalActiveMessages = queues.Sum(q => q.ActiveMessageCount);
@@ -144,7 +235,8 @@ public class DashboardRefreshService : IDashboardRefreshService
             var entitySnapshot = new NamespaceEntitySnapshot(
                 queues,
                 allSubscriptions,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                refreshedSections);
 
             SummaryUpdated?.Invoke(this, summary);
             TopEntitiesUpdated?.Invoke(this, topEntities);
@@ -168,7 +260,7 @@ public class DashboardRefreshService : IDashboardRefreshService
         return ((double)(current - previous) / previous) * 100.0;
     }
 
-    private async Task<(List<SubscriptionInfo> Subscriptions, bool IsPartial)> RefreshSubscriptionsAsync(
+    private async Task<(List<SubscriptionInfo> Subscriptions, bool IsPartial, bool HadFailures)> RefreshSubscriptionsAsync(
         IServiceBusOperations operations,
         IReadOnlyList<TopicInfo> topics,
         DashboardRefreshCache cache,
@@ -199,7 +291,51 @@ public class DashboardRefreshService : IDashboardRefreshService
             .Where(topic => cache.SubscriptionsByTopic.ContainsKey(topic.Name))
             .SelectMany(topic => cache.SubscriptionsByTopic[topic.Name])
             .ToList();
-        return (subscriptions, topics.Any(topic => !cache.SubscriptionsByTopic.ContainsKey(topic.Name)));
+        return (
+            subscriptions,
+            topics.Any(topic => !cache.SubscriptionsByTopic.ContainsKey(topic.Name)),
+            results.Any(result => !result.Result.Succeeded));
+    }
+
+    private static async Task<SectionFetchResult<QueueInfo>> FetchQueuesAsync(
+        IServiceBusOperations operations,
+        CancellationToken ct)
+    {
+        try
+        {
+            return new SectionFetchResult<QueueInfo>(true, (await operations.GetQueuesAsync(ct)).ToList());
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            Log.Warning(ex, "Failed to fetch queues for dashboard");
+            return new SectionFetchResult<QueueInfo>(false, []);
+        }
+    }
+
+    private static async Task<SectionFetchResult<TopicInfo>> FetchTopicsAsync(
+        IServiceBusOperations operations,
+        CancellationToken ct)
+    {
+        try
+        {
+            return new SectionFetchResult<TopicInfo>(true, (await operations.GetTopicsAsync(ct)).ToList());
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            Log.Warning(ex, "Failed to fetch topics for dashboard");
+            return new SectionFetchResult<TopicInfo>(false, []);
+        }
+    }
+
+    private void PublishFailure(
+        RefreshContext context,
+        DashboardRefreshSection section,
+        string message)
+    {
+        if (IsCurrent(context.Generation))
+        {
+            RefreshFailed?.Invoke(this, new DashboardRefreshFailure(section, message, DateTimeOffset.UtcNow));
+        }
     }
 
     private static List<TopicInfo> SelectTopicsToRefresh(
@@ -321,10 +457,15 @@ public class DashboardRefreshService : IDashboardRefreshService
             ));
         }
 
-        // Keep both lists in this collection; each UI list filters by entity type.
+        // Rank each entity type independently so a busy queue set cannot starve topics.
         return entities
-            .OrderByDescending(e => e.MessageCount)
+            .Where(entity => entity.Type == EntityType.Queue)
+            .OrderByDescending(entity => entity.MessageCount)
             .Take(20)
+            .Concat(entities
+                .Where(entity => entity.Type == EntityType.Topic)
+                .OrderByDescending(entity => entity.MessageCount)
+                .Take(20))
             .ToList();
     }
 
@@ -373,7 +514,7 @@ public class DashboardRefreshService : IDashboardRefreshService
 
         try
         {
-            await RefreshCoreAsync(context, context.CancellationToken);
+            await RefreshCoreAsync(context, requestedSection: null, context.CancellationToken);
         }
         catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
         {
@@ -457,8 +598,14 @@ public class DashboardRefreshService : IDashboardRefreshService
         DashboardRefreshCache Cache,
         CancellationToken CancellationToken);
 
+    private sealed record SectionFetchResult<T>(bool Succeeded, List<T> Items);
+
     private sealed class DashboardRefreshCache
     {
+        public List<QueueInfo> Queues { get; set; } = [];
+        public List<TopicInfo> Topics { get; set; } = [];
+        public bool HasQueues { get; set; }
+        public bool HasTopics { get; set; }
         public Dictionary<string, List<SubscriptionInfo>> SubscriptionsByTopic { get; } =
             new(StringComparer.OrdinalIgnoreCase);
 

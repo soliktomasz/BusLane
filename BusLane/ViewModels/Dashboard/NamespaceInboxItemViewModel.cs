@@ -1,6 +1,7 @@
 namespace BusLane.ViewModels.Dashboard;
 
 using BusLane.Models;
+using BusLane.Models.Dashboard;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.Input;
 
@@ -9,9 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 /// </summary>
 public partial class NamespaceInboxItemViewModel : ViewModelBase
 {
-    private readonly Action<NamespaceInboxItem> _openMessages;
-    private readonly Action<NamespaceInboxItem> _openDeadLetter;
-    private readonly Action<NamespaceInboxItem> _openSessionInspector;
+    private readonly Action<NamespaceNavigationRequest> _navigate;
     private readonly Action<NamespaceInboxItem> _markReviewed;
 
     public NamespaceInboxItem Item { get; }
@@ -34,6 +33,27 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
     public long DeadLetterDelta { get; }
     public long ScheduledDelta { get; }
     public int AlertDelta { get; }
+    public bool IsReviewed { get; }
+
+    /// <summary>
+    /// Triage health driving the status dot and pill: a dead-letter accumulation takes
+    /// priority over scheduled, active-message, and alert warning signals.
+    /// </summary>
+    public BusLane.Models.Dashboard.InboxStatus Status => DeadLetterCount > 0
+        ? BusLane.Models.Dashboard.InboxStatus.Critical
+        : ScheduledCount > 0
+            ? BusLane.Models.Dashboard.InboxStatus.Warning
+            : HasActiveAlerts || ActiveMessageCount > 0
+                ? BusLane.Models.Dashboard.InboxStatus.Warning
+                : BusLane.Models.Dashboard.InboxStatus.Healthy;
+
+    /// <summary>Short label shown in the status pill.</summary>
+    public string StatusLabel => Status switch
+    {
+        BusLane.Models.Dashboard.InboxStatus.Critical => "DLQ",
+        BusLane.Models.Dashboard.InboxStatus.Warning => "Scheduled",
+        _ => "OK"
+    };
 
     public NamespaceInboxItemViewModel(
         NamespaceInboxItem item,
@@ -41,9 +61,8 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
         long deadLetterDelta,
         long scheduledDelta,
         int alertDelta,
-        Action<NamespaceInboxItem> openMessages,
-        Action<NamespaceInboxItem> openDeadLetter,
-        Action<NamespaceInboxItem> openSessionInspector,
+        bool isReviewed,
+        Action<NamespaceNavigationRequest> navigate,
         Action<NamespaceInboxItem> markReviewed)
     {
         Item = item;
@@ -51,33 +70,37 @@ public partial class NamespaceInboxItemViewModel : ViewModelBase
         DeadLetterDelta = deadLetterDelta;
         ScheduledDelta = scheduledDelta;
         AlertDelta = alertDelta;
-        _openMessages = openMessages;
-        _openDeadLetter = openDeadLetter;
-        _openSessionInspector = openSessionInspector;
+        IsReviewed = isReviewed;
+        _navigate = navigate;
         _markReviewed = markReviewed;
     }
 
     [RelayCommand]
     private void OpenMessages()
     {
-        _openMessages(Item);
+        Navigate(EntityWorkspaceView.ActiveMessages);
     }
 
     [RelayCommand]
     private void OpenDeadLetter()
     {
-        _openDeadLetter(Item);
+        Navigate(EntityWorkspaceView.DeadLetters);
     }
 
     [RelayCommand]
     private void OpenSessionInspector()
     {
-        _openSessionInspector(Item);
+        Navigate(EntityWorkspaceView.Sessions);
     }
 
     [RelayCommand]
     private void MarkReviewed()
     {
         _markReviewed(Item);
+    }
+
+    private void Navigate(EntityWorkspaceView view)
+    {
+        _navigate(new NamespaceNavigationRequest(EntityType, EntityName, TopicName, view));
     }
 }

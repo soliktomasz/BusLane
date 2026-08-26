@@ -1,12 +1,10 @@
+using BusLane.Models.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Avalonia;
 using Avalonia.Threading;
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using System.Collections.ObjectModel;
-using SkiaSharp;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace BusLane.ViewModels.Dashboard;
 
@@ -16,45 +14,13 @@ public partial class DashboardChartViewModel : ObservableObject
     private string _title;
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _series = new();
-
-    [ObservableProperty]
-    private ObservableCollection<Axis> _xAxes = new()
-    {
-        new Axis
-        {
-            LabelsPaint = new SolidColorPaint(new SKColor(255, 255, 255)),
-            Labeler = value =>
-            {
-                try
-                {
-                    return new DateTime((long)value).ToString("HH:mm");
-                }
-                catch
-                {
-                    return string.Empty;
-                }
-            }
-        }
-    };
-
-    [ObservableProperty]
-    private ObservableCollection<Axis> _yAxes = new()
-    {
-        new Axis
-        {
-            LabelsPaint = new SolidColorPaint(new SKColor(255, 255, 255)),
-            MinLimit = 0
-        }
-    };
+    private LinePlotData? _plotData;
 
     [ObservableProperty]
     private string _selectedTimeRange = "1 Hour";
 
     [ObservableProperty]
     private bool _useGlobalTimeRange = true;
-
-    private readonly ObservableCollection<DateTimePoint> _points = [];
 
     public event EventHandler<string>? TimeRangeChanged;
 
@@ -69,12 +35,10 @@ public partial class DashboardChartViewModel : ObservableObject
     public DashboardChartViewModel(string title)
     {
         _title = title;
-        ApplyTimeRangeWindow();
     }
 
     partial void OnSelectedTimeRangeChanged(string value)
     {
-        ApplyTimeRangeWindow();
         TimeRangeChanged?.Invoke(this, value);
     }
 
@@ -86,7 +50,7 @@ public partial class DashboardChartViewModel : ObservableObject
         }
     }
 
-    public void UpdateData(IEnumerable<DateTimePoint> dataPoints)
+    public void UpdateData(IEnumerable<LinePlotPoint> dataPoints)
     {
         if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
         {
@@ -95,58 +59,41 @@ public partial class DashboardChartViewModel : ObservableObject
             return;
         }
 
-        _points.Clear();
-        foreach (var point in dataPoints)
-        {
-            _points.Add(point);
-        }
-        ApplyTimeRangeWindow();
-
-        if (Series.Count == 0)
-        {
-            Series.Add(new LineSeries<DateTimePoint>
-            {
-                Values = _points,
-                Fill = new SolidColorPaint(SKColors.Transparent),
-                Stroke = new SolidColorPaint(GetSeriesColor()) { StrokeThickness = 2.5f },
-                GeometryFill = null,
-                GeometryStroke = null
-            });
-        }
+        var points = dataPoints.ToList();
+        var visibleEnd = DateTime.Now;
+        var visibleStart = visibleEnd - GetTimeSpan(SelectedTimeRange);
+        PlotData = new LinePlotData(Title, points, GetColorToken(), visibleStart, visibleEnd);
     }
 
-    private SKColor GetSeriesColor()
+    public void ClearData()
+    {
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(ClearData);
+            return;
+        }
+
+        PlotData = null;
+    }
+
+    private string GetColorToken()
     {
         if (Title.Contains("Dead", StringComparison.OrdinalIgnoreCase))
         {
-            return new SKColor(239, 83, 80);
+            return "TextDanger";
         }
 
         if (Title.Contains("Scheduled", StringComparison.OrdinalIgnoreCase))
         {
-            return new SKColor(255, 167, 38);
+            return "TextWarning";
         }
 
         if (Title.Contains("Size", StringComparison.OrdinalIgnoreCase))
         {
-            return new SKColor(102, 187, 106);
+            return "TextSuccess";
         }
 
-        return new SKColor(66, 165, 245);
-    }
-
-    private void ApplyTimeRangeWindow()
-    {
-        if (XAxes.Count == 0)
-        {
-            return;
-        }
-
-        var now = DateTime.Now;
-        var min = now.Subtract(GetTimeSpan(SelectedTimeRange));
-
-        XAxes[0].MinLimit = min.Ticks;
-        XAxes[0].MaxLimit = now.Ticks;
+        return "AccentBrand";
     }
 
     private static TimeSpan GetTimeSpan(string selectedTimeRange)

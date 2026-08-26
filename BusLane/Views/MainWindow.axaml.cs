@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using BusLane.Services.Infrastructure;
 using BusLane.ViewModels;
 using BusLane.ViewModels.Core;
+using BusLane.Views.Controls;
 using CommunityToolkit.Mvvm.Input;
 
 public partial class MainWindow : Window
@@ -59,6 +60,19 @@ public partial class MainWindow : Window
             {
                 if (IsTextInputFocused())
                     return false;
+
+                if (vm.IsNamespaceOverviewVisible)
+                {
+                    var namespaceSearch = this.GetVisualDescendants()
+                        .OfType<NamespaceEntitySearchView>()
+                        .FirstOrDefault();
+                    if (namespaceSearch != null)
+                    {
+                        namespaceSearch.FocusSearch();
+                        return true;
+                    }
+                }
+
                 var searchBox = FindDescendantByName<TextBox>("MessageSearchTextBox");
                 if (searchBox == null)
                     return false;
@@ -101,7 +115,7 @@ public partial class MainWindow : Window
                 Execute(vm.OpenLiveStreamCommand),
 
             [KeyboardShortcutAction.OpenCharts] = vm =>
-                Execute(vm.OpenChartsCommand),
+                Execute(vm.OpenOverviewCommand),
 
             [KeyboardShortcutAction.OpenAlerts] = vm =>
                 Execute(vm.OpenAlertsCommand),
