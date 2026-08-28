@@ -41,6 +41,22 @@ public class EntityTreeViewTests
     }
 
     [Fact]
+    public void EntityTreeViews_ExposePinActionInEntityContextMenus()
+    {
+        // Arrange
+        var connectionTree = XDocument.Parse(File.ReadAllText(GetConnectionTreePath()));
+        var azureTree = XDocument.Parse(File.ReadAllText(GetAzureTreePath()));
+
+        // Assert
+        AssertEntityContextMenusExposePinAction(
+            connectionTree,
+            "{Binding $parent[Window].DataContext.ToggleEntityPinCommand}");
+        AssertEntityContextMenusExposePinAction(
+            azureTree,
+            "{ReflectionBinding $parent[Window].DataContext.ToggleEntityPinCommand}");
+    }
+
+    [Fact]
     public void EntityTreeViews_SelectionRowsGuardSecondaryPointerActivation()
     {
         // Arrange
@@ -324,6 +340,17 @@ public class EntityTreeViewTests
         selectionButtons.Should().OnlyContain(element =>
             element.Attribute("PointerPressed") != null &&
             element.Attribute("PointerPressed")!.Value == "OnEntityRowPointerPressed");
+    }
+
+    private static void AssertEntityContextMenusExposePinAction(XDocument document, string expectedCommand)
+    {
+        foreach (var identifyingAction in new[] { "Delete Queue", "Delete Topic", "Delete Subscription" })
+        {
+            var pinAction = FindMenuItem(GetMenuItems(document, identifyingAction), "Pin");
+
+            pinAction.Attribute("Command")?.Value.Should().Be(expectedCommand);
+            pinAction.Attribute("CommandParameter")?.Value.Should().Be("{Binding}");
+        }
     }
 
     private static void AssertInlineActionVisibilityBinding(XDocument document, string tooltip)

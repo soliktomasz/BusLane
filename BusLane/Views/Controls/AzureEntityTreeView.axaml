@@ -245,6 +245,9 @@
                                                             <MenuItem Header="Delete Queue"
                                                                       Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.DeleteQueueRequestCommand}"
                                                                       CommandParameter="{Binding}"/>
+                                                            <MenuItem Header="Pin"
+                                                                      Command="{ReflectionBinding $parent[Window].DataContext.ToggleEntityPinCommand}"
+                                                                      CommandParameter="{Binding}"/>
                                                             <MenuItem Header="Copy Name"
                                                                       Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.CopyQueueNameCommand}"
                                                                       CommandParameter="{Binding}"/>
@@ -401,6 +404,9 @@
                                                                 <MenuItem Header="Delete Topic"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.DeleteTopicRequestCommand}"
                                                                           CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Pin"
+                                                                          Command="{ReflectionBinding $parent[Window].DataContext.ToggleEntityPinCommand}"
+                                                                          CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Copy Name"
                                                                           Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.CopyTopicNameCommand}"
                                                                           CommandParameter="{Binding}"/>
@@ -528,6 +534,9 @@
                                                                                                   CommandParameter="{Binding}"/>
                                                                                         <MenuItem Header="Delete Subscription"
                                                                                                   Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.DeleteSubscriptionRequestCommand}"
+                                                                                                  CommandParameter="{Binding}"/>
+                                                                                        <MenuItem Header="Pin"
+                                                                                                  Command="{ReflectionBinding $parent[Window].DataContext.ToggleEntityPinCommand}"
                                                                                                   CommandParameter="{Binding}"/>
                                                                                         <MenuItem Header="Copy Path"
                                                                                                   Command="{ReflectionBinding $parent[Window].DataContext.EntityOperations.CopySubscriptionPathCommand}"
