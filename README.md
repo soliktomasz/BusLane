@@ -3,7 +3,7 @@
 A cross-platform Azure Service Bus management tool built with Avalonia UI and .NET 10.
 
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)
-![Avalonia UI](https://img.shields.io/badge/Avalonia-12.0-8B44AC?style=flat)
+![Avalonia UI](https://img.shields.io/badge/Avalonia-12.1-8B44AC?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/soliktomasz/BusLane)
@@ -14,7 +14,6 @@ A cross-platform Azure Service Bus management tool built with Avalonia UI and .N
   <a href="https://soliktomasz.github.io/BusLane/">Website</a> |
   <a href="#installation">Installation</a> |
   <a href="#features">Features</a> |
-  <a href="ROADMAP.md">Roadmap</a> |
   <a href="SECURITY.md">Security</a> |
   <a href="https://deepwiki.com/soliktomasz/BusLane">Documentation</a>
 </p>
@@ -64,7 +63,7 @@ dotnet run
 
 ## Contributing
 
-Contributions welcome. Fork, create a feature branch, and submit a PR. See [ROADMAP.md](ROADMAP.md) for ideas.
+Contributions welcome. Fork, create a feature branch, and submit a PR.
 
 ## License
 

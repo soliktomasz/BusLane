@@ -177,12 +177,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
     # Update hero badge version
     sed -i '' "s/Version [0-9.]*[0-9]/Version ${VERSION}/" docs/index.html
-    # Update current version badge in roadmap
-    sed -i '' "s/<span class=\"version-badge current\">v[0-9.]*<\/span>/<span class=\"version-badge current\">v${VERSION}<\/span>/" docs/index.html
 else
     # Linux
     sed -i "s/Version [0-9.]*[0-9]/Version ${VERSION}/" docs/index.html
-    sed -i "s/<span class=\"version-badge current\">v[0-9.]*<\/span>/<span class=\"version-badge current\">v${VERSION}<\/span>/" docs/index.html
 fi
 print_success "GitHub Pages updated"
 

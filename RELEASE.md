@@ -15,7 +15,7 @@ The `release_script.sh` automates the entire release process for BusLane, ensuri
 - ✅ **Multi-file Updates**: Updates version in all locations:
   - README.md version badge
   - BusLane/Info.plist (CFBundleVersion and CFBundleShortVersionString)
-  - docs/index.html (hero section and roadmap)
+  - docs/index.html (hero section)
 
 - ✅ **Interactive**: Prompts for confirmation before each major step
 
@@ -155,9 +155,6 @@ Proceed with version update? (y/n)
 ```html
 <!-- Hero section -->
 <span>Version 0.7.2 — Enhanced Message Management</span>
-
-<!-- Roadmap section -->
-<span class="version-badge current">v0.7.2</span>
 ```
 
 ## Manual Steps (If Needed)
@@ -168,7 +165,6 @@ If you need to update versions manually or the script fails:
 2. **Info.plist**: Update both `CFBundleVersion` and `CFBundleShortVersionString`
 3. **docs/index.html**:
    - Update hero badge (search for "Version X.X.X")
-   - Update current version badge (search for "version-badge current")
 4. Create git commit: `git commit -m "chore: bump version to X.X.X"`
 5. Create tag: `git tag -a vX.X.X -m "Release X.X.X"`
 6. Push: `git push origin vX.X.X && git push origin main`
