@@ -99,7 +99,7 @@ public class NavigationStatePinningTests
     }
 
     [Fact]
-    public void FilteredQueues_PutsPinnedQueuesFirst()
+    public void FilteredQueues_WhenQueueIsPinned_PreservesSourceOrder()
     {
         // Arrange
         var preferences = new TestPreferencesService();
@@ -115,7 +115,27 @@ public class NavigationStatePinningTests
         var result = sut.FilteredQueues.Select(queue => queue.Name);
 
         // Assert
-        result.Should().Equal("beta", "alpha");
+        result.Should().Equal("alpha", "beta");
+    }
+
+    [Fact]
+    public void FilteredTopics_WhenTopicIsPinned_PreservesSourceOrder()
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var _sut = new NavigationState(preferences);
+        _sut.SetPinScope("workspace-a");
+        var alpha = CreateTopic("alpha");
+        var beta = CreateTopic("beta");
+        _sut.Topics.Add(alpha);
+        _sut.Topics.Add(beta);
+        _sut.TogglePin(beta);
+
+        // Act
+        var result = _sut.FilteredTopics.Select(topic => topic.Name);
+
+        // Assert
+        result.Should().Equal("alpha", "beta");
     }
 
     [Fact]
@@ -192,6 +212,9 @@ public class NavigationStatePinningTests
 
     private static QueueInfo CreateQueue(string name) =>
         new(name, 1, 1, 0, 0, 1, null, false, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+
+    private static TopicInfo CreateTopic(string name) =>
+        new(name, 1, 1, null, TimeSpan.FromMinutes(1));
 
     private sealed class TestPreferencesService : IPreferencesService
     {

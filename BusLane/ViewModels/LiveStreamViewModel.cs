@@ -119,6 +119,11 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
                 FilteredMessages.Add(message);
             }
         }
+
+        if (SelectedMessage != null && !FilteredMessages.Contains(SelectedMessage))
+        {
+            SelectedMessage = null;
+        }
     }
 
     private bool MatchesFilter(LiveStreamMessage message)
@@ -206,6 +211,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private async Task StopStreamAsync()
     {
         await _liveStreamService.StopStreamAsync();
+        SelectedMessage = null;
         CurrentEntityName = null;
         CurrentEntityType = null;
     }
@@ -221,6 +227,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
         Messages.Clear();
         FilteredMessages.Clear();
+        SelectedMessage = null;
         MessageCount = 0;
     }
 
@@ -379,6 +386,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             }
         }
 
+        var previousNewestMessage = FilteredMessages.FirstOrDefault();
+
         // Messages and FilteredMessages are newest-first via Insert(0, ...), so tail removal drops oldest buffered items.
         for (var i = 0; i < removedMessages.Count; i++)
         {
@@ -407,6 +416,11 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             {
                 _correlationCatalog.Add(CorrelationMessageFactory.FromLiveStream(message, correlationContext));
             }
+        }
+
+        if (AutoScroll && FilteredMessages.Count > 0 && ReferenceEquals(SelectedMessage, previousNewestMessage))
+        {
+            SelectedMessage = FilteredMessages[0];
         }
 
         MessageCount = _messageBuffer.Count;

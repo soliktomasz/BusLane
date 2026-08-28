@@ -1,5 +1,7 @@
 namespace BusLane.Tests.Views;
 
+using System.Xml.Linq;
+
 using FluentAssertions;
 
 public class LiveStreamViewTests
@@ -17,6 +19,25 @@ public class LiveStreamViewTests
 
         // Assert
         listXaml.Should().Contain("<VirtualizingStackPanel/>");
+    }
+
+    [Fact]
+    public void LiveStreamView_StaticConverterReference_ResolvesFromLocalResources()
+    {
+        // Arrange
+        var document = XDocument.Parse(File.ReadAllText(GetLiveStreamViewPath()));
+        var xamlNamespace = XNamespace.Get("http://schemas.microsoft.com/winfx/2006/xaml");
+
+        // Act
+        var resourceKeys = document
+            .Descendants()
+            .Where(element => element.Parent?.Name.LocalName == "UserControl.Resources")
+            .Select(element => element.Attribute(xamlNamespace + "Key")?.Value)
+            .Where(key => key != null)
+            .ToList();
+
+        // Assert
+        resourceKeys.Should().Contain("IntEqualsConverter");
     }
 
     private static string GetLiveStreamViewPath()

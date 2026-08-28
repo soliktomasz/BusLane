@@ -45,19 +45,19 @@ public partial class NavigationState : ViewModelBase
     /// Gets the filtered queues based on the current entity filter text.
     /// </summary>
     public IEnumerable<QueueInfo> FilteredQueues =>
-        OrderPinnedFirst(string.IsNullOrWhiteSpace(EntityFilter)
+        string.IsNullOrWhiteSpace(EntityFilter)
             ? Queues
             : Queues.Where(q =>
-                q.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase)));
+                q.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Gets the filtered topics based on the current entity filter text.
     /// </summary>
     public IEnumerable<TopicInfo> FilteredTopics =>
-        OrderPinnedFirst(string.IsNullOrWhiteSpace(EntityFilter)
+        string.IsNullOrWhiteSpace(EntityFilter)
             ? Topics
             : Topics.Where(t =>
-                t.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase)));
+                t.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Gets the filtered namespaces based on the current filter text.
@@ -314,15 +314,6 @@ public partial class NavigationState : ViewModelBase
         {
             SelectedMessageTabIndex = 0;
         }
-    }
-
-    private IEnumerable<T> OrderPinnedFirst<T>(IEnumerable<T> entities)
-    {
-        return entities
-            .Select((entity, index) => new { Entity = entity, Index = index })
-            .OrderBy(item => IsPinned(item.Entity) ? 0 : 1)
-            .ThenBy(item => item.Index)
-            .Select(item => item.Entity);
     }
 
     private PinnedEntity? CreatePin(object? entity)
