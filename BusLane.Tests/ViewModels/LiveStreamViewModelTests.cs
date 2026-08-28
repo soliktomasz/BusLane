@@ -128,11 +128,32 @@ public class LiveStreamViewModelTests
 
         // Act
         liveStreamService.EmitMessage(CreateMessage("message-2", 2));
-        await WaitForAsync(() => sut.Messages.Count == 2);
+        await WaitForAsync(() => sut.SelectedMessage?.MessageId == "message-2");
 
         // Assert
         sut.SelectedMessage.Should().BeSameAs(sut.FilteredMessages[0]);
         sut.SelectedMessage!.MessageId.Should().Be("message-2");
+    }
+
+    [Fact]
+    public async Task IncomingMessage_WhenOlderMessageIsSelected_PreservesManualSelection()
+    {
+        // Arrange
+        var liveStreamService = new FakeLiveStreamService();
+        await using var sut = new LiveStreamViewModel(liveStreamService, () => null);
+        liveStreamService.EmitMessage(CreateMessage("message-1", 1));
+        await WaitForAsync(() => sut.SelectedMessage?.MessageId == "message-1");
+        liveStreamService.EmitMessage(CreateMessage("message-2", 2));
+        await WaitForAsync(() => sut.SelectedMessage?.MessageId == "message-2");
+        var olderMessage = sut.FilteredMessages.Single(message => message.MessageId == "message-1");
+        sut.SelectedMessage = olderMessage;
+
+        // Act
+        liveStreamService.EmitMessage(CreateMessage("message-3", 3));
+        await WaitForAsync(() => sut.MessageCount == 3);
+
+        // Assert
+        sut.SelectedMessage.Should().BeSameAs(olderMessage);
     }
 
     private static LiveStreamMessage CreateMessage(string messageId, long sequenceNumber)

@@ -123,16 +123,16 @@ public class NavigationStatePinningTests
     {
         // Arrange
         var preferences = new TestPreferencesService();
-        var sut = new NavigationState(preferences);
-        sut.SetPinScope("workspace-a");
+        var _sut = new NavigationState(preferences);
+        _sut.SetPinScope("workspace-a");
         var alpha = CreateTopic("alpha");
         var beta = CreateTopic("beta");
-        sut.Topics.Add(alpha);
-        sut.Topics.Add(beta);
-        sut.TogglePin(beta);
+        _sut.Topics.Add(alpha);
+        _sut.Topics.Add(beta);
+        _sut.TogglePin(beta);
 
         // Act
-        var result = sut.FilteredTopics.Select(topic => topic.Name);
+        var result = _sut.FilteredTopics.Select(topic => topic.Name);
 
         // Assert
         result.Should().Equal("alpha", "beta");
