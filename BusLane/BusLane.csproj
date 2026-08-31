@@ -40,7 +40,7 @@
     <PackageReference Include="Azure.ResourceManager.ServiceBus" Version="1.2.0" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Lucide.Avalonia" Version="0.2.19" />
+    <PackageReference Include="Lucide.Avalonia" Version="0.2.20" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.11" />
