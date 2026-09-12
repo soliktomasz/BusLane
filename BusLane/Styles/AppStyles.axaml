@@ -980,87 +980,115 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel>
+                    <ToggleButton Classes="entity-tree-group-toggle"
+                                  HorizontalContentAlignment="Stretch"
+                                  IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                        <Grid ColumnDefinitions="24,*">
+                            <LucideIcon Kind="ChevronRight" Size="14" HorizontalAlignment="Center"/>
+                            <ContentPresenter Grid.Column="1"
+                                              Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                              HorizontalContentAlignment="Stretch"/>
+                        </Grid>
+                    </ToggleButton>
+                    <ContentPresenter IsVisible="{TemplateBinding IsExpanded}"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="Stretch"/>
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
-    <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader">
-        <Setter Property="Padding" Value="6,3"/>
-        <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader:checked">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-group /template/ ToggleButton#ExpanderHeader:pointerover">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-group /template/ Border#ExpanderContent">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0"/>
-    </Style>
-
+    <!-- Expansion and selection have distinct keyboard and pointer targets. -->
     <Style Selector="Expander.entity-tree-node">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="24,*" RowDefinitions="Auto,Auto">
+                    <ToggleButton Grid.Column="0"
+                                  Classes="entity-tree-toggle"
+                                  AutomationProperties.Name="Expand topic subscriptions"
+                                  IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                        <LucideIcon Kind="ChevronRight" Size="14"/>
+                    </ToggleButton>
+                    <ContentPresenter Grid.Column="1"
+                                      Content="{TemplateBinding Header}"
+                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                      HorizontalContentAlignment="Stretch"/>
+                    <ContentPresenter Grid.Row="1" Grid.ColumnSpan="2"
+                                      IsVisible="{TemplateBinding IsExpanded}"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="Stretch"/>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader">
+    <Style Selector="ToggleButton.entity-tree-toggle, ToggleButton.entity-tree-group-toggle">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="MinWidth" Value="24"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="ToggleButton.entity-tree-toggle:pointerover, ToggleButton.entity-tree-group-toggle:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+    </Style>
+
+    <Style Selector="ToggleButton.entity-tree-toggle:focus-visible, ToggleButton.entity-tree-group-toggle:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style Selector="ToggleButton.entity-tree-toggle:checked &gt; LucideIcon, ToggleButton.entity-tree-group-toggle:checked &gt; Grid &gt; LucideIcon">
+        <Setter Property="RenderTransform">
+            <RotateTransform Angle="90"/>
+        </Setter>
+    </Style>
+
+    <Style Selector="TextBlock.entity-tree-column-heading">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+
+    <Style Selector="TextBlock.entity-tree-count">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+
+    <Style Selector="Border.entity-tree-dlq">
+        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="4,1"/>
     </Style>
 
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground">
-        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ Border#ToggleButtonBackground">
-        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
-    </Style>
-
-    <Style Selector="Expander.entity-tree-node /template/ Border#ExpanderContent">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0"/>
+    <Style Selector="Border.entity-selection-footer">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Padding" Value="14,12"/>
     </Style>
 
     <Style Selector="Border.entity-tree-section-icon">
@@ -1086,7 +1114,8 @@
 
     <Style Selector="Border.entity-tree-row-surface">
         <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="Padding" Value="8,7"/>
+        <Setter Property="MinHeight" Value="36"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
@@ -1099,7 +1128,7 @@
 
     <Style Selector="Border.entity-tree-connector">
         <Setter Property="Width" Value="1"/>
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="{DynamicResource BorderMuted}"/>
         <Setter Property="VerticalAlignment" Value="Stretch"/>
     </Style>
 
