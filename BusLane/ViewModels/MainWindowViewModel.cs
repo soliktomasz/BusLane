@@ -970,12 +970,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         IsLoading = true;
         StatusMessage = $"Loading subscriptions for {topic.Name}...";
+        topic.IsLoadingSubscriptions = true;
 
         try
         {
-            var subs = await operations.GetSubscriptionsAsync(topic.Name);
-            foreach (var sub in subs)
-                CurrentNavigation.TopicSubscriptions.Add(sub);
+            await ReloadTopicSubscriptionsAsync(topic, operations, CurrentNavigation);
+            topic.IsExpanded = true;
 
             StatusMessage = $"{CurrentNavigation.TopicSubscriptions.Count} subscription(s)";
             await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
@@ -986,6 +986,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
         finally
         {
+            topic.IsLoadingSubscriptions = false;
             IsLoading = false;
         }
     }

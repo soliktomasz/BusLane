@@ -26,6 +26,50 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class MainWindowViewModelTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SelectTopicCommand_CollapsedTopic_LoadsAndExpandsSubscriptions(bool connectionStringTree)
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var factory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var topic = new TopicInfo("orders", 0, 1, null, TimeSpan.FromDays(14));
+        var subscription = new SubscriptionInfo("billing", "orders", 1, 1, 0, null, false);
+        factory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetTopicInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(topic);
+        operations.GetSubscriptionsAsync("orders", Arg.Any<CancellationToken>()).Returns([subscription]);
+        using var sut = CreateSut(preferences, operationsFactory: factory);
+        var tab = CreateConnectedTopicTab("tab-1", preferences, factory, operations, "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        topic.IsExpanded = false;
+        topic.SubscriptionsLoaded = false;
+        topic.Subscriptions.Clear();
+        operations.ClearReceivedCalls();
+        // Mimic the tree's Expanding handler to guard against duplicate network loads.
+        topic.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(TopicInfo.IsExpanded) && topic.IsExpanded)
+                sut.LoadTopicSubscriptionsCommand.Execute(topic);
+        };
+
+        // Act
+        if (connectionStringTree)
+            await sut.SelectTopicForConnectionCommand.ExecuteAsync(topic);
+        else
+            await sut.SelectTopicCommand.ExecuteAsync(topic);
+
+        // Assert
+        topic.IsExpanded.Should().BeTrue();
+        topic.SubscriptionsLoaded.Should().BeTrue();
+        topic.Subscriptions.Should().ContainSingle().Which.Should().Be(subscription);
+        tab.Navigation.SelectedTopic.Should().BeSameAs(topic);
+        tab.Navigation.TopicSubscriptions.Should().ContainSingle().Which.Should().Be(subscription);
+        await operations.Received(1).GetSubscriptionsAsync("orders", Arg.Any<CancellationToken>());
+    }
+
     [Fact]
     public async Task OpenCorrelationExplorerCommand_WithComposedServices_OpensPanel()
     {
