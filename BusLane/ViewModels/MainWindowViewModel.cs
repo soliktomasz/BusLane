@@ -1819,6 +1819,49 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     }
 
     [RelayCommand]
+    private void DeleteSelectedMessage()
+    {
+        var messageOps = CurrentMessageOps;
+        var message = messageOps.SelectedMessage;
+        var navigation = CurrentNavigation;
+        var entityName = navigation.CurrentEntityName;
+        if (message == null || entityName == null) return;
+
+        var subscriptionName = navigation.CurrentSubscriptionName;
+        var showDeadLetter = navigation.ShowDeadLetter;
+        ObservableCollection<MessageInfo> messages = [message];
+        bool IsOriginalEntity() => ReferenceEquals(CurrentNavigation, navigation) &&
+            navigation.CurrentEntityName == entityName &&
+            navigation.CurrentSubscriptionName == subscriptionName &&
+            navigation.ShowDeadLetter == showDeadLetter;
+
+        Confirmation.ShowConfirmation(
+            "Confirm Delete",
+            BulkOps.GetBulkDeleteConfirmationMessage(messages),
+            BulkOps.GetBulkDeleteConfirmText(),
+            async () =>
+            {
+                if (!IsOriginalEntity())
+                {
+                    StatusMessage = "The selected entity changed. Reopen the message to delete it.";
+                    return;
+                }
+
+                var deletedCount = await BulkOps.ExecuteBulkDeleteAsync(messages);
+                if (deletedCount == 0) return;
+
+                messageOps.SelectedMessages.Remove(message);
+                if (messageOps.SelectedMessage == message)
+                    messageOps.ClearSelectedMessage();
+                if (IsOriginalEntity())
+                {
+                    await RefreshCurrentEntityMetadataAsync();
+                    await messageOps.LoadMessagesAsync();
+                }
+            });
+    }
+
+    [RelayCommand]
     private void BulkDeleteMessagesAsync()
     {
         if (!CurrentMessageOps.HasSelectedMessages) return;

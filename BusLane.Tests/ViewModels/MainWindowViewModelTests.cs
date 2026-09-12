@@ -27,6 +27,54 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 public class MainWindowViewModelTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeleteSelectedMessageCommand_Confirmed_DeletesOnlyInspectedMessageInOriginalEntity(bool changeEntity)
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var factory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        factory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(CreateQueue("orders"));
+        operations.DeleteMessagesDetailedAsync(Arg.Any<string>(), Arg.Any<string?>(),
+                Arg.Any<IEnumerable<MessageIdentifier>>(), Arg.Any<bool>(),
+                Arg.Any<IProgress<BulkOperationProgress>?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(new BulkOperationExecutionResult(BulkOperationType.Delete, 1, 1, [], "Deleted"));
+        using var sut = CreateSut(preferences, operationsFactory: factory);
+        var tab = CreateConnectedQueueTab("tab-1", preferences, factory, "Orders", "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        var inspected = new MessageInfo("inspected", null, "application/json", "{}", DateTimeOffset.UtcNow, null, 1, 1, null, new Dictionary<string, object>());
+        var other = inspected with { MessageId = "other", SequenceNumber = 2 };
+        tab.MessageOps.SelectedMessage = inspected;
+        tab.MessageOps.SelectedMessages.Add(other);
+
+        // Act
+        sut.DeleteSelectedMessageCommand.Execute(null);
+
+        // Assert - requesting deletion does not delete or alter the bulk selection.
+        sut.Confirmation.ShowConfirmDialog.Should().BeTrue();
+        tab.MessageOps.SelectedMessages.Should().ContainSingle().Which.Should().Be(other);
+        operations.ReceivedCalls().Should().NotContain(call => call.GetMethodInfo().Name == "DeleteMessagesDetailedAsync");
+        if (changeEntity)
+            tab.Navigation.SelectedQueue = CreateQueue("different-queue");
+        await sut.Confirmation.ExecuteConfirmDialogCommand.ExecuteAsync(null);
+
+        if (changeEntity)
+        {
+            operations.ReceivedCalls().Should().NotContain(call => call.GetMethodInfo().Name == "DeleteMessagesDetailedAsync");
+        }
+        else
+        {
+            await operations.Received(1).DeleteMessagesDetailedAsync("orders", null,
+                Arg.Is<IEnumerable<MessageIdentifier>>(items => items.Count() == 1 && items.Single().MessageId == "inspected"),
+                false, Arg.Any<IProgress<BulkOperationProgress>?>(), false, Arg.Any<CancellationToken>());
+            tab.MessageOps.SelectedMessage.Should().BeNull();
+        }
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]
