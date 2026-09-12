@@ -27,9 +27,11 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 public class MainWindowViewModelTests
 {
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task SelectTopicCommand_CollapsedTopic_LoadsAndExpandsSubscriptions(bool connectionStringTree)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task SelectTopicCommand_TopicClicked_LoadsAndTogglesSubscriptions(bool connectionStringTree, bool initiallyExpanded)
     {
         // Arrange
         var preferences = new TestPreferencesService();
@@ -44,7 +46,7 @@ public class MainWindowViewModelTests
         var tab = CreateConnectedTopicTab("tab-1", preferences, factory, operations, "orders");
         sut.ConnectionTabs.Add(tab);
         sut.ActiveTab = tab;
-        topic.IsExpanded = false;
+        topic.IsExpanded = initiallyExpanded;
         topic.SubscriptionsLoaded = false;
         topic.Subscriptions.Clear();
         operations.ClearReceivedCalls();
@@ -62,7 +64,7 @@ public class MainWindowViewModelTests
             await sut.SelectTopicCommand.ExecuteAsync(topic);
 
         // Assert
-        topic.IsExpanded.Should().BeTrue();
+        topic.IsExpanded.Should().Be(!initiallyExpanded);
         topic.SubscriptionsLoaded.Should().BeTrue();
         topic.Subscriptions.Should().ContainSingle().Which.Should().Be(subscription);
         tab.Navigation.SelectedTopic.Should().BeSameAs(topic);

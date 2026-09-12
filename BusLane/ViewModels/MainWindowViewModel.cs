@@ -956,6 +956,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task SelectTopicAsync(TopicInfo topic)
     {
+        var expandSubscriptions = !topic.IsExpanded;
         // Use active tab's operations if available, otherwise fall back to main operations
         var operations = ActiveTab?.Operations ?? _operations;
         if (operations == null) return;
@@ -975,7 +976,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         try
         {
             await ReloadTopicSubscriptionsAsync(topic, operations, CurrentNavigation);
-            topic.IsExpanded = true;
+            topic.IsExpanded = expandSubscriptions;
 
             StatusMessage = $"{CurrentNavigation.TopicSubscriptions.Count} subscription(s)";
             await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
