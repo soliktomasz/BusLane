@@ -21,6 +21,19 @@ public class PreferencesServiceTests : IDisposable
     }
 
     [Fact]
+    public void Save_WithTelemetryEnabled_IsSeenByStartupTelemetryCheck()
+    {
+        // Arrange
+        var sut = new PreferencesService(_preferencesPath) { EnableTelemetry = true };
+
+        // Act
+        sut.Save();
+
+        // Assert
+        Program.IsTelemetryEnabled(_preferencesPath).Should().BeTrue();
+    }
+
+    [Fact]
     public void MessagesPerPage_ShouldDefaultTo100()
     {
         // Arrange

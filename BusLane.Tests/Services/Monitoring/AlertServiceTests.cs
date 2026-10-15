@@ -368,7 +368,7 @@ public class AlertServiceTests
         var quietService = new AlertService(
             _rulesPath,
             _historyPath,
-            nowProvider: () => new DateTimeOffset(2026, 3, 7, 22, 0, 0, TimeSpan.Zero));
+            nowProvider: () => new DateTimeOffset(new DateTime(2026, 3, 7, 22, 0, 0, DateTimeKind.Local)));
         var rule = CreateTestRule(threshold: 10) with
         {
             QuietHours = new QuietHoursWindow(21, 6)
@@ -388,6 +388,63 @@ public class AlertServiceTests
     }
 
     [Fact]
+    public async Task EvaluateAlertsAsync_QuietHours_UseLocalTime()
+    {
+        // Arrange - 23:00 local; the window covers only the 23:00 local hour
+        var quietService = new AlertService(
+            _rulesPath,
+            _historyPath,
+            nowProvider: () => new DateTimeOffset(new DateTime(2026, 3, 7, 23, 0, 0, DateTimeKind.Local)).ToUniversalTime());
+        quietService.AddRule(CreateTestRule(threshold: 10) with { QuietHours = new QuietHoursWindow(23, 0) });
+
+        // Act
+        var alerts = await quietService.EvaluateAlertsAsync(
+            [CreateQueueInfo("night-queue", deadLetterCount: 50)],
+            Enumerable.Empty<SubscriptionInfo>());
+
+        // Assert
+        alerts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task EvaluateAlertsAsync_RepeatedSuppression_RecordsOneEntryPerStreak()
+    {
+        // Arrange - quiet all day
+        _sut.AddRule(CreateTestRule(threshold: 10) with { QuietHours = new QuietHoursWindow(0, 0) });
+        var overThreshold = new[] { CreateQueueInfo("busy-queue", deadLetterCount: 50) };
+        var belowThreshold = new[] { CreateQueueInfo("busy-queue", deadLetterCount: 0) };
+
+        // Act - five ticks over, one below, one over again
+        for (var tick = 0; tick < 5; tick++)
+        {
+            await _sut.EvaluateAlertsAsync(overThreshold, Enumerable.Empty<SubscriptionInfo>());
+        }
+        await _sut.EvaluateAlertsAsync(belowThreshold, Enumerable.Empty<SubscriptionInfo>());
+        await _sut.EvaluateAlertsAsync(overThreshold, Enumerable.Empty<SubscriptionInfo>());
+
+        // Assert
+        _sut.History.Count(h => h.Status == AlertHistoryStatus.Suppressed).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task EvaluateAlertsAsync_WhenHistoryExceedsLimit_KeepsNewestThousandEntries()
+    {
+        // Arrange
+        _sut.AddRule(CreateTestRule(threshold: 1));
+        var queues = Enumerable.Range(1, 1005)
+            .Select(index => CreateQueueInfo($"queue-{index}", deadLetterCount: 5))
+            .ToArray();
+
+        // Act
+        await _sut.EvaluateAlertsAsync(queues, Enumerable.Empty<SubscriptionInfo>());
+
+        // Assert
+        _sut.History.Should().HaveCount(1000);
+        _sut.History.Last().EntityName.Should().Be("queue-1005");
+        new AlertService(_rulesPath, _historyPath).History.Should().HaveCount(1000);
+    }
+
+    [Fact]
     public async Task EvaluateAlertsAsync_WithMultipleSuppressedAlerts_PersistsHistoryOnceAtEndOfPass()
     {
         // Arrange
@@ -396,7 +453,7 @@ public class AlertServiceTests
         var quietService = new AlertService(
             rulesPath,
             historyPath,
-            nowProvider: () => new DateTimeOffset(2026, 3, 7, 22, 0, 0, TimeSpan.Zero));
+            nowProvider: () => new DateTimeOffset(new DateTime(2026, 3, 7, 22, 0, 0, DateTimeKind.Local)));
         var rule = CreateTestRule(threshold: 10) with
         {
             QuietHours = new QuietHoursWindow(21, 6)

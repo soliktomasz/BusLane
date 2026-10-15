@@ -1099,65 +1099,97 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task AutoRefresh_WhenPreviousTickIsStillRunning_SkipsOverlappingAlertEvaluation()
+    public async Task PollAlerts_EvaluatesFreshCountsInsteadOfSidebarSnapshot()
+    {
+        // Arrange - sidebar still shows 0 dead letters, Service Bus now reports 500
+        var preferences = new TestPreferencesService { AutoRefreshMessages = false };
+        var alertService = Substitute.For<IAlertService>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>())
+            .Returns([CreateAlertQueue("orders", deadLetterCount: 500)]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>())
+            .Returns([new TopicInfo("events", 0, 1, DateTimeOffset.UtcNow, TimeSpan.FromDays(14))]);
+        operations.GetSubscriptionsAsync("events", Arg.Any<CancellationToken>())
+            .Returns([new SubscriptionInfo("audit", "events", 3, 0, 3, DateTimeOffset.UtcNow, false)]);
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory, alertService: alertService);
+        alertService.Rules.Returns([CreateEnabledAlertRule()]);
+        sut.ActiveTab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, "Orders", "orders");
+        sut.Navigation.Queues.Add(CreateAlertQueue("orders", deadLetterCount: 0));
+
+        // Act
+        await InvokePollAlertsAsync(sut);
+
+        // Assert
+        await alertService.Received(1).EvaluateAlertsAsync(
+            Arg.Is<IEnumerable<QueueInfo>>(queues => queues.Single().DeadLetterCount == 500),
+            Arg.Is<IEnumerable<SubscriptionInfo>>(subs => subs.Single().Name == "audit"));
+    }
+
+    [Fact]
+    public async Task PollAlerts_WhenPreviousPollIsStillRunning_SkipsOverlappingEvaluation()
     {
         // Arrange
-        var preferences = new TestPreferencesService
-        {
-            AutoRefreshMessages = false
-        };
+        var preferences = new TestPreferencesService { AutoRefreshMessages = false };
         var alertService = Substitute.For<IAlertService>();
-        var activeAlertEvaluations = 0;
-        var maxConcurrentAlertEvaluations = 0;
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns([CreateAlertQueue("orders", deadLetterCount: 2)]);
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>()).Returns([]);
         var firstEvaluationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowEvaluationToComplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var sut = CreateSut(
-            preferences,
-            alertService: alertService);
-
-        sut.Navigation.Queues.Add(new QueueInfo(
-            "orders",
-            12,
-            10,
-            2,
-            0,
-            1024,
-            DateTimeOffset.UtcNow,
-            false,
-            TimeSpan.FromDays(14),
-            TimeSpan.FromMinutes(1)));
+        using var sut = CreateSut(preferences, operationsFactory: operationsFactory, alertService: alertService);
+        alertService.Rules.Returns([CreateEnabledAlertRule()]);
+        sut.ActiveTab = CreateConnectedQueueTab("tab-1", preferences, operationsFactory, "Orders", "orders");
         alertService.EvaluateAlertsAsync(Arg.Any<IEnumerable<QueueInfo>>(), Arg.Any<IEnumerable<SubscriptionInfo>>())
             .Returns(async _ =>
             {
-                var inFlight = Interlocked.Increment(ref activeAlertEvaluations);
-                UpdateMaxValue(ref maxConcurrentAlertEvaluations, inFlight);
                 firstEvaluationStarted.TrySetResult();
-
-                try
-                {
-                    await allowEvaluationToComplete.Task;
-                    return Enumerable.Empty<AlertEvent>();
-                }
-                finally
-                {
-                    Interlocked.Decrement(ref activeAlertEvaluations);
-                }
+                await allowEvaluationToComplete.Task;
+                return Enumerable.Empty<AlertEvent>();
             });
 
         // Act
-        var firstTick = InvokeHandleAutoRefreshTickAsync(sut);
+        var firstPoll = InvokePollAlertsAsync(sut);
         await firstEvaluationStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
-
-        var secondTick = InvokeHandleAutoRefreshTickAsync(sut);
-        await secondTick.WaitAsync(TimeSpan.FromSeconds(1));
+        await InvokePollAlertsAsync(sut).WaitAsync(TimeSpan.FromSeconds(1));
         allowEvaluationToComplete.TrySetResult();
-        await firstTick;
+        await firstPoll;
 
         // Assert
-        maxConcurrentAlertEvaluations.Should().Be(1);
         await alertService.Received(1).EvaluateAlertsAsync(
             Arg.Any<IEnumerable<QueueInfo>>(),
             Arg.Any<IEnumerable<SubscriptionInfo>>());
+    }
+
+    private static QueueInfo CreateAlertQueue(string name, long deadLetterCount) => new(
+        name,
+        deadLetterCount,
+        0,
+        deadLetterCount,
+        0,
+        1024,
+        DateTimeOffset.UtcNow,
+        false,
+        TimeSpan.FromDays(14),
+        TimeSpan.FromMinutes(1));
+
+    private static AlertRule CreateEnabledAlertRule() => new(
+        Guid.NewGuid().ToString(),
+        "DLQ",
+        AlertType.DeadLetterThreshold,
+        AlertSeverity.Warning,
+        1,
+        true,
+        null);
+
+    private static Task InvokePollAlertsAsync(MainWindowViewModel sut)
+    {
+        var method = typeof(MainWindowViewModel).GetMethod("PollAlertsAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+        method.Should().NotBeNull();
+        return (Task)method!.Invoke(sut, [])!;
     }
 
     [Fact]
@@ -2115,23 +2147,6 @@ public class MainWindowViewModelTests
         return tab;
     }
 
-    private static void UpdateMaxValue(ref int target, int candidate)
-    {
-        while (true)
-        {
-            var current = target;
-            if (candidate <= current)
-            {
-                return;
-            }
-
-            if (Interlocked.CompareExchange(ref target, candidate, current) == current)
-            {
-                return;
-            }
-        }
-    }
-
     private static ILogSink CreateLogSink()
     {
         var logSink = Substitute.For<ILogSink>();
@@ -2143,13 +2158,6 @@ public class MainWindowViewModelTests
     {
         var property = typeof(ConnectionTabViewModel).GetProperty("IsActive");
         return property?.GetValue(tab) as bool? ?? false;
-    }
-
-    private static Task InvokeHandleAutoRefreshTickAsync(MainWindowViewModel sut)
-    {
-        var method = typeof(MainWindowViewModel).GetMethod("HandleAutoRefreshTickAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-        method.Should().NotBeNull();
-        return (Task)method!.Invoke(sut, [])!;
     }
 
     private static MessageInfo CreateMessage(string messageId, long sequenceNumber)
