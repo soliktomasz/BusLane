@@ -279,6 +279,64 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
+    public async Task DisconnectAsync_WhenDisposeFails_StillClearsConnectionState()
+    {
+        // Arrange
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        operations.DisposeAsync().Returns(ValueTask.FromException(new InvalidOperationException("dispose failed")));
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+        var tab = new ConnectionTabViewModel(
+            "test-id", "Test Tab", "test.servicebus.windows.net", Substitute.For<IPreferencesService>(), CreateMockLogSink());
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        await tab.DisconnectAsync();
+
+        // Assert
+        tab.IsConnected.Should().BeFalse();
+        tab.Mode.Should().Be(ConnectionMode.None);
+        tab.Operations.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ConnectWithConnectionStringAsync_WhenLoadAndDisposeFail_KeepsOriginalError()
+    {
+        // Arrange
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns<IEnumerable<QueueInfo>>(_ => throw new UnauthorizedAccessException("bad key"));
+        operations.DisposeAsync().Returns(ValueTask.FromException(new InvalidOperationException("dispose failed")));
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+        var tab = new ConnectionTabViewModel(
+            "test-id", "Test Tab", "test.servicebus.windows.net", Substitute.For<IPreferencesService>(), CreateMockLogSink());
+
+        // Act
+        var act = () => tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Assert
+        await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("bad key");
+        tab.Operations.Should().BeNull();
+        tab.Mode.Should().Be(ConnectionMode.None);
+    }
+
+    [Fact]
     public async Task DisconnectAsync_ClearsConnectionState()
     {
         // Arrange

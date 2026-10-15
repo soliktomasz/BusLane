@@ -266,6 +266,8 @@ public abstract class ServiceBusOperationsBase
         bool deadLetter,
         CancellationToken ct = default)
     {
+        // Not normalized on purpose: the count lookup goes through the entity listing, which in Azure
+        // mode is ARM and only knows the listed name (e.g. "orders~v1"). Purge itself normalizes.
         var (count, requiresSession) = await GetEstimatedCountAsync(entityName, subscription, deadLetter, ct);
         return BuildPurgePreview(entityName, subscription, deadLetter, count, requiresSession);
     }

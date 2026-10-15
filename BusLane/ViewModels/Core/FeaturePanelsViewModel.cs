@@ -6,6 +6,7 @@ using BusLane.Services.Monitoring;
 using BusLane.Services.ServiceBus;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Serilog;
 
 /// <summary>
 /// Manages feature panel visibility and lifecycle for auxiliary operator tools.
@@ -34,6 +35,8 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     private readonly IScheduledMessageManagementService? _scheduledMessageManagementService;
     private readonly Func<ScheduledMessageResolvedEntry, ScheduledMessagePayload, Task>? _cloneScheduledMessage;
     private readonly TimeProvider _timeProvider;
+    // Disposing a live stream view model stops the shared stream, so a replacement waits for it.
+    private Task _liveStreamDisposal = Task.CompletedTask;
 
     [ObservableProperty] private bool _showLiveStream;
     [ObservableProperty] private bool _showAlerts;
@@ -118,9 +121,18 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     {
         CloseScheduledMessages();
         DisposeCorrelationExplorer();
-        if (LiveStreamViewModel != null)
+        CloseLiveStream();
+        try
         {
-            await LiveStreamViewModel.DisposeAsync();
+            await _liveStreamDisposal;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Previous live stream did not stop cleanly");
+        }
+        finally
+        {
+            _liveStreamDisposal = Task.CompletedTask;
         }
 
         LiveStreamViewModel = new LiveStreamViewModel(
@@ -140,8 +152,11 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     public void CloseLiveStream()
     {
         ShowLiveStream = false;
-        _ = LiveStreamViewModel?.DisposeAsync();
-        LiveStreamViewModel = null;
+        if (LiveStreamViewModel != null)
+        {
+            _liveStreamDisposal = Task.WhenAll(_liveStreamDisposal, LiveStreamViewModel.DisposeAsync().AsTask());
+            LiveStreamViewModel = null;
+        }
     }
 
     public void OpenAlerts()

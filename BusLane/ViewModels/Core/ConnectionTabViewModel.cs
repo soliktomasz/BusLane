@@ -238,13 +238,23 @@ public partial class ConnectionTabViewModel : ViewModelBase
     }
 
     // Disposing closes the Azure-mode client and returns pooled connection-string clients.
+    // A failed dispose is only logged, so callers still finish their cleanup and keep their own error.
     private async Task ReleaseOperationsAsync()
     {
         var operations = _operations;
         _operations = null;
-        if (operations != null)
+        if (operations == null)
+        {
+            return;
+        }
+
+        try
         {
             await operations.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            LogActivity(LogLevel.Warning, $"Tab '{TabTitle}': failed to release connection", ex.Message);
         }
     }
 
