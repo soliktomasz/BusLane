@@ -254,6 +254,9 @@ public class NamespaceTopologyService : INamespaceTopologyService
                     {
                         var (topic, subscription) = FindSubscription(document, action.EntityPath);
                         await operations.CreateSubscriptionAsync(topic.Name, new SubscriptionCreationOptions(subscription.Name, subscription.RequiresSession), ct);
+                        // Service Bus adds a match-all $Default rule to every new subscription. Remove it so the
+                        // subscription ends up with exactly the document's rules; the plan recreates $Default if listed.
+                        await operations.DeleteSubscriptionRuleAsync(topic.Name, subscription.Name, DefaultRuleName, ct);
                         await operations.UpdateSubscriptionAsync(topic.Name, subscription.Name, ToSubscriptionUpdateOptions(subscription), ct);
                         break;
                     }
@@ -274,6 +277,8 @@ public class NamespaceTopologyService : INamespaceTopologyService
             }
         }
     }
+
+    private const string DefaultRuleName = "$Default";
 
     private static bool QueueNeedsUpdate(QueueInfo existing, QueueTopology desired) =>
         existing.DefaultMessageTtl != desired.DefaultMessageTimeToLive ||

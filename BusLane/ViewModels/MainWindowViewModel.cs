@@ -538,7 +538,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             auth,
             _logSink,
             tab => ActiveTab = tab,
-            _correlationMessageCatalog);
+            _correlationMessageCatalog,
+            azureResources);
 
         BulkOps = new MessageBulkOperationsViewModel(
             () => ActiveTab?.Operations ?? _operations,
