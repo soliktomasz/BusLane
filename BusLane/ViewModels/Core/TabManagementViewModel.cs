@@ -22,6 +22,7 @@ public partial class TabManagementViewModel : ViewModelBase
     private readonly IAzureAuthService _auth;
     private readonly ILogSink _logSink;
     private readonly ICorrelationMessageCatalog? _correlationCatalog;
+    private readonly IAzureResourceService? _azureResources;
     private readonly Action<ConnectionTabViewModel?> _activeTabChanged;
     private CancellationTokenSource? _saveSessionCts;
     private string _lastSavedTabsJson;
@@ -43,7 +44,8 @@ public partial class TabManagementViewModel : ViewModelBase
         IAzureAuthService auth,
         ILogSink logSink,
         Action<ConnectionTabViewModel?> activeTabChanged,
-        ICorrelationMessageCatalog? correlationCatalog = null)
+        ICorrelationMessageCatalog? correlationCatalog = null,
+        IAzureResourceService? azureResources = null)
     {
         _operationsFactory = operationsFactory;
         _preferencesService = preferencesService;
@@ -52,6 +54,7 @@ public partial class TabManagementViewModel : ViewModelBase
         _logSink = logSink;
         _activeTabChanged = activeTabChanged;
         _correlationCatalog = correlationCatalog;
+        _azureResources = azureResources;
         _lastSavedTabsJson = _preferencesService.OpenTabsJson;
     }
 
@@ -150,6 +153,50 @@ public partial class TabManagementViewModel : ViewModelBase
                 $"Failed to open tab for namespace '{ns.Name}'",
                 ex.Message));
             _activeTabChanged?.Invoke(ActiveTab);
+        }
+    }
+
+    /// <summary>
+    /// Looks up a saved Azure namespace by its resource ID, listing each Azure subscription at most once.
+    /// Returns null when not signed in or the namespace no longer exists.
+    /// </summary>
+    private async Task<ServiceBusNamespace?> FindAzureNamespaceAsync(
+        string namespaceId,
+        Dictionary<string, IReadOnlyList<ServiceBusNamespace>> namespacesBySubscription)
+    {
+        if (_azureResources == null || _auth.Credential == null)
+        {
+            return null;
+        }
+
+        // Resource IDs look like /subscriptions/{id}/resourceGroups/{rg}/providers/Microsoft.ServiceBus/namespaces/{name}
+        var segments = namespaceId.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var index = Array.FindIndex(segments, s => s.Equals("subscriptions", StringComparison.OrdinalIgnoreCase));
+        if (index < 0 || index + 1 >= segments.Length)
+        {
+            return null;
+        }
+
+        var subscriptionId = segments[index + 1];
+        try
+        {
+            if (!namespacesBySubscription.TryGetValue(subscriptionId, out var namespaces))
+            {
+                namespaces = (await _azureResources.GetNamespacesAsync(subscriptionId)).ToList();
+                namespacesBySubscription[subscriptionId] = namespaces;
+            }
+
+            return namespaces.FirstOrDefault(ns => string.Equals(ns.Id, namespaceId, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex)
+        {
+            _logSink.Log(new LogEntry(
+                DateTime.UtcNow,
+                LogSource.Application,
+                LogLevel.Warning,
+                $"Could not restore Azure tab for '{namespaceId}'",
+                ex.Message));
+            return null;
         }
     }
 
@@ -363,6 +410,7 @@ public partial class TabManagementViewModel : ViewModelBase
                 LogLevel.Info,
                 $"Restoring {states.Count} tab(s) from previous session"));
 
+            var namespacesBySubscription = new Dictionary<string, IReadOnlyList<ServiceBusNamespace>>(StringComparer.OrdinalIgnoreCase);
             foreach (var state in states.OrderBy(s => s.TabOrder))
             {
                 if (state.Mode == ConnectionMode.ConnectionString && state.ConnectionId != null)
@@ -371,6 +419,15 @@ public partial class TabManagementViewModel : ViewModelBase
                     if (connection != null)
                     {
                         await OpenTabForConnectionAsync(connection);
+                        ActiveTab?.ApplySessionState(state);
+                    }
+                }
+                else if (state.Mode == ConnectionMode.AzureAccount && state.NamespaceId != null)
+                {
+                    var ns = await FindAzureNamespaceAsync(state.NamespaceId, namespacesBySubscription);
+                    if (ns != null)
+                    {
+                        await OpenTabForNamespaceAsync(ns);
                         ActiveTab?.ApplySessionState(state);
                     }
                 }

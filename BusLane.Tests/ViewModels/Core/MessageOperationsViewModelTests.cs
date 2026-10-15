@@ -61,6 +61,39 @@ public class MessageOperationsViewModelTests
             items.Single().Source == CorrelationMessageSource.Loaded));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(500)]
+    public async Task LoadMessagesAsync_SessionEntityWithoutScope_DoesNotOfferNextPage(long knownMessageCount)
+    {
+        // Arrange - a cursor from page 1 would skip lower sequence numbers in other sessions
+        var operations = Substitute.For<IServiceBusOperations>();
+        operations.PeekMessagesAsync("orders", null, Arg.Any<int>(), null, false, true, null, Arg.Any<CancellationToken>())
+            .Returns([
+                CreateMessage("a-1", DateTimeOffset.UtcNow, 1),
+                CreateMessage("a-3", DateTimeOffset.UtcNow, 3)
+            ]);
+        var preferences = Substitute.For<IPreferencesService>();
+        preferences.MessagesPerPage.Returns(2);
+        var sut = new MessageOperationsViewModel(
+            () => operations,
+            preferences,
+            Substitute.For<ILogSink>(),
+            () => "orders",
+            () => null,
+            () => true,
+            () => false,
+            () => knownMessageCount,
+            _ => { });
+
+        // Act
+        await sut.LoadMessagesAsync();
+
+        // Assert
+        sut.Messages.Should().HaveCount(2);
+        sut.CanLoadNextPage.Should().BeFalse();
+    }
+
     [Fact]
     public void MessageSearchText_AfterClearing_DoesNotThrow()
     {

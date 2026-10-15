@@ -793,9 +793,13 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     private sealed record PageLoadResult(IReadOnlyList<MessageInfo> Messages, long? NextFromSequenceNumber);
 
+    // One sequence-number cursor cannot page across several sessions without skipping
+    // messages, so unscoped session peeks stop at page 1; scope to a session to page further.
+    private bool IsUnscopedSessionPeek => _currentRequiresSession && !_currentDeadLetter && !IsSessionScoped;
+
     private void UpdatePaginationState(int currentPage, int currentPageMessageCount, bool hasMoreMessages)
     {
-        if (_knownTotalCount > 0)
+        if (_knownTotalCount > 0 && !IsUnscopedSessionPeek)
         {
             Pagination.UpdatePageInfoWithTotal(
                 currentPage,
@@ -816,6 +820,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
         if (_pageCache.HasPage(currentPage + 1))
         {
             return true;
+        }
+
+        if (IsUnscopedSessionPeek)
+        {
+            return false;
         }
 
         // Be optimistic. We verify the actual end when a next-page fetch produces

@@ -424,6 +424,49 @@ public class NamespaceTopologyServiceTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ApplyImportPlanAsync_NewSubscription_EndsWithOnlyTheDocumentsRules(bool documentHasDefaultRule)
+    {
+        // Arrange - Service Bus adds $Default on create; creating it again would fail with 409
+        var operations = Substitute.For<IServiceBusOperations>();
+        var rules = documentHasDefaultRule
+            ? new[] { new RuleTopology("$Default", SubscriptionRuleFilterType.Sql, "1=1", "1=1", null, null) }
+            : [];
+        var document = new NamespaceTopologyDocument(
+            1,
+            DateTimeOffset.UtcNow,
+            [],
+            [
+                new TopicTopology("events", TimeSpan.FromDays(14), true,
+                [
+                    new SubscriptionTopology("processor", false, TimeSpan.FromMinutes(1), 10, TimeSpan.FromDays(14),
+                        null, null, null, true, true, rules)
+                ])
+            ]);
+        operations.GetQueuesAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<QueueInfo>());
+        operations.GetTopicsAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<TopicInfo>());
+        var sut = new NamespaceTopologyService();
+        var plan = await sut.BuildImportPlanAsync(operations, document);
+
+        // Act
+        await sut.ApplyImportPlanAsync(operations, document, plan);
+
+        // Assert
+        await operations.Received(1).DeleteSubscriptionRuleAsync("events", "processor", "$Default", Arg.Any<CancellationToken>());
+        await operations.Received(documentHasDefaultRule ? 1 : 0).CreateSubscriptionRuleAsync(
+            "events",
+            "processor",
+            Arg.Is<SubscriptionRuleCreationOptions>(options => options.Name == "$Default"),
+            Arg.Any<CancellationToken>());
+        Received.InOrder(() =>
+        {
+            operations.CreateSubscriptionAsync("events", Arg.Any<SubscriptionCreationOptions>(), Arg.Any<CancellationToken>());
+            operations.DeleteSubscriptionRuleAsync("events", "processor", "$Default", Arg.Any<CancellationToken>());
+        });
+    }
+
     [Fact]
     public async Task ApplyImportPlanAsync_WithUnknownActionType_Throws()
     {
