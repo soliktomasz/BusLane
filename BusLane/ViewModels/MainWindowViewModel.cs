@@ -380,6 +380,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     // Auto-refresh
     private System.Timers.Timer? _autoRefreshTimer;
     private int _autoRefreshTickInProgress;
+    // Alerts poll fresh counts on their own, so they work without message auto-refresh or the dashboard open.
+    private static readonly TimeSpan AlertPollInterval = TimeSpan.FromSeconds(60);
+    private System.Timers.Timer? _alertPollTimer;
+    private int _alertPollInProgress;
     private int _suppressDeadLetterReload;
     private long _namespaceNavigationGeneration;
     private CancellationTokenSource? _namespaceNavigationCts;
@@ -688,6 +692,40 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer = new System.Timers.Timer();
         _autoRefreshTimer.Elapsed += (_, _) => FireAndForget(HandleAutoRefreshTickAsync(), nameof(HandleAutoRefreshTickAsync));
         UpdateAutoRefreshTimer();
+
+        _alertPollTimer = new System.Timers.Timer(AlertPollInterval.TotalMilliseconds);
+        _alertPollTimer.Elapsed += (_, _) => FireAndForget(PollAlertsAsync(), nameof(PollAlertsAsync));
+        _alertPollTimer.Start();
+    }
+
+    private async Task PollAlertsAsync()
+    {
+        var operations = ActiveTab?.Operations;
+        if (_disposed || operations == null || !_alertService.Rules.Any(rule => rule.IsEnabled))
+        {
+            return;
+        }
+
+        if (Interlocked.CompareExchange(ref _alertPollInProgress, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var queues = (await operations.GetQueuesAsync()).ToList();
+            var subscriptions = new List<SubscriptionInfo>();
+            foreach (var topic in await operations.GetTopicsAsync())
+            {
+                subscriptions.AddRange(await operations.GetSubscriptionsAsync(topic.Name));
+            }
+
+            await _alertService.EvaluateAlertsAsync(queues, subscriptions);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _alertPollInProgress, 0);
+        }
     }
 
     private async Task HandleAutoRefreshTickAsync()
@@ -718,11 +756,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 {
                     await CurrentMessageOps.LoadMessagesAsync();
                 });
-            }
-
-            if (CurrentNavigation.Queues.Count > 0 || CurrentNavigation.TopicSubscriptions.Count > 0)
-            {
-                await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
             }
         }
         finally
@@ -2812,6 +2845,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer?.Stop();
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;
+        _alertPollTimer?.Stop();
+        _alertPollTimer?.Dispose();
+        _alertPollTimer = null;
 
         // Dispose the log viewer to unsubscribe from events
         LogViewer?.Dispose();
@@ -2841,6 +2877,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         _autoRefreshTimer?.Stop();
         _autoRefreshTimer?.Dispose();
         _autoRefreshTimer = null;
+        _alertPollTimer?.Stop();
+        _alertPollTimer?.Dispose();
+        _alertPollTimer = null;
 
         LogViewer?.Dispose();
         await Terminal.DisposeAsync();

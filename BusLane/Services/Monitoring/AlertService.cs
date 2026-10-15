@@ -18,6 +18,7 @@ public class AlertService : IAlertService
 
     // Maximum time allowed for regex pattern matching to prevent catastrophic backtracking
     private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromMilliseconds(100);
+    private const int MaxHistoryEntries = 1000;
 
     // Lock object for thread-safe access to mutable collections
     private readonly object _lock = new();
@@ -27,6 +28,8 @@ public class AlertService : IAlertService
     private readonly List<AlertHistoryEntry> _history = [];
     private readonly HashSet<string> _triggeredAlertKeys = []; // To prevent duplicate alerts
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastTriggeredAtByKey = new();
+    // Last suppression recorded per alert key, so a suppression streak adds one history entry, not one per tick.
+    private readonly ConcurrentDictionary<string, AlertSuppressionReason> _suppressionByKey = new();
     private readonly IEnumerable<INotificationChannel> _notificationChannels;
     private readonly Func<DateTimeOffset> _nowProvider;
     private readonly string _rulesPath;
@@ -279,48 +282,28 @@ public class AlertService : IAlertService
 
     private AlertEvaluationResult BuildEvaluationResult(AlertRule rule, string entityName, string entityType, double currentValue)
     {
+        var alertKey = $"{rule.Id}:{entityName}:{rule.Type}";
         if (currentValue < rule.Threshold)
         {
+            _suppressionByKey.TryRemove(alertKey, out _);
             return new AlertEvaluationResult(null, null);
         }
 
         var now = _nowProvider();
-        var alertKey = $"{rule.Id}:{entityName}:{rule.Type}";
 
-        if (rule.QuietHours != null && rule.QuietHours.Contains(now.Hour))
+        if (rule.QuietHours != null && rule.QuietHours.Contains(now.ToLocalTime().Hour))
         {
-            return new AlertEvaluationResult(
-                null,
-                new AlertHistoryEntry(
-                    Guid.NewGuid().ToString(),
-                    rule.Id,
-                    rule.Name,
-                    entityName,
-                    entityType,
-                    currentValue,
-                    now,
-                    AlertHistoryStatus.Suppressed,
-                    AlertSuppressionReason.QuietHours));
+            return Suppress(AlertSuppressionReason.QuietHours);
         }
 
         if (rule.Cooldown.HasValue &&
             _lastTriggeredAtByKey.TryGetValue(alertKey, out var lastTriggeredAt) &&
             now - lastTriggeredAt < rule.Cooldown.Value)
         {
-            return new AlertEvaluationResult(
-                null,
-                new AlertHistoryEntry(
-                    Guid.NewGuid().ToString(),
-                    rule.Id,
-                    rule.Name,
-                    entityName,
-                    entityType,
-                    currentValue,
-                    now,
-                    AlertHistoryStatus.Suppressed,
-                    AlertSuppressionReason.Cooldown));
+            return Suppress(AlertSuppressionReason.Cooldown);
         }
 
+        _suppressionByKey.TryRemove(alertKey, out _);
         return new AlertEvaluationResult(
             new AlertEvent(
                 Guid.NewGuid().ToString(),
@@ -330,6 +313,28 @@ public class AlertService : IAlertService
                 currentValue,
                 now),
             null);
+
+        AlertEvaluationResult Suppress(AlertSuppressionReason reason)
+        {
+            if (_suppressionByKey.TryGetValue(alertKey, out var recorded) && recorded == reason)
+            {
+                return new AlertEvaluationResult(null, null);
+            }
+
+            _suppressionByKey[alertKey] = reason;
+            return new AlertEvaluationResult(
+                null,
+                new AlertHistoryEntry(
+                    Guid.NewGuid().ToString(),
+                    rule.Id,
+                    rule.Name,
+                    entityName,
+                    entityType,
+                    currentValue,
+                    now,
+                    AlertHistoryStatus.Suppressed,
+                    reason));
+        }
     }
 
     private static bool MatchesEntityPattern(string entityName, string? pattern)
@@ -579,6 +584,11 @@ public class AlertService : IAlertService
         try
         {
             AppPaths.EnsureDirectoryExists();
+            if (_history.Count > MaxHistoryEntries)
+            {
+                _history.RemoveRange(0, _history.Count - MaxHistoryEntries);
+            }
+
             var json = JsonSerializer.Serialize(_history, JsonOptions);
             AppPaths.CreateSecureFile(_historyPath, json);
         }

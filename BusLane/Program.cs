@@ -229,14 +229,11 @@ class Program
     /// Reads the telemetry preference directly from the preferences file.
     /// This runs before DI is available, so we read the JSON file manually.
     /// </summary>
-    private static bool IsTelemetryEnabled()
+    internal static bool IsTelemetryEnabled(string? prefsPath = null)
     {
         try
         {
-            var prefsPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "BusLane",
-                "preferences.json");
+            prefsPath ??= AppPaths.Preferences;
 
             if (!File.Exists(prefsPath))
                 return false; // Default: disabled (opt-in)
@@ -244,7 +241,7 @@ class Program
             var json = File.ReadAllText(prefsPath);
             using var doc = JsonDocument.Parse(json);
 
-            if (doc.RootElement.TryGetProperty("EnableTelemetry", out var prop))
+            if (doc.RootElement.TryGetProperty("enableTelemetry", out var prop))
                 return prop.GetBoolean();
         }
         catch
