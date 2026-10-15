@@ -202,6 +202,26 @@ public class MessageBulkOperationsViewModelTests
     }
 
     [Fact]
+    public void BuildBulkResendPreview_FromSubscription_WarnsAboutTopicFanOut()
+    {
+        var navigation = new NavigationState
+        {
+            SelectedTopic = new TopicInfo("orders-topic", 1024, 2, null, TimeSpan.FromDays(14)),
+            SelectedSubscription = new SubscriptionInfo("processor", "orders-topic", 0, 0, 0, null, false)
+        };
+        var sut = new MessageBulkOperationsViewModel(
+            () => Substitute.For<IServiceBusOperations>(),
+            () => navigation,
+            Substitute.For<IPreferencesService>(),
+            Substitute.For<ILogSink>(),
+            _ => { });
+
+        var preview = sut.BuildBulkResendPreview([CreateMessage("msg-1", 101, null)]);
+
+        preview.Warnings.Should().Contain(w => w.Contains("every subscription receives a copy"));
+    }
+
+    [Fact]
     public void ConfirmationMessages_WithSelectedMessages_IncludeSampleIdsAndSelectionWarnings()
     {
         // Arrange

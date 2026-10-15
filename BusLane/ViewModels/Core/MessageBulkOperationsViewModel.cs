@@ -451,6 +451,12 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
             warnings.Add("Deleting from the dead-letter queue is irreversible.");
         }
 
+        if (nav.CurrentSubscriptionName != null &&
+            operationType is BulkOperationType.Resend or BulkOperationType.ResubmitDeadLetter)
+        {
+            warnings.Add($"Messages are sent to topic '{nav.CurrentEntityName}', so every subscription receives a copy, not only '{nav.CurrentSubscriptionName}'.");
+        }
+
         var scope = BuildScope(nav, requiresSession, sessionIds);
 
         return new BulkOperationPreview(

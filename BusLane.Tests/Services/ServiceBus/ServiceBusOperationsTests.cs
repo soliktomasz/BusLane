@@ -540,6 +540,20 @@ public class ServiceBusOperationsTests
         await receiver.Received(1).PeekMessagesAsync(50, 12345, Arg.Any<CancellationToken>());
     }
     
+    [Fact]
+    public async Task ResendMessagesAsync_WithBinaryBody_SendsOriginalBytes()
+    {
+        byte[] bytes = [0xFF, 0x00, 0xC3, 0x28];
+        var message = ServiceBusOperations.MapToMessageInfo(
+            ServiceBusModelFactory.ServiceBusReceivedMessage(body: new BinaryData(bytes), messageId: "bin", sequenceNumber: 1));
+        var client = new RecordingServiceBusClient();
+
+        await ServiceBusOperations.ResendMessagesAsync(client, "orders", [message]);
+
+        client.Sender.SentMessages.Should().ContainSingle()
+            .Which.Body.ToArray().Should().Equal(bytes);
+    }
+
     private IServiceBusOperations CreateOperations(ServiceBusReceiver receiver)
     {
         // This is a placeholder - the real implementation would require complex mocking
@@ -698,6 +712,12 @@ public class ServiceBusOperationsTests
         public override Task SendMessageAsync(ServiceBusMessage message, CancellationToken cancellationToken = default)
         {
             SentMessages.Add(message);
+            return Task.CompletedTask;
+        }
+
+        public override Task SendMessagesAsync(IEnumerable<ServiceBusMessage> messages, CancellationToken cancellationToken = default)
+        {
+            SentMessages.AddRange(messages);
             return Task.CompletedTask;
         }
 

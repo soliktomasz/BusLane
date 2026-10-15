@@ -27,6 +27,9 @@ public record MessageInfo(
     string? DeadLetterErrorDescription = null
 )
 {
+    // Original bytes, so resend does not round-trip non-UTF-8 bodies through Body (a string).
+    public BinaryData? RawBody { get; init; }
+
     // Pre-computed truncated body preview for efficient list rendering
     // Limit to ~200 chars to avoid performance issues with large message bodies
     private const int MaxPreviewLength = 200;

@@ -78,9 +78,141 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         ScheduledMessageActionRequest request,
         CancellationToken ct = default)
     {
+        var (error, operations) = await PrepareBrokerActionAsync(request);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        await using (operations!)
+        {
+            return await CancelOnBrokerAsync(operations!, request.Entry, ct);
+        }
+    }
+
+    public async Task<ScheduledMessageActionResult> RescheduleAsync(
+        ScheduledMessageActionRequest request,
+        CancellationToken ct = default)
+    {
+        if (request.NewScheduledTime is null || request.NewScheduledTime <= _timeProvider.GetUtcNow())
+        {
+            return new(false, "A future scheduled time is required", request.Entry);
+        }
+
+        var payload = await _store.LoadPayloadAsync(request.Entry, ct);
+        if (payload is null)
+        {
+            return new(false, "The scheduled payload is unavailable", request.Entry);
+        }
+
+        var (error, operations) = await PrepareBrokerActionAsync(request);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        await using (operations!)
+        {
+            // Schedule the replacement before cancelling the original so a failure never leaves neither.
+            long sequence;
+            try
+            {
+                var properties = payload.Properties.ToDictionary(
+                    p => p.Key, p => p.Value.ToObject()!);
+                sequence = await operations!.ScheduleMessageAsync(
+                    request.Entry.EntityName, payload.Body, properties, request.NewScheduledTime.Value,
+                    payload.ContentType, payload.CorrelationId, payload.MessageId, payload.SessionId,
+                    payload.Subject, payload.To, payload.ReplyTo, payload.ReplyToSessionId,
+                    payload.PartitionKey, payload.TimeToLive, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var withError = request.Entry with { LastError = ex.Message };
+                try
+                {
+                    await _store.UpdateAsync(withError, ct);
+                }
+                catch
+                {
+                    // The original schedule is untouched; the index error is secondary.
+                }
+                return new(false,
+                    $"The replacement could not be scheduled; the original schedule is unchanged: {ex.Message}",
+                    withError);
+            }
+
+            var cancelled = await CancelOnBrokerAsync(operations!, request.Entry, ct);
+            if (!cancelled.IsSuccess)
+            {
+                try
+                {
+                    await operations!.CancelScheduledMessageAsync(request.Entry.EntityName, sequence, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    return new(false,
+                        $"{cancelled.Message}. The replacement (sequence {sequence}) could not be removed and both may be delivered: {ex.Message}",
+                        cancelled.Entry,
+                        IsPartialFailure: true);
+                }
+                return cancelled;
+            }
+
+            var now = _timeProvider.GetUtcNow();
+            var replacement = request.Entry with
+            {
+                RecordId = Guid.NewGuid().ToString("N"),
+                ReplacementRecordId = null,
+                SequenceNumber = sequence,
+                ScheduledEnqueueTime = request.NewScheduledTime.Value,
+                CreatedAt = now,
+                UpdatedAt = now,
+                Status = ScheduledMessageRecordStatus.Indexed,
+                LastBrokerAction = null,
+                LastBrokerActionAt = null,
+                LastError = null,
+                EncryptedPayload = null
+            };
+            var old = cancelled.Entry with
+            {
+                Status = ScheduledMessageRecordStatus.Rescheduled,
+                ReplacementRecordId = replacement.RecordId,
+                LastBrokerAction = "Reschedule"
+            };
+            try
+            {
+                await _store.AddAsync(replacement, payload, ct);
+                await _store.UpdateAsync(old, ct);
+                return new(true, "Scheduled message rescheduled", old);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                return new(true,
+                    "Replacement scheduled successfully. The local schedule index could not be updated.",
+                    cancelled.Entry,
+                    IsPartialFailure: true);
+            }
+        }
+    }
+
+    private async Task<(ScheduledMessageActionResult? Error, IServiceBusOperations? Operations)> PrepareBrokerActionAsync(
+        ScheduledMessageActionRequest request)
+    {
         if (!request.IsConfirmed)
         {
-            return new(false, "Cancellation confirmation is required", request.Entry);
+            return (new(false, "Cancellation confirmation is required", request.Entry), null);
         }
         SavedConnection? currentConnection;
         try
@@ -91,18 +223,18 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         }
         catch (Exception ex)
         {
-            return new(false, $"Connection resolution failed: {ex.Message}", request.Entry);
+            return (new(false, $"Connection resolution failed: {ex.Message}", request.Entry), null);
         }
         if (request.Entry.ConnectionKind == ScheduledMessageConnectionKind.ConnectionString &&
             currentConnection is null)
         {
-            return new(false, "The indexed connection no longer matches its saved destination", request.Entry);
+            return (new(false, "The indexed connection no longer matches its saved destination", request.Entry), null);
         }
         if ((request.Entry.Environment == ConnectionEnvironment.Production ||
              currentConnection?.Environment == ConnectionEnvironment.Production) &&
             !request.IsProductionAcknowledged)
         {
-            return new(false, "Production acknowledgement is required", request.Entry);
+            return (new(false, "Production acknowledgement is required", request.Entry), null);
         }
 
         IServiceBusOperations? operations;
@@ -114,41 +246,46 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
         }
         catch (Exception ex)
         {
-            return new(false, $"Connection resolution failed: {ex.Message}", request.Entry);
+            return (new(false, $"Connection resolution failed: {ex.Message}", request.Entry), null);
         }
         if (operations is null)
         {
-            return new(false, "The indexed connection is unavailable", request.Entry);
+            return (new(false, "The indexed connection is unavailable", request.Entry), null);
         }
 
-        await using (operations)
+        return (null, operations);
+    }
+
+    private async Task<ScheduledMessageActionResult> CancelOnBrokerAsync(
+        IServiceBusOperations operations,
+        ScheduledMessageIndexEntry entry,
+        CancellationToken ct)
+    {
+        try
         {
-            try
+            await operations.CancelScheduledMessageAsync(
+                entry.EntityName, entry.SequenceNumber, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            var failed = entry with
             {
-                await operations.CancelScheduledMessageAsync(
-                    request.Entry.EntityName, request.Entry.SequenceNumber, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                var failed = request.Entry with
-                {
-                    Status = request.Entry.IsBrokerConfirmed
-                        ? request.Entry.Status
-                        : ScheduledMessageRecordStatus.ActionFailed,
-                    LastBrokerAction = "Cancel",
-                    LastBrokerActionAt = _timeProvider.GetUtcNow(),
-                    LastError = ex.Message
-                };
-                await _store.UpdateAsync(failed, ct);
-                return new(false, $"Cancellation failed: {ex.Message}", failed);
-            }
+                Status = entry.IsBrokerConfirmed
+                    ? entry.Status
+                    : ScheduledMessageRecordStatus.ActionFailed,
+                LastBrokerAction = "Cancel",
+                LastBrokerActionAt = _timeProvider.GetUtcNow(),
+                LastError = ex.Message
+            };
+            await _store.UpdateAsync(failed, ct);
+            return new(false, $"Cancellation failed: {ex.Message}", failed);
         }
 
-        var updated = request.Entry with
+        var updated = entry with
         {
             Status = ScheduledMessageRecordStatus.Cancelled,
             LastBrokerAction = "Cancel",
@@ -169,116 +306,6 @@ public sealed class ScheduledMessageManagementService : IScheduledMessageManagem
             return new(true,
                 "Scheduled message cancelled. The local schedule index could not be updated.",
                 updated,
-                IsPartialFailure: true);
-        }
-    }
-
-    public async Task<ScheduledMessageActionResult> RescheduleAsync(
-        ScheduledMessageActionRequest request,
-        CancellationToken ct = default)
-    {
-        if (request.NewScheduledTime is null || request.NewScheduledTime <= _timeProvider.GetUtcNow())
-        {
-            return new(false, "A future scheduled time is required", request.Entry);
-        }
-
-        var payload = await _store.LoadPayloadAsync(request.Entry, ct);
-        if (payload is null)
-        {
-            return new(false, "The scheduled payload is unavailable", request.Entry);
-        }
-
-        var cancelled = await CancelAsync(request, ct);
-        if (!cancelled.IsSuccess)
-        {
-            return cancelled;
-        }
-
-        IServiceBusOperations? operations;
-        try
-        {
-            operations = await ResolveOperationsAsync(request.Entry);
-        }
-        catch (Exception ex)
-        {
-            return new(false,
-                $"The original schedule was cancelled, but connection resolution failed: {ex.Message}",
-                cancelled.Entry with { LastError = ex.Message },
-                IsPartialFailure: true);
-        }
-        if (operations is null)
-        {
-            return new(false, "The indexed connection is unavailable", cancelled.Entry, true);
-        }
-        long sequence;
-        await using (operations)
-        try
-        {
-            var properties = payload.Properties.ToDictionary(
-                p => p.Key, p => p.Value.ToObject()!);
-            sequence = await operations.ScheduleMessageAsync(
-                request.Entry.EntityName, payload.Body, properties, request.NewScheduledTime.Value,
-                payload.ContentType, payload.CorrelationId, payload.MessageId, payload.SessionId,
-                payload.Subject, payload.To, payload.ReplyTo, payload.ReplyToSessionId,
-                payload.PartitionKey, payload.TimeToLive, ct);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            var cancelledWithError = cancelled.Entry with { LastError = ex.Message };
-            try
-            {
-                await _store.UpdateAsync(cancelledWithError, ct);
-            }
-            catch
-            {
-                // Broker-confirmed cancellation remains the primary outcome.
-            }
-            return new(false,
-                "The original schedule was cancelled, but the replacement could not be created.",
-                cancelledWithError,
-                IsPartialFailure: true);
-        }
-
-        var now = _timeProvider.GetUtcNow();
-        var replacement = request.Entry with
-        {
-            RecordId = Guid.NewGuid().ToString("N"),
-            ReplacementRecordId = null,
-            SequenceNumber = sequence,
-            ScheduledEnqueueTime = request.NewScheduledTime.Value,
-            CreatedAt = now,
-            UpdatedAt = now,
-            Status = ScheduledMessageRecordStatus.Indexed,
-            LastBrokerAction = null,
-            LastBrokerActionAt = null,
-            LastError = null,
-            EncryptedPayload = null
-        };
-        var old = cancelled.Entry with
-        {
-            Status = ScheduledMessageRecordStatus.Rescheduled,
-            ReplacementRecordId = replacement.RecordId,
-            LastBrokerAction = "Reschedule"
-        };
-        try
-        {
-            await _store.AddAsync(replacement, payload, ct);
-            await _store.UpdateAsync(old, ct);
-            return new(true, "Scheduled message rescheduled", old);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch
-        {
-            return new(true,
-                "Replacement scheduled successfully. The local schedule index could not be updated.",
-                cancelled.Entry,
                 IsPartialFailure: true);
         }
     }
