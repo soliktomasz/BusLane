@@ -687,7 +687,7 @@ public partial class SendMessageViewModel : ViewModelBase
         }
         catch
         {
-            // Ignore errors loading saved messages
+            AtomicFile.PreserveUnreadable(_savedMessagesPath);
         }
     }
 

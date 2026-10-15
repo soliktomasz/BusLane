@@ -523,6 +523,56 @@ public class ServiceBusOperationsTests
         client.SessionReceiver.CompletedSequenceNumbers.Should().ContainSingle().Which.Should().Be(7);
     }
 
+    [Fact]
+    public async Task DeleteMessagesDetailedAsync_WhenTargetIsBehindAFullBatch_FindsItAndAbandonsOthersOnce()
+    {
+        // Arrange - target is message 150, behind one full receive batch
+        var messages = Enumerable.Range(1, 150)
+            .Select(i => ServiceBusModelFactory.ServiceBusReceivedMessage(
+                BinaryData.FromString($"m{i}"), messageId: $"m{i}", sequenceNumber: i))
+            .ToList();
+        var receiver = new BrokerLikeReceiver(messages);
+        var client = new SingleReceiverClient(receiver);
+
+        // Act
+        var result = await ServiceBusOperations.DeleteMessagesDetailedAsync(
+            client,
+            "orders",
+            null,
+            [new MessageIdentifier(150, "m150", null)],
+            deadLetter: false,
+            ct: CancellationToken.None);
+
+        // Assert
+        result.SucceededCount.Should().Be(1);
+        receiver.CompletedSequenceNumbers.Should().Equal(150);
+        receiver.DeliveryCounts.Where(pair => pair.Key != 150).Should().OnlyContain(pair => pair.Value == 1);
+    }
+
+    [Fact]
+    public async Task PurgeMessagesDetailedAsync_WithLiveTraffic_StopsAtMessagesSentAfterPurgeStarted()
+    {
+        // Arrange - 150 old messages, and a new one arrives on every receive
+        var messages = Enumerable.Range(1, 150)
+            .Select(i => ServiceBusModelFactory.ServiceBusReceivedMessage(
+                BinaryData.FromString($"m{i}"), sequenceNumber: i, enqueuedTime: DateTimeOffset.UtcNow.AddHours(-1)))
+            .ToList();
+        var nextSequence = 1000L;
+        var receiver = new BrokerLikeReceiver(messages, onReceive: () => messages.Add(
+            ServiceBusModelFactory.ServiceBusReceivedMessage(
+                BinaryData.FromString("live"), sequenceNumber: nextSequence++, enqueuedTime: DateTimeOffset.UtcNow.AddSeconds(1))));
+        var client = new SingleReceiverClient(receiver);
+
+        // Act
+        var result = await ServiceBusOperations.PurgeMessagesDetailedAsync(
+            client, "orders", null, deadLetter: false, ct: CancellationToken.None);
+
+        // Assert
+        result.SucceededCount.Should().Be(150);
+        receiver.CompletedSequenceNumbers.Should().OnlyContain(sequence => sequence <= 150);
+        messages.Should().OnlyContain(message => message.SequenceNumber >= 1000);
+    }
+
     [Fact(Skip = "Integration test - requires Service Bus client setup. Functionality verified through manual testing.")]
     public async Task PeekMessagesAsync_WithSequenceNumber_ShouldCallPeekWithSequenceNumber()
     {
@@ -593,6 +643,63 @@ public class ServiceBusOperationsTests
 
             throw new InvalidOperationException("Session receiver should not be used for dead-letter subqueues.");
         }
+    }
+
+    private sealed class SingleReceiverClient(ServiceBusReceiver receiver) : ServiceBusClient
+    {
+        public override ServiceBusReceiver CreateReceiver(string queueName, ServiceBusReceiverOptions options) => receiver;
+
+        public override ServiceBusReceiver CreateReceiver(
+            string topicName,
+            string subscriptionName,
+            ServiceBusReceiverOptions options) => receiver;
+    }
+
+    /// <summary>Hands out the oldest unlocked messages first, like the broker; abandon unlocks.</summary>
+    private sealed class BrokerLikeReceiver(
+        List<ServiceBusReceivedMessage> messages,
+        Action? onReceive = null) : ServiceBusReceiver
+    {
+        private readonly HashSet<long> _locked = [];
+
+        public List<long> CompletedSequenceNumbers { get; } = [];
+        public Dictionary<long, int> DeliveryCounts { get; } = [];
+
+        public override Task<IReadOnlyList<ServiceBusReceivedMessage>> ReceiveMessagesAsync(
+            int maxMessages,
+            TimeSpan? maxWaitTime = null,
+            CancellationToken cancellationToken = default)
+        {
+            onReceive?.Invoke();
+            var batch = messages.Where(message => !_locked.Contains(message.SequenceNumber)).Take(maxMessages).ToList();
+            foreach (var message in batch)
+            {
+                _locked.Add(message.SequenceNumber);
+                DeliveryCounts[message.SequenceNumber] = DeliveryCounts.GetValueOrDefault(message.SequenceNumber) + 1;
+            }
+
+            return Task.FromResult<IReadOnlyList<ServiceBusReceivedMessage>>(batch);
+        }
+
+        public override Task CompleteMessageAsync(
+            ServiceBusReceivedMessage message,
+            CancellationToken cancellationToken = default)
+        {
+            CompletedSequenceNumbers.Add(message.SequenceNumber);
+            messages.Remove(message);
+            return Task.CompletedTask;
+        }
+
+        public override Task AbandonMessageAsync(
+            ServiceBusReceivedMessage message,
+            IDictionary<string, object>? propertiesToModify = null,
+            CancellationToken cancellationToken = default)
+        {
+            _locked.Remove(message.SequenceNumber);
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class FakeReceiver(IReadOnlyList<ServiceBusReceivedMessage> messages) : ServiceBusReceiver

@@ -19,6 +19,8 @@ public class ConnectionStorageService : IConnectionStorageService
     private readonly string _storagePath;
     private readonly SemaphoreSlim _mutationGate = new(1, 1);
     private List<SavedConnection> _connections = [];
+    // Entries this machine cannot decrypt; written back unchanged so a save never drops them.
+    private List<StoredConnection> _undecryptableConnections = [];
     private bool _loaded;
 
     public ConnectionStorageService(IEncryptionService encryptionService, string? storagePath = null)
@@ -98,6 +100,7 @@ public class ConnectionStorageService : IConnectionStorageService
         try
         {
             _connections.Clear();
+            _undecryptableConnections.Clear();
             _loaded = true;
             PersistConnections();
         }
@@ -113,6 +116,7 @@ public class ConnectionStorageService : IConnectionStorageService
             return;
 
         List<SavedConnection>? loadedConnections = null;
+        List<StoredConnection> undecryptableConnections = [];
 
         if (!File.Exists(_storagePath))
         {
@@ -141,6 +145,7 @@ public class ConnectionStorageService : IConnectionStorageService
                         {
                             Log.Warning("Failed to decrypt a connection. The connection may have been encrypted with a different key");
                             Log.Debug("Failed to decrypt connection {ConnectionName} (ID: {ConnectionId})", stored.Name, stored.Id);
+                            undecryptableConnections.Add(stored);
                             return null;
                         }
 
@@ -172,6 +177,7 @@ public class ConnectionStorageService : IConnectionStorageService
                 catch (Exception legacyEx)
                 {
                     Log.Warning(legacyEx, "Failed to load connections from {Path}, starting with empty list", _storagePath);
+                    AtomicFile.PreserveUnreadable(_storagePath);
                     loadedConnections = [];
                 }
             }
@@ -179,10 +185,12 @@ public class ConnectionStorageService : IConnectionStorageService
         catch (Exception ex)
         {
             Log.Warning(ex, "Failed to load connections from {Path}, starting with empty list", _storagePath);
+            AtomicFile.PreserveUnreadable(_storagePath);
             loadedConnections = [];
         }
 
         _connections = loadedConnections ?? [];
+        _undecryptableConnections = undecryptableConnections;
         _loaded = true;
     }
 
@@ -199,6 +207,7 @@ public class ConnectionStorageService : IConnectionStorageService
                 conn.IsFavorite,
                 conn.Environment
             ))
+            .Concat(_undecryptableConnections.Where(stored => _connections.All(conn => conn.Id != stored.Id)))
             .ToList();
 
         var json = JsonSerializer.Serialize(storedConnections, JsonOptions);

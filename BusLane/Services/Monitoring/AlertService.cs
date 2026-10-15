@@ -569,6 +569,7 @@ public class AlertService : IAlertService
             catch (Exception ex)
             {
                 Log.Debug(ex, "Failed to load alert history from {Path}", _historyPath);
+                AtomicFile.PreserveUnreadable(_historyPath);
             }
         }
     }

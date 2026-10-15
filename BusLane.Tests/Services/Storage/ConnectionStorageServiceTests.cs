@@ -217,6 +217,42 @@ public class ConnectionStorageServiceTests : IDisposable
         connections.Should().NotBeEmpty();
     }
 
+    [Fact]
+    public async Task SaveConnectionAsync_WhenAnotherConnectionCannotBeDecrypted_KeepsItOnDisk()
+    {
+        // Arrange - "lost" was encrypted with a key this machine no longer has
+        var lost = CreateTestConnection(name: "Lost");
+        await _sut.SaveConnectionAsync(lost);
+        _encryptionService.Decrypt(Arg.Is<string>(s => s.Contains("Lost-secret")))
+            .Returns((string?)null);
+        await File.WriteAllTextAsync(
+            _testStoragePath,
+            (await File.ReadAllTextAsync(_testStoragePath)).Replace("abc123", "Lost-secret"));
+        var restarted = new ConnectionStorageService(_encryptionService, _testStoragePath);
+
+        // Act
+        (await restarted.GetConnectionsAsync()).Should().BeEmpty();
+        await restarted.SaveConnectionAsync(CreateTestConnection(name: "New"));
+
+        // Assert
+        var json = await File.ReadAllTextAsync(_testStoragePath);
+        json.Should().Contain(lost.Id).And.Contain("Lost-secret").And.Contain("New");
+    }
+
+    [Fact]
+    public async Task SaveConnectionAsync_WhenFileIsUnreadable_BacksItUpBeforeOverwriting()
+    {
+        // Arrange
+        await File.WriteAllTextAsync(_testStoragePath, "{ not json");
+
+        // Act
+        await _sut.SaveConnectionAsync(CreateTestConnection());
+
+        // Assert
+        var backup = Directory.GetFiles(_testDirectory, "connections.json.*.bak").Should().ContainSingle().Subject;
+        (await File.ReadAllTextAsync(backup)).Should().Be("{ not json");
+    }
+
     private static SavedConnection CreateTestConnection(
         string? id = null,
         string name = "Test Connection")
