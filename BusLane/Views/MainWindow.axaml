@@ -52,13 +52,18 @@
                 <!-- Main content grid -->
                 <Grid Grid.Row="1"
                       x:Name="AzureWorkspaceGrid"
-                      ColumnDefinitions="0,1.2*,1.8*">
+                      ColumnDefinitions="0,280,5,*">
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="1"
                                                   IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
 
+                    <GridSplitter Grid.Column="2" Classes="workspace-splitter"
+                                  ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
+                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                  IsVisible="{Binding IsCurrentEntityPaneVisible}"
+                                  AutomationProperties.Name="Resize entity and message panes"/>
                     <!-- Messages Panel -->
-                    <controls:MessagesPanelView Grid.Column="2"/>
+                    <controls:MessagesPanelView Grid.Column="3"/>
                 </Grid>
             </Grid>
 
@@ -73,13 +78,18 @@
                 <!-- Main content for connection string mode -->
                 <Grid Grid.Row="1"
                       x:Name="ConnectionWorkspaceGrid"
-                      ColumnDefinitions="0,1.2*,1.8*">
+                      ColumnDefinitions="0,280,5,*">
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="1"
                                              IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
 
+                    <GridSplitter Grid.Column="2" Classes="workspace-splitter"
+                                  ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
+                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                  IsVisible="{Binding IsCurrentEntityPaneVisible}"
+                                  AutomationProperties.Name="Resize entity and message panes"/>
                     <!-- Messages Panel (reusing same structure as Azure mode) -->
-                    <controls:MessagesPanelView Grid.Column="2"/>
+                    <controls:MessagesPanelView Grid.Column="3"/>
                 </Grid>
             </Grid>
 

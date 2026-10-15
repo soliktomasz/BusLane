@@ -85,12 +85,12 @@
                                         </StackPanel>
 
                                         <TextBlock Text="{Binding ActiveTab.TabTitle}"
-                                                   Classes="heading"
+                                                   Classes="body-strong"
                                                    TextTrimming="CharacterEllipsis"/>
 
                                         <TextBlock Text="{Binding ActiveTab.TabSubtitle}"
                                                    Classes="caption"
-                                                   TextWrapping="Wrap"
+                                                   ToolTip.Tip="{Binding ActiveTab.TabSubtitle}"
                                                    TextTrimming="CharacterEllipsis"
                                                    IsVisible="{Binding ActiveTab.TabSubtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </StackPanel>
@@ -118,18 +118,6 @@
                                         <TextBlock Text="{Binding CurrentNavigation.TotalDeadLetterCount, StringFormat='{}{0} dead letters'}"/>
                                     </StackPanel>
                                 </Border>
-
-                                <WrapPanel Classes="sidebar-workspace-meta"
-                                           Orientation="Horizontal"
-                                           ItemHeight="28"
-                                           IsVisible="{Binding IsActiveTabConnectionStringMode}">
-                                    <Border Classes="badge-env"
-                                            Margin="0,0,6,6"
-                                            IsVisible="{Binding ActiveTab.SavedConnection.HasEnvironment}">
-                                        <TextBlock Text="{Binding ActiveTab.SavedConnection.EnvironmentDisplayName}"
-                                                   FontWeight="SemiBold"/>
-                                    </Border>
-                                </WrapPanel>
 
                                 <Grid Classes="sidebar-workspace-actions"
                                       ColumnDefinitions="*,Auto,Auto"
@@ -272,7 +260,7 @@
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                     <TextBlock Text="My Connections" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Manage saved and recent connections"
+                                    <TextBlock Text="Saved connections"
                                                Classes="caption"
                                                FontSize="11"/>
                                 </StackPanel>

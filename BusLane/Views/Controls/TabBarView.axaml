@@ -11,7 +11,7 @@
     <Border Background="{DynamicResource TabNavBackground}"
             BorderBrush="{DynamicResource BorderDefault}"
             BorderThickness="0,0,0,1"
-            Height="64"
+            Height="56"
             Padding="12,0"
             IsVisible="{Binding HasActiveTabs}">
         <Grid ColumnDefinitions="*,Auto">

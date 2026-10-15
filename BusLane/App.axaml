@@ -16,6 +16,8 @@
     <Application.Resources>
         <ResourceDictionary>
             
+            <x:Double x:Key="TextControlPlaceholderOpacity">1</x:Double>
+
             <!-- Converters for Live Stream, Charts, and Alerts -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
             <converters:BoolToStatusColorConverter x:Key="BoolToStatusColorConverter"/>
@@ -46,7 +48,7 @@
                     <SolidColorBrush x:Key="AppBackground" Color="#FAF9F5"/>
                     <SolidColorBrush x:Key="AppForeground" Color="#27272A"/>
                     <SolidColorBrush x:Key="SubtleForeground" Color="#52525B"/>
-                    <SolidColorBrush x:Key="MutedForeground" Color="#71717A"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#62626C"/>
                     <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="SidebarBackground" Color="#F4F4F5"/>
                     <SolidColorBrush x:Key="SurfaceSubtle" Color="#F7F7F8"/>
@@ -139,7 +141,7 @@
                     <SolidColorBrush x:Key="AppBackground" Color="#18181B"/>
                     <SolidColorBrush x:Key="AppForeground" Color="#F4F4F5"/>
                     <SolidColorBrush x:Key="SubtleForeground" Color="#A1A1AA"/>
-                    <SolidColorBrush x:Key="MutedForeground" Color="#71717A"/>
+                    <SolidColorBrush x:Key="MutedForeground" Color="#A1A1AA"/>
                     <SolidColorBrush x:Key="CardBackground" Color="#27272A"/>
                     <SolidColorBrush x:Key="SidebarBackground" Color="#18181B"/>
                     <SolidColorBrush x:Key="SurfaceSubtle" Color="#27272A"/>
@@ -230,7 +232,12 @@
     </Application.Resources>
 
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Light" Accent="#4F46E5"/>
+                <ColorPaletteResources x:Key="Dark" Accent="#A5B4FC"/>
+            </FluentTheme.Palettes>
+        </FluentTheme>
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>
         <StyleInclude Source="/Styles/AppStyles.axaml"/>
     </Application.Styles>

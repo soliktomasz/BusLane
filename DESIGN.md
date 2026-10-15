@@ -210,3 +210,5 @@ Native `details` and `summary` elements provide disclosure behavior. One-pixel b
 - **Don't** replace product screenshots with decorative mockups.
 - **Don't** turn every text section into an elevated card.
 - **Don't** introduce unimplemented form fields, modal dialogs, or input patterns into this record.
+
+Desktop application guidance: [docs/desktop-design.md](docs/desktop-design.md).

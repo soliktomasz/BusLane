@@ -13,8 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 public partial class MainWindow : Window
 {
     private const int TerminalBoundsSaveDebounceMilliseconds = 250;
-    private const double VisibleEntityPaneWidthWeight = 1.2;
-    private const double VisibleMessagesWidthWeight = 1.8;
+    private readonly Dictionary<string, (GridLength Entity, GridLength Messages)> _workspacePaneWidths = new();
 
     private readonly Dictionary<KeyboardShortcutAction, Func<MainWindowViewModel, bool>> _shortcutHandlers;
     private MainWindowViewModel? _viewModel;
@@ -554,19 +553,31 @@ public partial class MainWindow : Window
 
     private void ApplyEntityPaneLayoutColumns(string gridName, bool isEntityPaneVisible)
     {
-        if (this.FindControl<Grid>(gridName) is not { } grid || grid.ColumnDefinitions.Count < 3)
+        if (this.FindControl<Grid>(gridName) is not { } grid || grid.ColumnDefinitions.Count < 4)
         {
             return;
         }
 
-        grid.ColumnDefinitions[0].Width = isEntityPaneVisible
-            ? new GridLength(0)
-            : new GridLength(0);
-        grid.ColumnDefinitions[1].Width = isEntityPaneVisible
-            ? new GridLength(VisibleEntityPaneWidthWeight, GridUnitType.Star)
-            : new GridLength(0);
-        grid.ColumnDefinitions[2].Width = isEntityPaneVisible
-            ? new GridLength(VisibleMessagesWidthWeight, GridUnitType.Star)
-            : new GridLength(1, GridUnitType.Star);
+        var entityColumn = grid.ColumnDefinitions[1];
+        var splitterColumn = grid.ColumnDefinitions[2];
+        var messagesColumn = grid.ColumnDefinitions[3];
+        entityColumn.MinWidth = isEntityPaneVisible ? 220 : 0;
+        messagesColumn.MinWidth = 420;
+
+        if (!isEntityPaneVisible && entityColumn.Width.Value > 0)
+        {
+            _workspacePaneWidths[gridName] = (entityColumn.Width, messagesColumn.Width);
+            entityColumn.Width = new GridLength(0);
+            splitterColumn.Width = new GridLength(0);
+            messagesColumn.Width = new GridLength(1, GridUnitType.Star);
+        }
+        else if (isEntityPaneVisible && entityColumn.Width.Value == 0)
+        {
+            var widths = _workspacePaneWidths.GetValueOrDefault(gridName,
+                (new GridLength(280), new GridLength(1, GridUnitType.Star)));
+            entityColumn.Width = widths.Item1;
+            messagesColumn.Width = widths.Item2;
+            splitterColumn.Width = new GridLength(5);
+        }
     }
 }
