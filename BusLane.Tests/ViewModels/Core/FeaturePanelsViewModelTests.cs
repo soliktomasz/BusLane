@@ -127,23 +127,47 @@ public class FeaturePanelsViewModelTests
         sut.ShowAlerts.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task OpenLiveStream_AfterClose_WaitsForOldStreamToStopBeforeStarting()
+    {
+        // Arrange - the old view model's stop is still in flight when the panel is reopened
+        var liveStreamService = Substitute.For<ILiveStreamService>();
+        var oldStreamStopped = new TaskCompletionSource();
+        liveStreamService.StopStreamAsync().Returns(oldStreamStopped.Task, Task.CompletedTask);
+        var queue = new QueueInfo("orders", 0, 0, 0, 0, 0, null, false, TimeSpan.FromDays(14), TimeSpan.FromMinutes(1));
+        var sut = CreateSut(liveStreamService: liveStreamService, selectedQueue: queue);
+        await sut.OpenLiveStream();
+        sut.CloseLiveStream();
+
+        // Act
+        var reopen = sut.OpenLiveStream();
+
+        // Assert - the new stream starts only after the old one has stopped
+        await liveStreamService.Received(1).StartQueueStreamAsync(Arg.Any<IServiceBusOperations>(), "orders", Arg.Any<CancellationToken>());
+        oldStreamStopped.SetResult();
+        await reopen;
+        await liveStreamService.Received(2).StartQueueStreamAsync(Arg.Any<IServiceBusOperations>(), "orders", Arg.Any<CancellationToken>());
+    }
+
     private static FeaturePanelsViewModel CreateSut(
         ICorrelationMessageCatalog? catalog = null,
-        ICorrelationRefreshDelay? refreshDelay = null)
+        ICorrelationRefreshDelay? refreshDelay = null,
+        ILiveStreamService? liveStreamService = null,
+        QueueInfo? selectedQueue = null)
     {
         var auditStore = Substitute.For<IReplayAuditStore>();
         auditStore.LoadAsync(Arg.Any<CancellationToken>()).Returns([]);
         var replayService = Substitute.For<IMessageReplayService>();
         var destination = new ReplayDestination("namespace", ConnectionEnvironment.Test, "orders", "Queue", false);
         return new FeaturePanelsViewModel(
-            Substitute.For<ILiveStreamService>(),
+            liveStreamService ?? Substitute.For<ILiveStreamService>(),
             Substitute.For<IAlertService>(),
             Substitute.For<INotificationService>(),
             () => Substitute.For<IServiceBusOperations>(),
             () => [],
             () => [],
             () => [],
-            () => null,
+            () => selectedQueue,
             () => null,
             _ => { },
             catalog ?? new CorrelationMessageCatalog(),

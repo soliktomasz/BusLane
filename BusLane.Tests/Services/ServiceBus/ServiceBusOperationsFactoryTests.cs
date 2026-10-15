@@ -1,6 +1,7 @@
 namespace BusLane.Tests.Services.ServiceBus;
 
 using Azure.Core;
+using Azure.Messaging.ServiceBus;
 using Azure.ResourceManager;
 using BusLane.Services.ServiceBus;
 using FluentAssertions;
@@ -113,5 +114,47 @@ public class ServiceBusOperationsFactoryTests
     public void AzureCredentialOperations_NormalizeEntityPath_ConvertsArmSeparator(string input, string expected)
     {
         AzureCredentialOperations.NormalizeEntityPath(input).Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task AzureCredentialOperations_SharedSend_UsesDataPlanePath()
+    {
+        // Arrange - ARM lists queue "orders/v1" as "orders~v1"
+        var client = new SenderRecordingClient();
+        await using var operations = new TestAzureCredentialOperations(client);
+
+        // Act
+        await operations.SendMessageAsync("orders~v1", "body", null);
+
+        // Assert
+        client.SenderEntityNames.Should().Equal("orders/v1");
+    }
+
+    private sealed class TestAzureCredentialOperations(ServiceBusClient client) : AzureCredentialOperations(
+        "orders.servicebus.windows.net",
+        "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.ServiceBus/namespaces/orders",
+        Substitute.For<TokenCredential>(),
+        () => null!)
+    {
+        public override ServiceBusClient GetClient() => client;
+    }
+
+    private sealed class SenderRecordingClient : ServiceBusClient
+    {
+        public List<string> SenderEntityNames { get; } = [];
+
+        public override ServiceBusSender CreateSender(string queueOrTopicName)
+        {
+            SenderEntityNames.Add(queueOrTopicName);
+            return new NoOpSender();
+        }
+    }
+
+    private sealed class NoOpSender : ServiceBusSender
+    {
+        public override Task SendMessageAsync(ServiceBusMessage message, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

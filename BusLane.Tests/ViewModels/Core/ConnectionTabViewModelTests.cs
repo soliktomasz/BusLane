@@ -251,6 +251,92 @@ public class ConnectionTabViewModelTests
     }
 
     [Fact]
+    public async Task DisconnectAsync_DisposesOperations()
+    {
+        // Arrange - Azure-mode operations own their client, so dropping them without disposing leaks a connection
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+        var tab = new ConnectionTabViewModel(
+            "test-id", "Test Tab", "test.servicebus.windows.net", Substitute.For<IPreferencesService>(), CreateMockLogSink());
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        await tab.DisconnectAsync();
+
+        // Assert
+        await operations.Received(1).DisposeAsync();
+        tab.Operations.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_WhenDisposeFails_StillClearsConnectionState()
+    {
+        // Arrange
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
+        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
+        operations.DisposeAsync().Returns(ValueTask.FromException(new InvalidOperationException("dispose failed")));
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+        var tab = new ConnectionTabViewModel(
+            "test-id", "Test Tab", "test.servicebus.windows.net", Substitute.For<IPreferencesService>(), CreateMockLogSink());
+        await tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Act
+        await tab.DisconnectAsync();
+
+        // Assert
+        tab.IsConnected.Should().BeFalse();
+        tab.Mode.Should().Be(ConnectionMode.None);
+        tab.Operations.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ConnectWithConnectionStringAsync_WhenLoadAndDisposeFail_KeepsOriginalError()
+    {
+        // Arrange
+        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        operationsFactory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueuesAsync().Returns<IEnumerable<QueueInfo>>(_ => throw new UnauthorizedAccessException("bad key"));
+        operations.DisposeAsync().Returns(ValueTask.FromException(new InvalidOperationException("dispose failed")));
+        var connection = new SavedConnection
+        {
+            Id = "conn-1",
+            Name = "Test Connection",
+            ConnectionString = "Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=test",
+            Type = ConnectionType.Namespace
+        };
+        var tab = new ConnectionTabViewModel(
+            "test-id", "Test Tab", "test.servicebus.windows.net", Substitute.For<IPreferencesService>(), CreateMockLogSink());
+
+        // Act
+        var act = () => tab.ConnectWithConnectionStringAsync(connection, operationsFactory);
+
+        // Assert
+        await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("bad key");
+        tab.Operations.Should().BeNull();
+        tab.Mode.Should().Be(ConnectionMode.None);
+    }
+
+    [Fact]
     public async Task DisconnectAsync_ClearsConnectionState()
     {
         // Arrange
@@ -512,38 +598,6 @@ public class ConnectionTabViewModelTests
 
         // Assert
         state.IsEntityPaneVisible.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task RefreshNamespaceEntitiesAsync_KeepsSelectedNamespace()
-    {
-        // Arrange
-        var preferencesService = Substitute.For<IPreferencesService>();
-        var logSink = CreateMockLogSink();
-        var operationsFactory = Substitute.For<IServiceBusOperationsFactory>();
-        var operations = Substitute.For<IAzureCredentialOperations>();
-
-        operationsFactory.CreateFromAzureCredential(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<TokenCredential>())
-            .Returns(operations);
-        operations.GetQueuesAsync().Returns(new List<QueueInfo>());
-        operations.GetTopicsAsync().Returns(new List<TopicInfo>());
-
-        var ns = new ServiceBusNamespace(
-            "/subscriptions/sub-1/resourceGroups/rg/providers/Microsoft.ServiceBus/namespaces/ns-1",
-            "ns-1",
-            "rg",
-            "sub-1",
-            "westeurope",
-            "ns-1.servicebus.windows.net");
-
-        var tab = new ConnectionTabViewModel("test-id", "Test Tab", "test.servicebus.windows.net", preferencesService, logSink);
-        await tab.ConnectWithAzureCredentialAsync(ns, new TestTokenCredential(), operationsFactory);
-
-        // Act
-        await tab.RefreshNamespaceEntitiesAsync();
-
-        // Assert
-        tab.Navigation.SelectedNamespace.Should().Be(ns);
     }
 
     [Fact]

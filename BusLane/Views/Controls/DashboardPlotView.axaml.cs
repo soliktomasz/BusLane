@@ -77,8 +77,6 @@ public partial class DashboardPlotView : UserControl
         switch (data)
         {
             case LinePlotData line: RenderLine(line); break;
-            case BarPlotData bar: RenderBar(bar); break;
-            case PiePlotData pie: RenderPie(pie); break;
         }
 
         PlotHost.Refresh();
@@ -138,72 +136,6 @@ public partial class DashboardPlotView : UserControl
         return usesVisibleWindow
             ? (visibleStart!.Value.ToOADate(), visibleEnd!.Value.ToOADate(), true)
             : (xValues.Min(), xValues.Max(), false);
-    }
-
-    private void RenderBar(BarPlotData bar)
-    {
-        var categories = bar.Categories;
-        var count = categories.Count;
-        var seriesCount = bar.Series.Count;
-        var width = Math.Max(0.22, 0.72 / Math.Max(1, seriesCount));
-
-        var bars = new List<ScottPlot.Bar>();
-        for (var s = 0; s < seriesCount; s++)
-        {
-            var series = bar.Series[s];
-            var color = ResolveColor(series.FillColorToken);
-            var offset = (s - (seriesCount - 1) / 2.0) * width;
-            for (var i = 0; i < count; i++)
-            {
-                bars.Add(new ScottPlot.Bar
-                {
-                    Position = i + offset,
-                    Value = series.Values[i],
-                    Size = width,
-                    FillColor = color
-                });
-            }
-        }
-
-        PlotHost.Plot.Add.Bars(bars);
-
-        var positions = Enumerable.Range(0, count).Select(i => (double)i).ToArray();
-        PlotHost.Plot.Axes.Bottom.TickGenerator = new NumericManual(positions, categories.ToArray());
-
-        var max = bars.Select(b => b.Value).DefaultIfEmpty(0).Max();
-        if (max <= 0)
-        {
-            max = 1;
-        }
-        PlotHost.Plot.Axes.SetLimits(-0.5, count - 0.5, 0, max * 1.2);
-
-        StyleAxes(PlotHost.Plot);
-        PlotHost.Plot.Axes.Bottom.TickLabelStyle.Rotation = -30;
-    }
-
-    private void RenderPie(PiePlotData pie)
-    {
-        var slices = pie.Slices
-            .Select(s => new PieSlice
-            {
-                Value = s.Value,
-                Label = s.Name,
-                LegendText = s.Name,
-                FillColor = ResolveColor(s.FillColorToken)
-            })
-            .ToList();
-
-        PlotHost.Plot.Add.Pie(slices);
-        PlotHost.Plot.FigureBackground.Color = ColorHex("#00000000");
-        PlotHost.Plot.DataBackground.Color = ColorHex("#00000000");
-        PlotHost.Plot.HideAxesAndGrid();
-
-        PlotHost.Plot.Legend.IsVisible = true;
-        PlotHost.Plot.Legend.Alignment = Alignment.UpperRight;
-        PlotHost.Plot.Legend.FontSize = 10;
-        PlotHost.Plot.Legend.FontColor = ResolveColor("SubtleForeground");
-        PlotHost.Plot.Legend.BackgroundColor = ColorHex("#00000000");
-        PlotHost.Plot.Legend.OutlineWidth = 0;
     }
 
     /// <summary>

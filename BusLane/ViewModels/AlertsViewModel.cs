@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Services.Monitoring;
 
-public partial class AlertsViewModel : ViewModelBase
+public partial class AlertsViewModel : ViewModelBase, IDisposable
 {
     private readonly IAlertService _alertService;
     private readonly INotificationService _notificationService;
@@ -57,6 +57,8 @@ public partial class AlertsViewModel : ViewModelBase
 
         LoadData();
     }
+
+    public void Dispose() => _alertService.AlertsChanged -= OnAlertsChanged;
 
     partial void OnSystemNotificationsEnabledChanged(bool value)
     {

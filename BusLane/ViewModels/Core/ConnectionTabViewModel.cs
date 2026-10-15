@@ -156,7 +156,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Connection failed: {ex.Message}";
-            _operations = null;
+            await ReleaseOperationsAsync();
             SavedConnection = null;
             Mode = ConnectionMode.None;
             LogActivity(LogLevel.Error, $"Tab '{TabTitle}': connection failed", ex.Message);
@@ -202,7 +202,7 @@ public partial class ConnectionTabViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Connection failed: {ex.Message}";
-            _operations = null;
+            await ReleaseOperationsAsync();
             Namespace = null;
             Mode = ConnectionMode.None;
             LogActivity(LogLevel.Error, $"Tab '{TabTitle}': Azure connection failed", ex.Message);
@@ -217,11 +217,11 @@ public partial class ConnectionTabViewModel : ViewModelBase
     /// <summary>
     /// Disconnects from the current Service Bus namespace.
     /// </summary>
-    public Task DisconnectAsync()
+    public async Task DisconnectAsync()
     {
         var tabTitle = TabTitle;
 
-        _operations = null;
+        await ReleaseOperationsAsync();
         SavedConnection = null;
         Namespace = null;
         Mode = ConnectionMode.None;
@@ -235,7 +235,27 @@ public partial class ConnectionTabViewModel : ViewModelBase
         StatusMessage = "Disconnected";
         ConnectionHealth = new ConnectionHealthReport(ConnectionHealthState.Degraded, "Disconnected");
         LogActivity(LogLevel.Info, $"Tab '{tabTitle}': disconnected");
-        return Task.CompletedTask;
+    }
+
+    // Disposing closes the Azure-mode client and returns pooled connection-string clients.
+    // A failed dispose is only logged, so callers still finish their cleanup and keep their own error.
+    private async Task ReleaseOperationsAsync()
+    {
+        var operations = _operations;
+        _operations = null;
+        if (operations == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await operations.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            LogActivity(LogLevel.Warning, $"Tab '{TabTitle}': failed to release connection", ex.Message);
+        }
     }
 
     /// <summary>Records a successful destination for namespace-local quick access.</summary>
@@ -321,48 +341,6 @@ public partial class ConnectionTabViewModel : ViewModelBase
         LogActivity(
             LogLevel.Info,
             $"Tab '{TabTitle}': discovered {Navigation.Queues.Count} queue(s) and {Navigation.Topics.Count} topic(s)");
-    }
-
-    /// <summary>
-    /// Refreshes the namespace entities (queues and topics) for this tab.
-    /// </summary>
-    public async Task RefreshNamespaceEntitiesAsync()
-    {
-        if (_operations == null) return;
-
-        IsLoading = true;
-        StatusMessage = "Refreshing...";
-        LogActivity(LogLevel.Info, $"Tab '{TabTitle}': refreshing namespace entities");
-
-        try
-        {
-            Navigation.Queues.Clear();
-            Navigation.Topics.Clear();
-            Navigation.SelectedNamespace = Namespace;
-
-            var queues = await _operations.GetQueuesAsync();
-            foreach (var queue in queues)
-                Navigation.Queues.Add(queue);
-
-            var topics = await _operations.GetTopicsAsync();
-            foreach (var topic in topics)
-                Navigation.Topics.Add(topic);
-
-            StatusMessage = $"{Navigation.Queues.Count} queue(s), {Navigation.Topics.Count} topic(s)";
-            LogActivity(
-                LogLevel.Info,
-                $"Tab '{TabTitle}': refresh completed with {Navigation.Queues.Count} queue(s) and {Navigation.Topics.Count} topic(s)");
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error refreshing: {ex.Message}";
-            LogActivity(LogLevel.Error, $"Tab '{TabTitle}': refresh failed", ex.Message);
-            throw;
-        }
-        finally
-        {
-            IsLoading = false;
-        }
     }
 
     /// <summary>
