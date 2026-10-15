@@ -38,6 +38,7 @@ public sealed class ReplayAuditStore : IReplayAuditStore
         }
         catch
         {
+            AtomicFile.PreserveUnreadable(_path);
             return [];
         }
     }

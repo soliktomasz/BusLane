@@ -1522,11 +1522,6 @@ internal static class ServiceBusOperations
                         totalRequestedCount,
                         $"{completedVerb} {processedCount} of {totalRequestedCount} message(s)"));
                 }
-
-                if (heldMessages.Count >= DeleteBatchSize)
-                {
-                    await ReleaseHeldMessagesAsync();
-                }
             }
         }
         finally
@@ -1584,7 +1579,7 @@ internal static class ServiceBusOperations
     {
         var options = new ServiceBusReceiverOptions
         {
-            ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete,
+            ReceiveMode = ServiceBusReceiveMode.PeekLock,
             SubQueue = deadLetter ? SubQueue.DeadLetter : SubQueue.None
         };
 
@@ -1592,12 +1587,22 @@ internal static class ServiceBusOperations
             ? client.CreateReceiver(entityName, subscription, options)
             : client.CreateReceiver(entityName, options);
 
+        // Only delete what was there when purge started, so a queue with live traffic still finishes
+        // and messages sent after the user confirmed are left alone.
+        var purgeStart = DateTimeOffset.UtcNow;
         var deletedCount = 0;
-        while (!ct.IsCancellationRequested)
+        var reachedNewMessages = false;
+        while (!reachedNewMessages && !ct.IsCancellationRequested)
         {
             var msgs = await receiver.ReceiveMessagesAsync(PurgeBatchSize, PurgeReceiveTimeout, ct);
             if (msgs.Count == 0) break;
-            deletedCount += msgs.Count;
+
+            var existing = msgs.Where(m => m.EnqueuedTime < purgeStart).ToList();
+            var arrivedLater = msgs.Where(m => m.EnqueuedTime >= purgeStart).ToList();
+            reachedNewMessages = arrivedLater.Count > 0;
+            await Task.WhenAll(existing.Select(m => receiver.CompleteMessageAsync(m, ct)));
+            await Task.WhenAll(arrivedLater.Select(m => receiver.AbandonMessageAsync(m, cancellationToken: CancellationToken.None)));
+            deletedCount += existing.Count;
             progress?.Report(new BulkOperationProgress(
                 BulkOperationType.Purge,
                 deletedCount,
