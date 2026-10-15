@@ -83,8 +83,15 @@ internal static class AppPaths
     [SupportedOSPlatform("macOS")]
     private static void CreateSecureFileUnix(string path, string content)
     {
-        File.WriteAllText(path, content);
-        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        // Create the file as 0600 so its content is never readable by other users, even briefly.
+        using var stream = new FileStream(path, new FileStreamOptions
+        {
+            Mode = FileMode.Create,
+            Access = FileAccess.Write,
+            UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite
+        });
+        using var writer = new StreamWriter(stream);
+        writer.Write(content);
     }
 
     /// <summary>

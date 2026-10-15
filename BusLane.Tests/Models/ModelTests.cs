@@ -100,37 +100,6 @@ public class AlertEventTests
     }
 }
 
-public class MetricDataPointTests
-{
-    [Fact]
-    public void MetricDataPoint_WithSameValues_AreEqual()
-    {
-        // Arrange
-        var timestamp = DateTimeOffset.UtcNow;
-        var point1 = new MetricDataPoint(timestamp, "queue1", "ActiveMessageCount", 42);
-        var point2 = new MetricDataPoint(timestamp, "queue1", "ActiveMessageCount", 42);
-
-        // Assert
-        point1.Should().Be(point2);
-    }
-
-    [Fact]
-    public void MetricDataPoint_ContainsExpectedData()
-    {
-        // Arrange
-        var timestamp = new DateTimeOffset(2026, 1, 2, 12, 0, 0, TimeSpan.Zero);
-
-        // Act
-        var point = new MetricDataPoint(timestamp, "test-queue", "DeadLetterCount", 100.5);
-
-        // Assert
-        point.Timestamp.Should().Be(timestamp);
-        point.EntityName.Should().Be("test-queue");
-        point.MetricName.Should().Be("DeadLetterCount");
-        point.Value.Should().Be(100.5);
-    }
-}
-
 public class QueueInfoTests
 {
     [Fact]

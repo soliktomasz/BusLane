@@ -152,11 +152,9 @@ class Program
         // Monitoring services for Live Stream, Charts, and Alerts
         services.AddSingleton<ILiveStreamService, LiveStreamService>();
         services.AddSingleton<IMetricsHistoryStore, MetricsHistoryStore>();
-        services.AddSingleton<IMetricsService>(sp => new MetricsService(sp.GetRequiredService<IMetricsHistoryStore>()));
         services.AddSingleton<INamespaceInboxScoringService, NamespaceInboxScoringService>();
         services.AddSingleton<INamespaceInboxReviewStore, NamespaceInboxReviewStore>();
         services.AddSingleton<INotificationChannel, WebhookNotificationChannel>();
-        services.AddSingleton<IHealthCheckService, HealthCheckService>();
         services.AddSingleton<IAlertService>(sp => new AlertService(
             notificationChannels: sp.GetServices<INotificationChannel>()));
         services.AddSingleton<INotificationService, NotificationService>();
@@ -169,7 +167,6 @@ class Program
 
         // Dashboard services
         services.AddSingleton<IDashboardPersistenceService, DashboardPersistenceService>();
-        services.AddSingleton<DashboardLayoutEngine>();
 
         // Add dashboard services
         services.AddSingleton<IDashboardRefreshService, DashboardRefreshService>();

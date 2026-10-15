@@ -468,6 +468,29 @@ public class ServiceBusOperationsTests
     }
 
     [Fact]
+    public async Task ResubmitDeadLetterMessagesDetailedAsync_WhenDlqCompleteFailsAfterSend_IsNotRetryable()
+    {
+        // Arrange - the copy reaches the queue, then removing it from the DLQ fails with a transient error
+        var deadLetter = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            BinaryData.FromString("target"), messageId: "target", sequenceNumber: 7);
+        var receiver = new FailingCompleteReceiver([deadLetter]);
+        var client = new SingleReceiverClient(receiver);
+        var selected = new MessageInfo(
+            "target", null, "application/json", "target", DateTimeOffset.UtcNow, null,
+            7, 1, null, new Dictionary<string, object>());
+
+        // Act
+        var result = await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(
+            client, "orders", null, [selected], ct: CancellationToken.None);
+
+        // Assert - resuming would send a second copy
+        client.Sender.SentMessages.Should().ContainSingle();
+        result.SucceededCount.Should().Be(0);
+        result.CanResume.Should().BeFalse();
+        result.Failures.Should().ContainSingle().Which.Kind.Should().Be(BulkOperationFailureKind.NonRetryable);
+    }
+
+    [Fact]
     public async Task DeleteMessagesDetailedAsync_WhenSessionRequired_AcceptsSelectedSession()
     {
         // Arrange
@@ -598,7 +621,7 @@ public class ServiceBusOperationsTests
             ServiceBusModelFactory.ServiceBusReceivedMessage(body: new BinaryData(bytes), messageId: "bin", sequenceNumber: 1));
         var client = new RecordingServiceBusClient();
 
-        await ServiceBusOperations.ResendMessagesAsync(client, "orders", [message]);
+        await ServiceBusOperations.ResendMessagesDetailedAsync(client, "orders", [message]);
 
         client.Sender.SentMessages.Should().ContainSingle()
             .Which.Body.ToArray().Should().Equal(bytes);
@@ -661,6 +684,10 @@ public class ServiceBusOperationsTests
 
     private sealed class SingleReceiverClient(ServiceBusReceiver receiver) : ServiceBusClient
     {
+        public FakeSender Sender { get; } = new();
+
+        public override ServiceBusSender CreateSender(string queueOrTopicName) => Sender;
+
         public override ServiceBusReceiver CreateReceiver(string queueName, ServiceBusReceiverOptions options) => receiver;
 
         public override ServiceBusReceiver CreateReceiver(
@@ -712,6 +739,33 @@ public class ServiceBusOperationsTests
             _locked.Remove(message.SequenceNumber);
             return Task.CompletedTask;
         }
+
+        public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class FailingCompleteReceiver(IReadOnlyList<ServiceBusReceivedMessage> messages) : ServiceBusReceiver
+    {
+        private bool _received;
+
+        public override Task<IReadOnlyList<ServiceBusReceivedMessage>> ReceiveMessagesAsync(
+            int maxMessages,
+            TimeSpan? maxWaitTime = null,
+            CancellationToken cancellationToken = default)
+        {
+            var batch = _received ? [] : messages;
+            _received = true;
+            return Task.FromResult(batch);
+        }
+
+        public override Task CompleteMessageAsync(
+            ServiceBusReceivedMessage message,
+            CancellationToken cancellationToken = default) =>
+            throw new ServiceBusException("Lock lost", ServiceBusFailureReason.ServiceTimeout);
+
+        public override Task AbandonMessageAsync(
+            ServiceBusReceivedMessage message,
+            IDictionary<string, object>? propertiesToModify = null,
+            CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }

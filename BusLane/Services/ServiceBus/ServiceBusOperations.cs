@@ -1063,31 +1063,6 @@ internal static class ServiceBusOperations
         }
     }
 
-    /// <summary>
-    /// Deletes multiple messages by sequence numbers.
-    /// </summary>
-    public static async Task<int> DeleteMessagesAsync(
-        ServiceBusClient client,
-        string entityName,
-        string? subscription,
-        IEnumerable<long> sequenceNumbers,
-        bool deadLetter,
-        bool requiresSession = false,
-        string? sessionId = null,
-        CancellationToken ct = default)
-    {
-        var result = await DeleteMessagesDetailedAsync(
-            client,
-            entityName,
-            subscription,
-            sequenceNumbers.Select(sequenceNumber => new MessageIdentifier(sequenceNumber, null, sessionId)),
-            deadLetter,
-            requiresSession: requiresSession,
-            ct: ct);
-
-        return result.SucceededCount;
-    }
-
     public static async Task<BulkOperationExecutionResult> DeleteMessagesDetailedAsync(
         ServiceBusClient client,
         string entityName,
@@ -1194,19 +1169,6 @@ internal static class ServiceBusOperations
             CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
     }
 
-    /// <summary>
-    /// Resends multiple messages to an entity.
-    /// </summary>
-    public static async Task<int> ResendMessagesAsync(
-        ServiceBusClient client,
-        string entityName,
-        IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default)
-    {
-        var result = await ResendMessagesDetailedAsync(client, entityName, messages, ct: ct);
-        return result.SucceededCount;
-    }
-
     public static async Task<BulkOperationExecutionResult> ResendMessagesDetailedAsync(
         ServiceBusClient client,
         string entityName,
@@ -1303,20 +1265,6 @@ internal static class ServiceBusOperations
             CompletionStatus: ct.IsCancellationRequested ? BulkOperationCompletionStatus.Cancelled : null);
     }
 
-    /// <summary>
-    /// Resubmits messages from dead letter queue back to main queue.
-    /// </summary>
-    public static async Task<int> ResubmitDeadLetterMessagesAsync(
-        ServiceBusClient client,
-        string entityName,
-        string? subscription,
-        IEnumerable<MessageInfo> messages,
-        CancellationToken ct = default)
-    {
-        var result = await ResubmitDeadLetterMessagesDetailedAsync(client, entityName, subscription, messages, ct: ct);
-        return result.SucceededCount;
-    }
-
     public static async Task<BulkOperationExecutionResult> ResubmitDeadLetterMessagesDetailedAsync(
         ServiceBusClient client,
         string entityName,
@@ -1334,6 +1282,8 @@ internal static class ServiceBusOperations
         var succeeded = new HashSet<MessageIdentifier>();
         var failureExceptions = new Dictionary<MessageIdentifier, ServiceBusException>();
         var explicitFailures = new Dictionary<MessageIdentifier, BulkOperationFailure>();
+        // Sent to the main queue but still in the DLQ; retrying would send a duplicate.
+        var sentButNotCompleted = new HashSet<long>();
 
         await using var sender = client.CreateSender(entityName);
 
@@ -1341,7 +1291,15 @@ internal static class ServiceBusOperations
         {
             var newMessage = CreateResubmittedMessage(deadLetterMessage);
             await sender.SendMessageAsync(newMessage, token);
-            await receiver.CompleteMessageAsync(deadLetterMessage, token);
+            try
+            {
+                await receiver.CompleteMessageAsync(deadLetterMessage, token);
+            }
+            catch
+            {
+                sentButNotCompleted.Add(deadLetterMessage.SequenceNumber);
+                throw;
+            }
         }
 
         if (requiresSession)
@@ -1416,9 +1374,11 @@ internal static class ServiceBusOperations
         var failures = failed
             .Select(identifier => explicitFailures.TryGetValue(identifier, out var explicitFailure)
                 ? explicitFailure
-                : failureExceptions.TryGetValue(identifier, out var ex)
-                    ? CreateFailure(identifier, ex)
-                    : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not received from the dead-letter queue before the operation finished"))
+                : sentButNotCompleted.Contains(identifier.SequenceNumber)
+                    ? new BulkOperationFailure(identifier, BulkOperationFailureKind.NonRetryable, "Sent to the queue, but the dead-letter copy could not be removed")
+                    : failureExceptions.TryGetValue(identifier, out var ex)
+                        ? CreateFailure(identifier, ex)
+                        : new BulkOperationFailure(identifier, BulkOperationFailureKind.Retryable, "Message was not received from the dead-letter queue before the operation finished"))
             .ToList();
 
         return new BulkOperationExecutionResult(

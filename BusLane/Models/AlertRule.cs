@@ -36,10 +36,3 @@ public record AlertEvent(
     DateTimeOffset TriggeredAt,
     bool IsAcknowledged = false
 );
-
-public record MetricDataPoint(
-    DateTimeOffset Timestamp,
-    string EntityName,
-    string MetricName,
-    double Value
-);

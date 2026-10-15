@@ -118,6 +118,11 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     {
         CloseScheduledMessages();
         DisposeCorrelationExplorer();
+        if (LiveStreamViewModel != null)
+        {
+            await LiveStreamViewModel.DisposeAsync();
+        }
+
         LiveStreamViewModel = new LiveStreamViewModel(
             _liveStreamService,
             _getOperations,
@@ -143,6 +148,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     {
         CloseScheduledMessages();
         DisposeCorrelationExplorer();
+        AlertsViewModel?.Dispose();
         AlertsViewModel = new AlertsViewModel(_alertService, _notificationService, () => ShowAlerts = false);
         ShowAlerts = true;
         ShowLiveStream = false;
@@ -151,6 +157,7 @@ public partial class FeaturePanelsViewModel : ViewModelBase
     public void CloseAlerts()
     {
         ShowAlerts = false;
+        AlertsViewModel?.Dispose();
         AlertsViewModel = null;
     }
 

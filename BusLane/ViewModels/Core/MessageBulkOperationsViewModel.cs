@@ -46,14 +46,6 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         _setStatus = setStatus;
     }
 
-    /// <summary>
-    /// Purges all messages from the current entity.
-    /// </summary>
-    public Task<bool> ShouldConfirmPurgeAsync()
-    {
-        return Task.FromResult(true);
-    }
-
     public async Task<string> GetPurgeConfirmationMessageAsync()
     {
         var preview = await BuildPurgePreviewAsync();
@@ -136,14 +128,6 @@ public partial class MessageBulkOperationsViewModel : ViewModelBase
         {
             IsLoading = false;
         }
-    }
-
-    /// <summary>
-    /// Resends multiple messages to the current entity.
-    /// </summary>
-    public Task<bool> ShouldConfirmBulkResendAsync()
-    {
-        return Task.FromResult(true);
     }
 
     public string GetBulkResendConfirmText() => "Resend";

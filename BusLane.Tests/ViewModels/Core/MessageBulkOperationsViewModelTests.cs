@@ -51,35 +51,6 @@ public class MessageBulkOperationsViewModelTests
     }
 
     [Fact]
-    public async Task ShouldConfirmBulkOperations_WhenPreferencesDisabled_StillRequiresPreviewConfirmation()
-    {
-        // Arrange
-        var operations = Substitute.For<IServiceBusOperations>();
-        var preferences = Substitute.For<IPreferencesService>();
-        preferences.ConfirmBeforePurge.Returns(false);
-        var logSink = Substitute.For<ILogSink>();
-        var navigation = new NavigationState
-        {
-            SelectedQueue = CreateQueueInfo("orders")
-        };
-
-        var sut = new MessageBulkOperationsViewModel(
-            () => operations,
-            () => navigation,
-            preferences,
-            logSink,
-            _ => { });
-
-        // Act
-        var shouldConfirmPurge = await sut.ShouldConfirmPurgeAsync();
-        var shouldConfirmResend = await sut.ShouldConfirmBulkResendAsync();
-
-        // Assert
-        shouldConfirmPurge.Should().BeTrue();
-        shouldConfirmResend.Should().BeTrue();
-    }
-
-    [Fact]
     public async Task GetPurgeConfirmationMessageAsync_WithStrictConfirmation_AddsHighRiskWarning()
     {
         // Arrange
