@@ -5,696 +5,597 @@
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
 
-    <Border Classes="modal-overlay"
-            IsVisible="{Binding ShowSettings}">
+    <UserControl.Styles>
+        <Style Selector="TabItem.settings-category">
+            <Setter Property="Width" Value="196"/>
+            <Setter Property="MinHeight" Value="44"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+        <Style Selector="TabItem.settings-category:selected">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+        </Style>
+        <Style Selector="TextBlock.settings-page-title">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBlock.settings-group-title">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,24,0,12"/>
+        </Style>
+        <Style Selector="Grid.settings-row">
+            <Setter Property="MinHeight" Value="48"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+        <Style Selector="Grid.settings-row TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style Selector="Grid.settings-row > StackPanel">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ToggleSwitch">
+            <Setter Property="MinWidth" Value="0"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="(TextBlock.TextWrapping)" Value="Wrap"/>
+        </Style>
+        <Style Selector="Button.small">
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="modal-overlay" IsVisible="{Binding ShowSettings}">
         <Border Classes="modal modal-large"
-                VerticalAlignment="Stretch"
-                HorizontalAlignment="Stretch"
-                MinWidth="580"
-                Width="900"
-                Height="720"
-                Padding="0">
+                MaxWidth="900" MaxHeight="680" MinWidth="740" Margin="24"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0">
             <Grid RowDefinitions="Auto,*,Auto">
-                <!-- Header -->
-                <Border Grid.Row="0"
-                        Classes="dialog-header"
-                        BorderBrush="{DynamicResource BorderDefault}"
-                        BorderThickness="0,0,0,1"
-                        Padding="24,20">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Border Grid.Column="0"
-                                Width="40" Height="40"
-                                CornerRadius="{StaticResource RadiusMedium}"
-                                Background="{DynamicResource SurfaceBrand}"
-                                Margin="0,0,16,0">
-                            <LucideIcon Kind="Settings" Size="20"
-                                      Foreground="{DynamicResource AccentBrand}"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="Settings" Classes="title-small"/>
-                            <TextBlock Text="Customize your BusLane experience" Classes="caption"/>
+                <Border Classes="dialog-header" Padding="24,18">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="Preferences for your workspace." Classes="caption"/>
                         </StackPanel>
-                        <Button Grid.Column="2"
-                                Classes="subtle"
-                                Padding="8"
-                                VerticalAlignment="Top"
+                        <Button Grid.Column="1" Classes="subtle" Padding="8"
+                                VerticalAlignment="Center"
+                                AutomationProperties.Name="Close settings"
+                                ToolTip.Tip="Close settings"
                                 Command="{Binding SettingsViewModel.CancelCommand}">
-                            <LucideIcon Kind="X" Size="16"/>
+                            <LucideIcon Kind="X" Size="18"/>
                         </Button>
                     </Grid>
                 </Border>
 
-                <!-- Content -->
-                <ScrollViewer Grid.Row="1">
-                    <Border Classes="dialog-body"
-                            Padding="24,20">
-                        <StackPanel Spacing="16">
-
-                            <!-- Appearance Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="ChartBar" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Theme -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Theme" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Choose your preferred color scheme"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ComboBox Grid.Column="1"
-                                                      ItemsSource="{Binding SettingsViewModel.AvailableThemes}"
-                                                      SelectedItem="{Binding SettingsViewModel.Theme}"
-                                                      Width="130"
-                                                      VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
-                                        <!-- Dead Letter Badges -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Dead letter badges" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Show message counts on dead letter queues"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.ShowDeadLetterBadges}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
-                                        <!-- Topic Action Buttons -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Topic action buttons" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Show topic details, delete, and subscription actions"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.ShowTopicActionButtons}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Messages Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="MessageSquare" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Messages" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Messages Per Page -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Messages per page" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Number of messages to show per page"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ComboBox Grid.Column="1"
-                                                      ItemsSource="{Binding SettingsViewModel.MessagesPerPageOptions}"
-                                                      SelectedItem="{Binding SettingsViewModel.MessagesPerPage}"
-                                                      Width="100"
-                                                      VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
-                                        <!-- Message Preview -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Message preview" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Show message body preview in the list"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.EnableMessagePreview}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Auto Refresh Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="RefreshCw" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Auto Refresh" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Auto Refresh Toggle -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Enable auto-refresh" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Automatically refresh the message list"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.AutoRefreshMessages}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"
-                                                IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}"/>
-
-                                        <!-- Refresh Interval -->
-                                        <Grid Classes="settings-row"
-                                              ColumnDefinitions="*,Auto"
-                                              IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Refresh interval" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="How often to refresh (in seconds)"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ComboBox Grid.Column="1"
-                                                      ItemsSource="{Binding SettingsViewModel.AvailableRefreshIntervals}"
-                                                      SelectedItem="{Binding SettingsViewModel.AutoRefreshIntervalSeconds}"
-                                                      Width="100"
-                                                      VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Confirmations Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="TriangleAlert" Size="20"
-                                                  Foreground="{DynamicResource TextWarning}"/>
-                                        <TextBlock Text="Confirmations" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Destructive Delete Warning -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Stronger delete warnings" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Use a higher-risk confirmation for destructive delete actions"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.ConfirmBeforeDelete}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
-                                        <!-- Destructive Purge Warning -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Stronger purge warnings" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Use a higher-risk confirmation for destructive purge actions"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.ConfirmBeforePurge}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Session Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="ListOrdered" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Session" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Restore Tabs -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Restore tabs on startup" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Remember open connections between sessions"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.RestoreTabsOnStartup}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Privacy Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="Shield" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Privacy" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Telemetry Toggle -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Send error reports" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Help improve BusLane by sending anonymous crash reports (requires restart)"
-                                                           Classes="caption" FontSize="12" TextWrapping="Wrap"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.EnableTelemetry}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Security Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="Lock" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Security" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <TextBlock Text="App lock adds a launch-time password gate. It does not change how saved connections are encrypted."
-                                                   Classes="caption"
-                                                   FontSize="12"
-                                                   TextWrapping="Wrap"/>
-
-                                        <Border Classes="infobar-error"
-                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                            <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.ErrorMessage}"
-                                                       TextWrapping="Wrap"/>
-                                        </Border>
-
-                                        <Border Classes="infobar-success"
-                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                            <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.StatusMessage}"
-                                                       TextWrapping="Wrap"/>
-                                        </Border>
-
-                                        <StackPanel Spacing="12"
-                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.ShowEnableSection}">
-                                            <StackPanel Spacing="6">
-                                                <TextBlock Text="New password" FontWeight="Medium" FontSize="13"/>
-                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.NewPassword}"
-                                                         PasswordChar="●"
-                                                         PlaceholderText="Create an app lock password"/>
-                                            </StackPanel>
-
-                                            <StackPanel Spacing="6">
-                                                <TextBlock Text="Confirm password" FontWeight="Medium" FontSize="13"/>
-                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmPassword}"
-                                                         PasswordChar="●"
-                                                         PlaceholderText="Confirm the password"/>
-                                            </StackPanel>
-
-                                            <CheckBox Content="I understand the recovery code will be shown once and must be stored securely."
-                                                      IsChecked="{Binding SettingsViewModel.AppLockSettings.HasStoredRecoveryCode}"/>
-
-                                            <CheckBox Content="Enable biometric unlock on this device"
-                                                      IsChecked="{Binding SettingsViewModel.AppLockSettings.EnableBiometricUnlock}"
-                                                      IsVisible="{Binding SettingsViewModel.AppLockSettings.CanConfigureBiometrics}"/>
-
-                                            <Button Classes="primary small"
-                                                    Content="Enable App Lock"
-                                                    Command="{Binding SettingsViewModel.AppLockSettings.EnableAppLockCommand}"
-                                                    HorizontalAlignment="Left"
-                                                    IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
-                                        </StackPanel>
-
-                                        <StackPanel Spacing="12"
-                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.ShowManageSection}">
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Grid Grid.Row="1">
+                    <Border Width="196" HorizontalAlignment="Left"
+                            Background="{DynamicResource SurfaceSubtle}"
+                            BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,1,0"/>
+                    <TabControl TabStripPlacement="Left" SelectedIndex="0"
+                                AutomationProperties.Name="Settings categories">
+                        <TabItem Classes="settings-category" AutomationProperties.Name="General">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="SlidersHorizontal" Size="16"/>
+                                    <TextBlock Text="General" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <Border Classes="dialog-body" Padding="28,24,28,28">
+                                    <StackPanel>
+                                        <TextBlock Text="General" Classes="settings-page-title"/>
+                                        <TextBlock Text="Make the workspace feel familiar." Classes="caption" Margin="0,6,0,4" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Appearance" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Theme -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="App lock is enabled" FontWeight="Medium" FontSize="13"/>
-                                                    <TextBlock Text="BusLane will require authentication on launch. Sensitive changes below require your current password or biometrics."
-                                                               Classes="caption"
-                                                               FontSize="12"
-                                                               TextWrapping="Wrap"/>
+                                                    <TextBlock Text="Theme" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Choose your preferred color scheme"
+                                                               Classes="caption" FontSize="12"/>
                                                 </StackPanel>
-                                                <Button Grid.Column="1"
-                                                        Classes="danger-outline small"
-                                                        Content="Disable App Lock"
-                                                        Command="{Binding SettingsViewModel.AppLockSettings.DisableAppLockCommand}"
-                                                        VerticalAlignment="Top"
-                                                        IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                <ComboBox AutomationProperties.Name="Theme" Grid.Column="1"
+                                                          ItemsSource="{Binding SettingsViewModel.AvailableThemes}"
+                                                          SelectedItem="{Binding SettingsViewModel.Theme}"
+                                                          Width="130"
+                                                          VerticalAlignment="Center"/>
                                             </Grid>
-
-                                            <StackPanel Spacing="6">
-                                                <TextBlock Text="Current password" FontWeight="Medium" FontSize="13"/>
-                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.CurrentPassword}"
-                                                         PasswordChar="●"
-                                                         PlaceholderText="Optional if you prefer password re-authentication"/>
-                                            </StackPanel>
 
                                             <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
-                                            <StackPanel Spacing="6">
-                                                <TextBlock Text="Change password" FontWeight="Medium" FontSize="13"/>
-                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ChangePassword}"
-                                                         PasswordChar="●"
-                                                         PlaceholderText="Enter a new password"/>
-                                                <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmChangePassword}"
-                                                         PasswordChar="●"
-                                                         PlaceholderText="Confirm the new password"/>
-                                                <Button Classes="secondary small"
-                                                        Content="Update Password"
-                                                        Command="{Binding SettingsViewModel.AppLockSettings.ChangePasswordCommand}"
+                                            <!-- Dead Letter Badges -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Dead letter badges" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Show message counts on dead letter queues"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Dead letter badges" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.ShowDeadLetterBadges}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <!-- Topic Action Buttons -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Topic action buttons" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Show topic details, delete, and subscription actions"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Topic action buttons" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.ShowTopicActionButtons}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                        <TextBlock Text="Startup" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Restore Tabs -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Restore tabs on startup" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Remember open connections between sessions"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Restore tabs on startup" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.RestoreTabsOnStartup}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Classes="settings-category" AutomationProperties.Name="Messages">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="MessageSquare" Size="16"/>
+                                    <TextBlock Text="Messages" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <Border Classes="dialog-body" Padding="28,24,28,28">
+                                    <StackPanel>
+                                        <TextBlock Text="Messages" Classes="settings-page-title"/>
+                                        <TextBlock Text="Control how messages are displayed and refreshed." Classes="caption" Margin="0,6,0,4" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Display" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Messages Per Page -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Messages per page" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Number of messages to show per page"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ComboBox AutomationProperties.Name="Messages per page" Grid.Column="1"
+                                                          ItemsSource="{Binding SettingsViewModel.MessagesPerPageOptions}"
+                                                          SelectedItem="{Binding SettingsViewModel.MessagesPerPage}"
+                                                          Width="100"
+                                                          VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <!-- Message Preview -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Message preview" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Show message body preview in the list"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Message preview" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.EnableMessagePreview}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                        <TextBlock Text="Auto-refresh" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Auto Refresh Toggle -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Enable auto-refresh" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Automatically refresh the message list"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Enable auto-refresh" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.AutoRefreshMessages}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"
+                                                    IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}"/>
+
+                                            <!-- Refresh Interval -->
+                                            <Grid Classes="settings-row"
+                                                  ColumnDefinitions="*,Auto"
+                                                  IsVisible="{Binding SettingsViewModel.AutoRefreshMessages}">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Refresh interval" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="How often to refresh (in seconds)"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ComboBox AutomationProperties.Name="Refresh interval" Grid.Column="1"
+                                                          ItemsSource="{Binding SettingsViewModel.AvailableRefreshIntervals}"
+                                                          SelectedItem="{Binding SettingsViewModel.AutoRefreshIntervalSeconds}"
+                                                          Width="100"
+                                                          VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                        <TextBlock Text="Confirmations" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Destructive Delete Warning -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Stronger delete warnings" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Use a higher-risk confirmation for destructive delete actions"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Stronger delete warnings" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.ConfirmBeforeDelete}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <!-- Destructive Purge Warning -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Stronger purge warnings" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Use a higher-risk confirmation for destructive purge actions"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Stronger purge warnings" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.ConfirmBeforePurge}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Classes="settings-category" AutomationProperties.Name="Security &amp; privacy">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="Shield" Size="16"/>
+                                    <TextBlock Text="Security &amp; privacy" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <Border Classes="dialog-body" Padding="28,24,28,28">
+                                    <StackPanel>
+                                        <TextBlock Text="Security &amp; privacy" Classes="settings-page-title"/>
+                                        <TextBlock Text="Manage app access and error reporting." Classes="caption" Margin="0,6,0,4" TextWrapping="Wrap"/>
+                                        <TextBlock Text="App lock" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <TextBlock Text="App lock adds a launch-time password gate. It does not change how saved connections are encrypted."
+                                                       Classes="caption"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"/>
+
+                                            <Border Classes="infobar-error"
+                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.ErrorMessage}"
+                                                           TextWrapping="Wrap"/>
+                                            </Border>
+
+                                            <Border Classes="infobar-success"
+                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.StatusMessage}"
+                                                           TextWrapping="Wrap"/>
+                                            </Border>
+
+                                            <StackPanel Spacing="12"
+                                                        IsVisible="{Binding SettingsViewModel.AppLockSettings.ShowEnableSection}">
+                                                <StackPanel Spacing="6">
+                                                    <TextBlock Text="New password" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBox Text="{Binding SettingsViewModel.AppLockSettings.NewPassword}"
+                                                             PasswordChar="●"
+                                                             PlaceholderText="Create an app lock password"/>
+                                                </StackPanel>
+
+                                                <StackPanel Spacing="6">
+                                                    <TextBlock Text="Confirm password" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmPassword}"
+                                                             PasswordChar="●"
+                                                             PlaceholderText="Confirm the password"/>
+                                                </StackPanel>
+
+                                                <CheckBox Content="I understand the recovery code will be shown once and must be stored securely."
+                                                          IsChecked="{Binding SettingsViewModel.AppLockSettings.HasStoredRecoveryCode}"/>
+
+                                                <CheckBox Content="Enable biometric unlock on this device"
+                                                          IsChecked="{Binding SettingsViewModel.AppLockSettings.EnableBiometricUnlock}"
+                                                          IsVisible="{Binding SettingsViewModel.AppLockSettings.CanConfigureBiometrics}"/>
+
+                                                <Button Classes="primary small"
+                                                        Content="Enable App Lock"
+                                                        Command="{Binding SettingsViewModel.AppLockSettings.EnableAppLockCommand}"
                                                         HorizontalAlignment="Left"
                                                         IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
                                             </StackPanel>
 
-                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+                                            <StackPanel Spacing="12"
+                                                        IsVisible="{Binding SettingsViewModel.AppLockSettings.ShowManageSection}">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                        <TextBlock Text="App lock is enabled" FontWeight="Medium" FontSize="13"/>
+                                                        <TextBlock Text="BusLane will require authentication on launch. Sensitive changes below require your current password or biometrics."
+                                                                   Classes="caption"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1"
+                                                            Classes="danger-outline small"
+                                                            Content="Disable App Lock"
+                                                            Command="{Binding SettingsViewModel.AppLockSettings.DisableAppLockCommand}"
+                                                            VerticalAlignment="Top"
+                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                </Grid>
 
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12"
-                                                  IsVisible="{Binding SettingsViewModel.AppLockSettings.CanConfigureBiometrics}">
-                                                <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="Biometric unlock" FontWeight="Medium" FontSize="13"/>
-                                                    <TextBlock Text="Use Touch ID or Windows Hello as an unlock shortcut after password setup."
-                                                               Classes="caption"
-                                                               FontSize="12"
+                                                <StackPanel Spacing="6">
+                                                    <TextBlock Text="Current password" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBox Text="{Binding SettingsViewModel.AppLockSettings.CurrentPassword}"
+                                                             PasswordChar="●"
+                                                             PlaceholderText="Optional if you prefer password re-authentication"/>
+                                                </StackPanel>
+
+                                                <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                                <StackPanel Spacing="6">
+                                                    <TextBlock Text="Change password" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ChangePassword}"
+                                                             PasswordChar="●"
+                                                             PlaceholderText="Enter a new password"/>
+                                                    <TextBox Text="{Binding SettingsViewModel.AppLockSettings.ConfirmChangePassword}"
+                                                             PasswordChar="●"
+                                                             PlaceholderText="Confirm the new password"/>
+                                                    <Button Classes="secondary small"
+                                                            Content="Update Password"
+                                                            Command="{Binding SettingsViewModel.AppLockSettings.ChangePasswordCommand}"
+                                                            HorizontalAlignment="Left"
+                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                </StackPanel>
+
+                                                <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12"
+                                                      IsVisible="{Binding SettingsViewModel.AppLockSettings.CanConfigureBiometrics}">
+                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                        <TextBlock Text="Biometric unlock" FontWeight="Medium" FontSize="13"/>
+                                                        <TextBlock Text="Use Touch ID or Windows Hello as an unlock shortcut after password setup."
+                                                                   Classes="caption"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1"
+                                                                Orientation="Horizontal"
+                                                                Spacing="8"
+                                                                VerticalAlignment="Top">
+                                                        <Button Classes="secondary small"
+                                                                Content="Enable"
+                                                                Command="{Binding SettingsViewModel.AppLockSettings.EnableBiometricUnlockCommand}"
+                                                                IsVisible="{Binding !SettingsViewModel.AppLockSettings.BiometricUnlockEnabled}"
+                                                                IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                        <Button Classes="secondary small"
+                                                                Content="Disable"
+                                                                Command="{Binding SettingsViewModel.AppLockSettings.DisableBiometricUnlockCommand}"
+                                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.BiometricUnlockEnabled}"
+                                                                IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                        <TextBlock Text="Recovery code" FontWeight="Medium" FontSize="13"/>
+                                                        <TextBlock Text="Regenerate the code if you need a fresh recovery path. The old code stops working immediately."
+                                                                   Classes="caption"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1"
+                                                            Classes="secondary small"
+                                                            Content="Regenerate"
+                                                            Command="{Binding SettingsViewModel.AppLockSettings.RegenerateRecoveryCodeCommand}"
+                                                            VerticalAlignment="Top"
+                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <Border Classes="infobar"
+                                                    IsVisible="{Binding SettingsViewModel.AppLockSettings.RecoveryCode, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <StackPanel Spacing="10">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock Text="Recovery code" FontWeight="SemiBold" FontSize="13"/>
+                                                        <TextBlock Text="This is the only time BusLane will show the full code. Store it somewhere safe before closing this message."
+                                                                   Classes="caption"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.RecoveryCode}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="16"
                                                                TextWrapping="Wrap"/>
+                                                    <Button Classes="subtle small"
+                                                            Content="Hide Code"
+                                                            Command="{Binding SettingsViewModel.AppLockSettings.ClearRecoveryCodeCommand}"
+                                                            HorizontalAlignment="Left"/>
                                                 </StackPanel>
-                                                <StackPanel Grid.Column="1"
-                                                            Orientation="Horizontal"
-                                                            Spacing="8"
-                                                            VerticalAlignment="Top">
-                                                    <Button Classes="secondary small"
-                                                            Content="Enable"
-                                                            Command="{Binding SettingsViewModel.AppLockSettings.EnableBiometricUnlockCommand}"
-                                                            IsVisible="{Binding !SettingsViewModel.AppLockSettings.BiometricUnlockEnabled}"
-                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
-                                                    <Button Classes="secondary small"
-                                                            Content="Disable"
-                                                            Command="{Binding SettingsViewModel.AppLockSettings.DisableBiometricUnlockCommand}"
-                                                            IsVisible="{Binding SettingsViewModel.AppLockSettings.BiometricUnlockEnabled}"
-                                                            IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Privacy" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Telemetry Toggle -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Send error reports" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Help improve BusLane by sending anonymous crash reports (requires restart)"
+                                                               Classes="caption" FontSize="12" TextWrapping="Wrap"/>
                                                 </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Send error reports" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.EnableTelemetry}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Classes="settings-category" AutomationProperties.Name="Updates">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="Download" Size="16"/>
+                                    <TextBlock Text="Updates" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <Border Classes="dialog-body" Padding="28,24,28,28">
+                                    <StackPanel>
+                                        <TextBlock Text="Updates" Classes="settings-page-title"/>
+                                        <TextBlock Text="Keep BusLane up to date." Classes="caption" Margin="0,6,0,4" TextWrapping="Wrap"/>
+                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,20,0,16"/>
+                                        <StackPanel Spacing="12">
+                                            <!-- Auto Check for Updates -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Automatically check for updates" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Check for new versions on startup"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ToggleSwitch AutomationProperties.Name="Automatically check for updates" Grid.Column="1"
+                                                              IsChecked="{Binding SettingsViewModel.AutoCheckForUpdates}"
+                                                              OnContent="" OffContent=""
+                                                              VerticalAlignment="Center"/>
                                             </Grid>
 
-                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="Recovery code" FontWeight="Medium" FontSize="13"/>
-                                                    <TextBlock Text="Regenerate the code if you need a fresh recovery path. The old code stops working immediately."
+                                                    <TextBlock Text="Manual check" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Check now for the latest version"
+                                                               Classes="caption" FontSize="12"/>
+                                                    <TextBlock Text="{Binding SettingsViewModel.UpdateStatusMessage}"
                                                                Classes="caption"
                                                                FontSize="12"
-                                                               TextWrapping="Wrap"/>
+                                                               TextWrapping="Wrap"
+                                                               MaxWidth="360"/>
                                                 </StackPanel>
                                                 <Button Grid.Column="1"
                                                         Classes="secondary small"
-                                                        Content="Regenerate"
-                                                        Command="{Binding SettingsViewModel.AppLockSettings.RegenerateRecoveryCodeCommand}"
-                                                        VerticalAlignment="Top"
-                                                        IsEnabled="{Binding !SettingsViewModel.AppLockSettings.IsProcessing}"/>
+                                                        Content="Check now"
+                                                        Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
+                                                        IsEnabled="{Binding SettingsViewModel.CanCheckForUpdates}"
+                                                        IsVisible="{Binding !SettingsViewModel.ShowUpdateInstallAction}"
+                                                        VerticalAlignment="Center"/>
+                                                <Button Grid.Column="1"
+                                                        Classes="primary small"
+                                                        Content="{Binding SettingsViewModel.UpdateInstallActionText}"
+                                                        Command="{Binding SettingsViewModel.InstallUpdateCommand}"
+                                                        IsEnabled="{Binding SettingsViewModel.CanInstallUpdate}"
+                                                        IsVisible="{Binding SettingsViewModel.ShowUpdateInstallAction}"
+                                                        VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Grid Classes="settings-row"
+                                                  ColumnDefinitions="*,Auto"
+                                                  IsVisible="{Binding !SettingsViewModel.CanSelfUpdate}">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Manual downloads" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Use GitHub Releases for this build"
+                                                               Classes="caption"
+                                                               FontSize="12"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1"
+                                                        Classes="secondary small"
+                                                        Content="Open releases"
+                                                        Command="{Binding SettingsViewModel.OpenUpdateReleasesCommand}"
+                                                        VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
+                                            <!-- Current Version -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Current version" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Installed application version"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding AppVersion}"
+                                                           FontWeight="SemiBold"
+                                                           VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </ScrollViewer>
+                        </TabItem>
 
-                                        <Border Classes="infobar"
-                                                IsVisible="{Binding SettingsViewModel.AppLockSettings.RecoveryCode, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                            <StackPanel Spacing="10">
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="Recovery code" FontWeight="SemiBold" FontSize="13"/>
-                                                    <TextBlock Text="This is the only time BusLane will show the full code. Store it somewhere safe before closing this message."
-                                                               Classes="caption"
-                                                               FontSize="12"
-                                                               TextWrapping="Wrap"/>
+                        <TabItem Classes="settings-category" AutomationProperties.Name="Help &amp; support">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <LucideIcon Kind="LifeBuoy" Size="16"/>
+                                    <TextBlock Text="Help &amp; support" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <Border Classes="dialog-body" Padding="28,24,28,28">
+                                    <StackPanel>
+                                        <TextBlock Text="Help &amp; support" Classes="settings-page-title"/>
+                                        <TextBlock Text="Find shortcuts and troubleshooting tools." Classes="caption" Margin="0,6,0,4" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Keyboard Shortcuts" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="View all shortcuts" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="See available keyboard shortcuts for quick navigation"
+                                                               Classes="caption" FontSize="12"/>
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding SettingsViewModel.AppLockSettings.RecoveryCode}"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="16"
-                                                           TextWrapping="Wrap"/>
-                                                <Button Classes="subtle small"
-                                                        Content="Hide Code"
-                                                        Command="{Binding SettingsViewModel.AppLockSettings.ClearRecoveryCodeCommand}"
-                                                        HorizontalAlignment="Left"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Updates Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="Download" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <!-- Auto Check for Updates -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Automatically check for updates" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Check for new versions on startup"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding SettingsViewModel.AutoCheckForUpdates}"
-                                                          OnContent="" OffContent=""
-                                                          VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Manual check" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Check now for the latest version"
-                                                           Classes="caption" FontSize="12"/>
-                                                <TextBlock Text="{Binding SettingsViewModel.UpdateStatusMessage}"
-                                                           Classes="caption"
-                                                           FontSize="12"
-                                                           TextWrapping="Wrap"
-                                                           MaxWidth="360"/>
-                                            </StackPanel>
-                                            <Button Grid.Column="1"
-                                                    Classes="secondary small"
-                                                    Content="Check now"
-                                                    Command="{Binding SettingsViewModel.CheckForUpdatesNowCommand}"
-                                                    IsEnabled="{Binding SettingsViewModel.CanCheckForUpdates}"
-                                                    IsVisible="{Binding !SettingsViewModel.ShowUpdateInstallAction}"
-                                                    VerticalAlignment="Center"/>
-                                            <Button Grid.Column="1"
-                                                    Classes="primary small"
-                                                    Content="{Binding SettingsViewModel.UpdateInstallActionText}"
-                                                    Command="{Binding SettingsViewModel.InstallUpdateCommand}"
-                                                    IsEnabled="{Binding SettingsViewModel.CanInstallUpdate}"
-                                                    IsVisible="{Binding SettingsViewModel.ShowUpdateInstallAction}"
-                                                    VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Grid Classes="settings-row"
-                                              ColumnDefinitions="*,Auto"
-                                              IsVisible="{Binding !SettingsViewModel.CanSelfUpdate}">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Manual downloads" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Use GitHub Releases for this build"
-                                                           Classes="caption"
-                                                           FontSize="12"/>
-                                            </StackPanel>
-                                            <Button Grid.Column="1"
-                                                    Classes="secondary small"
-                                                    Content="Open releases"
-                                                    Command="{Binding SettingsViewModel.OpenUpdateReleasesCommand}"
-                                                    VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
-
-                                        <!-- Current Version -->
-                                        <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="Current version" FontWeight="Medium" FontSize="13"/>
-                                                <TextBlock Text="Installed application version"
-                                                           Classes="caption" FontSize="12"/>
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding AppVersion}"
-                                                       FontWeight="SemiBold"
-                                                       VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Keyboard Shortcuts Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <!-- Section Header -->
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="Keyboard" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Keyboard Shortcuts" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Settings Items -->
-                                <Border Padding="16">
-                                    <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="View all shortcuts" FontWeight="Medium" FontSize="13"/>
-                                            <TextBlock Text="See available keyboard shortcuts for quick navigation"
-                                                       Classes="caption" FontSize="12"/>
+                                                <Button Grid.Column="1"
+                                                        Classes="secondary small"
+                                                        Content="View Shortcuts"
+                                                        Command="{Binding ShowKeyboardShortcutsHelpCommand}"
+                                                        VerticalAlignment="Center"/>
+                                            </Grid>
                                         </StackPanel>
-                                        <Button Grid.Column="1"
-                                                Classes="secondary small"
-                                                Content="View Shortcuts"
-                                                Command="{Binding ShowKeyboardShortcutsHelpCommand}"
-                                                VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Support Section -->
-                        <Border Classes="settings-section" Padding="0">
-                            <StackPanel>
-                                <Border Padding="16,16"
-                                        BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Background="{DynamicResource CardBackground}"
-                                        CornerRadius="12,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <LucideIcon Kind="LifeBuoy" Size="20"
-                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                        <TextBlock Text="Support" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Support" Classes="settings-group-title"/>
+                                        <StackPanel Spacing="12">
+                                            <TextBlock Text="Export a redacted diagnostic bundle with logs, alert history, current settings, and dashboard state for troubleshooting."
+                                                       Classes="caption"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"/>
+                                            <Button Classes="secondary small"
+                                                    Command="{Binding SettingsViewModel.ExportDiagnosticBundleCommand}"
+                                                    IsEnabled="{Binding !SettingsViewModel.IsExportingDiagnosticBundle}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="PackageOpen" Size="16"/>
+                                                    <TextBlock Text="Export Diagnostic Bundle"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <TextBlock Text="{Binding SettingsViewModel.DiagnosticBundleStatus}"
+                                                       Classes="caption"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       IsVisible="{Binding SettingsViewModel.DiagnosticBundleStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
-
-                                <Border Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <TextBlock Text="Export a redacted diagnostic bundle with logs, alert history, current settings, and dashboard state for troubleshooting."
-                                                   Classes="caption"
-                                                   FontSize="12"
-                                                   TextWrapping="Wrap"/>
-                                        <Button Classes="secondary small"
-                                                Command="{Binding SettingsViewModel.ExportDiagnosticBundleCommand}"
-                                                IsEnabled="{Binding !SettingsViewModel.IsExportingDiagnosticBundle}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="PackageOpen" Size="16"/>
-                                                <TextBlock Text="Export Diagnostic Bundle"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <TextBlock Text="{Binding SettingsViewModel.DiagnosticBundleStatus}"
-                                                   Classes="caption"
-                                                   FontSize="12"
-                                                   TextWrapping="Wrap"
-                                                   IsVisible="{Binding SettingsViewModel.DiagnosticBundleStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        </StackPanel>
-                    </Border>
-                </ScrollViewer>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
 
                 <!-- Footer -->
                 <Border Grid.Row="2"

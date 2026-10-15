@@ -81,6 +81,12 @@ Keep primary operations visible and secondary commands available through More. D
 
 Rows use the frontmatter padding and flat divider treatment. Message action buttons remain visible at rest. Preserve both active and dead-letter message presentations, selection, session controls, search/filter states, and detail inspection.
 
+### Settings dialog
+
+Settings uses a native left-hand TabControl for General, Messages, Security & privacy, Updates, and Help & support. The category rail remains visible while each category scrolls independently. Flat label-and-control rows and group headings provide hierarchy within the existing Fluent dialog; preserve Inter, Lucide icons, dynamic light/dark resources, and violet selection feedback.
+
+Keep Close in the header and Reset to Defaults, Cancel, and Save Changes in the persistent footer. Preserve setting bindings, commands, conditional states, and accessible names when regrouping controls. Surface-specific dimensions, type sizes, and verification scope are recorded in [desktop-settings.md](../.impeccable/surfaces/desktop-settings.md); they do not introduce a desktop-wide token scale.
+
 ## Do's and Don'ts
 
 - **Do** preserve both themes, all message/entity operations, and existing navigation/tool workflows.
