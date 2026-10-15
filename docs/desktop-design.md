@@ -28,7 +28,7 @@ components:
     padding: "10px 12px"
   message-search:
     rounded: "{rounded.small}"
-    padding: "4px 8px"
+    padding: "6px 8px"
 ---
 
 # Design System: BusLane desktop workspace
@@ -57,7 +57,7 @@ Sequence and date metadata align in fixed columns. Full enqueue timestamps retai
 
 Sidebar width is (256px), with aligned sidebar and tab headers (56px). Azure and connection-string workspaces share a resizable entity/message split: entity pane starts at (280px), minimum (220px); native splitter is (5px); message pane minimum is (420px). Hiding the entity pane releases its width; showing it restores the previous widths for each workspace grid during the window lifetime.
 
-Message commands can wrap. Search occupies its own full-width row. Message rows use fixed sequence (70px) and timestamp (126px) columns, flexible message identity, and trailing actions, with column gaps (8px). Command and entity search surfaces use padding (16px horizontal, 12px vertical).
+Message title and session context sit opposite Send. Search uses a native TextBox with leading search icon and inline clear action; Select, Refresh, and More form a compact utility group beside it. Refresh and More are icon-only, with tooltips and accessible names. The search row remains usable at the 420px message-pane minimum. Session context can wrap; session labels are capped at (180px), truncate, and expose their full value through a tooltip. Message rows use fixed sequence (70px) and timestamp (126px) columns, flexible message identity, and trailing actions, with column gaps (8px). Command and entity search surfaces use padding (16px horizontal, 12px vertical); header rows use a (12px) gap. Message search, Send, Select, Refresh, and More use a (36px) minimum height; the inline clear action uses (30px). The search prompt explicitly scopes filtering to loaded messages.
 
 **The Inspection Space Rule.** Keep repeated context compact; preserve readable message metadata, search, and resizable inspection space.
 
@@ -91,3 +91,9 @@ Rows use the frontmatter padding and flat divider treatment. Message action butt
 - **Don't** claim backend behavior or capabilities changed through this visual refinement.
 
 Implementation evidence: `BusLane/App.axaml`, `BusLane/Styles/AppStyles.axaml`, `BusLane/Views/MainWindow.axaml` and code-behind, plus `NavigationSidebar`, `TabBarView`, both entity trees, and `MessagesPanelView` under `BusLane/Views/Controls/`. Surface direction lives in [desktop-workspace.md](../.impeccable/surfaces/desktop-workspace.md).
+
+### Message details: split inspector
+
+Message details uses the approved Split inspector layout. A fixed 260px metadata rail shows identity, timing, delivery, and conditional routing fields. Metadata scrolls independently from the read-only, syntax-highlighted body, which fills the available height. Application properties remain beneath the body in a scrollable area capped at 180px. Dead-letter reason, source, and error description stay visible above both panes, with long diagnostics scrolling within 144px.
+
+The persistent header shows subject (or Message details), sequence number, Export, Resend, Clone, and Close. Copy body stays beside the payload. Preserve existing commands, optional-field visibility, selectable metadata, and both themes. Modal margins are 32px; the footer identifies read-only inspection. Routing appears when any supported routing field is present.

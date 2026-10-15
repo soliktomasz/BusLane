@@ -1115,7 +1115,7 @@
     </Style>
 
     <Style Selector="Border.message-command-bar">
-        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="CornerRadius" Value="0"/>
@@ -2191,5 +2191,31 @@
     </Style>
     <Style Selector="TextBox">
         <Setter Property="PlaceholderForeground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    <!-- Message header: one primary action, native search, quieter list utilities. -->
+    <Style Selector="TextBox.message-header-search">
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+    <Style Selector="TextBox.message-header-search:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+    </Style>
+    <Style Selector="TextBox.message-header-search:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="BorderThickness" Value="1,1,1,2"/>
+    </Style>
+    <Style Selector="Button.message-header-utility, ToggleButton.message-header-select, Button.message-header-send">
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.message-header-clear">
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="MinWidth" Value="30"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="Margin" Value="0,0,2,0"/>
     </Style>
 </Styles>
