@@ -134,15 +134,21 @@ public class EntityTreeViewTests
     }
 
     [Fact]
-    public void EntityTreeViews_BindTopicActionsToSettingsVisibility()
+    public void EntityTreeViews_MoveInlineActionsToSelectionFooter()
     {
         // Arrange
         var connectionTree = File.ReadAllText(GetConnectionTreePath());
         var azureTree = File.ReadAllText(GetAzureTreePath());
 
         // Assert
-        AssertTopicActionVisibilityBindings(connectionTree);
-        AssertTopicActionVisibilityBindings(azureTree);
+        AssertTopicContextActionsRemainAvailable(connectionTree);
+        AssertTopicContextActionsRemainAvailable(azureTree);
+        connectionTree.Should().Contain("controls:EntitySelectionFooter");
+        azureTree.Should().Contain("controls:EntitySelectionFooter");
+        var footer = File.ReadAllText(Path.Combine(Path.GetDirectoryName(GetConnectionTreePath())!, "EntitySelectionFooter.axaml"));
+        footer.Should().Contain("OpenCreateSubscriptionDialogCommand");
+        footer.Should().Contain("OpenSubscriptionDetailDialogCommand");
+        footer.Should().Contain("DeleteSubscriptionRequestCommand");
     }
 
     [Fact]
@@ -203,8 +209,8 @@ public class EntityTreeViewTests
         // Assert
         AssertSubscriptionButtonsUseHoverClass(connectionTree, "SelectSubscriptionForConnectionCommand");
         AssertSubscriptionButtonsUseHoverClass(azureTree, "SelectSubscriptionCommand");
-        styles.Should().Contain("Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground");
-        styles.Should().Contain("Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ Border#ToggleButtonBackground");
+        // Topic selection now uses the same row button hover; expansion is a separate target.
+        styles.Should().Contain("ToggleButton.entity-tree-toggle");
         styles.Should().Contain("Button.entity-tree-row:pointerover /template/ ContentPresenter");
         // Hover must not target the row surface Border: its Background is locally
         // bound to the selection converter, which always beats style setters.
@@ -274,7 +280,7 @@ public class EntityTreeViewTests
             "SubscriptionCreateDialog.axaml"));
     }
 
-    private static void AssertTopicActionVisibilityBindings(string xaml)
+    private static void AssertTopicContextActionsRemainAvailable(string xaml)
     {
         var document = XDocument.Parse(xaml);
         var topicMenuItems = GetMenuItems(document, "Create Subscription");
@@ -301,9 +307,10 @@ public class EntityTreeViewTests
             .Should()
             .BeNull();
 
-        AssertInlineActionVisibilityBinding(document, "Create subscription");
-        AssertInlineActionVisibilityBinding(document, "Subscription details");
-        AssertInlineActionVisibilityBinding(document, "Delete subscription");
+        document.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => element.Attribute("ToolTip.Tip")?.Value)
+            .Should().NotContain(["Create subscription", "Subscription details", "Delete subscription"]);
     }
 
     private static void AssertEntityGroupLoadingDoesNotBindToGlobalLoading(XDocument document)
@@ -351,16 +358,6 @@ public class EntityTreeViewTests
             pinAction.Attribute("Command")?.Value.Should().Be(expectedCommand);
             pinAction.Attribute("CommandParameter")?.Value.Should().Be("{Binding}");
         }
-    }
-
-    private static void AssertInlineActionVisibilityBinding(XDocument document, string tooltip)
-    {
-        document.Descendants()
-            .Single(element => element.Attribute("ToolTip.Tip")?.Value == tooltip)
-            .Attribute("IsVisible")
-            ?.Value
-            .Should()
-            .Be("{Binding $parent[Window].DataContext.ShowTopicActionButtons}");
     }
 
     private static IEnumerable<string> GetHeaderTooltips(XDocument document)

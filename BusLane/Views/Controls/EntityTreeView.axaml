@@ -3,220 +3,165 @@
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
              xmlns:converters="using:BusLane.Converters"
+             xmlns:controls="using:BusLane.Views.Controls"
              x:Class="BusLane.Views.Controls.EntityTreeView"
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
-
     <UserControl.Resources>
         <converters:EntitySelectionConverter x:Key="EntitySelectionConverter"/>
         <converters:EntitySelectionBackgroundConverter x:Key="EntitySelectionBackgroundConverter"/>
         <converters:DeadLetterBadgeVisibilityConverter x:Key="DeadLetterBadgeVisibilityConverter"/>
     </UserControl.Resources>
-
     <Grid>
-    <Border Classes="pane-card entity-pane" Padding="0">
-        <DockPanel>
-            <Border DockPanel.Dock="Top"
-                    Classes="pane-search-surface">
-                <StackPanel Spacing="12">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
-                        <Border Grid.Column="0" Classes="metric-icon-surface">
-                            <LucideIcon Kind="PanelsTopLeft"
-                                        Size="16"
-                                        Foreground="{DynamicResource AccentBrand}"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Grid.Column="1"
-                                   Text="Browse entities"
-                                   Classes="heading"
-                                   VerticalAlignment="Center"/>
-                        <Button Grid.Column="2"
-                                Classes="icon-button"
-                                ToolTip.Tip="More entity actions"
-                                VerticalAlignment="Center">
-                            <Button.Flyout>
-                                <Flyout Placement="BottomEdgeAlignedRight">
-                                    <StackPanel Spacing="4" MinWidth="190">
-                                        <Button Classes="subtle small"
-                                                Command="{Binding EntityOperations.OpenCreateQueueDialogCommand}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="ListPlus" Size="13"/>
-                                                <TextBlock Text="Create queue"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Classes="subtle small"
-                                                Command="{Binding EntityOperations.OpenCreateTopicDialogCommand}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="MessageSquarePlus" Size="13"/>
-                                                <TextBlock Text="Create topic"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Height="1"
-                                                Margin="4,4"
-                                                Background="{DynamicResource BorderMuted}"/>
-                                        <Button Classes="subtle small"
-                                                Command="{Binding ExportNamespaceTopologyCommand}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="Download" Size="13"/>
-                                                <TextBlock Text="Export topology"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Classes="subtle small"
-                                                Command="{Binding ImportNamespaceTopologyCommand}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <LucideIcon Kind="Upload" Size="13"/>
-                                                <TextBlock Text="Import topology"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Flyout>
-                            </Button.Flyout>
-                            <LucideIcon Kind="Ellipsis" Size="15"/>
-                        </Button>
-                        <Button Grid.Column="3"
-                                Classes="icon-button"
-                                Command="{Binding ToggleSelectedEntityPinCommand}"
-                                ToolTip.Tip="Pin selected entity"
-                                VerticalAlignment="Center">
-                            <LucideIcon Kind="Pin" Size="15"/>
-                        </Button>
-                        <Button Grid.Column="4"
-                                Classes="icon-button"
-                                Command="{Binding HideEntityPaneCommand}"
-                                ToolTip.Tip="Hide entity pane"
-                                VerticalAlignment="Center">
-                            <LucideIcon Kind="PanelLeftClose" Size="15"/>
-                        </Button>
-                    </Grid>
-                    <Grid ColumnDefinitions="*" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
-                                 PlaceholderText="Search queues, topics, or subscriptions"
-                                 FontSize="12"
-                                 Padding="4,4,4,4"
-                                 CornerRadius="{StaticResource RadiusMedium}"
-                                 BorderBrush="{DynamicResource BorderMuted}">
-                            <TextBox.InnerLeftContent>
-                                <LucideIcon Kind="Search"
-                                            Size="13"
+        <Border Classes="pane-card entity-pane" Padding="0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Classes="pane-search-surface">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
+                            <Border Grid.Column="0" Classes="" Width="20" Height="20">
+                                <LucideIcon Kind="PanelsTopLeft"
+                                            Size="16"
                                             Foreground="{DynamicResource SubtleForeground}"
-                                            Margin="5,0,0,0"/>
-                            </TextBox.InnerLeftContent>
-                        </TextBox>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <ScrollViewer>
-                <StackPanel Spacing="0" Margin="0,2,0,6">
-                    <StackPanel IsVisible="{Binding CurrentNavigation.HasPinnedEntities}"
-                                Margin="4,2,4,4"
-                                Spacing="2">
-                        <Border Classes="entity-group-header">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                                    <Border Classes="entity-tree-section-icon"
-                                            Background="{DynamicResource SurfaceWarning}">
-                                        <LucideIcon Kind="Pin"
-                                                    Size="10"
-                                                    Foreground="{DynamicResource TextWarning}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Pinned"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource AppForeground}"/>
-                                </StackPanel>
-                                <Border Grid.Column="2"
-                                        Classes="entity-tree-section-count"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentNavigation.PinnedEntities.Count}"
-                                               FontSize="10"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource SubtleForeground}"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-
-                        <ItemsControl ItemsSource="{Binding CurrentNavigation.PinnedEntities}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="models:PinnedEntity">
-                                    <Grid ColumnDefinitions="*,Auto" Margin="0,1">
-                                        <Button Grid.Column="0"
-                                                Classes="entity-tree-row"
-                                                PointerPressed="OnEntityRowPointerPressed"
-                                                Command="{Binding $parent[Window].DataContext.SelectPinnedEntityCommand}"
-                                                CommandParameter="{Binding}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Stretch">
-                                            <Border Classes="entity-tree-row-surface">
-                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                                    <LucideIcon Grid.Column="0"
-                                                                Kind="Pin"
-                                                                Size="12"
-                                                                Foreground="{DynamicResource TextWarning}"
-                                                                VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding DisplayName}"
-                                                               FontSize="12"
-                                                               FontWeight="Medium"
-                                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                               Foreground="{DynamicResource AppForeground}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <Border Grid.Column="2"
-                                                            Classes="entity-tree-badge"
-                                                            Background="{DynamicResource SurfaceSubtle}"
-                                                            VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding TypeLabel}"
-                                                                   Foreground="{DynamicResource SubtleForeground}"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-                                        </Button>
-                                        <Button Grid.Column="1"
-                                                Classes="icon-button"
-                                                Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip.Tip="Unpin entity"
-                                                VerticalAlignment="Center"
-                                                Margin="4,0,0,0">
-                                            <LucideIcon Kind="X" Size="12"/>
-                                        </Button>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Grid.Column="1"
+                                       Text="Browse entities"
+                                       Classes="heading"
+                                       VerticalAlignment="Center"
+                                       FontSize="16"
+                                       FontWeight="Medium"/>
+                            <Button Grid.Column="2"
+                                    Classes="icon-button"
+                                    ToolTip.Tip="More entity actions"
+                                    VerticalAlignment="Center">
+                                <Button.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedRight">
+                                        <StackPanel Spacing="4" MinWidth="190">
+                                            <Button Classes="subtle small"
+                                                    Command="{Binding EntityOperations.OpenCreateQueueDialogCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="ListPlus"
+                                                                Size="13"
+                                                                Foreground="{DynamicResource SubtleForeground}"/>
+                                                    <TextBlock Text="Create queue"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="subtle small"
+                                                    Command="{Binding EntityOperations.OpenCreateTopicDialogCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="MessageSquarePlus"
+                                                                Size="13"
+                                                                Foreground="{DynamicResource SubtleForeground}"/>
+                                                    <TextBlock Text="Create topic"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Border Height="1" Margin="4,4" Background="{DynamicResource BorderMuted}"/>
+                                            <Button Classes="subtle small"
+                                                    Command="{Binding ExportNamespaceTopologyCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="Download"
+                                                                Size="13"
+                                                                Foreground="{DynamicResource SubtleForeground}"/>
+                                                    <TextBlock Text="Export topology"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="subtle small"
+                                                    Command="{Binding ImportNamespaceTopologyCommand}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <LucideIcon Kind="Upload"
+                                                                Size="13"
+                                                                Foreground="{DynamicResource SubtleForeground}"/>
+                                                    <TextBlock Text="Import topology"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                                <LucideIcon Kind="Ellipsis" Size="15" Foreground="{DynamicResource SubtleForeground}"/>
+                            </Button>
+                            <Button Grid.Column="3"
+                                    Classes="icon-button"
+                                    Command="{Binding ToggleSelectedEntityPinCommand}"
+                                    ToolTip.Tip="Pin selected entity"
+                                    VerticalAlignment="Center">
+                                <LucideIcon Kind="Pin" Size="15" Foreground="{DynamicResource SubtleForeground}"/>
+                            </Button>
+                            <Button Grid.Column="4"
+                                    Classes="icon-button"
+                                    Command="{Binding HideEntityPaneCommand}"
+                                    ToolTip.Tip="Hide entity pane"
+                                    VerticalAlignment="Center">
+                                <LucideIcon Kind="PanelLeftClose"
+                                            Size="15"
+                                            Foreground="{DynamicResource SubtleForeground}"/>
+                            </Button>
+                        </Grid>
+                        <Grid ColumnDefinitions="*" ColumnSpacing="8">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
+                                     PlaceholderText="Search queues, topics, or subscriptions"
+                                     FontSize="13"
+                                     Padding="8,7"
+                                     CornerRadius="{StaticResource RadiusMedium}"
+                                     BorderBrush="{DynamicResource BorderMuted}">
+                                <TextBox.InnerLeftContent>
+                                    <LucideIcon Kind="Search"
+                                                Size="13"
+                                                Foreground="{DynamicResource SubtleForeground}"
+                                                Margin="5,0,0,0"/>
+                                </TextBox.InnerLeftContent>
+                            </TextBox>
+                        </Grid>
+                        <TextBlock Text="Expand topics to include their subscriptions in search."
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SubtleForeground}"
+                                   IsVisible="{Binding CurrentNavigation.HasUnloadedTopics}"/>
                     </StackPanel>
-
-                    <Expander Classes="entity-tree-group"
-                              IsVisible="{Binding CurrentNavigation.HasQueues}"
-                              IsExpanded="{Binding CurrentNavigation.IsQueuesSectionExpanded}"
-                              Margin="4,2,4,0">
-                        <Expander.Header>
+                </Border>
+                <Grid ColumnDefinitions="*,58,44" ColumnSpacing="8" Margin="18,8,12,4" DockPanel.Dock="Top">
+                    <TextBlock Text="Entity" Classes="entity-tree-column-heading"/>
+                    <TextBlock Text="Active"
+                               Classes="entity-tree-column-heading"
+                               HorizontalAlignment="Right"
+                               Grid.Column="1"/>
+                    <TextBlock Text="DLQ"
+                               Classes="entity-tree-column-heading"
+                               HorizontalAlignment="Right"
+                               Grid.Column="2"
+                               ToolTip.Tip="Dead-letter messages"/>
+                </Grid>
+                <controls:EntitySelectionFooter DockPanel.Dock="Bottom"/>
+                <ScrollViewer>
+                    <StackPanel Spacing="0" Margin="0,2,0,6">
+                        <TextBlock Text="No matching entities"
+                                   Margin="16,20"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource SubtleForeground}"
+                                   IsVisible="{Binding CurrentNavigation.HasNoMatchingEntities}"/>
+                        <StackPanel IsVisible="{Binding CurrentNavigation.HasPinnedEntities}"
+                                    Margin="4,2,4,4"
+                                    Spacing="2">
                             <Border Classes="entity-group-header">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                                        <Border Classes="entity-tree-section-icon"
-                                                Background="{DynamicResource SurfaceBrand}">
-                                            <LucideIcon Kind="ListOrdered"
-                                                        Size="10"
-                                                        Foreground="{DynamicResource AccentBrand}"
+                                        <Border Classes="entity-tree-section-icon" Background="Transparent">
+                                            <LucideIcon Kind="Pin"
+                                                        Size="13"
+                                                        Foreground="{DynamicResource SubtleForeground}"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"/>
                                         </Border>
-                                        <TextBlock Text="Queues"
+                                        <TextBlock Text="Pinned"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"
                                                    VerticalAlignment="Center"
@@ -225,201 +170,121 @@
                                     <Border Grid.Column="2"
                                             Classes="entity-tree-section-count"
                                             VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding CurrentNavigation.Queues.Count}"
+                                        <TextBlock Text="{Binding CurrentNavigation.PinnedEntities.Count}"
                                                    FontSize="10"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource SubtleForeground}"/>
                                     </Border>
                                 </Grid>
                             </Border>
-                        </Expander.Header>
-
-                        <StackPanel Spacing="0">
-                            <ListBox ItemsSource="{Binding CurrentNavigation.FilteredQueues}"
-                                     Classes="entity-list"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel/>
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:QueueInfo">
-                                        <Button Classes="entity-tree-row"
-                                                PointerPressed="OnEntityRowPointerPressed"
-                                                Command="{Binding $parent[Window].DataContext.SelectQueueForConnectionCommand}"
-                                                CommandParameter="{Binding}"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Stretch"
-                                                Margin="0,1">
-                                            <Grid ColumnDefinitions="3,*">
-                                                <Border Grid.Column="0"
-                                                        Background="{DynamicResource AccentBrand}"
-                                                        CornerRadius="1.5"
-                                                        Width="3"
-                                                        Margin="0,4"
-                                                        HorizontalAlignment="Left">
-                                                    <Border.IsVisible>
-                                                        <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
-                                                            <Binding Path="."/>
-                                                            <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedQueue"/>
-                                                        </MultiBinding>
-                                                    </Border.IsVisible>
-                                                </Border>
-
-                                                <Border Grid.Column="1"
-                                                        Classes="entity-tree-row-surface">
-                                                    <Border.ContextMenu>
-                                                        <ContextMenu>
-                                                            <MenuItem Header="Details"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueDetailsCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Open in Azure Portal"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueInAzurePortalCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Send Message"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.SendQueueMessageCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Refresh"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshQueueCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Purge Active Messages"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeQueueActiveCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Purge Dead Letters"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeQueueDeadLettersCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Edit Properties"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueEditCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Delete Queue"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteQueueRequestCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Pin"
-                                                                      Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                            <MenuItem Header="Copy Name"
-                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.CopyQueueNameCommand}"
-                                                                      CommandParameter="{Binding}"/>
-                                                        </ContextMenu>
-                                                    </Border.ContextMenu>
-                                                    <Border.Background>
-                                                        <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
-                                                            <Binding Path="."/>
-                                                            <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedQueue"/>
-                                                        </MultiBinding>
-                                                    </Border.Background>
+                            <ItemsControl ItemsSource="{Binding CurrentNavigation.PinnedEntities}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:PinnedEntity">
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                                            <Button Grid.Column="0"
+                                                    Classes="entity-tree-row"
+                                                    PointerPressed="OnEntityRowPointerPressed"
+                                                    Command="{Binding $parent[Window].DataContext.SelectPinnedEntityCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Stretch">
+                                                <Border Classes="entity-tree-row-surface">
                                                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                                                         <LucideIcon Grid.Column="0"
-                                                                    Kind="Inbox"
+                                                                    Kind="Pin"
                                                                     Size="13"
-                                                                    Foreground="{DynamicResource AccentBrand}"
+                                                                    Foreground="{DynamicResource SubtleForeground}"
                                                                     VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1"
-                                                                   Text="{Binding Name}"
-                                                                   FontSize="12"
+                                                                   Text="{Binding DisplayName}"
+                                                                   FontSize="13"
                                                                    FontWeight="Medium"
-                                                                   FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                                    Foreground="{DynamicResource AppForeground}"
                                                                    VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"/>
-                                                        <StackPanel Grid.Column="2"
-                                                                    Orientation="Horizontal"
-                                                                    Spacing="4"
-                                                                    VerticalAlignment="Center">
-                                                            <Border Classes="entity-tree-badge"
-                                                                    Background="{DynamicResource SurfaceBrand}"
-                                                                    IsVisible="{Binding ActiveMessageCount}">
-                                                                <TextBlock Foreground="{DynamicResource AccentBrand}"
-                                                                           Text="{Binding ActiveMessageCount}"/>
-                                                            </Border>
-                                                            <Border Classes="entity-tree-badge"
-                                                                    Background="{DynamicResource SurfaceDanger}">
-                                                                <Border.IsVisible>
-                                                                    <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
-                                                                        <Binding Path="DeadLetterCount"/>
-                                                                        <Binding Path="$parent[Window].DataContext.ShowDeadLetterBadges"/>
-                                                                    </MultiBinding>
-                                                                </Border.IsVisible>
-                                                                <TextBlock Foreground="{DynamicResource TextDanger}">
-                                                                    <Run Text="{Binding DeadLetterCount}"/><Run Text=" dlq"/>
-                                                                </TextBlock>
-                                                            </Border>
-                                                            <Border Classes="entity-tree-badge"
-                                                                    Background="{DynamicResource SurfaceWarning}"
-                                                                    IsVisible="{Binding ScheduledCount}">
-                                                                <TextBlock Foreground="{DynamicResource TextWarning}">
-                                                                    <Run Text="{Binding ScheduledCount}"/><Run Text=" sch"/>
-                                                                </TextBlock>
-                                                            </Border>
-                                                        </StackPanel>
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   ToolTip.Tip="{Binding DisplayName}"/>
+                                                        <Border Grid.Column="2"
+                                                                Classes="entity-tree-badge"
+                                                                Background="{DynamicResource SurfaceSubtle}"
+                                                                VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding TypeLabel}"
+                                                                       Foreground="{DynamicResource SubtleForeground}"/>
+                                                        </Border>
                                                     </Grid>
                                                 </Border>
-                                            </Grid>
-                                        </Button>
+                                            </Button>
+                                            <Button Grid.Column="1"
+                                                    Classes="icon-button"
+                                                    Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Unpin entity"
+                                                    VerticalAlignment="Center"
+                                                    Margin="4,0,0,0">
+                                                <LucideIcon Kind="X"
+                                                            Size="13"
+                                                            Foreground="{DynamicResource SubtleForeground}"/>
+                                            </Button>
+                                        </Grid>
                                     </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
-                    </Expander>
-
-                    <Expander Classes="entity-tree-group"
-                              IsVisible="{Binding CurrentNavigation.HasTopics}"
-                              IsExpanded="{Binding CurrentNavigation.IsTopicsSectionExpanded}"
-                              Margin="4,0,4,0">
-                        <Expander.Header>
-                            <Border Classes="entity-group-header">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                                        <Border Classes="entity-tree-section-icon"
-                                                Background="{DynamicResource SurfaceSuccess}">
-                                            <LucideIcon Kind="Megaphone"
-                                                        Size="10"
-                                                        Foreground="{DynamicResource TextSuccess}"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"/>
+                        <Expander Classes="entity-tree-group"
+                                  IsVisible="{Binding CurrentNavigation.HasQueues}"
+                                  IsExpanded="{Binding CurrentNavigation.IsQueuesSectionExpanded}"
+                                  Margin="4,2,4,0">
+                            <Expander.Header>
+                                <Border Classes="entity-group-header">
+                                    <Grid ColumnDefinitions="Auto,Auto" HorizontalAlignment="Left">
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                            <Border Classes="entity-tree-section-icon" Background="Transparent">
+                                                <LucideIcon Kind="ListOrdered"
+                                                            Size="13"
+                                                            Foreground="{DynamicResource SubtleForeground}"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Queues"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AppForeground}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1"
+                                                Classes="entity-tree-section-count"
+                                                VerticalAlignment="Center"
+                                                Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding CurrentNavigation.Queues.Count}"
+                                                       FontSize="10"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource SubtleForeground}"/>
                                         </Border>
-                                        <TextBlock Text="Topics"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource AppForeground}"/>
-                                    </StackPanel>
-                                    <Border Grid.Column="2"
-                                            Classes="entity-tree-section-count"
-                                            VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding CurrentNavigation.Topics.Count}"
-                                                   FontSize="10"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource SubtleForeground}"/>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </Expander.Header>
-
-                        <StackPanel Spacing="0">
-                            <ListBox ItemsSource="{Binding CurrentNavigation.FilteredTopics}"
-                                     Classes="entity-list"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel/>
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:TopicInfo">
-                                        <Expander Classes="entity-tree-node"
-                                                  Margin="0,1"
-                                                  IsExpanded="{Binding IsExpanded}"
-                                                  Expanding="OnTopicExpanderExpanding">
-                                            <Expander.Header>
-                                                <Grid ColumnDefinitions="3,*" PointerPressed="OnTopicHeaderTapped">
+                                    </Grid>
+                                </Border>
+                            </Expander.Header>
+                            <StackPanel Spacing="0">
+                                <ListBox ItemsSource="{Binding CurrentNavigation.FilteredQueues}"
+                                         Classes="entity-list"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:QueueInfo">
+                                            <Button Classes="entity-tree-row"
+                                                    PointerPressed="OnEntityRowPointerPressed"
+                                                    Command="{Binding $parent[Window].DataContext.SelectQueueForConnectionCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    Margin="0,1">
+                                                <Grid ColumnDefinitions="3,*">
                                                     <Border Grid.Column="0"
-                                                            Background="{DynamicResource TextSuccess}"
+                                                            Background="{DynamicResource AccentBrand}"
                                                             CornerRadius="1.5"
                                                             Width="3"
                                                             Margin="0,4"
@@ -427,259 +292,386 @@
                                                         <Border.IsVisible>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
                                                                 <Binding Path="."/>
-                                                                <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedTopic"/>
+                                                                <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedQueue"/>
                                                             </MultiBinding>
                                                         </Border.IsVisible>
                                                     </Border>
-
                                                     <Border Grid.Column="1"
-                                                            Classes="entity-tree-row-surface">
+                                                            Classes="entity-tree-row-surface"
+                                                            ToolTip.Tip="{Binding ScheduledCount, StringFormat=Scheduled messages: {0:N0}}">
                                                         <Border.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Details"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueDetailsCommand}"
                                                                           CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Open in Azure Portal"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicInAzurePortalCommand}"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueInAzurePortalCommand}"
                                                                           CommandParameter="{Binding}"/>
-                                                                <MenuItem Header="Send Message to Topic"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
+                                                                <MenuItem Header="Send Message"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.SendQueueMessageCommand}"
                                                                           CommandParameter="{Binding}"/>
-                                                                <MenuItem Header="Create Subscription"
-                                                                          Command="{Binding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
+                                                                <MenuItem Header="Refresh"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshQueueCommand}"
                                                                           CommandParameter="{Binding}"/>
-                                                                <MenuItem Header="Refresh Subscriptions"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshTopicCommand}"
+                                                                <MenuItem Header="Purge Active Messages"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeQueueActiveCommand}"
+                                                                          CommandParameter="{Binding}"/>
+                                                                <MenuItem Header="Purge Dead Letters"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeQueueDeadLettersCommand}"
                                                                           CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Edit Properties"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicEditCommand}"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.OpenQueueEditCommand}"
                                                                           CommandParameter="{Binding}"/>
-                                                                <MenuItem Header="Delete Topic"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteTopicRequestCommand}"
+                                                                <MenuItem Header="Delete Queue"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteQueueRequestCommand}"
                                                                           CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Pin"
                                                                           Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
                                                                           CommandParameter="{Binding}"/>
                                                                 <MenuItem Header="Copy Name"
-                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.CopyTopicNameCommand}"
+                                                                          Command="{Binding $parent[Window].DataContext.EntityOperations.CopyQueueNameCommand}"
                                                                           CommandParameter="{Binding}"/>
                                                             </ContextMenu>
                                                         </Border.ContextMenu>
                                                         <Border.Background>
                                                             <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
                                                                 <Binding Path="."/>
-                                                                <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedTopic"/>
+                                                                <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedQueue"/>
+                                                                <Binding Path="$parent[UserControl].ActualThemeVariant"/>
                                                             </MultiBinding>
                                                         </Border.Background>
-                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                                        <Grid ColumnDefinitions="Auto,*,58,44" ColumnSpacing="8">
                                                             <LucideIcon Grid.Column="0"
-                                                                        Kind="Megaphone"
+                                                                        Kind="Inbox"
                                                                         Size="13"
-                                                                        Foreground="{DynamicResource TextSuccess}"
+                                                                        Foreground="{DynamicResource SubtleForeground}"
                                                                         VerticalAlignment="Center"/>
                                                             <TextBlock Grid.Column="1"
                                                                        Text="{Binding Name}"
-                                                                       FontSize="12"
+                                                                       FontSize="13"
                                                                        FontWeight="Medium"
-                                                                       FontFamily="Cascadia Code, Consolas, Monaco, monospace"
                                                                        Foreground="{DynamicResource AppForeground}"
                                                                        VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"/>
-                                                            <Border Grid.Column="2"
-                                                                    Classes="entity-tree-badge"
-                                                                    Background="{DynamicResource SurfaceSubtle}"
-                                                                    VerticalAlignment="Center">
-                                                                <TextBlock Foreground="{DynamicResource SubtleForeground}">
-                                                                    <Run Text="{Binding SubscriptionCount}"/><Run Text=" subs"/>
-                                                                </TextBlock>
-                                                            </Border>
-                                                            <Button Grid.Column="3"
-                                                                    Classes="icon-button"
-                                                                    Command="{Binding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    ToolTip.Tip="Create subscription"
-                                                                    IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"
-                                                                    VerticalAlignment="Center">
-                                                                <LucideIcon Kind="Plus" Size="12"/>
-                                                            </Button>
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       ToolTip.Tip="{Binding Name}"/>
+                                                            <TextBlock Classes="entity-tree-count"
+                                                                       Text="{Binding ActiveMessageCount, StringFormat={}{0:N0}}"
+                                                                       Grid.Column="2"
+                                                                       ToolTip.Tip="{Binding ActiveMessageCount, StringFormat=Active messages: {0:N0}}"/>
+                                                            <Grid Grid.Column="3">
+                                                                <TextBlock Classes="entity-tree-count"
+                                                                           Text="{Binding DeadLetterCount, StringFormat={}{0:N0}}"
+                                                                           ToolTip.Tip="{Binding DeadLetterCount, StringFormat=Dead-letter messages: {0:N0}}"/>
+                                                                <Border Classes="entity-tree-dlq"
+                                                                        HorizontalAlignment="Right"
+                                                                        VerticalAlignment="Center">
+                                                                    <Border.IsVisible>
+                                                                        <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
+                                                                            <Binding Path="DeadLetterCount"/>
+                                                                            <Binding Path="$parent[Window].DataContext.ShowDeadLetterBadges"/>
+                                                                        </MultiBinding>
+                                                                    </Border.IsVisible>
+                                                                    <TextBlock Classes="entity-tree-count"
+                                                                               Foreground="{DynamicResource TextDanger}"
+                                                                               Text="{Binding DeadLetterCount, StringFormat={}{0:N0}}"/>
+                                                                </Border>
+                                                            </Grid>
                                                         </Grid>
                                                     </Border>
                                                 </Grid>
-                                            </Expander.Header>
-
-                                            <Grid ColumnDefinitions="Auto,*" Margin="10,2,2,2">
-                                                <Border Grid.Column="0"
-                                                        Classes="entity-tree-connector"
-                                                        Margin="4,0,0,0"/>
-
-                                                <StackPanel Grid.Column="1" Margin="6,0,0,0">
-                                                    <Border Classes="entity-tree-loading"
-                                                            IsVisible="{Binding IsLoadingSubscriptions}"
-                                                            Margin="0,0,0,2">
-                                                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                                            <ProgressBar IsIndeterminate="True" Width="36" Height="2"/>
-                                                            <TextBlock Text="Loading..."
-                                                                       FontSize="10"
-                                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                                       VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Border>
-
-                                                    <ListBox ItemsSource="{Binding Subscriptions}"
-                                                             Classes="entity-list"
-                                                             Background="Transparent"
-                                                             BorderThickness="0"
-                                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                                        <ListBox.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <VirtualizingStackPanel/>
-                                                            </ItemsPanelTemplate>
-                                                        </ListBox.ItemsPanel>
-                                                        <ListBox.ItemTemplate>
-                                                            <DataTemplate x:DataType="models:SubscriptionInfo">
-                                                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
-                                                                    <Button Grid.Column="0"
-                                                                            Classes="entity-tree-row subscription-tree-row"
-                                                                            PointerPressed="OnEntityRowPointerPressed"
-                                                                            Command="{Binding $parent[Window].DataContext.SelectSubscriptionForConnectionCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Stretch">
-                                                                        <Grid ColumnDefinitions="3,*">
-                                                                            <Border Grid.Column="0"
-                                                                                    Background="{DynamicResource TextWarning}"
-                                                                                    CornerRadius="1.5"
-                                                                                    Width="3"
-                                                                                    Margin="0,4"
-                                                                                    HorizontalAlignment="Left">
-                                                                                <Border.IsVisible>
-                                                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
-                                                                                        <Binding Path="."/>
-                                                                                        <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
-                                                                                    </MultiBinding>
-                                                                                </Border.IsVisible>
-                                                                            </Border>
-
-                                                                            <Border Grid.Column="1"
-                                                                                    Classes="entity-tree-row-surface">
-                                                                                <Border.ContextMenu>
-                                                                                    <ContextMenu>
-                                                                                        <MenuItem Header="Details"
-                                                                                                  Command="{Binding $parent[Window].DataContext.OpenSubscriptionDetailDialogCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Open in Azure Portal"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionInAzurePortalCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Manage Filters/Rules"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionRulesDialogCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Purge Active Messages"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeSubscriptionActiveCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Purge Dead Letters"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeSubscriptionDeadLettersCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Refresh"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshSubscriptionCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Edit Properties"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionEditCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Delete Subscription"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteSubscriptionRequestCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Pin"
-                                                                                                  Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                        <MenuItem Header="Copy Path"
-                                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.CopySubscriptionPathCommand}"
-                                                                                                  CommandParameter="{Binding}"/>
-                                                                                    </ContextMenu>
-                                                                                </Border.ContextMenu>
-                                                                                <Border.Background>
-                                                                                    <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
-                                                                                        <Binding Path="."/>
-                                                                                        <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
-                                                                                    </MultiBinding>
-                                                                                </Border.Background>
-                                                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                                                                    <LucideIcon Grid.Column="0"
-                                                                                                Kind="Inbox"
-                                                                                                Size="12"
-                                                                                                Foreground="{DynamicResource TextWarning}"
-                                                                                                VerticalAlignment="Center"/>
-                                                                                    <TextBlock Grid.Column="1"
-                                                                                               Text="{Binding Name}"
-                                                                                               FontSize="12"
-                                                                                               FontWeight="Medium"
-                                                                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                                                               Foreground="{DynamicResource AppForeground}"
-                                                                                               VerticalAlignment="Center"
-                                                                                               TextTrimming="CharacterEllipsis"/>
-                                                                                    <StackPanel Grid.Column="2"
-                                                                                                Orientation="Horizontal"
-                                                                                                Spacing="4"
-                                                                                                VerticalAlignment="Center">
-                                                                                        <Border Classes="entity-tree-badge"
-                                                                                                Background="{DynamicResource SurfaceBrand}"
-                                                                                                IsVisible="{Binding ActiveMessageCount}">
-                                                                                            <TextBlock Foreground="{DynamicResource AccentBrand}"
-                                                                                                       Text="{Binding ActiveMessageCount}"/>
-                                                                                        </Border>
-                                                                                        <Border Classes="entity-tree-badge"
-                                                                                                Background="{DynamicResource SurfaceDanger}">
-                                                                                            <Border.IsVisible>
-                                                                                                <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
-                                                                                                    <Binding Path="DeadLetterCount"/>
-                                                                                                    <Binding Path="$parent[Window].DataContext.ShowDeadLetterBadges"/>
-                                                                                                </MultiBinding>
-                                                                                            </Border.IsVisible>
-                                                                                            <TextBlock Foreground="{DynamicResource TextDanger}">
-                                                                                                <Run Text="{Binding DeadLetterCount}"/><Run Text=" dlq"/>
-                                                                                            </TextBlock>
-                                                                                        </Border>
-                                                                                    </StackPanel>
-                                                                                </Grid>
-                                                                            </Border>
-                                                                        </Grid>
-                                                                    </Button>
-                                                                    <Button Grid.Column="1"
-                                                                            Classes="icon-button"
-                                                                            Command="{Binding $parent[Window].DataContext.OpenSubscriptionDetailDialogCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            ToolTip.Tip="Subscription details"
-                                                                            IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"
-                                                                            VerticalAlignment="Center"
-                                                                            Margin="2,0,0,0">
-                                                                        <LucideIcon Kind="Info" Size="11"/>
-                                                                    </Button>
-                                                                    <Button Grid.Column="2"
-                                                                            Classes="icon-button"
-                                                                            Command="{Binding $parent[Window].DataContext.DeleteSubscriptionRequestCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            ToolTip.Tip="Delete subscription"
-                                                                            IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"
-                                                                            VerticalAlignment="Center"
-                                                                            Margin="0,0,0,0">
-                                                                        <LucideIcon Kind="Trash2" Size="11"
-                                                                                    Foreground="{DynamicResource TextDanger}"/>
-                                                                    </Button>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Expander>
+                        <Expander Classes="entity-tree-group"
+                                  IsVisible="{Binding CurrentNavigation.HasTopics}"
+                                  IsExpanded="{Binding CurrentNavigation.IsTopicsSectionExpanded}"
+                                  Margin="4,0,4,0">
+                            <Expander.Header>
+                                <Border Classes="entity-group-header">
+                                    <Grid ColumnDefinitions="Auto,Auto" HorizontalAlignment="Left">
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                            <Border Classes="entity-tree-section-icon" Background="Transparent">
+                                                <LucideIcon Kind="Megaphone"
+                                                            Size="13"
+                                                            Foreground="{DynamicResource SubtleForeground}"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Topics"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AppForeground}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1"
+                                                Classes="entity-tree-section-count"
+                                                VerticalAlignment="Center"
+                                                Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding CurrentNavigation.Topics.Count}"
+                                                       FontSize="10"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource SubtleForeground}"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </Expander.Header>
+                            <StackPanel Spacing="0">
+                                <ListBox ItemsSource="{Binding CurrentNavigation.FilteredTopics}"
+                                         Classes="entity-list"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:TopicInfo">
+                                            <Expander Classes="entity-tree-node"
+                                                      Margin="0,1"
+                                                      IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                                                      Expanding="OnTopicExpanderExpanding">
+                                                <Expander.Header>
+                                                    <Button Classes="entity-tree-row"
+                                                            PointerPressed="OnEntityRowPointerPressed"
+                                                            Command="{Binding $parent[Window].DataContext.SelectTopicForConnectionCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Stretch">
+                                                        <Grid ColumnDefinitions="3,*">
+                                                            <Border Grid.Column="0"
+                                                                    Background="{DynamicResource AccentBrand}"
+                                                                    CornerRadius="1.5"
+                                                                    Width="3"
+                                                                    Margin="0,4"
+                                                                    HorizontalAlignment="Left">
+                                                                <Border.IsVisible>
+                                                                    <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                        <Binding Path="."/>
+                                                                        <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedTopic"/>
+                                                                    </MultiBinding>
+                                                                </Border.IsVisible>
+                                                            </Border>
+                                                            <Border Grid.Column="1" Classes="entity-tree-row-surface">
+                                                                <Border.ContextMenu>
+                                                                    <ContextMenu>
+                                                                        <MenuItem Header="Details"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicDetailsCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Open in Azure Portal"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicInAzurePortalCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Send Message to Topic"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.SendTopicMessageCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Create Subscription"
+                                                                                  Command="{Binding $parent[Window].DataContext.OpenCreateSubscriptionDialogCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Refresh Subscriptions"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshTopicCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Edit Properties"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.OpenTopicEditCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Delete Topic"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteTopicRequestCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Pin"
+                                                                                  Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                        <MenuItem Header="Copy Name"
+                                                                                  Command="{Binding $parent[Window].DataContext.EntityOperations.CopyTopicNameCommand}"
+                                                                                  CommandParameter="{Binding}"/>
+                                                                    </ContextMenu>
+                                                                </Border.ContextMenu>
+                                                                <Border.Background>
+                                                                    <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                        <Binding Path="."/>
+                                                                        <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedTopic"/>
+                                                                        <Binding Path="$parent[UserControl].ActualThemeVariant"/>
+                                                                    </MultiBinding>
+                                                                </Border.Background>
+                                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                                    <LucideIcon Grid.Column="0"
+                                                                                Kind="Megaphone"
+                                                                                Size="13"
+                                                                                Foreground="{DynamicResource SubtleForeground}"
+                                                                                VerticalAlignment="Center"/>
+                                                                    <TextBlock Grid.Column="1"
+                                                                               Text="{Binding Name}"
+                                                                               FontSize="13"
+                                                                               FontWeight="Medium"
+                                                                               Foreground="{DynamicResource AppForeground}"
+                                                                               VerticalAlignment="Center"
+                                                                               TextTrimming="CharacterEllipsis"
+                                                                               ToolTip.Tip="{Binding Name}"/>
+                                                                    <TextBlock Text="{Binding SubscriptionCount, StringFormat={}{0} subscriptions}"
+                                                                               FontSize="11"
+                                                                               Foreground="{DynamicResource SubtleForeground}"
+                                                                               VerticalAlignment="Center"
+                                                                               Grid.Column="2"/>
                                                                 </Grid>
-                                                            </DataTemplate>
-                                                        </ListBox.ItemTemplate>
-                                                    </ListBox>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Expander>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </StackPanel>
-                    </Expander>
-                </StackPanel>
-            </ScrollViewer>
-        </DockPanel>
-    </Border>
-
+                                                            </Border>
+                                                        </Grid>
+                                                    </Button>
+                                                </Expander.Header>
+                                                <Grid ColumnDefinitions="Auto,*" Margin="24,2,0,2">
+                                                    <Border Grid.Column="0"
+                                                            Classes="entity-tree-connector"
+                                                            Margin="4,0,0,0"/>
+                                                    <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                                        <Border Classes="entity-tree-loading"
+                                                                IsVisible="{Binding IsLoadingSubscriptions}"
+                                                                Margin="0,0,0,2">
+                                                            <StackPanel Orientation="Horizontal"
+                                                                        Spacing="6"
+                                                                        HorizontalAlignment="Center">
+                                                                <ProgressBar IsIndeterminate="True"
+                                                                             Width="36"
+                                                                             Height="2"/>
+                                                                <TextBlock Text="Loading..."
+                                                                           FontSize="10"
+                                                                           Foreground="{DynamicResource SubtleForeground}"
+                                                                           VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <ListBox ItemsSource="{Binding FilteredSubscriptions}"
+                                                                 Classes="entity-list"
+                                                                 Background="Transparent"
+                                                                 BorderThickness="0"
+                                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                                            <ListBox.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <VirtualizingStackPanel/>
+                                                                </ItemsPanelTemplate>
+                                                            </ListBox.ItemsPanel>
+                                                            <ListBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="models:SubscriptionInfo">
+                                                                    <Grid ColumnDefinitions="*" Margin="0,1">
+                                                                        <Button Grid.Column="0"
+                                                                                Classes="entity-tree-row subscription-tree-row"
+                                                                                PointerPressed="OnEntityRowPointerPressed"
+                                                                                Command="{Binding $parent[Window].DataContext.SelectSubscriptionForConnectionCommand}"
+                                                                                CommandParameter="{Binding}"
+                                                                                HorizontalAlignment="Stretch"
+                                                                                HorizontalContentAlignment="Stretch">
+                                                                            <Grid ColumnDefinitions="3,*">
+                                                                                <Border Grid.Column="0"
+                                                                                        Background="{DynamicResource AccentBrand}"
+                                                                                        CornerRadius="1.5"
+                                                                                        Width="3"
+                                                                                        Margin="0,4"
+                                                                                        HorizontalAlignment="Left">
+                                                                                    <Border.IsVisible>
+                                                                                        <MultiBinding Converter="{StaticResource EntitySelectionConverter}">
+                                                                                            <Binding Path="."/>
+                                                                                            <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
+                                                                                        </MultiBinding>
+                                                                                    </Border.IsVisible>
+                                                                                </Border>
+                                                                                <Border Grid.Column="1"
+                                                                                        Classes="entity-tree-row-surface">
+                                                                                    <Border.ContextMenu>
+                                                                                        <ContextMenu>
+                                                                                            <MenuItem Header="Details"
+                                                                                                      Command="{Binding $parent[Window].DataContext.OpenSubscriptionDetailDialogCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Open in Azure Portal"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionInAzurePortalCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Manage Filters/Rules"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionRulesDialogCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Purge Active Messages"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeSubscriptionActiveCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Purge Dead Letters"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.PurgeSubscriptionDeadLettersCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Refresh"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.RefreshSubscriptionCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Edit Properties"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.OpenSubscriptionEditCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Delete Subscription"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteSubscriptionRequestCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Pin"
+                                                                                                      Command="{Binding $parent[Window].DataContext.ToggleEntityPinCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                            <MenuItem Header="Copy Path"
+                                                                                                      Command="{Binding $parent[Window].DataContext.EntityOperations.CopySubscriptionPathCommand}"
+                                                                                                      CommandParameter="{Binding}"/>
+                                                                                        </ContextMenu>
+                                                                                    </Border.ContextMenu>
+                                                                                    <Border.Background>
+                                                                                        <MultiBinding Converter="{StaticResource EntitySelectionBackgroundConverter}">
+                                                                                            <Binding Path="."/>
+                                                                                            <Binding Path="$parent[Window].DataContext.CurrentNavigation.SelectedSubscription"/>
+                                                                                            <Binding Path="$parent[UserControl].ActualThemeVariant"/>
+                                                                                        </MultiBinding>
+                                                                                    </Border.Background>
+                                                                                    <Grid ColumnDefinitions="Auto,*,58,44"
+                                                                                          ColumnSpacing="8">
+                                                                                        <LucideIcon Grid.Column="0"
+                                                                                                    Kind="Inbox"
+                                                                                                    Size="13"
+                                                                                                    Foreground="{DynamicResource SubtleForeground}"
+                                                                                                    VerticalAlignment="Center"/>
+                                                                                        <TextBlock Grid.Column="1"
+                                                                                                   Text="{Binding Name}"
+                                                                                                   FontSize="13"
+                                                                                                   FontWeight="Medium"
+                                                                                                   Foreground="{DynamicResource AppForeground}"
+                                                                                                   VerticalAlignment="Center"
+                                                                                                   TextTrimming="CharacterEllipsis"
+                                                                                                   ToolTip.Tip="{Binding Name}"/>
+                                                                                        <TextBlock Classes="entity-tree-count"
+                                                                                                   Text="{Binding ActiveMessageCount, StringFormat={}{0:N0}}"
+                                                                                                   Grid.Column="2"
+                                                                                                   ToolTip.Tip="{Binding ActiveMessageCount, StringFormat=Active messages: {0:N0}}"/>
+                                                                                        <Grid Grid.Column="3">
+                                                                                            <TextBlock Classes="entity-tree-count"
+                                                                                                       Text="{Binding DeadLetterCount, StringFormat={}{0:N0}}"
+                                                                                                       ToolTip.Tip="{Binding DeadLetterCount, StringFormat=Dead-letter messages: {0:N0}}"/>
+                                                                                            <Border Classes="entity-tree-dlq"
+                                                                                                    HorizontalAlignment="Right"
+                                                                                                    VerticalAlignment="Center">
+                                                                                                <Border.IsVisible>
+                                                                                                    <MultiBinding Converter="{StaticResource DeadLetterBadgeVisibilityConverter}">
+                                                                                                        <Binding Path="DeadLetterCount"/>
+                                                                                                        <Binding Path="$parent[Window].DataContext.ShowDeadLetterBadges"/>
+                                                                                                    </MultiBinding>
+                                                                                                </Border.IsVisible>
+                                                                                                <TextBlock Classes="entity-tree-count"
+                                                                                                           Foreground="{DynamicResource TextDanger}"
+                                                                                                           Text="{Binding DeadLetterCount, StringFormat={}{0:N0}}"/>
+                                                                                            </Border>
+                                                                                        </Grid>
+                                                                                    </Grid>
+                                                                                </Border>
+                                                                            </Grid>
+                                                                        </Button>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Expander>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
     </Grid>
 </UserControl>

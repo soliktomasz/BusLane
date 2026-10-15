@@ -1,6 +1,7 @@
 namespace BusLane.ViewModels.Core;
 
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using BusLane.Models;
 using BusLane.Services.Abstractions;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
@@ -16,6 +17,7 @@ public partial class NavigationState : ViewModelBase
     private readonly List<PinnedEntity> _allPinnedEntities = [];
     private readonly ObservableCollection<PinnedEntity> _pinnedEntities = [];
     private string? _pinScopeId;
+    private readonly HashSet<TopicInfo> _observedTopics = [];
 
     [ObservableProperty] private AzureSubscription? _selectedAzureSubscription;
     [ObservableProperty] private ServiceBusNamespace? _selectedNamespace;
@@ -48,7 +50,7 @@ public partial class NavigationState : ViewModelBase
         string.IsNullOrWhiteSpace(EntityFilter)
             ? Queues
             : Queues.Where(q =>
-                q.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
+                q.Name.Contains(EntityFilter.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Gets the filtered topics based on the current entity filter text.
@@ -57,7 +59,45 @@ public partial class NavigationState : ViewModelBase
         string.IsNullOrWhiteSpace(EntityFilter)
             ? Topics
             : Topics.Where(t =>
-                t.Name.Contains(EntityFilter, StringComparison.OrdinalIgnoreCase));
+                t.Name.Contains(EntityFilter.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                t.Subscriptions.Any(s => s.Name.Contains(EntityFilter.Trim(), StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>Whether a nonempty browser query has no matching loaded entities.</summary>
+    public bool HasNoMatchingEntities => !string.IsNullOrWhiteSpace(EntityFilter) &&
+        !FilteredQueues.Any() && !FilteredTopics.Any();
+
+    /// <summary>Whether subscription search is limited by topics that have not yet been expanded.</summary>
+    public bool HasUnloadedTopics => Topics.Any(t => !t.SubscriptionsLoaded);
+
+    /// <summary>Whether the selected-entity footer is visible.</summary>
+    public bool HasSelectedEntity => SelectedEntity is QueueInfo or TopicInfo or SubscriptionInfo;
+
+    /// <summary>Human-readable selected entity type.</summary>
+    public string SelectedEntityKind => SelectedEntity switch
+    {
+        QueueInfo => "Queue",
+        TopicInfo => "Topic",
+        SubscriptionInfo => "Subscription",
+        _ => string.Empty
+    };
+
+    /// <summary>Full entity path, including the parent topic for subscriptions.</summary>
+    public string SelectedEntityPath => SelectedEntity switch
+    {
+        QueueInfo q => q.Name,
+        TopicInfo t => t.Name,
+        SubscriptionInfo s => $"{s.TopicName} / {s.Name}",
+        _ => string.Empty
+    };
+
+    /// <summary>Secondary metrics for the selected entity, leaving names uncluttered in the tree.</summary>
+    public string SelectedEntitySummary => SelectedEntity switch
+    {
+        QueueInfo q => $"{q.ActiveMessageCount:N0} active · {q.DeadLetterCount:N0} dead-letter · {q.ScheduledCount:N0} scheduled",
+        SubscriptionInfo s => $"{s.ActiveMessageCount:N0} active · {s.DeadLetterCount:N0} dead-letter",
+        TopicInfo t => $"{t.SubscriptionCount:N0} subscriptions",
+        _ => string.Empty
+    };
 
     /// <summary>
     /// Gets the filtered namespaces based on the current filter text.
@@ -135,13 +175,28 @@ public partial class NavigationState : ViewModelBase
         {
             OnPropertyChanged(nameof(HasQueues));
             OnPropertyChanged(nameof(FilteredQueues));
+            OnPropertyChanged(nameof(HasNoMatchingEntities));
             OnPropertyChanged(nameof(TotalDeadLetterCount));
             OnPropertyChanged(nameof(HasDeadLetters));
         };
         Topics.CollectionChanged += (_, _) =>
         {
+            foreach (var removed in _observedTopics.Except(Topics).ToList())
+            {
+                removed.PropertyChanged -= OnTopicPropertyChanged;
+                _observedTopics.Remove(removed);
+                removed.ApplyEntityFilter(string.Empty);
+            }
+            foreach (var added in Topics.Except(_observedTopics).ToList())
+            {
+                _observedTopics.Add(added);
+                added.ApplyEntityFilter(EntityFilter);
+                added.PropertyChanged += OnTopicPropertyChanged;
+            }
             OnPropertyChanged(nameof(HasTopics));
             OnPropertyChanged(nameof(FilteredTopics));
+            OnPropertyChanged(nameof(HasNoMatchingEntities));
+            OnPropertyChanged(nameof(HasUnloadedTopics));
         };
         TopicSubscriptions.CollectionChanged += (_, _) =>
         {
@@ -161,8 +216,29 @@ public partial class NavigationState : ViewModelBase
 
     partial void OnEntityFilterChanged(string value)
     {
+        foreach (var topic in Topics)
+            topic.ApplyEntityFilter(value);
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            IsQueuesSectionExpanded = true;
+            IsTopicsSectionExpanded = true;
+        }
         OnPropertyChanged(nameof(FilteredQueues));
         OnPropertyChanged(nameof(FilteredTopics));
+        OnPropertyChanged(nameof(HasNoMatchingEntities));
+    }
+
+    private void OnTopicPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TopicInfo.FilteredSubscriptions))
+        {
+            OnPropertyChanged(nameof(FilteredTopics));
+            OnPropertyChanged(nameof(HasNoMatchingEntities));
+        }
+        if (e.PropertyName == nameof(TopicInfo.SubscriptionsLoaded))
+            OnPropertyChanged(nameof(HasUnloadedTopics));
+        if (ReferenceEquals(sender, SelectedEntity) && e.PropertyName == nameof(TopicInfo.SubscriptionCount))
+            OnPropertyChanged(nameof(SelectedEntitySummary));
     }
 
     partial void OnNamespaceFilterChanged(string value)
@@ -198,6 +274,10 @@ public partial class NavigationState : ViewModelBase
     {
         _ = value;
         OnPropertyChanged(nameof(IsSelectedEntityPinned));
+        OnPropertyChanged(nameof(HasSelectedEntity));
+        OnPropertyChanged(nameof(SelectedEntityKind));
+        OnPropertyChanged(nameof(SelectedEntityPath));
+        OnPropertyChanged(nameof(SelectedEntitySummary));
     }
 
     /// <summary>

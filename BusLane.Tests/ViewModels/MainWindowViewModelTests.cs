@@ -26,6 +26,100 @@ using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 public class MainWindowViewModelTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeleteSelectedMessageCommand_Confirmed_DeletesOnlyInspectedMessageInOriginalEntity(bool changeEntity)
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var factory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        factory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetQueueInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(CreateQueue("orders"));
+        operations.DeleteMessagesDetailedAsync(Arg.Any<string>(), Arg.Any<string?>(),
+                Arg.Any<IEnumerable<MessageIdentifier>>(), Arg.Any<bool>(),
+                Arg.Any<IProgress<BulkOperationProgress>?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(new BulkOperationExecutionResult(BulkOperationType.Delete, 1, 1, [], "Deleted"));
+        using var sut = CreateSut(preferences, operationsFactory: factory);
+        var tab = CreateConnectedQueueTab("tab-1", preferences, factory, "Orders", "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        var inspected = new MessageInfo("inspected", null, "application/json", "{}", DateTimeOffset.UtcNow, null, 1, 1, null, new Dictionary<string, object>());
+        var other = inspected with { MessageId = "other", SequenceNumber = 2 };
+        tab.MessageOps.SelectedMessage = inspected;
+        tab.MessageOps.SelectedMessages.Add(other);
+
+        // Act
+        sut.DeleteSelectedMessageCommand.Execute(null);
+
+        // Assert - requesting deletion does not delete or alter the bulk selection.
+        sut.Confirmation.ShowConfirmDialog.Should().BeTrue();
+        tab.MessageOps.SelectedMessages.Should().ContainSingle().Which.Should().Be(other);
+        operations.ReceivedCalls().Should().NotContain(call => call.GetMethodInfo().Name == "DeleteMessagesDetailedAsync");
+        if (changeEntity)
+            tab.Navigation.SelectedQueue = CreateQueue("different-queue");
+        await sut.Confirmation.ExecuteConfirmDialogCommand.ExecuteAsync(null);
+
+        if (changeEntity)
+        {
+            operations.ReceivedCalls().Should().NotContain(call => call.GetMethodInfo().Name == "DeleteMessagesDetailedAsync");
+        }
+        else
+        {
+            await operations.Received(1).DeleteMessagesDetailedAsync("orders", null,
+                Arg.Is<IEnumerable<MessageIdentifier>>(items => items.Count() == 1 && items.Single().MessageId == "inspected"),
+                false, Arg.Any<IProgress<BulkOperationProgress>?>(), false, Arg.Any<CancellationToken>());
+            tab.MessageOps.SelectedMessage.Should().BeNull();
+        }
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task SelectTopicCommand_TopicClicked_LoadsAndTogglesSubscriptions(bool connectionStringTree, bool initiallyExpanded)
+    {
+        // Arrange
+        var preferences = new TestPreferencesService();
+        var factory = Substitute.For<IServiceBusOperationsFactory>();
+        var operations = Substitute.For<IConnectionStringOperations>();
+        var topic = new TopicInfo("orders", 0, 1, null, TimeSpan.FromDays(14));
+        var subscription = new SubscriptionInfo("billing", "orders", 1, 1, 0, null, false);
+        factory.CreateFromConnectionString(Arg.Any<string>()).Returns(operations);
+        operations.GetTopicInfoAsync("orders", Arg.Any<CancellationToken>()).Returns(topic);
+        operations.GetSubscriptionsAsync("orders", Arg.Any<CancellationToken>()).Returns([subscription]);
+        using var sut = CreateSut(preferences, operationsFactory: factory);
+        var tab = CreateConnectedTopicTab("tab-1", preferences, factory, operations, "orders");
+        sut.ConnectionTabs.Add(tab);
+        sut.ActiveTab = tab;
+        topic.IsExpanded = initiallyExpanded;
+        topic.SubscriptionsLoaded = false;
+        topic.Subscriptions.Clear();
+        operations.ClearReceivedCalls();
+        // Mimic the tree's Expanding handler to guard against duplicate network loads.
+        topic.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(TopicInfo.IsExpanded) && topic.IsExpanded)
+                sut.LoadTopicSubscriptionsCommand.Execute(topic);
+        };
+
+        // Act
+        if (connectionStringTree)
+            await sut.SelectTopicForConnectionCommand.ExecuteAsync(topic);
+        else
+            await sut.SelectTopicCommand.ExecuteAsync(topic);
+
+        // Assert
+        topic.IsExpanded.Should().Be(!initiallyExpanded);
+        topic.SubscriptionsLoaded.Should().BeTrue();
+        topic.Subscriptions.Should().ContainSingle().Which.Should().Be(subscription);
+        tab.Navigation.SelectedTopic.Should().BeSameAs(topic);
+        tab.Navigation.TopicSubscriptions.Should().ContainSingle().Which.Should().Be(subscription);
+        await operations.Received(1).GetSubscriptionsAsync("orders", Arg.Any<CancellationToken>());
+    }
+
     [Fact]
     public async Task OpenCorrelationExplorerCommand_WithComposedServices_OpensPanel()
     {

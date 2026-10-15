@@ -12,7 +12,18 @@
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen">
+    <Window.Styles>
+        <Style Selector="Grid.message-detail-background.drawer-open">
+            <Setter Property="Effect">
+                <BlurEffect Radius="4"/>
+            </Setter>
+        </Style>
+    </Window.Styles>
     <Grid ColumnDefinitions="Auto,*">
+        <Grid Grid.ColumnSpan="2" ColumnDefinitions="Auto,*"
+              Classes="message-detail-background"
+              Classes.drawer-open="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
+              IsEnabled="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNull}}">
         <!-- Navigation Pane (Fluent 2 Sidebar) -->
         <controls:NavigationSidebar Grid.Column="0"/>
 
@@ -317,6 +328,8 @@
                                     DataContext="{Binding Terminal}"
                                     IsVisible="{Binding IsDockedVisible}"/>
             </Grid>
+        </Grid>
+
         </Grid>
 
         <!-- Modal Dialogs -->

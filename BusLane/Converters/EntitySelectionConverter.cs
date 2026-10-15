@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 /// <summary>
 /// Converts entity selection state to a boolean by comparing the current item with the selected item.
@@ -90,7 +91,9 @@ public class EntitySelectionBackgroundConverter : IMultiValueConverter
             var app = Application.Current;
             if (app != null)
             {
-                var themeVariant = app.ActualThemeVariant;
+                var themeVariant = values.Count > 2 && values[2] is ThemeVariant rowTheme
+                    ? rowTheme
+                    : app.ActualThemeVariant;
                 if (app.Resources.TryGetResource("SelectedBackground", themeVariant, out var resource) 
                     && resource is IBrush brush)
                 {

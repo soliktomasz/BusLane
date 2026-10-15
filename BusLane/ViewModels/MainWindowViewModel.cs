@@ -956,6 +956,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [RelayCommand]
     private async Task SelectTopicAsync(TopicInfo topic)
     {
+        var expandSubscriptions = !topic.IsExpanded;
         // Use active tab's operations if available, otherwise fall back to main operations
         var operations = ActiveTab?.Operations ?? _operations;
         if (operations == null) return;
@@ -970,12 +971,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
 
         IsLoading = true;
         StatusMessage = $"Loading subscriptions for {topic.Name}...";
+        topic.IsLoadingSubscriptions = true;
 
         try
         {
-            var subs = await operations.GetSubscriptionsAsync(topic.Name);
-            foreach (var sub in subs)
-                CurrentNavigation.TopicSubscriptions.Add(sub);
+            await ReloadTopicSubscriptionsAsync(topic, operations, CurrentNavigation);
+            topic.IsExpanded = expandSubscriptions;
 
             StatusMessage = $"{CurrentNavigation.TopicSubscriptions.Count} subscription(s)";
             await _alertService.EvaluateAlertsAsync(CurrentNavigation.Queues, CurrentNavigation.TopicSubscriptions);
@@ -986,6 +987,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         }
         finally
         {
+            topic.IsLoadingSubscriptions = false;
             IsLoading = false;
         }
     }
@@ -1813,6 +1815,49 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
                 await BulkOps.ExecuteBulkResendAsync(CurrentMessageOps.SelectedMessages);
                 CurrentMessageOps.SelectedMessages.Clear();
                 await CurrentMessageOps.LoadMessagesAsync();
+            });
+    }
+
+    [RelayCommand]
+    private void DeleteSelectedMessage()
+    {
+        var messageOps = CurrentMessageOps;
+        var message = messageOps.SelectedMessage;
+        var navigation = CurrentNavigation;
+        var entityName = navigation.CurrentEntityName;
+        if (message == null || entityName == null) return;
+
+        var subscriptionName = navigation.CurrentSubscriptionName;
+        var showDeadLetter = navigation.ShowDeadLetter;
+        ObservableCollection<MessageInfo> messages = [message];
+        bool IsOriginalEntity() => ReferenceEquals(CurrentNavigation, navigation) &&
+            navigation.CurrentEntityName == entityName &&
+            navigation.CurrentSubscriptionName == subscriptionName &&
+            navigation.ShowDeadLetter == showDeadLetter;
+
+        Confirmation.ShowConfirmation(
+            "Confirm Delete",
+            BulkOps.GetBulkDeleteConfirmationMessage(messages),
+            BulkOps.GetBulkDeleteConfirmText(),
+            async () =>
+            {
+                if (!IsOriginalEntity())
+                {
+                    StatusMessage = "The selected entity changed. Reopen the message to delete it.";
+                    return;
+                }
+
+                var deletedCount = await BulkOps.ExecuteBulkDeleteAsync(messages);
+                if (deletedCount == 0) return;
+
+                messageOps.SelectedMessages.Remove(message);
+                if (messageOps.SelectedMessage == message)
+                    messageOps.ClearSelectedMessage();
+                if (IsOriginalEntity())
+                {
+                    await RefreshCurrentEntityMetadataAsync();
+                    await messageOps.LoadMessagesAsync();
+                }
             });
     }
 

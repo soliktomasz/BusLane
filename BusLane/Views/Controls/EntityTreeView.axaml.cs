@@ -28,26 +28,6 @@ public partial class EntityTreeView : UserControl
         }
     }
 
-    private void OnTopicHeaderTapped(object? sender, PointerPressedEventArgs e)
-    {
-        if (sender is Grid grid && grid.DataContext is TopicInfo topic)
-        {
-            if (!e.GetCurrentPoint(grid).Properties.IsLeftButtonPressed)
-            {
-                e.Handled = true;
-                return;
-            }
-
-            var mainWindow = TopLevel.GetTopLevel(this);
-            if (mainWindow?.DataContext is MainWindowViewModel vm)
-            {
-                vm.SelectTopicForConnectionCommand.Execute(topic);
-                // Don't toggle IsExpanded here - the Expander's built-in
-                // ToggleButton handles it via the two-way binding
-            }
-        }
-    }
-
     private void OnEntityRowPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is Control control && !e.GetCurrentPoint(control).Properties.IsLeftButtonPressed)
