@@ -356,6 +356,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        topicName = NormalizeEntityPath(topicName);
 
         var rules = new List<SubscriptionRuleInfo>();
         await foreach (var rule in AdminClient.GetRulesAsync(topicName, subscriptionName, ct))
@@ -374,6 +375,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        topicName = NormalizeEntityPath(topicName);
         ArgumentNullException.ThrowIfNull(options);
 
         var sdkOptions = ServiceBusOperations.BuildCreateRuleOptions(options);
@@ -388,6 +390,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
+        topicName = NormalizeEntityPath(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(ruleName);
 
         await AdminClient.DeleteRuleAsync(topicName, subscriptionName, ruleName, ct);
@@ -425,6 +428,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         TimeSpan? timeToLive = null, DateTimeOffset? scheduledEnqueueTime = null,
         CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         Log.Debug("Sending message to {EntityName} via Azure credential", entityName);
         await using var sender = GetClient().CreateSender(entityName);
 
@@ -453,6 +457,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         TimeSpan? timeToLive = null,
         CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         await using var sender = GetClient().CreateSender(entityName);
         var msg = new ServiceBusMessage(body);
         ServiceBusOperations.ApplyMessageProperties(msg, contentType, correlationId, messageId, sessionId,
@@ -462,6 +467,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
 
     public async Task CancelScheduledMessageAsync(string entityName, long sequenceNumber, CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         await using var sender = GetClient().CreateSender(entityName);
         await sender.CancelScheduledMessageAsync(sequenceNumber, ct);
     }
@@ -510,6 +516,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
 
     public async Task PurgeMessagesAsync(string entityName, string? subscription, bool deadLetter, CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         Log.Information("Purging messages from {EntityName}{Subscription} (DeadLetter: {DeadLetter})",
             entityName, subscription != null ? $"/{subscription}" : "", deadLetter);
         await ServiceBusOperations.PurgeMessagesAsync(GetClient(), entityName, subscription, deadLetter, ct);
@@ -556,6 +563,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         IProgress<BulkOperationProgress>? progress = null,
         CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         return await ServiceBusOperations.PurgeMessagesDetailedAsync(GetClient(), entityName, subscription, deadLetter, progress, ct);
     }
 
@@ -564,6 +572,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         bool deadLetter = false, bool requiresSession = false,
         string? sessionId = null, CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         var sequenceList = sequenceNumbers.ToList();
         Log.Debug("Deleting {Count} messages from {EntityName}", sequenceList.Count, entityName);
         var deleted = await ServiceBusOperations.DeleteMessagesAsync(
@@ -581,11 +590,13 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         bool requiresSession = false,
         CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         return await ServiceBusOperations.DeleteMessagesDetailedAsync(GetClient(), entityName, subscription, messages, deadLetter, progress, requiresSession, ct);
     }
 
     public async Task<int> ResendMessagesAsync(string entityName, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         var messageList = messages.ToList();
         Log.Debug("Resending {Count} messages to {EntityName}", messageList.Count, entityName);
         var resent = await ServiceBusOperations.ResendMessagesAsync(GetClient(), entityName, messageList, ct);
@@ -599,12 +610,14 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         IProgress<BulkOperationProgress>? progress = null,
         CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         return await ServiceBusOperations.ResendMessagesDetailedAsync(GetClient(), entityName, messages, progress, ct);
     }
 
     public async Task<int> ResubmitDeadLetterMessagesAsync(
         string entityName, string? subscription, IEnumerable<MessageInfo> messages, CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         var messageList = messages.ToList();
         Log.Debug("Resubmitting {Count} dead letter messages from {EntityName}", messageList.Count, entityName);
         var resubmitted = await ServiceBusOperations.ResubmitDeadLetterMessagesAsync(GetClient(), entityName, subscription, messageList, ct);
@@ -620,6 +633,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         bool requiresSession = false,
         CancellationToken ct = default)
     {
+        entityName = NormalizeEntityPath(entityName);
         return await ServiceBusOperations.ResubmitDeadLetterMessagesDetailedAsync(GetClient(), entityName, subscription, messages, progress, requiresSession, ct);
     }
 
@@ -682,7 +696,7 @@ public class AzureCredentialOperations : IAzureCredentialOperations
         return fqn;
     }
 
-    private static string NormalizeEntityPath(string entityPath) =>
+    internal static string NormalizeEntityPath(string entityPath) =>
         entityPath.Contains('~') ? entityPath.Replace('~', '/') : entityPath;
 
     private async Task<(int Count, bool RequiresSession)> GetEstimatedCountAsync(

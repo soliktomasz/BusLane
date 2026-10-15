@@ -106,4 +106,12 @@ public class ServiceBusOperationsFactoryTests
         // Assert
         operations.Should().NotBeNull();
     }
+
+    [Theory]
+    [InlineData("orders~v1", "orders/v1")]
+    [InlineData("orders", "orders")]
+    public void AzureCredentialOperations_NormalizeEntityPath_ConvertsArmSeparator(string input, string expected)
+    {
+        AzureCredentialOperations.NormalizeEntityPath(input).Should().Be(expected);
+    }
 }

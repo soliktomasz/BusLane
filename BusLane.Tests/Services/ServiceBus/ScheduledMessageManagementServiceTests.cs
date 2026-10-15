@@ -61,7 +61,7 @@ public class ScheduledMessageManagementServiceTests
     }
 
     [Fact]
-    public async Task RescheduleAsync_WhenReplacementFails_PreservesConfirmedCancellation()
+    public async Task RescheduleAsync_WhenReplacementFails_LeavesOriginalScheduled()
     {
         var (sut, operations, store) = CreateSut();
         store.LoadPayloadAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
@@ -76,12 +76,36 @@ public class ScheduledMessageManagementServiceTests
         var result = await sut.RescheduleAsync(new ScheduledMessageActionRequest(
             CreateEntry(), true, true, DateTimeOffset.UtcNow.AddHours(2)));
 
-        result.IsPartialFailure.Should().BeTrue();
-        result.Entry.Status.Should().Be(ScheduledMessageRecordStatus.Cancelled);
+        result.IsSuccess.Should().BeFalse();
+        result.Entry.Status.Should().Be(ScheduledMessageRecordStatus.Indexed);
+        await operations.DidNotReceiveWithAnyArgs().CancelScheduledMessageAsync(default!, default);
     }
 
     [Fact]
-    public async Task RescheduleAsync_Success_CancelsThenSchedulesAndLinksReplacement()
+    public async Task RescheduleAsync_WhenOriginalCancelFails_CancelsReplacement()
+    {
+        var (sut, operations, store) = CreateSut();
+        store.LoadPayloadAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())
+            .Returns(new ScheduledMessagePayload(
+                "body", null, null, null, null, null, null, null, null, null, null,
+                new Dictionary<string, ScheduledMessagePropertyValue>()));
+        operations.ScheduleMessageAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IDictionary<string, object>>(),
+                Arg.Any<DateTimeOffset>(), ct: Arg.Any<CancellationToken>())
+            .Returns(99);
+        operations.CancelScheduledMessageAsync("orders", 42, Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new InvalidOperationException("cancel failed"));
+
+        var result = await sut.RescheduleAsync(new ScheduledMessageActionRequest(
+            CreateEntry(), true, true, DateTimeOffset.UtcNow.AddHours(2)));
+
+        result.IsSuccess.Should().BeFalse();
+        await operations.Received(1).CancelScheduledMessageAsync("orders", 99, Arg.Any<CancellationToken>());
+        await store.DidNotReceiveWithAnyArgs().AddAsync(default!, default!, default);
+    }
+
+    [Fact]
+    public async Task RescheduleAsync_Success_SchedulesThenCancelsAndLinksReplacement()
     {
         var (sut, operations, store) = CreateSut();
         store.LoadPayloadAsync(Arg.Any<ScheduledMessageIndexEntry>(), Arg.Any<CancellationToken>())

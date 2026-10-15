@@ -277,7 +277,10 @@ internal static class ServiceBusOperations
         m.DeadLetterSource,
         m.DeadLetterReason,
         m.DeadLetterErrorDescription
-    );
+    )
+    {
+        RawBody = m.Body
+    };
 
     public static SessionInspectorItem BuildSessionInspectorItem(
         SessionMessageSnapshot? activeSnapshot,
@@ -1233,7 +1236,7 @@ internal static class ServiceBusOperations
             {
                 var msg = messageList[i + j];
                 sourceBatch.Add(msg);
-                var sbMsg = new ServiceBusMessage(msg.Body);
+                var sbMsg = msg.RawBody is null ? new ServiceBusMessage(msg.Body) : new ServiceBusMessage(msg.RawBody);
                 ApplyMessageProperties(sbMsg, msg.ContentType, msg.CorrelationId, null, msg.SessionId,
                     msg.Subject, msg.To, msg.ReplyTo, msg.ReplyToSessionId, msg.PartitionKey,
                     msg.TimeToLive, null, msg.Properties);
