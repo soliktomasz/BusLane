@@ -1,452 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BusLane | Azure Service Bus Desktop Workspace</title>
-  <meta name="description" content="Inspect, recover, and monitor Azure Service Bus from one focused cross-platform desktop workspace.">
-  <meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#08090c" media="(prefers-color-scheme: dark)">
-  <meta property="og:title" content="BusLane | Azure Service Bus Desktop Workspace">
-  <meta property="og:description" content="Inspect, recover, and monitor Azure Service Bus from one focused desktop workspace.">
+  <title>BusLane — Your Azure Service Bus workspace</title>
+  <meta name="description" content="Inspect messages, recover dead letters, and monitor Azure Service Bus in one open-source desktop app for macOS, Windows, and Linux.">
+  <meta name="theme-color" content="#eef3f4">
+  <meta property="og:title" content="BusLane — Your Azure Service Bus workspace">
+  <meta property="og:description" content="Inspect messages. Recover dead letters. Understand your namespace. Open source, on your desktop.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://soliktomasz.github.io/BusLane/">
   <meta property="og:image" content="https://soliktomasz.github.io/BusLane/pics/MainWindow.png">
   <link rel="canonical" href="https://soliktomasz.github.io/BusLane/">
   <link rel="icon" href="BusLane/Assets/icon.png" type="image/png">
-  <script>document.documentElement.classList.add('js');</script>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #f3f5f8;
-      --surface: #ffffff;
-      --surface-2: #e9edf3;
-      --ink: #111318;
-      --muted: #596170;
-      --line: #d9dee7;
-      --accent: #1f5fd1;
-      --accent-hover: #184daa;
-      --accent-ink: #f8fbff;
-      --deep: #0c1529;
-      --deep-ink: #f2f5fa;
-      --deep-muted: #9ba5b5;
-      --shadow: rgba(28, 42, 67, .16);
-      --max-width: 1180px;
-      --radius: 14px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #08090c;
-        --surface: #101218;
-        --surface-2: #171a22;
-        --ink: #f3f5f8;
-        --muted: #a9b0bd;
-        --line: #272c36;
-        --accent: #4d83f3;
-        --accent-hover: #6c97f3;
-        --accent-ink: #08090c;
-        --deep: #080b12;
-        --deep-ink: #f2f5fa;
-        --deep-muted: #9ba5b5;
-        --shadow: rgba(0, 0, 0, .42);
-      }
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      overflow-x: hidden;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
-      font-size: 16px;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-    }
-    img { max-width: 100%; }
-    button { font: inherit; }
-    ::selection { background: color-mix(in srgb, var(--accent), transparent 72%); color: var(--ink); }
-
-    .shell { width: min(var(--max-width), calc(100% - 48px)); margin-inline: auto; }
-    .site-nav { border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg), transparent 7%); }
-    .nav-inner { display: flex; min-height: 68px; align-items: center; justify-content: space-between; gap: 24px; }
-    .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; letter-spacing: -.02em; text-decoration: none; }
-    .brand img { width: 32px; height: 32px; border-radius: 10px; }
-    .nav-links { display: flex; align-items: center; gap: 24px; color: var(--muted); font-size: 14px; }
-    .nav-links > a:not(.button) { color: inherit; text-decoration: none; transition: color .18s ease; }
-    .nav-links > a:not(.button):hover { color: var(--ink); }
-
-    .button {
-      display: inline-flex;
-      min-height: 44px;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 0 18px;
-      background: var(--surface);
-      color: var(--ink);
-      font-size: 14px;
-      font-weight: 650;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: transform .18s ease, background .18s ease, border-color .18s ease;
-    }
-    .button:hover { transform: translateY(-1px); border-color: var(--muted); }
-    .button:active { transform: translateY(1px); }
-    .button-primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
-    .button-primary:hover { border-color: transparent; background: var(--accent-hover); }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, .84fr) minmax(520px, 1.16fr);
-      gap: clamp(42px, 6vw, 84px);
-      align-items: center;
-      overflow: clip;
-      min-height: calc(100dvh - 68px);
-      padding: 58px 0 66px;
-    }
-    .hero-copy { position: relative; z-index: 1; animation: enter .72s cubic-bezier(.16, 1, .3, 1) both; }
-    .hero h1 {
-      max-width: 10.5ch;
-      margin: 0;
-      font-size: clamp(52px, 5.7vw, 72px);
-      font-weight: 680;
-      letter-spacing: -.065em;
-      line-height: .98;
-    }
-    .hero h1 span { color: var(--accent); }
-    .hero-copy > p { max-width: 36ch; margin: 26px 0 0; color: var(--muted); font-size: 18px; line-height: 1.55; }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
-    .hero-media { position: relative; min-width: 0; animation: enter .86s .08s cubic-bezier(.16, 1, .3, 1) both; }
-    .hero-media::before {
-      content: "";
-      position: absolute;
-      inset: 8% 0 12% 20%;
-      border-radius: var(--radius);
-      background: color-mix(in srgb, var(--accent), transparent 84%);
-      transform: rotate(-4deg);
-    }
-    .product-window {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid color-mix(in srgb, var(--line), transparent 12%);
-      border-radius: var(--radius);
-      background: #101218;
-      box-shadow: 0 36px 90px -42px var(--shadow);
-      transform: rotate(-1.6deg);
-    }
-    .product-window img { display: block; width: 100%; }
-
-    .foundation { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); }
-    .foundation-inner { display: grid; grid-template-columns: repeat(4, 1fr); }
-    .foundation-item { padding: 21px 20px; border-right: 1px solid var(--line); }
-    .foundation-item:last-child { border-right: 0; }
-    .foundation-item strong { display: block; font-size: 13px; }
-    .foundation-item span { color: var(--muted); font-size: 12px; }
-
-    .section { padding: clamp(78px, 10vw, 128px) 0; scroll-margin-top: 24px; }
-    .eyebrow {
-      margin: 0 0 18px;
-      color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-    .section h2 { max-width: 13ch; margin: 0; font-size: clamp(38px, 5vw, 62px); font-weight: 650; letter-spacing: -.05em; line-height: 1; }
-    .section-copy { max-width: 52ch; margin: 22px 0 0; color: var(--muted); font-size: 17px; line-height: 1.55; }
-
-    .workflow { display: grid; grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr); gap: clamp(48px, 8vw, 108px); align-items: start; }
-    .step-list { margin-top: 42px; border-top: 1px solid var(--line); }
-    .step { display: grid; grid-template-columns: 92px 1fr; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--line); }
-    .step strong { color: var(--ink); font-size: 16px; }
-    .step span { color: var(--muted); font-size: 14px; line-height: 1.45; }
-    .lane-visual { position: sticky; top: 28px; overflow: hidden; border-radius: var(--radius); background: var(--deep); }
-    .lane-visual img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
-    .lane-copy { position: absolute; right: 28px; bottom: 28px; left: 28px; color: var(--deep-ink); }
-    .lane-copy strong { display: block; max-width: 14ch; font-size: 26px; line-height: 1.05; }
-    .lane-copy span { display: block; max-width: 34ch; margin-top: 10px; color: var(--deep-muted); font-size: 13px; }
-
-    .feature-section { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); }
-    .feature-grid { display: grid; grid-template-columns: 1.25fr .75fr .75fr; grid-template-rows: 230px 230px; gap: 14px; margin-top: 48px; }
-    .feature { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 26px; }
-    .feature h3 { margin: 0; font-size: 20px; letter-spacing: -.025em; }
-    .feature p { max-width: 34ch; margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
-    .feature-main { grid-row: 1 / 3; padding: 0; background: var(--deep); }
-    .feature-main img { width: 100%; height: 100%; object-fit: cover; object-position: left center; opacity: .86; }
-    .feature-main::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 11, 18, .96), transparent 62%); }
-    .feature-main-copy { position: absolute; z-index: 1; right: 28px; bottom: 28px; left: 28px; color: var(--deep-ink); }
-    .feature-main-copy p { color: var(--deep-muted); }
-    .feature-accent { border-color: color-mix(in srgb, var(--accent), transparent 62%); background: color-mix(in srgb, var(--accent), var(--bg) 88%); }
-    .feature-lines { background-image: repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in srgb, var(--accent), transparent 89%) 18px 19px); }
-
-    .gallery-head { display: flex; flex-direction: column; align-items: flex-start; }
-    .gallery-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
-    .gallery-tab {
-      min-height: 38px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 0 14px;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .gallery-tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
-    .gallery-frame { margin-top: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--deep); box-shadow: 0 38px 92px -48px var(--shadow); }
-    .gallery-frame img { display: block; width: 100%; transition: opacity .2s ease; }
-
-    .install { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(48px, 8vw, 112px); align-items: center; }
-    .code-panel { overflow: hidden; border-radius: var(--radius); background: var(--deep); color: var(--deep-ink); }
-    .code-head { display: flex; justify-content: space-between; gap: 16px; padding: 16px 18px; border-bottom: 1px solid #262b34; color: var(--deep-muted); font-size: 12px; }
-    .code-panel pre { margin: 0; padding: 28px; overflow-x: auto; font: 13px/1.85 ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .code-panel strong { color: #7ba2ff; font-weight: 500; }
-
-    .faq { padding-top: 0; }
-    .faq-grid { display: grid; grid-template-columns: .75fr 1.25fr; gap: clamp(48px, 8vw, 112px); }
-    .faq-list { border-top: 1px solid var(--line); }
-    .faq-list details { padding: 22px 0; border-bottom: 1px solid var(--line); }
-    .faq-list summary { cursor: pointer; font-weight: 650; }
-    .faq-list p { margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
-
-    .final-cta { padding: 72px 0; background: var(--deep); color: var(--deep-ink); }
-    .final-inner { display: grid; grid-template-columns: 1.2fr .8fr; gap: 40px; align-items: center; }
-    .final-cta h2 { max-width: 12ch; margin: 0; font-size: clamp(38px, 5vw, 64px); font-weight: 650; letter-spacing: -.05em; line-height: 1; }
-    .final-actions { display: flex; justify-content: flex-end; }
-    .site-footer { border-top: 1px solid #252a33; background: var(--deep); color: var(--deep-muted); }
-    .footer-inner { display: flex; justify-content: space-between; gap: 26px; flex-wrap: wrap; padding: 28px 0; font-size: 13px; }
-    .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
-    .site-footer a { color: inherit; text-decoration: none; }
-
-    .js .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.16, 1, .3, 1), transform .7s cubic-bezier(.16, 1, .3, 1); }
-    .js .reveal.is-visible { opacity: 1; transform: none; }
-    @keyframes enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      .hero-copy, .hero-media { animation: none; }
-      .button, .gallery-frame img, .js .reveal { transition: none; }
-      .js .reveal { opacity: 1; transform: none; }
-    }
-
-    @media (max-width: 1040px) {
-      .shell { width: min(100% - 32px, 760px); }
-      .nav-links > a:not(.nav-download) { display: none; }
-      .nav-links { gap: 0; }
-      .hero { grid-template-columns: 1fr; min-height: 0; gap: 44px; padding: 56px 0 64px; }
-      .hero h1 { max-width: 12ch; font-size: clamp(48px, 10vw, 68px); }
-      .hero-media { width: 100%; }
-      .foundation-inner { grid-template-columns: 1fr 1fr; }
-      .foundation-item:nth-child(2) { border-right: 0; }
-      .foundation-item:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-      .workflow, .install, .faq-grid { grid-template-columns: 1fr; }
-      .lane-visual { position: relative; top: auto; }
-      .lane-visual img { aspect-ratio: 16 / 10; }
-      .feature-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 360px 210px 210px; }
-      .feature-main { grid-column: 1 / 3; grid-row: auto; }
-      .final-inner { grid-template-columns: 1fr; }
-      .final-actions { justify-content: flex-start; }
-    }
-
-    @media (max-width: 540px) {
-      .shell { width: min(100% - 28px, 500px); }
-      .nav-download { min-height: 40px; padding: 0 14px; }
-      .hero { padding-top: 42px; }
-      .hero h1 { max-width: 9ch; font-size: clamp(44px, 13.5vw, 58px); }
-      .hero-copy > p { font-size: 16px; }
-      .actions { align-items: stretch; }
-      .actions .button { flex: 1 1 140px; }
-      .hero-media { width: 100%; }
-      .product-window { transform: none; }
-      .section { padding: 72px 0; }
-      .section h2 { font-size: 40px; }
-      .step { grid-template-columns: 78px 1fr; }
-      .lane-copy { right: 20px; bottom: 20px; left: 20px; }
-      .feature-grid { grid-template-columns: 1fr; grid-template-rows: 310px repeat(4, auto); }
-      .feature-main { grid-column: auto; min-height: 310px; }
-      .feature { min-height: 170px; }
-      .gallery-frame { width: 100%; }
-      .final-cta { padding: 58px 0; }
-      .final-cta h2 { font-size: 42px; }
-    }
-  </style>
+  <link rel="preload" href="assets/fonts/BricolageGrotesque.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
 </head>
 <body>
-  <header class="site-nav">
-    <nav class="shell nav-inner" aria-label="Primary navigation">
-      <a class="brand" href="#top"><img src="BusLane/Assets/icon.png" alt=""><span>BusLane</span></a>
-      <div class="nav-links">
-        <a href="#workflow">Workflow</a>
-        <a href="#features">Features</a>
-        <a href="#showcase">Screenshots</a>
-        <a href="#install">Install</a>
-        <a href="#faq">FAQ</a>
-        <a class="button button-primary nav-download" href="https://github.com/soliktomasz/BusLane/releases">Download</a>
-      </div>
-    </nav>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header shell" id="top">
+    <a class="brand" href="#top" aria-label="BusLane home"><img src="BusLane/Assets/icon.png" width="34" height="34" alt=""><span>BusLane</span></a>
+    <nav aria-label="Main navigation"><a href="#workspace">Explore</a><a href="#features">Features</a><a href="#get-started">Get started</a><a href="https://github.com/soliktomasz/BusLane">GitHub <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></nav>
+    <a class="button button-small" href="#download">Download</a>
   </header>
-
-  <main id="top">
-    <section class="shell hero">
-      <div class="hero-copy">
-        <h1>Service Bus, <span>under control.</span></h1>
-        <p>Inspect, recover, and monitor Azure Service Bus without stitching together portal tabs and scripts.</p>
-        <div class="actions">
-          <a class="button button-primary" href="https://github.com/soliktomasz/BusLane/releases">Download</a>
-          <a class="button" href="https://github.com/soliktomasz/BusLane">View source</a>
+  <main id="main">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <h1 id="hero-title">Know what’s happening<br class="desktop-break"> in your Service Bus.</h1>
+      <p class="hero-copy">Inspect messages, recover dead letters, and monitor your namespaces. One open-source desktop workspace for Azure Service Bus.</p>
+      <div class="hero-actions"><a class="button" href="https://github.com/soliktomasz/BusLane/releases/latest">Download BusLane <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16m-6-6 6 6 6-6M5 20h14"/></svg></a><p>macOS · Windows · Linux <span class="license">MIT licensed</span></p></div>
+      <div class="workspace" id="workspace">
+        <div class="workspace-index">
+          <h2>Explore the workspace</h2>
+          <div class="view-controls" hidden aria-label="Product screenshots">
+            <button type="button" aria-pressed="true" aria-controls="view-messages" data-view="messages">Messages <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button>
+            <button type="button" aria-pressed="false" aria-controls="view-details" data-view="details">Message details <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button>
+            <button type="button" aria-pressed="false" aria-controls="view-dashboard" data-view="dashboard">Dashboard <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button>
+            <button type="button" aria-pressed="false" aria-controls="view-alerts" data-view="alerts">Alerts <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button>
+          </div>
+          <p class="workspace-note">Your entities, payloads, and message operations in one place.</p>
+          <a class="text-link" href="#features">See what you can do <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16m-6-6 6 6 6-6"/></svg></a>
+        </div>
+        <div class="workspace-stage">
+          <figure id="view-messages" class="product-view"><a href="pics/MainWindow.png" aria-label="Open full-size message workspace screenshot"><img src="pics/MainWindow.png" width="3248" height="1960" alt="BusLane message workspace with entity navigation, message list, search, and message operations" fetchpriority="high"></a><figcaption><span>Browse entities. Inspect messages. Act with context.</span><a href="pics/MainWindow.png">Open full size</a></figcaption></figure>
+          <figure id="view-details" class="product-view" hidden><a href="pics/MessageDetailsWindow.png" aria-label="Open full-size message details screenshot"><img src="pics/MessageDetailsWindow.png" width="3248" height="1960" alt="BusLane message details showing a payload and its properties" loading="lazy"></a><figcaption><span>Read the payload and inspect message properties.</span><a href="pics/MessageDetailsWindow.png">Open full size</a></figcaption></figure>
+          <figure id="view-dashboard" class="product-view" hidden><a href="pics/DashboardWindow.png" aria-label="Open full-size dashboard screenshot"><img src="pics/DashboardWindow.png" width="3248" height="1960" alt="BusLane dashboard showing namespace metrics and monitoring charts" loading="lazy"></a><figcaption><span>Follow namespace activity from a dedicated dashboard.</span><a href="pics/DashboardWindow.png">Open full size</a></figcaption></figure>
+          <figure id="view-alerts" class="product-view" hidden><a href="pics/AlertsWindow.png" aria-label="Open full-size alerts screenshot"><img src="pics/AlertsWindow.png" width="3248" height="1960" alt="BusLane alert configuration for namespace monitoring" loading="lazy"></a><figcaption><span>Configure alerts for the conditions you need to watch.</span><a href="pics/AlertsWindow.png">Open full size</a></figcaption></figure>
+          <noscript><p>More screenshots: <a href="pics/MessageDetailsWindow.png">Message details</a> · <a href="pics/DashboardWindow.png">Dashboard</a> · <a href="pics/AlertsWindow.png">Alerts</a></p></noscript>
         </div>
       </div>
-      <div class="hero-media">
-        <div class="product-window">
-          <img src="pics/MainWindow.png" alt="BusLane message workspace">
-        </div>
+      <div class="foundation"><span>Built with <strong>Avalonia UI + .NET 10</strong></span><span>Connect with <strong>Azure Identity or connection strings</strong></span><span>Made for <strong>queues, topics &amp; subscriptions</strong></span></div>
+    </section>
+    <section class="features shell section" id="features" aria-labelledby="features-title">
+      <div class="section-intro"><h2 id="features-title">From “what happened?”<br>to “handled.”</h2><p>The everyday work of Service Bus, brought together. Explore safely, investigate failures, and take the next action with the message in front of you.</p></div>
+      <div class="capabilities">
+        <article class="capability"><h3>Inspect before you act.</h3><div><p>Browse queues, topics, and subscriptions. Peek at messages without consuming them; search and filter to find the payload you need.</p><ul class="terms"><li>Read-only peek</li><li>Body &amp; properties</li><li>Session-enabled entities</li></ul></div></article>
+        <article class="capability"><h3>Give failed messages<br> another chance.</h3><div><p>Inspect dead-letter messages and resend them. Receive messages under a lock to complete, abandon, defer, dead-letter, or renew the lock.</p><ul class="terms"><li>Dead-letter recovery</li><li>Receive-lock settlement</li><li>Deferred receive by sequence number</li></ul></div></article>
+        <article class="capability"><h3>Send now.<br> Schedule for later.</h3><div><p>Compose and send messages, or schedule delivery. Search, clone, cancel, and reschedule messages from the scheduled-message console.</p><p class="detail-note">The console tracks messages scheduled through BusLane. Local status does not verify whether a schedule still exists at the broker.</p></div></article>
+        <article class="capability"><h3>Move your topology<br> with a plan.</h3><div><p>Export queues, topics, subscriptions, and rules. Compare a snapshot against another namespace, review the dry run, then import or clone.</p><p class="detail-note">Imports create missing entities and update supported settings. They do not delete target entities.</p></div></article>
       </div>
     </section>
-
-    <section class="foundation" aria-label="Technical foundation">
-      <div class="shell foundation-inner">
-        <div class="foundation-item"><strong>Avalonia UI</strong><span>Native desktop experience</span></div>
-        <div class="foundation-item"><strong>.NET 10</strong><span>Modern cross-platform core</span></div>
-        <div class="foundation-item"><strong>Azure Identity</strong><span>RBAC-first connections</span></div>
-        <div class="foundation-item"><strong>MIT licensed</strong><span>Open source by default</span></div>
+    <section class="monitor-band" aria-labelledby="monitor-title"><div class="shell monitor-layout"><div class="monitor-copy"><h2 id="monitor-title">Keep a pulse on<br>your namespace.</h2><p>Follow message activity with live streaming and charts. Set configurable alerts and review activity history without leaving your desktop workspace.</p><a class="text-link" href="pics/DashboardWindow.png">Take a closer look <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div><a class="monitor-image" href="pics/DashboardWindow.png" aria-label="Open full-size namespace dashboard screenshot"><img src="pics/DashboardWindow.png" width="3248" height="1960" alt="BusLane namespace dashboard with charts, metrics, and activity overview"></a></div></section>
+    <section class="shell section getting-started" id="get-started" aria-labelledby="start-title">
+      <div class="section-intro"><h2 id="start-title">Your first connection.<br>Two ways in.</h2><p>Use your Azure account or connect directly to a namespace. Start with the connection method that fits your environment.</p></div>
+      <div class="connection-paths">
+        <article><h3>Sign in with Azure</h3><p>Use Azure Identity to discover subscriptions and namespaces available to your account.</p><ol><li>Sign in to Azure.</li><li>Select your subscription and namespace.</li><li>Open a queue or subscription to browse messages.</li></ol><p class="detail-note">Required access depends on your operation. The <a href="https://github.com/soliktomasz/BusLane#prerequisites">README prerequisites</a> list <code>Reader</code>, <code>Azure Service Bus Data Receiver</code>, and <code>Azure Service Bus Data Sender</code>.</p></article>
+        <article><h3>Use a connection string</h3><p>Connect directly with a Service Bus connection string and keep saved connections in your library.</p><ol><li>Open the connection library.</li><li>Add or select a connection.</li><li>Browse entities and open your workspace.</li></ol><p class="detail-note">Saved connection strings use AES-256 encryption with machine-specific keys. Choose credentials with permissions for your intended operations.</p></article>
       </div>
+      <div class="security-note"><h3>A lock for your workspace.</h3><p>Optional app lock adds a launch-time password gate, a recovery code, and Touch ID or Windows Hello shortcuts where supported. Enable it in <strong>Settings → Security</strong> and save your recovery code.</p><a class="text-link" href="https://github.com/soliktomasz/BusLane/blob/main/SECURITY.md">Security policy</a></div>
     </section>
-
-    <section id="workflow" class="shell section workflow">
-      <div class="reveal">
-        <p class="eyebrow">One workspace</p>
-        <h2>Stay inside the operational loop.</h2>
-        <p class="section-copy">Connect, inspect, recover, and monitor without switching between tools.</p>
-        <div class="step-list">
-          <div class="step"><strong>Connect</strong><span>Use Azure Identity or encrypted connection strings.</span></div>
-          <div class="step"><strong>Inspect</strong><span>Peek payloads, properties, sessions, and delivery state.</span></div>
-          <div class="step"><strong>Recover</strong><span>Replay or purge dead-letter messages with context.</span></div>
-          <div class="step"><strong>Monitor</strong><span>Follow throughput, alerts, history, and live streams.</span></div>
-        </div>
-      </div>
-      <div class="lane-visual reveal">
-        <img src="assets/buslane-lanes.jpg" alt="Abstract cobalt transit lane branching through graphite roadways" loading="lazy">
-        <div class="lane-copy"><strong>One lane through every branch.</strong><span>Supporting imagery carries the BusLane metaphor. Product screenshots carry product truth.</span></div>
-      </div>
-    </section>
-
-    <section id="features" class="feature-section">
-      <div class="shell section reveal">
-        <h2>Built for queue work, not generic cloud admin.</h2>
-        <p class="section-copy">Every capability answers a task engineers repeat: inspect, compare, replay, secure, and monitor.</p>
-        <div class="feature-grid">
-          <article class="feature feature-main">
-            <img src="pics/DashboardWindow.png" alt="BusLane dashboard with namespace metrics" loading="lazy">
-            <div class="feature-main-copy"><h3>Live namespace health</h3><p>Depth, throughput, alerts, and history remain visible without leaving the workspace.</p></div>
-          </article>
-          <article class="feature feature-accent"><h3>Dead-letter recovery</h3><p>Inspect failures, repair payloads, and replay messages with deliberate controls.</p></article>
-          <article class="feature"><h3>Session-aware</h3><p>Work with session-enabled queues and subscriptions without changing tools.</p></article>
-          <article class="feature feature-lines"><h3>Topology tools</h3><p>Export, compare, and clone namespace entities with non-destructive checks.</p></article>
-          <article class="feature"><h3>Local security</h3><p>Encrypt saved connections and add app lock with supported biometrics.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section id="showcase" class="shell section reveal">
-      <div class="gallery-head">
-        <p class="eyebrow">Product views</p>
-        <h2>Real screens. No invented product chrome.</h2>
-        <p class="section-copy">A quieter gallery lets actual workflows carry the visual proof.</p>
-        <div class="gallery-tabs" role="tablist" aria-label="BusLane screenshots">
-          <button type="button" class="gallery-tab" role="tab" id="workspace-tab" aria-controls="gallery-image" aria-selected="true" data-image="pics/MainWindow.png" data-alt="BusLane message workspace">Workspace</button>
-          <button type="button" class="gallery-tab" role="tab" id="dashboard-tab" aria-controls="gallery-image" aria-selected="false" data-image="pics/DashboardWindow.png" data-alt="BusLane namespace dashboard">Dashboard</button>
-          <button type="button" class="gallery-tab" role="tab" id="message-tab" aria-controls="gallery-image" aria-selected="false" data-image="pics/MessageDetailsWindow.png" data-alt="BusLane message details">Message details</button>
-        </div>
-      </div>
-      <div class="gallery-frame"><img id="gallery-image" role="tabpanel" aria-labelledby="workspace-tab" src="pics/MainWindow.png" alt="BusLane message workspace" loading="lazy"></div>
-    </section>
-
-    <section id="install" class="shell section install reveal">
-      <div>
-        <h2>Download it. Or own the build.</h2>
-        <p class="section-copy">Release packages cover daily use. Source remains one short .NET workflow away.</p>
-        <div class="actions"><a class="button button-primary" href="https://github.com/soliktomasz/BusLane/releases">Download</a></div>
-      </div>
-      <div class="code-panel" aria-label="Build BusLane from source">
-        <div class="code-head"><span>Build from source</span><span>.NET 10 SDK</span></div>
-        <pre><code><strong>git clone</strong> https://github.com/soliktomasz/BusLane.git
-<strong>cd</strong> BusLane
-<strong>dotnet build</strong>
-<strong>dotnet run</strong> --project BusLane/BusLane.csproj</code></pre>
-      </div>
-    </section>
-
-    <section id="faq" class="shell section faq reveal">
-      <div class="faq-grid">
-        <div><h2>Before you install.</h2></div>
-        <div class="faq-list">
-          <details open><summary>Which platforms are supported?</summary><p>BusLane targets macOS, Windows, and Linux through one Avalonia codebase.</p></details>
-          <details><summary>How are connections protected?</summary><p>Saved connection strings use local encryption. Optional app lock adds another boundary.</p></details>
-          <details><summary>Can I contribute?</summary><p>Yes. BusLane is MIT licensed, with security guidance in the repository.</p></details>
-        </div>
-      </div>
-    </section>
-
-    <section class="final-cta">
-      <div class="shell final-inner">
-        <h2>Give Service Bus its own workspace.</h2>
-        <div class="final-actions"><a class="button button-primary" href="https://github.com/soliktomasz/BusLane/releases">Download</a></div>
-      </div>
-    </section>
+    <section class="download-band" id="download" aria-labelledby="download-title"><div class="shell section">
+      <div class="download-intro"><div><h2 id="download-title">Put BusLane<br>on your desktop.</h2><p>Open source. MIT licensed. Yours to use, inspect, and improve.</p></div><a class="button button-lime" href="https://github.com/soliktomasz/BusLane/releases/latest">Get the latest release <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div>
+      <div class="platforms" aria-label="Release platforms"><div><h3>macOS</h3><p>Apple Silicon &amp; Intel</p></div><div><h3>Windows</h3><p>x64</p></div><div><h3>Linux</h3><p>x64</p></div></div>
+      <p class="release-note">Choose the package matching your operating system and architecture on the release page. <a href="https://github.com/soliktomasz/BusLane/releases">Read release notes</a></p>
+    </div></section>
+    <section class="shell section source-section" aria-labelledby="source-title"><div><h2 id="source-title">Prefer to build it?</h2><p>Bring the .NET 10 SDK. Clone the repository, build, and launch BusLane from source.</p><a class="text-link" href="https://github.com/soliktomasz/BusLane">Explore the source <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div><div class="code-panel"><div class="code-heading"><span>Build from source</span><button type="button" id="copy-commands" hidden>Copy commands</button></div><pre><code id="build-commands">git clone https://github.com/soliktomasz/BusLane.git
+cd BusLane
+dotnet build
+dotnet run --project BusLane/BusLane.csproj</code></pre><p class="copy-status" id="copy-status" role="status"></p></div></section>
+    <section class="shell faq section" aria-labelledby="faq-title"><h2 id="faq-title">A few useful details.</h2><div class="faq-list">
+      <details><summary>Does peeking remove messages?</summary><p>No. Peek is read-only. Settlement actions require receiving messages under a lock first; actions depend on the broker lock remaining valid.</p></details>
+      <details><summary>Can I manage every scheduled message?</summary><p>The scheduled-message console indexes messages scheduled through BusLane. Azure Service Bus does not provide an API to enumerate all scheduled messages. Refresh reloads the local index; it cannot confirm that a schedule still exists at the broker. <a href="https://github.com/soliktomasz/BusLane/blob/main/docs/servicebus-parity-guide.md">Read the workflow details</a>.</p></details>
+      <details><summary>Where are setup and usage instructions?</summary><p>The <a href="https://github.com/soliktomasz/BusLane#installation">repository README</a> covers installation, prerequisites, connection modes, and app lock. Start there for platform-specific installation notes.</p></details>
+      <details><summary>How can I contribute or report a problem?</summary><p><a href="https://github.com/soliktomasz/BusLane/issues">Report a bug or request a feature</a>, or fork the repository and open a pull request. For sensitive security reports, follow the <a href="https://github.com/soliktomasz/BusLane/blob/main/SECURITY.md">security policy</a>.</p></details>
+    </div></section>
   </main>
-
-  <footer class="site-footer">
-    <div class="shell footer-inner">
-      <span>BusLane. Open source Azure Service Bus desktop workspace.</span>
-      <div class="footer-links">
-        <a href="https://github.com/soliktomasz/BusLane">GitHub</a>
-        <a href="https://github.com/soliktomasz/BusLane/releases">Releases</a>
-        <a href="https://github.com/soliktomasz/BusLane/blob/main/SECURITY.md">Security</a>
-        <a href="https://github.com/soliktomasz/BusLane/blob/main/LICENSE">License</a>
-        <a href="https://www.buymeacoffee.com/tomaszsolik">Support</a>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    (() => {
-      const galleryImage = document.getElementById('gallery-image');
-      const galleryTabs = document.querySelectorAll('.gallery-tab');
-
-      galleryTabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
-          galleryTabs.forEach((item) => item.setAttribute('aria-selected', 'false'));
-          tab.setAttribute('aria-selected', 'true');
-          galleryImage.style.opacity = '.28';
-          window.setTimeout(() => {
-            galleryImage.src = tab.dataset.image;
-            galleryImage.alt = tab.dataset.alt;
-            galleryImage.setAttribute('aria-labelledby', tab.id);
-            galleryImage.style.opacity = '1';
-          }, 120);
-        });
-      });
-
-      const revealItems = document.querySelectorAll('.reveal');
-      if (!('IntersectionObserver' in window)) {
-        revealItems.forEach((item) => item.classList.add('is-visible'));
-        return;
-      }
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
-        });
-      }, { threshold: .12, rootMargin: '0px 0px -6% 0px' });
-
-      revealItems.forEach((item) => observer.observe(item));
-    })();
-  </script>
+  <footer class="shell site-footer"><div><a class="brand" href="#top"><img src="BusLane/Assets/icon.png" width="30" height="30" alt=""><span>BusLane</span></a><p>A clearer view of your Service Bus.</p></div><nav aria-label="Footer navigation"><a href="https://github.com/soliktomasz/BusLane">GitHub</a><a href="https://github.com/soliktomasz/BusLane/blob/main/LICENSE">MIT license</a><a href="https://www.buymeacoffee.com/tomaszsolik">Support the project</a><a href="#top">Back to top</a></nav></footer>
 </body>
 </html>
