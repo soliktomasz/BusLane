@@ -143,11 +143,39 @@ Message details uses the approved Split inspector layout. A fixed 260px metadata
 
 The persistent header shows subject (or Message details), sequence number, Export, Resend, Clone, and Close. Copy body stays beside the payload. Preserve existing commands, optional-field visibility, selectable metadata, and both themes. Modal margins are 32px; the footer identifies read-only inspection. Routing appears when any supported routing field is present.
 
+### Send Message composer
+
+Send Message retains the native Compose, Properties, and Custom tabs within a modal capped at (960 × 760px), with minimum width (720px) and an outer margin (24px). The destination and Close remain in the fixed header; compact tabs and template tools sit below it. A persistent Send/Cancel footer keeps the body-required helper visible. Send is disabled and reads Sending... while the existing sending state is active.
+
+Compose gives the available height to a native multiline body editor using the existing payload type role and dynamic code foreground, including its placeholder. The editor scrolls natively; template values and long errors have their own bounded scroll areas. Properties groups all existing fields into flat Identity, Routing & sessions, and Delivery sections with two columns. Custom properties uses native key/value rows with Add, Remove, and an explicit empty helper.
+
+The native Templates flyout retains search, Use, Duplicate, and Delete, with compact metadata and an empty label tied to the actual displayed item count. Import, Save template, Update, and Clear retain their existing bindings. No send shortcut is advertised without an implemented binding. Surface dimensions, states, evidence, and limits are recorded in [desktop-send-message.md](../.impeccable/surfaces/desktop-send-message.md); these local choices do not add global desktop tokens.
+
 ### Settings dialog
 
 Settings uses a native left-hand TabControl for General, Messages, Security & privacy, Updates, and Help & support. The category rail remains visible while each category scrolls independently. Flat label-and-control rows and group headings provide hierarchy within the existing Fluent dialog; preserve Inter, Lucide icons, dynamic light/dark resources, and violet selection feedback.
 
 Keep Close in the header and Reset to Defaults, Cancel, and Save Changes in the persistent footer. Preserve setting bindings, commands, conditional states, and accessible names when regrouping controls. Surface-specific dimensions, type sizes, and verification scope are recorded in [desktop-settings.md](../.impeccable/surfaces/desktop-settings.md); they do not introduce a desktop-wide token scale.
+
+### Connections manager
+
+Connections uses a focused native list within the existing large modal. Keep the environment filter and Add Connection action fixed above independently scrolling, flat rows. Each row aligns name, endpoint and optional entity with Type, Environment, favorite, edit, delete, and an explicit Connect action. Trim long identity values with full-value tooltips; icon actions retain accessible names and tooltips.
+
+Backup & Management is a native Expander, collapsed initially, below the list. Its passphrase, encrypted export/import, error feedback, and clear-all action remain available without competing with routine connection selection. Add/edit forms scroll between the persistent header and Save/Update Connection and Cancel footer. Connection-check results and detected details wrap within the available form width; validation messages also wrap. Preserve the distinct empty-library and empty-environment states, existing command bindings, storage, and secret handling.
+
+The modal inherits the shared large-dialog bounds with a local (24px) outer margin. Surface-specific dimensions and verification scope are recorded in [desktop-connections.md](../.impeccable/surfaces/desktop-connections.md); they do not introduce new desktop tokens.
+
+### Activity Log
+
+Activity Log remains a right-hand drawer (600px), capped to the available width, with the existing overlay and native close behavior. The fixed header offers Copy visible and Close; a full-width search field sits above separate Level and Source controls. Counts and Newest first remain above the independently scrolling, virtualized entries. Flat rows use thin seams, wrapping messages (14px), selectable wrapping details (13px), and compact timestamp, level, and source metadata (12px). Full timestamps remain available through tooltips.
+
+Keep Auto-scroll, Debug logs, and Clear all in the persistent footer. The two toggles reuse the shared pill style, including its theme-aware checked state. Warning labels use the existing stronger warning foreground. Auto-scroll returns to the newest entry when enabled and follows changes while enabled; disabling it permits reviewing older entries. Preserve copy-entry actions, search, level/source filtering, debug inclusion, and the distinction between an empty library and filters with no matches. Copy visible applies to the filtered entries; Clear all includes hidden entries.
+
+### Entity details
+
+Queue, topic, and subscription details retain a compact read-only native modal with maximum dimensions (720 × 680px) and an outer margin (24px). The title, Property/Value headings, and footer remain fixed around the scrolling property rows. Rows align a property column (180px) and a wrapping value column with a gap (24px); labels use (13px) text and selectable values (14px). Queue and topic sizes explicitly identify bytes.
+
+Preserve each entity's existing property rows and Close commands. Keep the read-only explanation and Close action in the footer, with no editing controls. Surface-specific behavior and evidence for both components are recorded in [desktop-activity-entity-details.md](../.impeccable/surfaces/desktop-activity-entity-details.md); these local dimensions do not extend the global desktop token scale.
 
 ## Do's and Don'ts
 

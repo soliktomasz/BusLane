@@ -251,6 +251,7 @@ public partial class LogViewerViewModel : ViewModelBase, IDisposable
     {
         _searchFilterCts?.Cancel();
         _searchFilterCts?.Dispose();
+        _searchFilterCts = null;
 
         if (string.IsNullOrWhiteSpace(SearchText))
         {

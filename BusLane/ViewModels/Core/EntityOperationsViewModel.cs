@@ -100,7 +100,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
             AddDetail("Active Messages", queue.ActiveMessageCount);
             AddDetail("Dead Letters", queue.DeadLetterCount);
             AddDetail("Scheduled", queue.ScheduledCount);
-            AddDetail("Size", queue.SizeInBytes);
+            AddDetail("Size (bytes)", queue.SizeInBytes);
             AddDetail("Requires Session", queue.RequiresSession);
             AddDetail("Default TTL", queue.DefaultMessageTtl);
             AddDetail("Lock Duration", queue.LockDuration);
@@ -118,7 +118,7 @@ public partial class EntityOperationsViewModel : ViewModelBase
             EntityDetailRows.Clear();
             AddDetail("Name", topic.Name);
             AddDetail("Subscriptions", topic.SubscriptionCount);
-            AddDetail("Size", topic.SizeInBytes);
+            AddDetail("Size (bytes)", topic.SizeInBytes);
             AddDetail("Default TTL", topic.DefaultMessageTtl);
             AddDetail("Accessed", topic.AccessedAt);
             ShowEntityDetailDialog = true;

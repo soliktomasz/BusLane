@@ -6,7 +6,7 @@ using System.Xml.Linq;
 public class LogViewerPanelTests
 {
     [Fact]
-    public void LogViewerPanel_WhenOpenAnimationIsDefined_ScopesAnimationToPanelSurface()
+    public void LogViewerPanel_ScopesStylesToPanelSurface()
     {
         // Arrange
         var xaml = File.ReadAllText(GetLogViewerPanelPath());

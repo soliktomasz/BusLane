@@ -109,6 +109,21 @@ public class LogViewerViewModelTests
         sut.FilteredLogs[0].Should().BeSameAs(newestEntry);
     }
 
+    [Fact]
+    public void SearchText_AfterClearingPreviousSearch_CanSearchAgain()
+    {
+        // Arrange
+        using var sut = new LogViewerViewModel(new LogSink());
+        sut.SearchText = "first search";
+
+        // Act
+        sut.ClearSearchCommand.Execute(null);
+        sut.SearchText = "second search";
+
+        // Assert
+        sut.SearchText.Should().Be("second search");
+    }
+
     private static LogEntry CreateEntry(LogLevel level, DateTime? timestamp = null)
     {
         return new LogEntry(
