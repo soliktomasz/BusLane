@@ -110,26 +110,38 @@ public class LogViewerViewModelTests
     }
 
     [Fact]
-    public void SearchText_AfterClearingPreviousSearch_CanSearchAgain()
+    public async Task SearchText_AfterClearingPreviousSearch_FiltersBySecondQuery()
     {
         // Arrange
-        using var sut = new LogViewerViewModel(new LogSink());
-        sut.SearchText = "first search";
+        var logSink = new LogSink();
+        using var sut = new LogViewerViewModel(logSink);
+        var firstMatch = CreateEntry(LogLevel.Info, message: "Queue orders.incoming refreshed");
+        var secondMatch = CreateEntry(LogLevel.Info, message: "Topic invoices.events refreshed");
+        logSink.Log(firstMatch);
+        logSink.Log(secondMatch);
+        logSink.Log(CreateEntry(LogLevel.Info, message: "Connection opened"));
+        sut.SearchText = "orders";
 
         // Act
         sut.ClearSearchCommand.Execute(null);
-        sut.SearchText = "second search";
+        sut.SearchText = "invoices";
 
-        // Assert
-        sut.SearchText.Should().Be("second search");
+        // Assert - search filtering is debounced, so wait for it to apply
+        var deadline = DateTime.UtcNow.AddSeconds(2);
+        while (sut.FilteredLogs.Count != 1 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
+        }
+
+        sut.FilteredLogs.Should().ContainSingle().Which.Should().BeSameAs(secondMatch);
     }
 
-    private static LogEntry CreateEntry(LogLevel level, DateTime? timestamp = null)
+    private static LogEntry CreateEntry(LogLevel level, DateTime? timestamp = null, string? message = null)
     {
         return new LogEntry(
             timestamp ?? DateTime.UtcNow,
             LogSource.Application,
             level,
-            $"Test {level}");
+            message ?? $"Test {level}");
     }
 }

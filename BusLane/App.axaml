@@ -234,7 +234,7 @@
     <Application.Styles>
         <FluentTheme>
             <FluentTheme.Palettes>
-                <ColorPaletteResources x:Key="Light" Accent="#4F46E5"/>
+                <ColorPaletteResources x:Key="Light" Accent="#4338CA"/>
                 <ColorPaletteResources x:Key="Dark" Accent="#B8ADFF"/>
             </FluentTheme.Palettes>
         </FluentTheme>

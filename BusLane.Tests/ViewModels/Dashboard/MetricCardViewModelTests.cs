@@ -85,4 +85,50 @@ public class MetricCardViewModelTests
         // Assert
         sut.TrendDisplay.Should().Be("No change");
     }
+
+    [Fact]
+    public void UpdateValue_FromZeroToPositive_ReportsUpFromZero()
+    {
+        // Arrange
+        var sut = new MetricCardViewModel("Dead Letters", "messages");
+        sut.UpdateValue(0);
+
+        // Act
+        sut.UpdateValue(5);
+
+        // Assert
+        sut.Trend.Should().Be(MetricTrend.Up);
+        sut.IsTrendUp.Should().BeTrue();
+        sut.TrendDisplay.Should().Be("Up from 0");
+    }
+
+    [Fact]
+    public void UpdateValue_AfterUpFromZero_ReturnsToPercentageDisplay()
+    {
+        // Arrange
+        var sut = new MetricCardViewModel("Dead Letters", "messages");
+        sut.UpdateValue(0);
+        sut.UpdateValue(10);
+
+        // Act
+        sut.UpdateValue(11);
+
+        // Assert
+        sut.TrendDisplay.Should().Be("+10%");
+    }
+
+    [Fact]
+    public void UpdateValue_ZeroStaysZero_IsNoChange()
+    {
+        // Arrange
+        var sut = new MetricCardViewModel("Dead Letters", "messages");
+        sut.UpdateValue(0);
+
+        // Act
+        sut.UpdateValue(0);
+
+        // Assert
+        sut.Trend.Should().Be(MetricTrend.Stable);
+        sut.TrendDisplay.Should().Be("No change");
+    }
 }
