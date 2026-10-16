@@ -22,12 +22,12 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <Viewbox Width="28" Height="28">
                             <Canvas Width="512" Height="512">
-                                <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="{DynamicResource BrandMarkTile}"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
-                                <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource AccentBrand}"/>
-                                <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
-                                <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Path Data="M512.0,256.0 L511.5,331.6 L510.0,362.7 L507.6,386.2 L504.2,405.7 L499.7,422.4 L494.2,437.0 L487.7,449.9 L480.1,461.2 L471.3,471.3 L461.2,480.1 L449.9,487.7 L437.0,494.2 L422.4,499.7 L405.7,504.2 L386.2,507.6 L362.7,510.0 L331.6,511.5 L256.0,512.0 L180.4,511.5 L149.3,510.0 L125.8,507.6 L106.3,504.2 L89.6,499.7 L75.0,494.2 L62.1,487.7 L50.8,480.1 L40.7,471.3 L31.9,461.2 L24.3,449.9 L17.8,437.0 L12.3,422.4 L7.8,405.7 L4.4,386.2 L2.0,362.7 L0.5,331.6 L0.0,256.0 L0.5,180.4 L2.0,149.3 L4.4,125.8 L7.8,106.3 L12.3,89.6 L17.8,75.0 L24.3,62.1 L31.9,50.8 L40.7,40.7 L50.8,31.9 L62.1,24.3 L75.0,17.8 L89.6,12.3 L106.3,7.8 L125.8,4.4 L149.3,2.0 L180.4,0.5 L256.0,0.0 L331.6,0.5 L362.7,2.0 L386.2,4.4 L405.7,7.8 L422.4,12.3 L437.0,17.8 L449.9,24.3 L461.2,31.9 L471.3,40.7 L480.1,50.8 L487.7,62.1 L494.2,75.0 L499.7,89.6 L504.2,106.3 L507.6,125.8 L510.0,149.3 L511.5,180.4 Z" Fill="{DynamicResource BrandMarkTile}"/>
+                                <Rectangle Canvas.Left="101.9" Canvas.Top="154.1" Width="114.3" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Rectangle Canvas.Left="236.1" Canvas.Top="154.1" Width="174.0" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Rectangle Canvas.Left="101.9" Canvas.Top="228.7" Width="308.2" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource AccentBrand}"/>
+                                <Rectangle Canvas.Left="101.9" Canvas.Top="303.2" Width="233.6" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource BrandMarkBar}"/>
+                                <Ellipse Canvas.Left="355.4" Canvas.Top="303.2" Width="54.7" Height="54.7" Fill="{DynamicResource BrandMarkBar}"/>
                             </Canvas>
                         </Viewbox>
                         <StackPanel VerticalAlignment="Center">
@@ -472,12 +472,12 @@
             <StackPanel Grid.Row="0" Spacing="12" HorizontalAlignment="Center" Margin="0,14">
                 <Viewbox Width="28" Height="28">
                     <Canvas Width="512" Height="512">
-                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="512" Height="512" RadiusX="108" RadiusY="108" Fill="{DynamicResource BrandMarkTile}"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="152" Width="128" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
-                        <Rectangle Canvas.Left="248" Canvas.Top="152" Width="168" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="228" Width="320" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource AccentBrand}"/>
-                        <Rectangle Canvas.Left="96" Canvas.Top="304" Width="200" Height="56" RadiusX="28" RadiusY="28" Fill="{DynamicResource BrandMarkBar}"/>
-                        <Ellipse Canvas.Left="316" Canvas.Top="304" Width="56" Height="56" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Path Data="M512.0,256.0 L511.5,331.6 L510.0,362.7 L507.6,386.2 L504.2,405.7 L499.7,422.4 L494.2,437.0 L487.7,449.9 L480.1,461.2 L471.3,471.3 L461.2,480.1 L449.9,487.7 L437.0,494.2 L422.4,499.7 L405.7,504.2 L386.2,507.6 L362.7,510.0 L331.6,511.5 L256.0,512.0 L180.4,511.5 L149.3,510.0 L125.8,507.6 L106.3,504.2 L89.6,499.7 L75.0,494.2 L62.1,487.7 L50.8,480.1 L40.7,471.3 L31.9,461.2 L24.3,449.9 L17.8,437.0 L12.3,422.4 L7.8,405.7 L4.4,386.2 L2.0,362.7 L0.5,331.6 L0.0,256.0 L0.5,180.4 L2.0,149.3 L4.4,125.8 L7.8,106.3 L12.3,89.6 L17.8,75.0 L24.3,62.1 L31.9,50.8 L40.7,40.7 L50.8,31.9 L62.1,24.3 L75.0,17.8 L89.6,12.3 L106.3,7.8 L125.8,4.4 L149.3,2.0 L180.4,0.5 L256.0,0.0 L331.6,0.5 L362.7,2.0 L386.2,4.4 L405.7,7.8 L422.4,12.3 L437.0,17.8 L449.9,24.3 L461.2,31.9 L471.3,40.7 L480.1,50.8 L487.7,62.1 L494.2,75.0 L499.7,89.6 L504.2,106.3 L507.6,125.8 L510.0,149.3 L511.5,180.4 Z" Fill="{DynamicResource BrandMarkTile}"/>
+                        <Rectangle Canvas.Left="101.9" Canvas.Top="154.1" Width="114.3" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Rectangle Canvas.Left="236.1" Canvas.Top="154.1" Width="174.0" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Rectangle Canvas.Left="101.9" Canvas.Top="228.7" Width="308.2" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource AccentBrand}"/>
+                        <Rectangle Canvas.Left="101.9" Canvas.Top="303.2" Width="233.6" Height="54.7" RadiusX="27.4" RadiusY="27.4" Fill="{DynamicResource BrandMarkBar}"/>
+                        <Ellipse Canvas.Left="355.4" Canvas.Top="303.2" Width="54.7" Height="54.7" Fill="{DynamicResource BrandMarkBar}"/>
                     </Canvas>
                 </Viewbox>
                 <Button Classes="entity-pane-restore-command"
