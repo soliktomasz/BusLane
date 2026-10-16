@@ -57,32 +57,31 @@ public class NamespaceDashboardViewTests
 
         // Assert
         dashboardClasses.Should().NotContain("page-header-surface");
-        dashboardClasses.Should().Contain("dashboard-summary-surface");
+        dashboardClasses.Should().Contain("overview-panel");
         inboxClasses.Should().Contain("dashboard-inbox-surface");
         inboxClasses.Should().Contain("inbox-item-surface");
         inboxClasses.Should().NotContain("card");
     }
 
     [Fact]
-    public void Dashboard_UsesThreeValueHealthStrip()
+    public void Dashboard_UsesSeamedFiveValueHealthStrip()
     {
         // Arrange
         var dashboard = XDocument.Load(GetDashboardPath());
 
         // Act
-        var metricGrid = dashboard.Descendants()
-            .Single(element =>
-                element.Name.LocalName == "Grid"
-                && element.Elements().Count(child =>
-                    child.Name.LocalName == "Border"
-                    && child.Attribute("Classes")?.Value == "dashboard-summary-surface") == 3);
+        var strip = dashboard.Descendants()
+            .Single(element => element.Attribute("Classes")?.Value == "overview-panel overview-metrics");
+        var cells = strip.Descendants()
+            .Where(element => element.Attribute("Classes")?.Value.StartsWith("overview-metric-cell", StringComparison.Ordinal) == true)
+            .ToList();
 
         // Assert
-        metricGrid.Attribute("ColumnDefinitions")!.Value.Should().Be("*,*,*");
-        metricGrid.Attribute("ColumnSpacing")!.Value.Should().Be("16");
-        metricGrid.Elements()
-            .Where(element => element.Attribute("Classes")?.Value == "dashboard-summary-surface")
-            .Should().OnlyContain(element => element.Attribute("Margin") == null);
+        strip.Descendants().First(element => element.Name.LocalName == "Grid")
+            .Attribute("ColumnDefinitions")!.Value.Should().Be("*,*,*,*,*");
+        cells.Should().HaveCount(5);
+        cells.Should().ContainSingle(element => element.Attribute("Classes")!.Value == "overview-metric-cell first");
+        strip.ToString().Should().Contain("{Binding ScheduledCard}").And.Contain("{Binding SizeCard}");
     }
 
     [Fact]

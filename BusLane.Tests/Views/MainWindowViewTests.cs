@@ -71,17 +71,18 @@ public class MainWindowViewTests
     }
 
     [Fact]
-    public void MainWindow_EntityWorkspace_ShowsBreadcrumbWithoutOverviewLink()
+    public void MainWindow_EntityWorkspace_ShowsBreadcrumbInMessageHeaderWithoutOverviewLink()
     {
         // Arrange
-        var xaml = File.ReadAllText(GetMainWindowPath());
+        var xaml = File.ReadAllText(GetControlPath("MessagesPanelView.axaml"));
         var breadcrumbXaml = File.ReadAllText(GetControlPath("NamespaceWorkspaceBreadcrumb.axaml"));
 
         // Assert
         xaml.Should().Contain("<controls:NamespaceWorkspaceBreadcrumb");
         breadcrumbXaml.Should().NotContain("BackToOverviewCommand");
         breadcrumbXaml.Should().NotContain("Text=\"Overview\"");
-        breadcrumbXaml.Should().Contain("Text=\"Entity Explorer\"");
+        breadcrumbXaml.Should().Contain("{Binding WorkspaceEntityKindLabel}");
+        breadcrumbXaml.Should().Contain("{Binding ActiveTab.TabTitle}");
     }
 
     [Fact]

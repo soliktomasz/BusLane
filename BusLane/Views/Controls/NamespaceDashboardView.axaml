@@ -6,136 +6,234 @@
              x:Class="BusLane.Views.Controls.NamespaceDashboardView"
              x:DataType="vm:NamespaceDashboardViewModel"
              x:CompileBindings="True">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="26" Spacing="20">
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Namespace Overview" Classes="heading"/>
-                    <TextBlock Text="Find entities fast, then work highest-impact exceptions first." Classes="caption"/>
-                    <TextBlock Text="Topic metrics updating progressively" Classes="caption"
-                               IsVisible="{Binding IsPartialSnapshot}"/>
-                    <TextBlock Text="Updating namespace data" Classes="caption"
-                               IsVisible="{Binding IsRefreshing}"
-                               AutomationProperties.Name="Updating namespace data"/>
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Header matches the entity workspace: tile, title over refresh state, outlined actions. -->
+        <Border Grid.Row="0" Classes="message-command-bar" Padding="24,18">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                <Border Classes="entity-header-icon">
+                    <LucideIcon Kind="LayoutDashboard" Size="18"/>
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="Namespace overview" Classes="entity-header-title"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Classes="overview-status"
+                                   Text="{Binding LastRefreshTime, StringFormat='Updated {0:HH:mm:ss}'}"
+                                   IsVisible="{Binding LastRefreshTime, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <TextBlock Classes="overview-status" Text="Waiting for first refresh"
+                                   IsVisible="{Binding LastRefreshTime, Converter={x:Static ObjectConverters.IsNull}}"/>
+                        <TextBlock Classes="overview-status accent" Text="· Updating namespace data"
+                                   IsVisible="{Binding IsRefreshing}"
+                                   AutomationProperties.Name="Updating namespace data"/>
+                        <TextBlock Classes="overview-status" Text="· Topic metrics updating progressively"
+                                   IsVisible="{Binding IsPartialSnapshot}"/>
+                    </StackPanel>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                    <Button Classes="subtle small" Command="{Binding ShowHomeCommand}" Content="Home"/>
-                    <Button Classes="subtle small" Command="{Binding ShowIssuesCommand}" Content="Issues"/>
-                    <Button Classes="subtle small" Command="{Binding ShowAnalyticsCommand}" Content="Analytics"/>
-                    <Button Classes="secondary small" Command="{Binding RefreshCommand}"
-                            IsEnabled="{Binding !IsRefreshing}" Content="Refresh"/>
-                    <Button Classes="subtle small"
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="entity-header-action outline"
+                            Command="{Binding RefreshCommand}"
+                            IsEnabled="{Binding !IsRefreshing}"
+                            AutomationProperties.Name="Refresh namespace overview">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="RefreshCw" Size="14"/>
+                            <TextBlock Text="Refresh"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="entity-header-action outline icon-only"
                             Command="{ReflectionBinding $parent[Window].DataContext.CloseOverviewCommand}"
-                            Content="Close"
-                            AutomationProperties.Name="Close namespace overview"/>
+                            ToolTip.Tip="Close overview"
+                            AutomationProperties.Name="Close namespace overview">
+                        <LucideIcon Kind="X" Size="16"/>
+                    </Button>
                 </StackPanel>
             </Grid>
+        </Border>
 
-            <Border Classes="infobar-error"
-                    IsVisible="{Binding RefreshErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    AutomationProperties.Name="Dashboard refresh error">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <TextBlock Text="{Binding RefreshErrorMessage}"
-                               TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextDanger}"/>
-                    <Button Grid.Column="1" Classes="secondary small"
-                            Command="{Binding RetryFailedSectionCommand}"
-                            IsEnabled="{Binding !IsRetryingFailedSection}"
-                            Content="Retry section"
-                            AutomationProperties.Name="Retry failed dashboard section"/>
-                </Grid>
-            </Border>
+        <!-- Section tabs share the message tabs' indicator. -->
+        <Border Grid.Row="1" Classes="overview-section-strip">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Classes="section-tab" GroupName="OverviewSection"
+                             IsChecked="{Binding IsHomeSelected, Mode=OneWay}"
+                             Command="{Binding ShowHomeCommand}">
+                    <TextBlock Text="Overview"/>
+                </RadioButton>
+                <RadioButton Classes="section-tab" GroupName="OverviewSection"
+                             IsChecked="{Binding IsIssuesSelected, Mode=OneWay}"
+                             Command="{Binding ShowIssuesCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Issues"/>
+                        <Border Classes="counter-active" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Inbox.AllIssues.Count}"/>
+                        </Border>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton Classes="section-tab" GroupName="OverviewSection"
+                             IsChecked="{Binding IsAnalyticsSelected, Mode=OneWay}"
+                             Command="{Binding ShowAnalyticsCommand}">
+                    <TextBlock Text="Analytics"/>
+                </RadioButton>
+            </StackPanel>
+        </Border>
 
-            <Border Classes="card" IsVisible="{Binding IsInitialLoading}"
-                    AutomationProperties.Name="Loading namespace overview">
-                <StackPanel Spacing="14">
-                    <ProgressBar IsIndeterminate="True" Height="4"/>
-                    <Border Height="38" Background="{DynamicResource DashboardTileBackground}"
-                            CornerRadius="{StaticResource RadiusMedium}"/>
-                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
-                        <Border Height="72" Background="{DynamicResource DashboardTileBackground}"
-                                CornerRadius="{StaticResource RadiusMedium}"/>
-                        <Border Grid.Column="1" Height="72" Background="{DynamicResource DashboardTileBackground}"
-                                CornerRadius="{StaticResource RadiusMedium}"/>
-                        <Border Grid.Column="2" Height="72" Background="{DynamicResource DashboardTileBackground}"
-                                CornerRadius="{StaticResource RadiusMedium}"/>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,28" Spacing="20">
+                <Border Classes="infobar-error"
+                        IsVisible="{Binding RefreshErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        AutomationProperties.Name="Dashboard refresh error">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <TextBlock Text="{Binding RefreshErrorMessage}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextDanger}"/>
+                        <Button Grid.Column="1" Classes="secondary small"
+                                Command="{Binding RetryFailedSectionCommand}"
+                                IsEnabled="{Binding !IsRetryingFailedSection}"
+                                Content="Retry section"
+                                AutomationProperties.Name="Retry failed dashboard section"/>
+                    </Grid>
+                </Border>
+
+                <!-- First load: placeholder strip and list in the final layout's shapes. -->
+                <StackPanel Spacing="20" IsVisible="{Binding IsInitialLoading}"
+                            AutomationProperties.Name="Loading namespace overview">
+                    <ProgressBar IsIndeterminate="True" Height="3"/>
+                    <Border Classes="overview-panel" Height="112"/>
+                    <Border Classes="overview-panel" Height="260"/>
+                </StackPanel>
+
+                <!-- Overview -->
+                <StackPanel IsVisible="{Binding IsHomeSelected}" Spacing="20">
+                    <controls:NamespaceEntitySearchView DataContext="{Binding EntitySearch}"/>
+
+                    <Border Classes="overview-panel overview-metrics">
+                        <Grid ColumnDefinitions="*,*,*,*,*">
+                            <Border Grid.Column="0" Classes="overview-metric-cell first">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Needs attention" Classes="overview-metric-title"/>
+                                    <TextBlock Text="{Binding Inbox.NeedsActionCount}" Classes="overview-metric-value"/>
+                                    <TextBlock Text="entities to review" Classes="overview-metric-caption"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Classes="overview-metric-cell">
+                                <controls:MetricCard DataContext="{Binding DeadLetterCard}"
+                                                     SparklineStroke="{DynamicResource TextDanger}"/>
+                            </Border>
+                            <Border Grid.Column="2" Classes="overview-metric-cell">
+                                <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"
+                                                     SparklineStroke="{DynamicResource AccentBrand}"/>
+                            </Border>
+                            <Border Grid.Column="3" Classes="overview-metric-cell">
+                                <controls:MetricCard DataContext="{Binding ScheduledCard}"
+                                                     SparklineStroke="{DynamicResource TextWarning}"/>
+                            </Border>
+                            <Border Grid.Column="4" Classes="overview-metric-cell">
+                                <controls:MetricCard DataContext="{Binding SizeCard}"
+                                                     SparklineStroke="{DynamicResource SubtleForeground}"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,320" ColumnSpacing="20">
+                        <Border Grid.Column="0" Classes="overview-panel" VerticalAlignment="Top">
+                            <StackPanel>
+                                <Border Classes="overview-panel-header">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="Needs attention" Classes="overview-panel-title"/>
+                                            <TextBlock Text="Ranked by dead letters, backlog, and alerts"
+                                                       Classes="overview-status" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Classes="overview-link"
+                                                Command="{Binding ShowIssuesCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <TextBlock Text="All issues"/>
+                                                <LucideIcon Kind="ChevronRight" Size="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                                <controls:NamespaceInboxView DataContext="{Binding Inbox}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Spacing="20">
+                            <controls:TopEntitiesList DataContext="{Binding TopQueues}"/>
+                            <controls:TopEntitiesList DataContext="{Binding TopTopics}"/>
+
+                            <Border Classes="overview-panel">
+                                <StackPanel>
+                                    <Border Classes="overview-panel-header">
+                                        <TextBlock Text="Continue work" Classes="overview-panel-title"/>
+                                    </Border>
+                                    <StackPanel Margin="6,6,6,8" Spacing="2">
+                                        <TextBlock Text="Pinned" Classes="menu-group-label"/>
+                                        <ItemsControl ItemsSource="{Binding PinnedDestinations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
+                                                    <Button Classes="menu-item"
+                                                            Command="{ReflectionBinding $parent[UserControl].DataContext.OpenDestinationCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <controls:OverviewDestinationRow/>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Pin entities in the entity pane to keep them here."
+                                                   Classes="overview-empty-hint"
+                                                   IsVisible="{Binding !PinnedDestinations.Count}"/>
+                                        <TextBlock Text="Recent" Classes="menu-group-label" Margin="10,10,10,4"/>
+                                        <ItemsControl ItemsSource="{Binding RecentDestinations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
+                                                    <Button Classes="menu-item"
+                                                            Command="{ReflectionBinding $parent[UserControl].DataContext.OpenDestinationCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <controls:OverviewDestinationRow/>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Entities you open appear here."
+                                                   Classes="overview-empty-hint"
+                                                   IsVisible="{Binding !RecentDestinations.Count}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
-            </Border>
 
-            <StackPanel IsVisible="{Binding IsHomeSelected}" Spacing="20">
-                <controls:NamespaceEntitySearchView DataContext="{Binding EntitySearch}"/>
-
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
-                    <Border Grid.Column="0" Classes="dashboard-summary-surface">
-                        <StackPanel><TextBlock Text="NEEDS ACTION" Classes="dashboard-section-label"/>
-                            <TextBlock Text="{Binding Inbox.NeedsActionCount}" Classes="heading"/></StackPanel>
-                    </Border>
-                    <Border Grid.Column="1" Classes="dashboard-summary-surface">
-                        <controls:MetricCard DataContext="{Binding DeadLetterCard}"/>
-                    </Border>
-                    <Border Grid.Column="2" Classes="dashboard-summary-surface">
-                        <controls:MetricCard DataContext="{Binding ActiveMessagesCard}"/>
-                    </Border>
-                </Grid>
-
-                <Grid ColumnDefinitions="2*,*" ColumnSpacing="16">
-                    <StackPanel Grid.Column="0" Spacing="6">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="PRIORITY WORK" Classes="dashboard-section-label"/>
-                            <Button Grid.Column="1" Classes="subtle small" Command="{Binding ShowIssuesCommand}"
-                                    Content="View all issues"/>
-                        </Grid>
-                        <controls:NamespaceInboxView DataContext="{Binding Inbox}"/>
+                <!-- Issues -->
+                <Border IsVisible="{Binding IsIssuesSelected}" Classes="overview-panel">
+                    <StackPanel>
+                        <Border Classes="overview-panel-header">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="All issues" Classes="overview-panel-title"/>
+                                <TextBlock Text="Including entities you marked reviewed"
+                                           Classes="overview-status" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <controls:NamespaceIssuesView DataContext="{Binding Inbox}"/>
                     </StackPanel>
+                </Border>
 
-                    <Border Grid.Column="1" Classes="card">
-                        <StackPanel Spacing="14">
-                            <TextBlock Text="CONTINUE WORK" Classes="dashboard-section-label"/>
-                            <TextBlock Text="Pinned" FontWeight="SemiBold"/>
-                            <ItemsControl ItemsSource="{Binding PinnedDestinations}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
-                                        <Button Classes="subtle small" HorizontalAlignment="Stretch"
-                                                Command="{ReflectionBinding $parent[UserControl].DataContext.OpenDestinationCommand}"
-                                                CommandParameter="{Binding}" Content="{Binding DisplayPath}"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <TextBlock Text="Recent" FontWeight="SemiBold"/>
-                            <ItemsControl ItemsSource="{Binding RecentDestinations}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
-                                        <Button Classes="subtle small" HorizontalAlignment="Stretch"
-                                                Command="{ReflectionBinding $parent[UserControl].DataContext.OpenDestinationCommand}"
-                                                CommandParameter="{Binding}" Content="{Binding DisplayPath}"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Button Classes="secondary small" Command="{Binding ShowAnalyticsCommand}" Content="Open Analytics"/>
+                <!-- Analytics -->
+                <StackPanel IsVisible="{Binding IsAnalyticsSelected}" Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="Namespace trends" Classes="overview-panel-title"/>
+                            <TextBlock Text="Sampled on each refresh" Classes="overview-status"/>
                         </StackPanel>
-                    </Border>
-                </Grid>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding TimeRangeOptions}"
+                                  SelectedItem="{Binding SelectedTimeRange}" Width="140"
+                                  AutomationProperties.Name="Time range for all charts"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="20" RowSpacing="20">
+                        <controls:DashboardChart Grid.Row="0" Grid.Column="0" DataContext="{Binding Charts[0]}"/>
+                        <controls:DashboardChart Grid.Row="0" Grid.Column="1" DataContext="{Binding Charts[1]}"/>
+                        <controls:DashboardChart Grid.Row="1" Grid.Column="0" DataContext="{Binding Charts[2]}"/>
+                        <controls:DashboardChart Grid.Row="1" Grid.Column="1" DataContext="{Binding Charts[3]}"/>
+                    </Grid>
+                </StackPanel>
             </StackPanel>
-
-            <StackPanel IsVisible="{Binding IsIssuesSelected}" Spacing="10">
-                <TextBlock Text="All Issues" Classes="title"/>
-                <controls:NamespaceIssuesView DataContext="{Binding Inbox}"/>
-            </StackPanel>
-
-            <StackPanel IsVisible="{Binding IsAnalyticsSelected}" Spacing="16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Analytics" Classes="title"/>
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding TimeRangeOptions}"
-                              SelectedItem="{Binding SelectedTimeRange}" Width="140"/>
-                </Grid>
-                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="16">
-                    <controls:DashboardChart Grid.Row="0" Grid.Column="0" DataContext="{Binding Charts[0]}"/>
-                    <controls:DashboardChart Grid.Row="0" Grid.Column="1" DataContext="{Binding Charts[1]}"/>
-                    <controls:DashboardChart Grid.Row="1" Grid.Column="0" DataContext="{Binding Charts[2]}"/>
-                    <controls:DashboardChart Grid.Row="1" Grid.Column="1" DataContext="{Binding Charts[3]}"/>
-                </Grid>
-            </StackPanel>
-        </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

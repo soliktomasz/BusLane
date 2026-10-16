@@ -111,6 +111,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     [NotifyPropertyChangedFor(nameof(WorkspaceTopicName))]
     [NotifyPropertyChangedFor(nameof(WorkspaceEntityName))]
     [NotifyPropertyChangedFor(nameof(WorkspaceDestinationLabel))]
+    [NotifyPropertyChangedFor(nameof(WorkspaceEntityKindLabel))]
     [NotifyPropertyChangedFor(nameof(ShowWelcome))]
     private ConnectionTabViewModel? _activeTab;
 
@@ -202,6 +203,36 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             return request.EntityName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
                 ? request.EntityName[prefix.Length..]
                 : request.EntityName;
+        }
+    }
+
+    /// <summary>Gets the plural entity kind shown before the namespace in the entity header.</summary>
+    public string? WorkspaceEntityKindLabel
+    {
+        get
+        {
+            if (CurrentNavigation.SelectedSubscription is not null)
+            {
+                return "Subscriptions";
+            }
+
+            if (CurrentNavigation.SelectedQueue is not null)
+            {
+                return "Queues";
+            }
+
+            if (CurrentNavigation.SelectedTopic is not null)
+            {
+                return "Topics";
+            }
+
+            return ActiveTab?.CurrentDestination?.EntityType switch
+            {
+                EntityType.Queue => "Queues",
+                EntityType.Topic => "Topics",
+                EntityType.Subscription => "Subscriptions",
+                _ => null
+            };
         }
     }
 
@@ -1586,7 +1617,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void DeselectAllMessages() => CurrentMessageOps.DeselectAllMessages();
 
     [RelayCommand]
-    private void ToggleSortOrder() => CurrentMessageOps.ToggleSortOrder();
+    private void SetSortOrder(bool descending) => CurrentMessageOps.SetSortOrder(descending);
 
     [RelayCommand]
     private void ClearMessageSearch() => CurrentMessageOps.ClearMessageSearch();
@@ -2645,6 +2676,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             OnPropertyChanged(nameof(WorkspaceTopicName));
             OnPropertyChanged(nameof(WorkspaceEntityName));
             OnPropertyChanged(nameof(WorkspaceDestinationLabel));
+            OnPropertyChanged(nameof(WorkspaceEntityKindLabel));
         }
 
         if (e.PropertyName == nameof(NavigationState.SelectedMessageTabIndex)
@@ -2704,6 +2736,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
             OnPropertyChanged(nameof(WorkspaceTopicName));
             OnPropertyChanged(nameof(WorkspaceEntityName));
             OnPropertyChanged(nameof(WorkspaceDestinationLabel));
+            OnPropertyChanged(nameof(WorkspaceEntityKindLabel));
         }
 
         // Also notify for SavedConnection and Namespace so bindings update properly
@@ -2736,6 +2769,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
         OnPropertyChanged(nameof(WorkspaceTopicName));
         OnPropertyChanged(nameof(WorkspaceEntityName));
         OnPropertyChanged(nameof(WorkspaceDestinationLabel));
+        OnPropertyChanged(nameof(WorkspaceEntityKindLabel));
         OnPropertyChanged(nameof(ActiveWorkspaceModeLabel));
         OnPropertyChanged(nameof(IsCurrentEntityPaneVisible));
         OnPropertyChanged(nameof(ShowWelcome));

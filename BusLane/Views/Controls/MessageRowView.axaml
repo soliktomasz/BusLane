@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:BusLane.Models"
+             xmlns:converters="using:BusLane.Converters"
+             x:Class="BusLane.Views.Controls.MessageRowView"
+             x:DataType="models:MessageInfo" x:CompileBindings="False">
+    <UserControl.Resources>
+        <converters:MessageSelectionConverter x:Key="MessageSelectionConverter"/>
+    </UserControl.Resources>
+    <Border BorderBrush="{DynamicResource BorderMuted}" BorderThickness="0,0,0,1" Padding="16,10"
+            Background="Transparent" PointerPressed="OnMessageRowPointerPressed">
+        <Border.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Resend" Command="{Binding $parent[Window].DataContext.ResendMessageCommand}" CommandParameter="{Binding}"/>
+                <MenuItem Header="Clone" Command="{Binding $parent[Window].DataContext.CloneMessageCommand}" CommandParameter="{Binding}"/>
+                <MenuItem Header="Export" Command="{Binding $parent[Window].DataContext.ExportMessageCommand}" CommandParameter="{Binding}"/>
+                <MenuItem Header="Copy body" Command="{Binding $parent[Window].DataContext.CopyMessageBodyCommand}" CommandParameter="{Binding}"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+        <Grid ColumnDefinitions="Auto,*">
+            <CheckBox Grid.Column="0" Margin="0,0,10,0" VerticalAlignment="Center"
+                      IsVisible="{Binding $parent[Window].DataContext.CurrentMessageOps.IsMultiSelectMode}"
+                      Command="{Binding $parent[Window].DataContext.ToggleMessageSelectionCommand}" CommandParameter="{Binding}"
+                      AutomationProperties.Name="{Binding MessageId, StringFormat='Select message {0}'}">
+                <CheckBox.IsChecked>
+                    <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
+                        <Binding Path="."/>
+                        <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectedMessages"/>
+                        <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectionVersion"/>
+                    </MultiBinding>
+                </CheckBox.IsChecked>
+            </CheckBox>
+            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
+                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Subject}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding Subject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <TextBlock Text="Message" FontSize="13" FontWeight="SemiBold"
+                                   IsVisible="{Binding Subject, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                        <TextBlock Text="{Binding SequenceNumber, StringFormat='#{0}'}" Classes="caption" FontSize="11"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding MessageId}" FontSize="12" TextTrimming="CharacterEllipsis"
+                               ToolTip.Tip="{Binding MessageId}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding EnqueuedTime, StringFormat='{}{0:HH:mm:ss}'}" FontSize="12"/>
+                        <TextBlock Text="{Binding EnqueuedTime, StringFormat='{}{0:dd MMM yyyy}'}" Classes="caption" FontSize="11"/>
+                    </StackPanel>
+                    <Button Grid.Column="3" Classes="icon-button" Padding="4" VerticalAlignment="Center"
+                            Command="{Binding $parent[Window].DataContext.CurrentMessageOps.ExpandMessageDetailsCommand}"
+                            CommandParameter="{Binding}" AutomationProperties.Name="{Binding MessageId, StringFormat='Open details for {0}'}"
+                            ToolTip.Tip="Open message details">
+                        <LucideIcon Kind="Maximize2" Size="13"/>
+                    </Button>
+                </Grid>
+                <TextBlock Grid.Row="1" Text="{Binding DeadLetterReason}" FontSize="12" TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource TextDanger}" ToolTip.Tip="{Binding DeadLetterErrorDescription}"
+                           IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <TextBlock Grid.Row="2" Text="{Binding BodyPreview}" Classes="message-preview-text"
+                           TextTrimming="CharacterEllipsis" MaxLines="1"
+                           IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

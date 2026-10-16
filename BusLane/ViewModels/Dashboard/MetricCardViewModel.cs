@@ -18,10 +18,19 @@ public partial class MetricCardViewModel : ObservableObject
     private double _value;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TrendDisplay))]
     private double _trendPercentage;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TrendDisplay))]
+    [NotifyPropertyChangedFor(nameof(IsTrendUp))]
+    [NotifyPropertyChangedFor(nameof(IsTrendDown))]
     private MetricTrend _trend;
+
+    // A percentage can't be computed from zero, so that rise is reported on its own.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TrendDisplay))]
+    private bool _isUpFromZero;
 
     [ObservableProperty]
     private double[] _sparklineData = [];
@@ -45,6 +54,16 @@ public partial class MetricCardViewModel : ObservableObject
         }
     }
 
+    /// <summary>Change since the previous refresh, e.g. "+10%", "Up from 0", or "No change".</summary>
+    public string TrendDisplay => IsUpFromZero
+        ? "Up from 0"
+        : Trend == MetricTrend.Stable
+            ? "No change"
+            : TrendPercentage.ToString("+0.#;-0.#", CultureInfo.InvariantCulture) + "%";
+
+    public bool IsTrendUp => Trend == MetricTrend.Up;
+    public bool IsTrendDown => Trend == MetricTrend.Down;
+
     private readonly Queue<double> _history = new(20);
     private double? _previousValue;
 
@@ -57,7 +76,13 @@ public partial class MetricCardViewModel : ObservableObject
 
     public void UpdateValue(double newValue)
     {
-        if (_previousValue.HasValue && _previousValue.Value != 0)
+        IsUpFromZero = _previousValue == 0 && newValue > 0;
+        if (IsUpFromZero)
+        {
+            TrendPercentage = 0;
+            Trend = MetricTrend.Up;
+        }
+        else if (_previousValue.HasValue && _previousValue.Value != 0)
         {
             TrendPercentage = Math.Round(((newValue - _previousValue.Value) / _previousValue.Value) * 100, 1);
             Trend = TrendPercentage switch

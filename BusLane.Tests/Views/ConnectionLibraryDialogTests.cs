@@ -1,5 +1,6 @@
 namespace BusLane.Tests.Views;
 
+using System.Xml.Linq;
 using FluentAssertions;
 
 public class ConnectionLibraryDialogTests
@@ -71,14 +72,42 @@ public class ConnectionLibraryDialogTests
     }
 
     [Fact]
-    public void ConnectionLibraryDialog_UsesFixedDialogSize()
+    public void ConnectionLibraryDialog_FitsAvailableWindowSpace()
     {
         // Arrange
         var xaml = File.ReadAllText(GetDialogPath());
 
         // Assert
-        xaml.Should().Contain("Width=\"900\"");
-        xaml.Should().Contain("Height=\"720\"");
+        xaml.Should().Contain("Classes=\"modal modal-large\"");
+        xaml.Should().Contain("Margin=\"24\" Padding=\"0\"");
+        xaml.Should().NotContain("Width=\"900\"");
+        xaml.Should().NotContain("Height=\"720\"");
+    }
+
+    [Fact]
+    public void ConnectionLibraryDialog_KeepsSaveActionsOutsideScrollingContent()
+    {
+        var document = XDocument.Load(GetDialogPath());
+        var save = document.Descendants().Single(element =>
+            ((string?)element.Attribute("Command"))?.Contains("ValidateAndAddConnectionCommand") == true);
+
+        save.Ancestors().Should().NotContain(element => element.Name.LocalName == "ScrollViewer");
+        save.Ancestors().Should().Contain(element =>
+            (string?)element.Attribute("Classes") == "dialog-footer");
+    }
+
+    [Fact]
+    public void ConnectionLibraryDialog_CollapsesBackupAndDestructiveActionsByDefault()
+    {
+        var document = XDocument.Load(GetDialogPath());
+        var backup = document.Descendants().Single(element => element.Name.LocalName == "Expander");
+
+        ((string?)backup.Attribute("IsExpanded")).Should().Be("False");
+        foreach (var command in new[] { "ExportConnectionsBackupCommand", "ImportConnectionsBackupCommand", "ClearAllConnectionsCommand" })
+        {
+            backup.Descendants().Should().Contain(element =>
+                ((string?)element.Attribute("Command") ?? "").Contains(command));
+        }
     }
 
     private static string GetDialogPath()

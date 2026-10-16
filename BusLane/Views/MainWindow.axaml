@@ -9,7 +9,7 @@
         x:Name="MainWindowControl"
         Title="BusLane - Service Bus Manager"
         Icon="/Assets/icon.png"
-        Width="1280" Height="800"
+        Width="1440" Height="900"
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen">
     <Grid ColumnDefinitions="Auto,*">
@@ -47,12 +47,12 @@
                       IsVisible="{Binding IsAzureEntityWorkspaceVisible}"
                       Background="{DynamicResource AppBackground}">
 
-                <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
+
 
                 <!-- Main content grid -->
                 <Grid Grid.Row="1"
                       x:Name="AzureWorkspaceGrid"
-                      ColumnDefinitions="0,280,5,*">
+                      ColumnDefinitions="0,240,5,*">
                     <!-- Service Bus Tree View -->
                     <controls:AzureEntityTreeView Grid.Column="1"
                                                   IsVisible="{Binding IsCurrentEntityPaneVisible}"/>
@@ -73,12 +73,12 @@
                   IsVisible="{Binding IsConnectionStringEntityWorkspaceVisible}"
                   Background="{DynamicResource AppBackground}">
 
-                <controls:NamespaceWorkspaceBreadcrumb Grid.Row="0"/>
+
 
                 <!-- Main content for connection string mode -->
                 <Grid Grid.Row="1"
                       x:Name="ConnectionWorkspaceGrid"
-                      ColumnDefinitions="0,280,5,*">
+                      ColumnDefinitions="0,240,5,*">
                     <!-- Entity Tree for connection string mode -->
                     <controls:EntityTreeView Grid.Column="1"
                                              IsVisible="{Binding IsCurrentEntityPaneVisible}"/>

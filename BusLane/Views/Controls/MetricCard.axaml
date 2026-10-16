@@ -10,32 +10,20 @@
              x:DataType="vm:MetricCardViewModel"
              x:CompileBindings="False">
 
-    <StackPanel Spacing="6">
-        <TextBlock Text="{Binding Title}"
-                   Classes="caption"
-                   FontWeight="SemiBold"/>
-
-        <TextBlock Text="{Binding ValueDisplay}"
-                   FontSize="30"
-                   FontWeight="Bold"
-                   FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                   Foreground="{DynamicResource AppForeground}"/>
-
-        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-            <TextBlock Text="{Binding TrendPercentage, StringFormat='{}{0:+0.0;-0.0;0}%'}"
-                       FontSize="12"
-                       FontWeight="SemiBold"
-                       Foreground="{Binding TrendForeground, ElementName=Root}"/>
-            <TextBlock Text="vs prev"
-                       Classes="caption"
-                       VerticalAlignment="Center"/>
+    <!-- One cell of the overview health strip: title, value, change since the last refresh, recent shape. -->
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+        <TextBlock Text="{Binding Title}" Classes="overview-metric-title"/>
+        <TextBlock Grid.Row="1" Text="{Binding ValueDisplay}" Classes="overview-metric-value"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4">
+            <LucideIcon Kind="TrendingUp" Size="13" Classes="overview-metric-caption-icon"
+                        IsVisible="{Binding IsTrendUp}"/>
+            <LucideIcon Kind="TrendingDown" Size="13" Classes="overview-metric-caption-icon"
+                        IsVisible="{Binding IsTrendDown}"/>
+            <TextBlock Text="{Binding TrendDisplay}" Classes="overview-metric-caption"/>
         </StackPanel>
-
-        <Border Height="30"
-                Padding="2,0"
-                Margin="0,6,0,0">
+        <Border Grid.Row="3" Height="26" Margin="0,4,0,0">
             <controls:SparklineView Values="{Binding SparklineData}"
                                     Stroke="{Binding SparklineStroke, ElementName=Root}"/>
         </Border>
-    </StackPanel>
+    </Grid>
 </UserControl>

@@ -1,0 +1,43 @@
+{
+  "title": "A new workspace for BusLane",
+  "question": "Compare the light and dark concepts. Expand either preview to inspect the full screen.",
+  "options": [
+    {
+      "id": "light",
+      "kind": "assigned",
+      "label": "Light · Focused workspace",
+      "thesis": "Bring the queue, message list and payload into one calm, continuous workspace.",
+      "palette": ["#f6f5fa", "#ffffff", "#4338ca", "#242138"],
+      "materials": ["violet navigation", "clean reading surfaces", "tabular message data"],
+      "viewport": "A narrow tool rail and entity tree sit beside a message table and persistent right-hand inspector.",
+      "risk": "Three panes need careful minimum widths on smaller laptops.",
+      "raised": [
+        {"from":"Catalog grid", "raise":"Every message uses consistent columns and a stable selection position."},
+        {"from":"Tabbed reference manual", "raise":"Each work area has an unmistakable title and a predictable place."},
+        {"from":"Airport wayfinding", "raise":"Queue and dead-letter context stay visible at every decision."},
+        {"from":"Timetable", "raise":"Times and sequence numbers align for fast scanning."},
+        {"from":"Exposure record", "raise":"Selection stays legible through tonal hierarchy without relying on color alone."}
+      ],
+      "html": ".impeccable/mocks/decision/light.html",
+      "htmlFrame": "1440x900"
+    },
+    {
+      "id": "dark",
+      "kind": "challenger",
+      "catalogId": "digital-design-canon-dark-first-developer-console",
+      "label": "Dark · Dense workspace",
+      "verdict": "competitive",
+      "thesis": "Scan more messages at once, with a large payload inspector directly beneath the list.",
+      "palette": ["#17171e", "#202028", "#b8adff", "#edecf3"],
+      "materials": ["graphite panels", "violet selection", "hairline separators"],
+      "viewport": "A combined navigation sidebar opens into a wide message table above a horizontal payload and metadata inspector.",
+      "case": "Strong developer familiarity and long-session comfort; lower ambient-light flexibility than the light concept.",
+      "risk": "The horizontal inspector shows fewer message rows while open.",
+      "html": ".impeccable/mocks/decision/dark.html",
+      "htmlFrame": "1440x900"
+    }
+  ],
+  "steer": true,
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value":"code", "toggle": false}
+}

@@ -20,7 +20,7 @@ public class PreferencesService : IPreferencesService
     public bool ShowDeadLetterBadges { get; set; } = true;
     public bool ShowTopicActionButtons { get; set; } = true;
     public bool EnableMessagePreview { get; set; } = true;
-    public bool ShowNavigationPanel { get; set; } = true;
+    public bool ShowNavigationPanel { get; set; } = false;
     public bool ShowTerminalPanel { get; set; }
     public bool TerminalIsDocked { get; set; } = true;
     public double TerminalDockHeight { get; set; } = 260;
@@ -153,7 +153,7 @@ public class PreferencesService : IPreferencesService
         public bool ShowDeadLetterBadges { get; set; }
         public bool ShowTopicActionButtons { get; set; } = true;
         public bool EnableMessagePreview { get; set; }
-        public bool ShowNavigationPanel { get; set; } = true;
+        public bool ShowNavigationPanel { get; set; } = false;
         public bool ShowTerminalPanel { get; set; }
         public bool TerminalIsDocked { get; set; } = true;
         public double TerminalDockHeight { get; set; } = 260;

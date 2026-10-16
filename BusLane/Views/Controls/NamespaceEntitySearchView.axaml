@@ -2,23 +2,33 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels.Dashboard"
              xmlns:models="using:BusLane.Models.Dashboard"
+             xmlns:controls="using:BusLane.Views.Controls"
              x:Class="BusLane.Views.Controls.NamespaceEntitySearchView"
              x:DataType="vm:NamespaceEntitySearchViewModel"
              x:CompileBindings="False">
     <Grid RowDefinitions="Auto,Auto">
         <TextBox x:Name="SearchBox"
                  Grid.Row="0"
+                 Classes="message-header-search"
                  Text="{Binding Query, Mode=TwoWay}"
-                 PlaceholderText="Find queue, topic, or subscription"
+                 PlaceholderText="Find a queue, topic, or subscription"
                  AutomationProperties.Name="Search queues, topics, and subscriptions"
                  ToolTip.Tip="Press Cmd/Ctrl+F to search"
-                 KeyDown="OnSearchKeyDown"/>
+                 KeyDown="OnSearchKeyDown">
+            <TextBox.InnerLeftContent>
+                <LucideIcon Kind="Search" Size="14" Margin="10,0,2,0"
+                            Foreground="{DynamicResource SubtleForeground}"
+                            VerticalAlignment="Center"/>
+            </TextBox.InnerLeftContent>
+        </TextBox>
         <Border Grid.Row="1"
                 Margin="0,6,0,0"
-                Classes="card"
+                Classes="overview-panel"
+                Padding="6"
                 IsVisible="{Binding HasResults}">
             <ListBox ItemsSource="{Binding Results}"
                      SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
+                     Background="Transparent"
                      MaxHeight="280">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -27,17 +37,10 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:NamespaceEntitySearchResult">
-                        <Button Classes="subtle"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Stretch"
+                        <Button Classes="menu-item"
                                 Command="{Binding $parent[UserControl].DataContext.OpenResultCommand}"
                                 CommandParameter="{Binding}">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <TextBlock Text="{Binding DisplayPath}"
-                                           TextTrimming="CharacterEllipsis"
-                                           ToolTip.Tip="{Binding DisplayPath}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding TypeLabel}" Classes="caption"/>
-                            </Grid>
+                            <controls:OverviewDestinationRow/>
                         </Button>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

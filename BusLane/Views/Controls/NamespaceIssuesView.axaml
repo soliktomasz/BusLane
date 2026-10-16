@@ -5,34 +5,58 @@
              x:DataType="vm:NamespaceInboxViewModel"
              x:CompileBindings="False">
     <Grid>
-        <ListBox ItemsSource="{Binding AllIssues}">
+        <ListBox ItemsSource="{Binding AllIssues}" Classes="overview-issues" Background="Transparent">
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate>
             </ListBox.ItemsPanel>
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:NamespaceInboxItemViewModel">
                     <Border Classes="inbox-item-surface">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <StackPanel>
-                                <TextBlock Text="{Binding EntityName}" FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EntityName}"
-                                           AutomationProperties.Name="{Binding EntityName}"/>
-                                <TextBlock Text="{Binding ReasonSummary}" Classes="caption"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                            <Border Width="8" Height="8"
+                                    CornerRadius="{StaticResource RadiusPill}"
+                                    Background="{Binding Status, Converter={StaticResource InboxStatusToBrushConverter}}"
+                                    VerticalAlignment="Top" Margin="0,6,0,0"/>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding EntityName}" Classes="overview-row-title"
+                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EntityName}"
+                                               AutomationProperties.Name="{Binding EntityName}"/>
+                                    <Border Classes="overview-chip" IsVisible="{Binding IsReviewed}" VerticalAlignment="Center">
+                                        <TextBlock Text="Reviewed"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{Binding ReasonSummary}" Classes="overview-status" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Classes="secondary small"
-                                    Command="{Binding OpenMessagesCommand}" Content="Open"
-                                    AutomationProperties.Name="Open entity messages"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Classes="overview-chip danger" IsVisible="{Binding DeadLetterCount}">
+                                    <TextBlock Text="{Binding DeadLetterCount, StringFormat='{}{0:N0} dead-lettered'}"/>
+                                </Border>
+                                <Border Classes="overview-chip warning" IsVisible="{Binding HasScheduledMessages}">
+                                    <TextBlock Text="{Binding ScheduledCount, StringFormat='{}{0:N0} scheduled'}"/>
+                                </Border>
+                            </StackPanel>
+                            <Button Grid.Column="3" Classes="overview-row-action"
+                                    Command="{Binding OpenMessagesCommand}"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="Open entity messages">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Open"/>
+                                    <LucideIcon Kind="ChevronRight" Size="13"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <Border Classes="dialog-section-surface"
-                IsVisible="{Binding !AllIssues.Count}">
+        <StackPanel Classes="overview-empty"
+                    IsVisible="{Binding !AllIssues.Count}">
+            <LucideIcon Kind="CircleCheck" Size="22" Foreground="{DynamicResource TextSuccess}"/>
             <TextBlock Text="No issues found."
-                       Classes="caption"
+                       Classes="menu-item-label"
                        HorizontalAlignment="Center"/>
-        </Border>
+        </StackPanel>
     </Grid>
 </UserControl>

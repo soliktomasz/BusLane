@@ -4,73 +4,59 @@
              x:Class="BusLane.Views.Dialogs.EntityDetailDialog"
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
-
-    <Border Classes="modal-overlay"
-            IsVisible="{Binding EntityOperations.ShowEntityDetailDialog}">
-        <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="{StaticResource RadiusLarge}"
-                BorderThickness="1"
-                BorderBrush="{DynamicResource BorderDefault}"
-                BoxShadow="0 12 32 0 #38000000"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                MinWidth="560"
-                MaxWidth="720"
-                MaxHeight="680"
-                ClipToBounds="True"
-                Padding="0">
-            <Grid RowDefinitions="Auto,*">
-                <Border Grid.Row="0"
-                        Background="{DynamicResource SurfaceSubtle}"
-                        CornerRadius="12,12,0,0"
-                        Padding="20,16">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Border Grid.Column="0"
-                                Width="36" Height="36"
-                                CornerRadius="{StaticResource RadiusMedium}"
-                                Background="{DynamicResource SurfaceBrand}"
-                                Margin="0,0,12,0">
-                            <LucideIcon Kind="Info" Size="18"
-                                        Foreground="{DynamicResource AccentBrand}"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding EntityOperations.EntityDetailTitle}"
-                                   Classes="heading"
-                                   VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Classes="icon"
-                                Command="{Binding EntityOperations.CloseEntityDetailDialogCommand}"
-                                ToolTip.Tip="Close">
-                            <LucideIcon Kind="X" Size="16"/>
+    <Border Classes="modal-overlay" IsVisible="{Binding EntityOperations.ShowEntityDetailDialog}">
+        <Border Classes="modal" MaxWidth="720" MaxHeight="680" Margin="24" Padding="0"
+                HorizontalAlignment="Stretch" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <Border Grid.Row="0" Classes="dialog-header" Padding="24,20">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding EntityOperations.EntityDetailTitle}" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="Configuration and runtime properties" Classes="caption"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="subtle" Width="34" Height="34" Padding="8"
+                                VerticalAlignment="Center" Command="{Binding EntityOperations.CloseEntityDetailDialogCommand}"
+                                ToolTip.Tip="Close details" AutomationProperties.Name="Close entity details">
+                            <LucideIcon Kind="X" Size="18"/>
                         </Button>
                     </Grid>
                 </Border>
 
-                <ScrollViewer Grid.Row="1">
-                    <ItemsControl ItemsSource="{Binding EntityOperations.EntityDetailRows}"
-                                  Margin="20,18,20,28">
+                <Border Grid.Row="1" Margin="24,18,24,0" Padding="12,0,12,12"
+                        BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderDefault}">
+                    <Grid ColumnDefinitions="180,*" ColumnSpacing="24">
+                        <TextBlock Text="Property" Classes="caption"/>
+                        <TextBlock Grid.Column="1" Text="Value" Classes="caption"/>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding EntityOperations.EntityDetailRows}" Margin="24,0,24,20">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{DynamicResource BorderDefault}"
-                                        BorderThickness="0,0,0,1"
-                                        Padding="0,10">
-                                    <Grid ColumnDefinitions="220,*">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding Label}"
-                                                   Classes="caption"
-                                                   VerticalAlignment="Top"/>
-                                        <SelectableTextBlock Grid.Column="1"
-                                                             Text="{Binding Value}"
-                                                             TextWrapping="Wrap"
-                                                             FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                             FontSize="12"/>
+                                <Border BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1" Padding="12,14">
+                                    <Grid ColumnDefinitions="180,*" ColumnSpacing="24">
+                                        <TextBlock Text="{Binding Label}" FontSize="13" Foreground="{DynamicResource SubtleForeground}"
+                                                   TextWrapping="Wrap" VerticalAlignment="Top"/>
+                                        <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" FontSize="14"
+                                                             TextWrapping="Wrap"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
+
+                <Border Grid.Row="3" Classes="dialog-footer" Padding="24,16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <LucideIcon Kind="Eye" Size="16" Foreground="{DynamicResource SubtleForeground}"/>
+                            <TextBlock Text="Read-only details. Select a value to copy." Classes="caption"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="secondary" Content="Close" MinWidth="88"
+                                Command="{Binding EntityOperations.CloseEntityDetailDialogCommand}"/>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
     </Border>

@@ -9,55 +9,32 @@
              x:DataType="vm:TopEntitiesListViewModel"
              x:CompileBindings="False">
 
-    <Border Classes="card dashboard-card" Padding="0">
-        <Grid RowDefinitions="Auto,*">
-            <Border Grid.Row="0"
-                    BorderBrush="{DynamicResource BorderDefault}"
-                    BorderThickness="0,0,0,1"
-                    Padding="14,12">
-                <TextBlock Text="{Binding Title}"
-                           Classes="body-strong"
-                           VerticalAlignment="Center"/>
+    <!-- Busiest entities by active messages, with each one's share of the namespace total. -->
+    <Border Classes="overview-panel">
+        <StackPanel>
+            <Border Classes="overview-panel-header">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Title}" Classes="overview-panel-title"/>
+                    <TextBlock Grid.Column="1" Text="Messages" Classes="overview-status" VerticalAlignment="Center"/>
+                </Grid>
             </Border>
-
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Entities}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="models:TopEntityInfo">
-                            <Border Padding="14,10"
-                                    BorderThickness="0,0,0,1"
-                                    BorderBrush="{DynamicResource BorderMuted}">
-                                <Grid ColumnDefinitions="2*,3*,Auto"
-                                      ColumnSpacing="10"
-                                      VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}"
-                                               FontSize="13"
-                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                               Foreground="{DynamicResource AppForeground}"
-                                               VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis"
-                                               ToolTip.Tip="{Binding Name}"/>
-                                    <ProgressBar Grid.Column="1"
-                                                 Value="{Binding PercentageOfTotal}"
-                                                 Maximum="100"
-                                                 Height="4"
-                                                 MinWidth="80"
-                                                 Background="{DynamicResource SurfaceSubtle}"
-                                                 Foreground="{DynamicResource AccentBrand}"
-                                                 VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="2"
-                                               Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"
-                                               FontSize="12"
-                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                               Foreground="{DynamicResource AppForeground}"
-                                               VerticalAlignment="Center"
-                                               HorizontalAlignment="Right"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
+            <ItemsControl ItemsSource="{Binding Entities}" Margin="0,4,0,8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="models:TopEntityInfo">
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" Margin="16,8" RowSpacing="6">
+                            <TextBlock Text="{Binding Name}" Classes="menu-item-label"
+                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}"/>
+                            <TextBlock Grid.Column="1" Classes="overview-figure"
+                                       Text="{Binding MessageCount, StringFormat='{}{0:N0}'}"/>
+                            <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Classes="overview-share"
+                                         Value="{Binding PercentageOfTotal}" Maximum="100"
+                                         ToolTip.Tip="{Binding PercentageOfTotal, StringFormat='{}{0:0.#}% of namespace messages'}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="No data yet" Classes="overview-empty-hint" Margin="16,0,16,14"
+                       IsVisible="{Binding !Entities.Count}"/>
+        </StackPanel>
     </Border>
 </UserControl>
