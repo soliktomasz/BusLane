@@ -5,40 +5,34 @@
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
     <Border>
-        <!-- One line that trims from the end instead of wrapping under the title. -->
+        <!-- Entity kind, optional topic, then namespace: one line that trims instead of wrapping. -->
         <DockPanel VerticalAlignment="Center">
             <DockPanel.Styles>
                 <Style Selector="TextBlock">
-                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="FontSize" Value="13"/>
                     <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
-                    <Setter Property="Margin" Value="0,0,6,0"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+                <Style Selector="TextBlock.separator">
+                    <Setter Property="Margin" Value="6,0"/>
                 </Style>
             </DockPanel.Styles>
             <TextBlock DockPanel.Dock="Left"
-                       Text="Entity Explorer"
-                       FontWeight="SemiBold"
-                       VerticalAlignment="Center"/>
-            <TextBlock DockPanel.Dock="Left" Text="/" Classes="caption" VerticalAlignment="Center"
-                       IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                       Text="{Binding WorkspaceEntityKindLabel}"
+                       IsVisible="{Binding WorkspaceEntityKindLabel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            <TextBlock DockPanel.Dock="Left" Text="/" Classes="separator"
+                       IsVisible="{Binding WorkspaceTopicName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
             <TextBlock DockPanel.Dock="Left"
                        Text="{Binding WorkspaceTopicName}"
-                       Classes="caption"
                        MaxWidth="160"
-                       VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
                        ToolTip.Tip="{Binding WorkspaceTopicName}"
                        IsVisible="{Binding WorkspaceTopicName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-            <TextBlock DockPanel.Dock="Left"
-                       Text="/"
-                       Classes="caption"
-                       VerticalAlignment="Center"
-                       IsVisible="{Binding WorkspaceTopicName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-            <TextBlock Text="{Binding WorkspaceDestinationLabel}"
-                       Classes="caption"
-                       VerticalAlignment="Center"
+            <TextBlock DockPanel.Dock="Left" Text="/" Classes="separator"
+                       IsVisible="{Binding WorkspaceEntityKindLabel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            <TextBlock Text="{Binding ActiveTab.TabTitle}"
                        TextTrimming="CharacterEllipsis"
-                       ToolTip.Tip="{Binding WorkspaceDestinationLabel}"
-                       IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                       ToolTip.Tip="{Binding ActiveTab.TabTitle}"/>
         </DockPanel>
     </Border>
 </UserControl>

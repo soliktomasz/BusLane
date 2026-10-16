@@ -117,10 +117,14 @@ public class MessagesPanelViewTests
         var topActionTooltips = GetTopActionTooltips(document);
 
         topActionTooltips.Should().Contain([
-            "Toggle multi-select mode (⌘M / Ctrl+M)",
             "Refresh messages",
             "More message actions"
         ]);
+        document.Descendants()
+            .Where(element => element.Name.LocalName == "ToggleButton")
+            .Select(element => element.Attribute("ToolTip.Tip")?.Value)
+            .Should()
+            .Contain("Toggle multi-select mode (⌘M / Ctrl+M)");
         topActionTooltips.Should().NotContain([
             "Toggle sort order",
             "Receive locked messages",
@@ -173,10 +177,8 @@ public class MessagesPanelViewTests
     private static IEnumerable<string> GetTopActionTooltips(XDocument document)
     {
         return document.Descendants()
-            .Where(element => element.Name.LocalName == "StackPanel" &&
-                              element.Attribute("Orientation")?.Value == "Horizontal" &&
-                              element.Attribute("IsVisible")?.Value.Contains("CurrentNavigation.IsSessionInspectorTabSelected", StringComparison.Ordinal) == true)
-            .First()
+            .Single(element => element.Name.LocalName == "StackPanel" &&
+                               element.Attribute("Classes")?.Value == "entity-header-actions")
             .Elements()
             .Select(element => element.Attribute("ToolTip.Tip")?.Value)
             .Where(value => value is not null)

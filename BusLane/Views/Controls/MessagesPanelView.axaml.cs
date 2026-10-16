@@ -11,7 +11,12 @@ public partial class MessagesPanelView : UserControl
     public MessagesPanelView()
     {
         InitializeComponent();
-        SizeChanged += (_, _) => UpdateInspectorLayout();
+        SizeChanged += (_, _) =>
+        {
+            // Narrow workspaces keep the entity title readable by dropping secondary action labels.
+            Classes.Set("narrow-header", Bounds.Width < 760);
+            UpdateInspectorLayout();
+        };
         InspectorHost.PropertyChanged += (_, e) =>
         {
             if (e.Property == IsVisibleProperty)

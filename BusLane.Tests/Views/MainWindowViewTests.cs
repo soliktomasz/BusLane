@@ -81,7 +81,8 @@ public class MainWindowViewTests
         xaml.Should().Contain("<controls:NamespaceWorkspaceBreadcrumb");
         breadcrumbXaml.Should().NotContain("BackToOverviewCommand");
         breadcrumbXaml.Should().NotContain("Text=\"Overview\"");
-        breadcrumbXaml.Should().Contain("Text=\"Entity Explorer\"");
+        breadcrumbXaml.Should().Contain("{Binding WorkspaceEntityKindLabel}");
+        breadcrumbXaml.Should().Contain("{Binding ActiveTab.TabTitle}");
     }
 
     [Fact]

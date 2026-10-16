@@ -47,7 +47,7 @@ public partial class MessageInspectorView : UserControl
         InitializeComponent();
         // The settle animates this transform's Y; RenderTransform itself has no animator.
         InspectedContent.RenderTransform = new TranslateTransform();
-        SizeChanged += (_, _) => Classes.Set("compact", Bounds.Height < 400);
+        SizeChanged += (_, _) => Classes.Set("compact", Bounds.Height < 460);
     }
 
     /// <summary>

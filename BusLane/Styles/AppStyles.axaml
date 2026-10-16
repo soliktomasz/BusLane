@@ -1119,7 +1119,85 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="16,18,20,18"/>
+    </Style>
+
+    <!-- Entity header: kind tile, title over "Kind / namespace", outlined actions beside the primary send. -->
+    <Style Selector="Border.entity-header-icon">
+        <Setter Property="Width" Value="40"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+    </Style>
+    <Style Selector="Border.entity-header-icon LucideIcon">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.entity-header-title">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LetterSpacing" Value="-0.2"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.entity-header-action">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.entity-header-action.primary">
+        <Setter Property="Padding" Value="14,0"/>
+    </Style>
+    <Style Selector="Button.entity-header-action.outline">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+    <Style Selector="Button.entity-header-action.outline /template/ ContentPresenter">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.entity-header-action.outline:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="Button.entity-header-action.outline:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+    </Style>
+    <Style Selector="Button.entity-header-action.outline:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+    <Style Selector="Button.entity-header-action.icon-only">
+        <Setter Property="Width" Value="34"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector=":is(UserControl).narrow-header Button.entity-header-action.collapsible">
+        <Setter Property="Width" Value="34"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector=":is(UserControl).narrow-header Button.entity-header-action.collapsible TextBlock">
+        <Setter Property="IsVisible" Value="False"/>
+    </Style>
+
+    <Style Selector="Border.message-search-bar">
         <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
     <Style Selector="Border.message-search-surface">
@@ -2319,8 +2397,8 @@
     </Style>
     <!-- Message header: one primary action, native search, quieter list utilities. -->
     <Style Selector="TextBox.message-header-search">
-        <Setter Property="MinHeight" Value="36"/>
-        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="6,6"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
@@ -2334,7 +2412,7 @@
         <Setter Property="BorderThickness" Value="1,1,1,2"/>
     </Style>
     <Style Selector="Button.message-header-utility, ToggleButton.message-header-select, Button.message-header-send">
-        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="MinHeight" Value="34"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.message-header-utility, ToggleButton.message-header-select">
@@ -2345,7 +2423,11 @@
     </Style>
     <Style Selector="ToggleButton.message-header-select">
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.message-header-utility:pointerover /template/ ContentPresenter, ToggleButton.message-header-select:pointerover /template/ ContentPresenter">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>

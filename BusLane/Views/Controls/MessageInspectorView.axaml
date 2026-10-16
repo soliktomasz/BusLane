@@ -15,13 +15,13 @@
         <Style Selector="TextBlock.inspector-subject">
             <Setter Property="IsVisible" Value="{Binding CurrentMessageOps.SelectedMessage.Subject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         </Style>
-        <Style Selector="UserControl.compact Border.inspector-header">
-            <Setter Property="Padding" Value="12,4"/>
+        <Style Selector=":is(UserControl).compact Border.inspector-header">
+            <Setter Property="Padding" Value="18,4,12,4"/>
         </Style>
-        <Style Selector="UserControl.compact TextBlock.inspector-subject, UserControl.compact SelectableTextBlock.inspector-id, UserControl.compact StackPanel.inspector-peek, UserControl.compact Border.inspector-summary">
+        <Style Selector=":is(UserControl).compact TextBlock.inspector-subject, :is(UserControl).compact SelectableTextBlock.inspector-id, :is(UserControl).compact StackPanel.inspector-peek, :is(UserControl).compact Border.inspector-summary">
             <Setter Property="IsVisible" Value="False"/>
         </Style>
-        <Style Selector="UserControl.compact StackPanel.inspector-heading">
+        <Style Selector=":is(UserControl).compact StackPanel.inspector-heading">
             <Setter Property="Spacing" Value="0"/>
         </Style>
     </UserControl.Styles>

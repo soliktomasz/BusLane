@@ -387,7 +387,9 @@ public class MainWindowViewModelTests
         sut.WorkspaceTopicName.Should().BeNull();
         sut.WorkspaceEntityName.Should().Be("orders");
         sut.WorkspaceDestinationLabel.Should().Be("Active messages");
+        sut.WorkspaceEntityKindLabel.Should().Be("Queues");
         changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceEntityName));
+        changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceEntityKindLabel));
 
         // Act / Assert - topic
         changedProperties.Clear();
@@ -397,6 +399,7 @@ public class MainWindowViewModelTests
         sut.WorkspaceTopicName.Should().BeNull();
         sut.WorkspaceEntityName.Should().Be("events");
         sut.WorkspaceDestinationLabel.Should().Be("Subscriptions");
+        sut.WorkspaceEntityKindLabel.Should().Be("Topics");
         changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceDestinationLabel));
 
         // Act / Assert - subscription
@@ -407,6 +410,7 @@ public class MainWindowViewModelTests
         sut.WorkspaceTopicName.Should().Be("events");
         sut.WorkspaceEntityName.Should().Be("processor");
         sut.WorkspaceDestinationLabel.Should().Be("Active messages");
+        sut.WorkspaceEntityKindLabel.Should().Be("Subscriptions");
         changedProperties.Should().Contain(nameof(MainWindowViewModel.WorkspaceTopicName));
 
         // Act / Assert - message view
