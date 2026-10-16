@@ -4,7 +4,7 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Media.Transformation;
+using Avalonia.Media;
 using Avalonia.Styling;
 
 /// <summary>
@@ -25,7 +25,7 @@ public partial class MessageInspectorView : UserControl
                 Setters =
                 {
                     new Setter(OpacityProperty, 0.35),
-                    new Setter(RenderTransformProperty, TransformOperations.Parse("translateY(4px)"))
+                    new Setter(TranslateTransform.YProperty, 4.0)
                 }
             },
             new KeyFrame
@@ -34,7 +34,7 @@ public partial class MessageInspectorView : UserControl
                 Setters =
                 {
                     new Setter(OpacityProperty, 1.0),
-                    new Setter(RenderTransformProperty, TransformOperations.Parse("none"))
+                    new Setter(TranslateTransform.YProperty, 0.0)
                 }
             }
         }
@@ -45,6 +45,8 @@ public partial class MessageInspectorView : UserControl
     public MessageInspectorView()
     {
         InitializeComponent();
+        // The settle animates this transform's Y; RenderTransform itself has no animator.
+        InspectedContent.RenderTransform = new TranslateTransform();
         SizeChanged += (_, _) => Classes.Set("compact", Bounds.Height < 400);
     }
 
