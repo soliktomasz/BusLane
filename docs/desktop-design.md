@@ -115,11 +115,11 @@ The workspace is flat: square pane surfaces, thin dividers, tonal hover/selectio
 
 ## Motion
 
-Motion is feedback and continuity, never decoration. Row, button, tab, and splitter tints ease over (120-150ms). Main-screen command buttons settle from a (0.96) press scale. Selecting a message settles the inspector content from (0.35) opacity and a (4px) offset over (180ms) with `cubic-bezier(0.16, 1, 0.3, 1)`; a newer selection interrupts the running one. Message empty and loading states fade in over (200ms). Avalonia exposes no reduced-motion preference, so every effect stays short, small, and non-spatial beyond a few pixels.
+Motion is feedback and continuity, never decoration. Row, button, tab, and splitter tints ease over (120-150ms). Main-screen command buttons settle from a (0.96) press scale. Selecting a message settles the inspector content from (0.35) opacity and a (4px) offset over (180ms) with `cubic-bezier(0.16, 1, 0.3, 1)`; a newer selection interrupts the running one. Message empty and loading states fade in over (200ms). The selected tab's bar grows from the centre over (220ms), and switching tabs crossfades the content over (150ms). Avalonia exposes no reduced-motion preference, so every effect stays short, small, and non-spatial beyond a few pixels.
 
 ## Shapes
 
-Shared desktop radii remain small controls, buttons, and cards/dialogs as recorded in the frontmatter. Workspace panes and message rows have square corners; search keeps the small radius. Namespace tabs retain softly rounded top corners (6px); they sit on the strip's bottom seam, stay transparent at rest, and the active tab joins the content surface with a (2px) violet cap instead of a full outline. Search, Select, Refresh, and More share the small radius and a thin border. Existing rounded badges and state indicators remain intact.
+Shared desktop radii remain small controls, buttons, and cards/dialogs as recorded in the frontmatter. Workspace panes and message rows have square corners; search keeps the small radius. Namespace tabs retain softly rounded top corners (6px); they sit on the strip's bottom seam, stay transparent at rest, and the active tab joins the content surface with a (2px) violet cap instead of a full outline. Search, Select, Refresh, and More share the small radius and a thin border. The Active/Dead Letter and Body/Properties strips share one tab treatment: Medium-weight labels that change only colour, a label-width (2px) violet bar on a full-width seam, a soft hover/focus pill, and a muted Active count while that tab is not showing. Existing rounded badges and state indicators remain intact.
 
 ## Components
 
