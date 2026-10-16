@@ -147,6 +147,14 @@ Message details uses the approved Split inspector layout. A fixed 260px metadata
 
 The persistent header shows subject (or Message details), sequence number, Export, Resend, Clone, and Close. Copy body stays beside the payload. Preserve existing commands, optional-field visibility, selectable metadata, and both themes. Modal margins are 32px; the footer identifies read-only inspection. Routing appears when any supported routing field is present.
 
+### Namespace overview
+
+The overview shares the entity workspace's header: a kind tile, "Namespace overview" over the last refresh time (with updating and partial-snapshot notes), outlined Refresh, and an icon-only Close, all on the content's (24px) inset. Overview, Issues (with its count), and Analytics are radio tabs that reuse the message tabs' label-width violet indicator.
+
+Overview stacks entity search, a seamed five-value health strip (Needs attention, Dead Letters, Active Messages, Scheduled, Total Size: 26px semibold values, the change since the previous refresh with a trend icon, and a sparkline coloured by meaning), then a two-column body. The left panel lists ranked entities with a status dot, reason, dead-lettered / scheduled / active chips, and always-visible Messages, Dead letters, Sessions, and Mark reviewed actions. A (320px) right column holds Top queues, Top topics (each with a share-of-namespace bar), and Continue work (pinned and recent destinations with kind icons and empty hints). Issues lists every actionable entity, including reviewed ones, in one panel. Analytics keeps the global and per-chart ranges and draws a 2px line with HH:mm ticks and gridlines only.
+
+Panels are flat (8px radius, 1px border); there are no nested cards or shadows. Verification used synthetic data in a temporary harness in light and dark at (1440px) and (1000px).
+
 ### Send Message composer
 
 Send Message retains the native Compose, Properties, and Custom tabs within a modal capped at (960 × 760px), with minimum width (720px) and an outer margin (24px). The destination and Close remain in the fixed header; compact tabs and template tools sit below it. A persistent Send/Cancel footer keeps the body-required helper visible. Send is disabled and reads Sending... while the existing sending state is active.

@@ -18,9 +18,13 @@ public partial class MetricCardViewModel : ObservableObject
     private double _value;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TrendDisplay))]
     private double _trendPercentage;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TrendDisplay))]
+    [NotifyPropertyChangedFor(nameof(IsTrendUp))]
+    [NotifyPropertyChangedFor(nameof(IsTrendDown))]
     private MetricTrend _trend;
 
     [ObservableProperty]
@@ -44,6 +48,14 @@ public partial class MetricCardViewModel : ObservableObject
                 : $"{Value.ToString("N1", CultureInfo.InvariantCulture)} MB";
         }
     }
+
+    /// <summary>Change since the previous refresh, e.g. "+10%", or "No change".</summary>
+    public string TrendDisplay => Trend == MetricTrend.Stable
+        ? "No change"
+        : TrendPercentage.ToString("+0.#;-0.#", CultureInfo.InvariantCulture) + "%";
+
+    public bool IsTrendUp => Trend == MetricTrend.Up;
+    public bool IsTrendDown => Trend == MetricTrend.Down;
 
     private readonly Queue<double> _history = new(20);
     private double? _previousValue;

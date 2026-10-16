@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:BusLane.Models.Dashboard"
+             x:Class="BusLane.Views.Controls.OverviewDestinationRow"
+             x:DataType="models:NamespaceEntitySearchResult"
+             x:CompileBindings="True">
+    <!-- Kind icon, path and kind label: one row in Continue work. -->
+    <Grid ColumnDefinitions="20,*,Auto" ColumnSpacing="10">
+        <Panel VerticalAlignment="Center">
+            <LucideIcon Kind="Inbox" Size="15"
+                        IsVisible="{Binding TypeLabel, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Queue}"/>
+            <LucideIcon Kind="Megaphone" Size="15"
+                        IsVisible="{Binding TypeLabel, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Topic}"/>
+            <LucideIcon Kind="ListOrdered" Size="15"
+                        IsVisible="{Binding TypeLabel, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Subscription}"/>
+        </Panel>
+        <TextBlock Grid.Column="1" Text="{Binding DisplayPath}" Classes="menu-item-label"
+                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayPath}"
+                   VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="2" Text="{Binding TypeLabel}" Classes="overview-status"
+                   VerticalAlignment="Center"/>
+    </Grid>
+</UserControl>

@@ -54,4 +54,35 @@ public class MetricCardViewModelTests
         // Assert
         _sut.ValueDisplay.Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData(100, 110, "+10%", true, false)]
+    [InlineData(100, 92.5, "-7.5%", false, true)]
+    [InlineData(100, 100, "No change", false, false)]
+    public void TrendDisplay_DescribesChangeSincePreviousRefresh(
+        double previous, double current, string expected, bool isUp, bool isDown)
+    {
+        // Arrange
+        var sut = new MetricCardViewModel("Test", "units");
+        sut.UpdateValue(previous);
+
+        // Act
+        sut.UpdateValue(current);
+
+        // Assert
+        sut.TrendDisplay.Should().Be(expected);
+        sut.IsTrendUp.Should().Be(isUp);
+        sut.IsTrendDown.Should().Be(isDown);
+    }
+
+    [Fact]
+    public void TrendDisplay_BeforeSecondRefresh_IsNoChange()
+    {
+        // Arrange / Act
+        var sut = new MetricCardViewModel("Test", "units");
+        sut.UpdateValue(42);
+
+        // Assert
+        sut.TrendDisplay.Should().Be("No change");
+    }
 }

@@ -100,10 +100,17 @@ public partial class DashboardPlotView : UserControl
         }
         else
         {
-            PlotHost.Plot.Add.Scatter(xs, ys, color);
+            // A continuous line reads as a trend; per-sample markers add noise at refresh cadence.
+            var series = PlotHost.Plot.Add.Scatter(xs, ys, color);
+            series.MarkerSize = 0;
+            series.LineWidth = 2;
         }
 
-        PlotHost.Plot.Axes.DateTimeTicksBottom();
+        var timeAxis = PlotHost.Plot.Axes.DateTimeTicksBottom();
+        if (timeAxis.TickGenerator is DateTimeAutomatic automatic)
+        {
+            automatic.LabelFormatter = time => time.ToString("HH:mm");
+        }
 
         var horizontalLimits = GetHorizontalLimits(line, xs);
         var xMin = horizontalLimits.Minimum;
@@ -153,6 +160,13 @@ public partial class DashboardPlotView : UserControl
         plot.FigureBorder.Color = ColorHex("#00000000");
         plot.DataBorder.Color = ColorHex("#00000000");
         plot.Axes.Color(axisColor);
+        // Gridlines carry the scale; no frame box or tick marks around the data.
+        foreach (var axis in plot.Axes.GetAxes())
+        {
+            axis.FrameLineStyle.Width = 0;
+            axis.MajorTickStyle.Length = 0;
+            axis.MinorTickStyle.Length = 0;
+        }
 
         // Horizontal gridlines only, quiet.
         plot.Grid.IsVisible = true;

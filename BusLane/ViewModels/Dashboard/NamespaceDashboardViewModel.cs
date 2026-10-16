@@ -117,16 +117,16 @@ public partial class NamespaceDashboardViewModel : ObservableObject
         SizeCard = new MetricCardViewModel("Total Size", "MB");
 
         // Initialize top entities lists
-        TopQueues = new TopEntitiesListViewModel("Top Queues");
-        TopTopics = new TopEntitiesListViewModel("Top Topics");
+        TopQueues = new TopEntitiesListViewModel("Top queues");
+        TopTopics = new TopEntitiesListViewModel("Top topics");
 
         // Initialize charts
         Charts = new ObservableCollection<DashboardChartViewModel>
         {
-            new("Active Messages Over Time"),
-            new("Dead Letters Over Time"),
-            new("Scheduled Messages Over Time"),
-            new("Total Size (MB) Over Time")
+            new("Active messages"),
+            new("Dead letters"),
+            new("Scheduled messages"),
+            new("Total size (MB)")
         };
 
         foreach (var chart in Charts)

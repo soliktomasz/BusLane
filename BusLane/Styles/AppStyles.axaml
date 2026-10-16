@@ -1298,6 +1298,253 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 
+    <!-- Namespace overview: flat bordered panels, a seamed health strip, compact triage rows. -->
+    <Style Selector="Border.overview-panel">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <Style Selector="Border.overview-panel-header">
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="MinHeight" Value="46"/>
+    </Style>
+    <Style Selector="TextBlock.overview-panel-title">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.overview-status">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    <Style Selector="TextBlock.overview-status.accent">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+    <Style Selector="TextBlock.overview-empty-hint">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Margin" Value="10,2,10,4"/>
+    </Style>
+    <Style Selector="StackPanel.overview-empty">
+        <Setter Property="Spacing" Value="6"/>
+        <Setter Property="Margin" Value="24,32"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="StackPanel.overview-empty LucideIcon">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector="Border.overview-section-strip">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="12,0"/>
+    </Style>
+    <Style Selector="RadioButton.section-tab">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="MinHeight" Value="42"/>
+        <Setter Property="Margin" Value="0,0,0,-1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Foreground" Duration="0:0:0.12"/>
+            </Transitions>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="RadioButton">
+                <Panel Background="Transparent">
+                    <Border x:Name="PART_HoverSurface" Margin="4,7" CornerRadius="6" Background="Transparent">
+                        <Border.Transitions>
+                            <Transitions>
+                                <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"/>
+                    <Border x:Name="PART_Indicator" Height="2" Margin="12,0" VerticalAlignment="Bottom"
+                            CornerRadius="2,2,0,0" Background="{DynamicResource AccentBrand}"
+                            Opacity="0" RenderTransform="scaleX(0.4)">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="0.16,1,0.3,1"/>
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.section-tab:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="RadioButton.section-tab:pointerover:not(:checked) /template/ Border#PART_HoverSurface">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+    </Style>
+    <Style Selector="RadioButton.section-tab:focus-visible /template/ Border#PART_HoverSurface">
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+    <Style Selector="RadioButton.section-tab:checked">
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="RadioButton.section-tab:checked /template/ Border#PART_Indicator">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="RenderTransform" Value="scaleX(1)"/>
+    </Style>
+
+    <Style Selector="Border.overview-metric-cell">
+        <Setter Property="Padding" Value="18,16"/>
+        <Setter Property="BorderThickness" Value="1,0,0,0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+    <Style Selector="Border.overview-metric-cell.first">
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="TextBlock.overview-metric-title">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    <Style Selector="TextBlock.overview-metric-value">
+        <Setter Property="FontSize" Value="26"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LetterSpacing" Value="-0.4"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="TextBlock.overview-metric-caption">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    <Style Selector="LucideIcon.overview-metric-caption-icon">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector="TextBlock.overview-row-title">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="TextBlock.overview-figure">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Border.overview-chip">
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+    <Style Selector="Border.overview-chip TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    <Style Selector="Border.overview-chip.danger">
+        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    <Style Selector="Border.overview-chip.danger TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+    </Style>
+    <Style Selector="Border.overview-chip.warning">
+        <Setter Property="Background" Value="{DynamicResource SurfaceWarning}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    <Style Selector="Border.overview-chip.warning TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextWarning}"/>
+    </Style>
+
+    <Style Selector="Button.overview-row-action">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.overview-row-action:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="Button.overview-row-action:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+    </Style>
+    <Style Selector="Button.overview-row-action:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+    <Style Selector="Button.overview-row-action.quiet">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+    </Style>
+    <Style Selector="Button.overview-row-action.quiet:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+
+    <Style Selector="Button.overview-link">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.overview-link:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+    <Style Selector="Button.overview-link:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+
+    <Style Selector="ProgressBar.overview-share">
+        <Setter Property="Height" Value="4"/>
+        <Setter Property="MinHeight" Value="4"/>
+        <Setter Property="CornerRadius" Value="2"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+    <Style Selector="ComboBox.overview-range">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+    <Style Selector="ListBox.overview-issues ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="ListBox.overview-issues ListBoxItem:selected /template/ ContentPresenter, ListBox.overview-issues ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
     <Style Selector="Border.message-search-bar">
         <Setter Property="Padding" Value="16,12"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -1539,21 +1786,18 @@
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
+    <!-- The inbox sits inside an overview panel, which owns the frame. -->
     <Style Selector="Border.dashboard-inbox-surface">
-        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="BoxShadow" Value="0 1 2 0 #0D000000"/>
-        <Setter Property="ClipToBounds" Value="True"/>
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.inbox-item-surface">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="CornerRadius" Value="0"/>
-        <Setter Property="Padding" Value="16,12"/>
-        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="16,14"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
 
