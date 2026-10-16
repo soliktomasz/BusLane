@@ -348,11 +348,18 @@
                         <Grid RowDefinitions="Auto,*,Auto">
                             <Border Grid.Row="0" Padding="16,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1"
                                     Background="{DynamicResource SurfaceSubtle}">
-                                <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
-                                    <TextBlock Text="Subject / sequence" Classes="caption" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="Message ID" Classes="caption" FontSize="11"/>
-                                    <TextBlock Grid.Column="2" Text="Enqueued" Classes="caption" FontSize="11"/>
-                                </Grid>
+                                <DockPanel>
+                                    <!-- Reserves the row checkbox width so headers stay over their columns in Select mode. -->
+                                    <CheckBox DockPanel.Dock="Left" Margin="0,0,10,0" Opacity="0" MinHeight="0" Height="0" VerticalAlignment="Top"
+                                              IsHitTestVisible="False" Focusable="False" IsTabStop="False"
+                                              AutomationProperties.AccessibilityView="Raw"
+                                              IsVisible="{Binding CurrentMessageOps.IsMultiSelectMode}"/>
+                                    <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
+                                        <TextBlock Text="Subject / sequence" Classes="caption" FontSize="11"/>
+                                        <TextBlock Grid.Column="1" Text="Message ID" Classes="caption" FontSize="11"/>
+                                        <TextBlock Grid.Column="2" Text="Enqueued" Classes="caption" FontSize="11"/>
+                                    </Grid>
+                                </DockPanel>
                             </Border>
                             <Border Grid.Row="0"
                                     Classes="inline-loading-surface"
@@ -491,11 +498,18 @@
                         <Grid RowDefinitions="Auto,*,Auto">
                             <Border Grid.Row="0" Padding="16,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1"
                                     Background="{DynamicResource SurfaceSubtle}">
-                                <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
-                                    <TextBlock Text="Subject / sequence" Classes="caption" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="Message ID" Classes="caption" FontSize="11"/>
-                                    <TextBlock Grid.Column="2" Text="Enqueued" Classes="caption" FontSize="11"/>
-                                </Grid>
+                                <DockPanel>
+                                    <!-- Reserves the row checkbox width so headers stay over their columns in Select mode. -->
+                                    <CheckBox DockPanel.Dock="Left" Margin="0,0,10,0" Opacity="0" MinHeight="0" Height="0" VerticalAlignment="Top"
+                                              IsHitTestVisible="False" Focusable="False" IsTabStop="False"
+                                              AutomationProperties.AccessibilityView="Raw"
+                                              IsVisible="{Binding CurrentMessageOps.IsMultiSelectMode}"/>
+                                    <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
+                                        <TextBlock Text="Subject / sequence" Classes="caption" FontSize="11"/>
+                                        <TextBlock Grid.Column="1" Text="Message ID" Classes="caption" FontSize="11"/>
+                                        <TextBlock Grid.Column="2" Text="Enqueued" Classes="caption" FontSize="11"/>
+                                    </Grid>
+                                </DockPanel>
                             </Border>
                             <Border Grid.Row="0"
                                     Classes="inline-loading-surface"

@@ -113,9 +113,13 @@ Message headers and rows align two flexible subject/ID columns, an enqueue colum
 
 The workspace is flat: square pane surfaces, thin dividers, tonal hover/selection feedback, and no row shadows. A bottom divider (1px) separates rows. The native splitters use muted seams at rest and violet on hover or keyboard focus. Existing dialogs, loading overlays, and other desktop surfaces retain their established elevation; this workspace treatment does not redefine them.
 
+## Motion
+
+Motion is feedback and continuity, never decoration. Row, button, tab, and splitter tints ease over (120-150ms). Main-screen command buttons settle from a (0.96) press scale. Selecting a message settles the inspector content from (0.35) opacity and a (4px) offset over (180ms) with `cubic-bezier(0.16, 1, 0.3, 1)`; a newer selection interrupts the running one. Message empty and loading states fade in over (200ms). Avalonia exposes no reduced-motion preference, so every effect stays short, small, and non-spatial beyond a few pixels.
+
 ## Shapes
 
-Shared desktop radii remain small controls, buttons, and cards/dialogs as recorded in the frontmatter. Workspace panes and message rows have square corners; search keeps the small radius. Namespace tabs retain softly rounded top corners (6px). Existing rounded badges and state indicators remain intact.
+Shared desktop radii remain small controls, buttons, and cards/dialogs as recorded in the frontmatter. Workspace panes and message rows have square corners; search keeps the small radius. Namespace tabs retain softly rounded top corners (6px); they sit on the strip's bottom seam, stay transparent at rest, and the active tab joins the content surface with a (2px) violet cap instead of a full outline. Search, Select, Refresh, and More share the small radius and a thin border. Existing rounded badges and state indicators remain intact.
 
 ## Components
 

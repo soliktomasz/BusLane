@@ -101,7 +101,7 @@
                                             Classes="workspace-tab-close"
                                             Command="{Binding $parent[UserControl].DataContext.CloseTabCommand}"
                                             CommandParameter="{Binding TabId}"
-                                            Margin="8,0,0,0"
+                                            Margin="6,0,-6,0"
                                             VerticalAlignment="Center"
                                             AutomationProperties.Name="Close tab"
                                             ToolTip.Tip="Close tab">
@@ -120,9 +120,9 @@
                 <Button Classes="workspace-new-tab"
                         Command="{Binding OpenConnectionLibraryCommand}"
                         ToolTip.Tip="Open new connection tab">
-                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <LucideIcon Kind="Plus" Size="14"/>
-                        <TextBlock Text="New" FontSize="11"/>
+                        <TextBlock Text="New" FontSize="12"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

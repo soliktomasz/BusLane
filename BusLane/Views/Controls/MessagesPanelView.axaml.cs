@@ -17,6 +17,11 @@ public partial class MessagesPanelView : UserControl
             if (e.Property == IsVisibleProperty)
                 UpdateInspectorLayout();
         };
+        AddHandler(SelectingItemsControl.SelectionChangedEvent, (_, e) =>
+        {
+            if (e.Source is ListBox { Classes: var classes } && classes.Contains("message-table") && e.AddedItems.Count > 0)
+                InspectorPanel.PlaySelectionMotion();
+        });
     }
 
     private void UpdateInspectorLayout()

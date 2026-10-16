@@ -34,12 +34,12 @@
                 <TextBlock Text="Inspect its body and properties here. Peeking leaves messages in the queue."
                            Classes="caption" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="250"/>
             </StackPanel>
-            <Grid RowDefinitions="Auto,Auto,*,Auto"
+            <Grid x:Name="InspectedContent" RowDefinitions="Auto,Auto,*,Auto"
                   IsVisible="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
                 <Border Grid.Row="0" Classes="inspector-header" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
                     <StackPanel Classes="inspector-heading">
                         <Grid ColumnDefinitions="*,Auto,Auto">
-                            <TextBlock Text="Message details · Read only" Classes="caption" VerticalAlignment="Center"/>
+                            <TextBlock Text="Message details" Classes="caption" VerticalAlignment="Center"/>
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CurrentMessageOps.ExpandMessageDetailsCommand}"
                                     AutomationProperties.Name="Expand message details" ToolTip.Tip="Expand message details">
                                 <LucideIcon Kind="Maximize2" Size="15"/>
@@ -70,7 +70,7 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Border>
-                <TabControl Grid.Row="2" Classes="inspector-tabs">
+                <TabControl Grid.Row="2" Classes="inspector-tabs message-inspector-tabs">
                     <TabItem Header="Body">
                         <Grid RowDefinitions="Auto,*,Auto">
                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="18,8">
@@ -153,9 +153,9 @@
                         <Button Classes="subtle small" Command="{Binding ExportMessageCommand}" CommandParameter="{Binding CurrentMessageOps.SelectedMessage}">
                             <StackPanel Orientation="Horizontal" Spacing="6"><LucideIcon Kind="Download" Size="14"/><TextBlock Text="Export"/></StackPanel>
                         </Button>
-                        <Button Classes="icon-button" Command="{Binding CloneMessageCommand}" CommandParameter="{Binding CurrentMessageOps.SelectedMessage}"
-                                AutomationProperties.Name="Clone inspected message" ToolTip.Tip="Clone message">
-                            <LucideIcon Kind="CopyPlus" Size="14"/>
+                        <Button Classes="subtle small" Command="{Binding CloneMessageCommand}" CommandParameter="{Binding CurrentMessageOps.SelectedMessage}"
+                                AutomationProperties.Name="Clone inspected message" ToolTip.Tip="Open a new message prefilled from this one">
+                            <StackPanel Orientation="Horizontal" Spacing="6"><LucideIcon Kind="CopyPlus" Size="14"/><TextBlock Text="Clone"/></StackPanel>
                         </Button>
                     </StackPanel>
                 </Border>

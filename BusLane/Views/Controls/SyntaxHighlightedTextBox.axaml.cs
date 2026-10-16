@@ -51,6 +51,9 @@ public partial class SyntaxHighlightedTextBox : UserControl
     {
         InitializeComponent();
         _editor = this.FindControl<TextEditor>("Editor");
+        // Separate the line-number gutter from the payload text.
+        if (_editor != null)
+            _editor.TextArea.TextView.Margin = new Thickness(8, 0, 0, 0);
         EnsureHighlightingsLoaded();
         ActualThemeVariantChanged += (_, _) => UpdateSyntaxHighlighting();
     }
