@@ -29,6 +29,10 @@ public partial class MessagesPanelView : UserControl
         });
     }
 
+    // Choosing a menu action closes the More menu, as a native menu would.
+    private void OnMoreMenuItemClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        MoreActionsButton.Flyout?.Hide();
+
     private void UpdateInspectorLayout()
     {
         var stacked = Bounds.Width < 660;

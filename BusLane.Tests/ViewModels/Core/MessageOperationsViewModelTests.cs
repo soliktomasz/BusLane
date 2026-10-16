@@ -11,6 +11,37 @@ using NSubstitute;
 public class MessageOperationsViewModelTests
 {
     [Fact]
+    public void SetSortOrder_AppliesRequestedOrderAndIgnoresRepeats()
+    {
+        // Arrange
+        var sut = CreateSut(Substitute.For<IServiceBusOperations>(), () => "orders", () => null, () => false, () => false);
+        var now = DateTimeOffset.UtcNow;
+        foreach (var message in new[]
+                 {
+                     CreateMessage("middle", now.AddMinutes(-1), 2),
+                     CreateMessage("newest", now, 3),
+                     CreateMessage("oldest", now.AddMinutes(-2), 1)
+                 })
+        {
+            sut.Messages.Add(message);
+        }
+
+        // Act / Assert - oldest first
+        sut.SetSortOrder(descending: false);
+        sut.SortDescending.Should().BeFalse();
+        sut.FilteredMessages.Select(m => m.MessageId).Should().Equal("oldest", "middle", "newest");
+
+        // Act / Assert - choosing the current order keeps it
+        sut.SetSortOrder(descending: false);
+        sut.FilteredMessages.Select(m => m.MessageId).Should().Equal("oldest", "middle", "newest");
+
+        // Act / Assert - newest first
+        sut.SetSortOrder(descending: true);
+        sut.SortDescending.Should().BeTrue();
+        sut.FilteredMessages.Select(m => m.MessageId).Should().Equal("newest", "middle", "oldest");
+    }
+
+    [Fact]
     public void ExpandMessageDetails_WithoutSelection_CannotExecute()
     {
         // Arrange

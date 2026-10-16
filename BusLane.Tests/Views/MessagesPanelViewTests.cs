@@ -109,7 +109,7 @@ public class MessagesPanelViewTests
             .Select(element => element.Attribute("Command")?.Value)
             .Should()
             .Contain([
-                "{Binding ToggleSortOrderCommand}",
+                "{Binding SetSortOrderCommand}",
                 "{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}",
                 "{Binding PurgeMessagesCommand}"
             ]);

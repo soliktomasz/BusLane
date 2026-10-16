@@ -235,57 +235,83 @@
                                     </MultiBinding>
                                 </Button.IsVisible>
                 </Button>
-                <Button Classes="entity-header-action outline icon-only message-header-utility"
+                <Button x:Name="MoreActionsButton"
+                        Classes="entity-header-action outline icon-only message-header-utility"
                         AutomationProperties.Name="More message actions"
                         ToolTip.Tip="More message actions"
                         IsVisible="{Binding CurrentNavigation.IsSessionInspectorTabSelected, Converter={x:Static BoolConverters.Not}}">
                                     <Button.Flyout>
-                                        <Flyout Placement="BottomEdgeAlignedRight">
-                                            <StackPanel Spacing="4" MinWidth="190">
-                                                <Button Classes="subtle small"
-                                                        Command="{Binding ToggleSortOrderCommand}"
-                                                        HorizontalAlignment="Stretch"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <LucideIcon Kind="ArrowDownUp" Size="13"/>
-                                                        <TextBlock Text="{Binding CurrentMessageOps.SortButtonText}"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button Classes="subtle small"
-                                                        Command="{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}"
-                                                        HorizontalAlignment="Stretch"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <LucideIcon Kind="LockKeyhole" Size="13"/>
-                                                        <TextBlock Text="Receive locked"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Expander Header="Receive deferred messages">
-                                                    <StackPanel Spacing="8" Margin="0,8,0,0">
-                                                        <TextBlock Text="Sequence numbers, separated by commas"
-                                                                   Classes="caption"/>
-                                                        <TextBox Text="{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}"
-                                                                 PlaceholderText="e.g. 12, 34, 56" MinWidth="240"/>
-                                                        <Button Classes="secondary small"
-                                                                Content="Receive deferred"
-                                                                Command="{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}"/>
-                                                    </StackPanel>
-                                                </Expander>
-                                                <Border Height="1"
-                                                        Margin="4,4"
-                                                        Background="{DynamicResource BorderMuted}"/>
-                                                <Button Classes="danger-subtle small"
-                                                        Command="{Binding PurgeMessagesCommand}"
-                                                        HorizontalAlignment="Stretch"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <LucideIcon Kind="Trash2" Size="13"/>
-                                                        <TextBlock Text="Purge messages"/>
-                                                    </StackPanel>
-                                                </Button>
-                                            </StackPanel>
-                                        </Flyout>
-                                    </Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight" FlyoutPresenterClasses="menu-flyout">
+                            <StackPanel Spacing="2" Width="296">
+                                <TextBlock Text="Sort by enqueued time" Classes="menu-group-label"/>
+                                <Button Classes="menu-item" Command="{Binding SetSortOrderCommand}" CommandParameter="{x:True}"
+                                        Click="OnMoreMenuItemClick" AutomationProperties.Name="Sort newest first">
+                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                        <LucideIcon Kind="Check" Size="15" Classes="menu-check"
+                                                    IsVisible="{Binding CurrentMessageOps.SortDescending}"/>
+                                        <TextBlock Grid.Column="1" Text="Newest first" Classes="menu-item-label"/>
+                                    </Grid>
+                                </Button>
+                                <Button Classes="menu-item" Command="{Binding SetSortOrderCommand}" CommandParameter="{x:False}"
+                                        Click="OnMoreMenuItemClick" AutomationProperties.Name="Sort oldest first">
+                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                        <LucideIcon Kind="Check" Size="15" Classes="menu-check"
+                                                    IsVisible="{Binding !CurrentMessageOps.SortDescending}"/>
+                                        <TextBlock Grid.Column="1" Text="Oldest first" Classes="menu-item-label"/>
+                                    </Grid>
+                                </Button>
+
+                                <Border Classes="menu-separator"/>
+
+                                <Button Classes="menu-item" Command="{Binding CurrentMessageOps.ReceiveLockedMessagesCommand}"
+                                        Click="OnMoreMenuItemClick">
+                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                        <LucideIcon Kind="LockKeyhole" Size="15"/>
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Text="Receive locked" Classes="menu-item-label"/>
+                                            <TextBlock Text="Lock a page to complete, abandon, defer, or dead-letter."
+                                                       Classes="menu-item-description"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                                <Border Classes="menu-item-static">
+                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10" RowDefinitions="Auto,Auto">
+                                        <LucideIcon Kind="Clock" Size="15"/>
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Text="Receive deferred" Classes="menu-item-label"/>
+                                            <TextBlock Text="Sequence numbers, separated by commas."
+                                                       Classes="menu-item-description"/>
+                                        </StackPanel>
+                                        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="6" Margin="0,8,0,0">
+                                            <TextBox Classes="menu-input"
+                                                     Text="{Binding CurrentMessageOps.DeferredSequenceNumbersText, Mode=TwoWay}"
+                                                     PlaceholderText="e.g. 12, 34, 56"
+                                                     AutomationProperties.Name="Deferred sequence numbers"/>
+                                            <Button Grid.Column="1" Classes="secondary small menu-input-action"
+                                                    Content="Receive"
+                                                    Command="{Binding CurrentMessageOps.ReceiveDeferredMessagesCommand}"
+                                                    Click="OnMoreMenuItemClick"
+                                                    AutomationProperties.Name="Receive deferred messages"/>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+
+                                <Border Classes="menu-separator"/>
+
+                                <Button Classes="menu-item destructive" Command="{Binding PurgeMessagesCommand}"
+                                        Click="OnMoreMenuItemClick">
+                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                        <LucideIcon Kind="Trash2" Size="15"/>
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Text="Purge messages" Classes="menu-item-label"/>
+                                            <TextBlock Text="Shows a preview first. Purged messages can't be recovered."
+                                                       Classes="menu-item-description"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
                     <LucideIcon Kind="Ellipsis" Size="16"/>
                 </Button>
             </StackPanel>

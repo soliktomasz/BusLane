@@ -74,7 +74,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
 
     [ObservableProperty] private int _selectionVersion;
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SortButtonText))]
     private bool _sortDescending = true;
 
     [ObservableProperty] private string _messageSearchText = "";
@@ -107,7 +106,6 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public bool HasSelectedMessages => SelectedMessages.Count > 0;
     public int SelectedMessagesCount => SelectedMessages.Count;
     public bool CanResubmitDeadLetters => HasSelectedMessages && _getShowDeadLetter();
-    public string SortButtonText => SortDescending ? "↓ Newest" : "↑ Oldest";
     public bool IsSessionScoped => !string.IsNullOrWhiteSpace(ScopedSessionId);
     public string? SessionScopeLabel => IsSessionScoped ? $"Session: {ScopedSessionId}" : null;
 
@@ -1032,9 +1030,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
         SelectionVersion++;
     }
 
-    public void ToggleSortOrder()
+    public void SetSortOrder(bool descending)
     {
-        SortDescending = !SortDescending;
+        if (SortDescending == descending) return;
+
+        SortDescending = descending;
         ApplySorting();
     }
 

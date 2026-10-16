@@ -1194,6 +1194,110 @@
         <Setter Property="IsVisible" Value="False"/>
     </Style>
 
+    <!-- More menu: card surface, grouped actions with factual one-line descriptions. -->
+    <Style Selector="FlyoutPresenter.menu-flyout">
+        <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="MaxWidth" Value="340"/>
+    </Style>
+    <Style Selector="FlyoutPresenter.menu-flyout /template/ Border#LayoutRoot">
+        <Setter Property="BoxShadow" Value="0 12 32 0 #26000000"/>
+    </Style>
+    <Style Selector="TextBlock.menu-group-label">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="Margin" Value="10,6,10,4"/>
+    </Style>
+    <Style Selector="Border.menu-separator">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="4,4"/>
+        <Setter Property="Background" Value="{DynamicResource BorderMuted}"/>
+    </Style>
+    <Style Selector="Button.menu-item">
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Border.menu-item-static">
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.menu-item">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.menu-item /template/ ContentPresenter">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.menu-item:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+    </Style>
+    <Style Selector="Button.menu-item:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+    </Style>
+    <Style Selector="Button.menu-item:focus-visible /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+    </Style>
+    <Style Selector="Button.menu-item:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+    <Style Selector="Button.menu-item LucideIcon, Border.menu-item-static LucideIcon">
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Margin" Value="0,1,0,0"/>
+    </Style>
+    <Style Selector="Button.menu-item LucideIcon.menu-check">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+    </Style>
+    <Style Selector="TextBlock.menu-item-label">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+    <Style Selector="TextBlock.menu-item-description">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="LineHeight" Value="16"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="Button.menu-item.destructive">
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+    </Style>
+    <Style Selector="Button.menu-item.destructive LucideIcon">
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+    </Style>
+    <Style Selector="Button.menu-item.destructive:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+    </Style>
+    <Style Selector="TextBox.menu-input">
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+    </Style>
+    <Style Selector="Button.menu-input-action">
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
     <Style Selector="Border.message-search-bar">
         <Setter Property="Padding" Value="16,12"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>

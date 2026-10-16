@@ -1617,7 +1617,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IAsyncDis
     private void DeselectAllMessages() => CurrentMessageOps.DeselectAllMessages();
 
     [RelayCommand]
-    private void ToggleSortOrder() => CurrentMessageOps.ToggleSortOrder();
+    private void SetSortOrder(bool descending) => CurrentMessageOps.SetSortOrder(descending);
 
     [RelayCommand]
     private void ClearMessageSearch() => CurrentMessageOps.ClearMessageSearch();
