@@ -85,23 +85,23 @@ public partial class MainWindow : Window
                 vm.Navigation.CurrentEntityName != null && Execute(vm.OpenSendMessagePopupCommand),
 
             [KeyboardShortcutAction.CopyMessageBody] = vm =>
-                !IsTextInputFocused() && vm.MessageOps.SelectedMessage != null && Execute(vm.CopyMessageBodyCommand),
+                !IsTextInputFocused() && vm.CurrentMessageOps.SelectedMessage != null && Execute(vm.CopyMessageBodyCommand),
 
             [KeyboardShortcutAction.DeleteSelected] = vm =>
-                vm.MessageOps.HasSelectedMessages && Execute(vm.BulkDeleteMessagesAsyncCommand),
+                vm.CurrentMessageOps.HasSelectedMessages && Execute(vm.BulkDeleteMessagesAsyncCommand),
 
             [KeyboardShortcutAction.SelectAll] = vm =>
             {
-                if (IsTextInputFocused() || vm.MessageOps.FilteredMessages.Count == 0)
+                if (IsTextInputFocused() || vm.CurrentMessageOps.FilteredMessages.Count == 0)
                     return false;
-                if (!vm.MessageOps.IsMultiSelectMode)
+                if (!vm.CurrentMessageOps.IsMultiSelectMode)
                     vm.ToggleMultiSelectModeCommand.Execute(null);
                 vm.SelectAllMessagesCommand.Execute(null);
                 return true;
             },
 
             [KeyboardShortcutAction.DeselectAll] = vm =>
-                vm.MessageOps.IsMultiSelectMode && Execute(vm.DeselectAllMessagesCommand),
+                vm.CurrentMessageOps.IsMultiSelectMode && Execute(vm.DeselectAllMessagesCommand),
 
             [KeyboardShortcutAction.ToggleMultiSelect] = vm =>
                 Execute(vm.ToggleMultiSelectModeCommand),
@@ -276,7 +276,12 @@ public partial class MainWindow : Window
             vm.CloseStatusPopupCommand.Execute(null);
             return true;
         }
-        if (vm.MessageOps.SelectedMessage != null)
+        if (vm.CurrentMessageOps.IsMessageDetailExpanded)
+        {
+            vm.CurrentMessageOps.CollapseMessageDetailsCommand.Execute(null);
+            return true;
+        }
+        if (vm.CurrentMessageOps.SelectedMessage != null)
         {
             vm.ClearSelectedMessageCommand.Execute(null);
             return true;
@@ -574,7 +579,7 @@ public partial class MainWindow : Window
         else if (isEntityPaneVisible && entityColumn.Width.Value == 0)
         {
             var widths = _workspacePaneWidths.GetValueOrDefault(gridName,
-                (new GridLength(280), new GridLength(1, GridUnitType.Star)));
+                (new GridLength(240), new GridLength(1, GridUnitType.Star)));
             entityColumn.Width = widths.Item1;
             messagesColumn.Width = widths.Item2;
             splitterColumn.Width = new GridLength(5);

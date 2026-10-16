@@ -49,12 +49,13 @@ public class MessagesPanelViewTests
 
         // Act
         var messageRows = document.Descendants()
-            .Where(element => element.Attribute("Classes")?.Value == "message-row")
+            .Where(element => element.Name.LocalName == "MessageRowView")
             .ToList();
+        var rowDocument = XDocument.Load(Path.Combine(Path.GetDirectoryName(GetMessagesPanelPath())!, "MessageRowView.axaml"));
 
         // Assert
         messageRows.Should().HaveCount(2);
-        messageRows.Should().OnlyContain(element =>
+        rowDocument.Descendants().Should().Contain(element =>
             element.Attribute("PointerPressed") != null &&
             element.Attribute("PointerPressed")!.Value == "OnMessageRowPointerPressed");
     }

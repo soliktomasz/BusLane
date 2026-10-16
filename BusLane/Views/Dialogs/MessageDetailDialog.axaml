@@ -27,7 +27,7 @@
 
     <Border x:Name="ModalOverlay"
             Classes="modal-overlay"
-            IsVisible="{Binding CurrentMessageOps.SelectedMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+            IsVisible="{Binding CurrentMessageOps.IsMessageDetailExpanded}">
         <Border Background="{DynamicResource CardBackground}"
                 CornerRadius="{StaticResource RadiusLarge}"
                 BorderThickness="1"
@@ -72,7 +72,7 @@
                                 <LucideIcon Kind="Copy" Size="16"/>
                             </Button>
                             <Border Width="1" Margin="6,4" Background="{DynamicResource BorderDefault}"/>
-                            <Button Classes="icon-button" Command="{Binding ClearSelectedMessageCommand}"
+                            <Button Classes="icon-button" Command="{Binding CurrentMessageOps.CollapseMessageDetailsCommand}"
                                     AutomationProperties.Name="Close message details" ToolTip.Tip="Close">
                                 <LucideIcon Kind="X" Size="16"/>
                             </Button>

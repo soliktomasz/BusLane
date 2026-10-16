@@ -19,11 +19,18 @@
             <Border DockPanel.Dock="Top"
                     Classes="pane-search-surface">
                 <StackPanel Spacing="12">
+                    <StackPanel Spacing="5" Margin="0,0,0,6">
+                        <TextBlock Text="{Binding ActiveTab.TabTitle}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource TextSuccess}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Connected" Classes="caption" FontSize="11"/>
+                        </StackPanel>
+                    </StackPanel>
                     <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="4">
                         <TextBlock Grid.Column="0"
                                    Text="Entities"
                                    TextTrimming="CharacterEllipsis"
-                                   FontSize="16"
+                                   FontSize="12"
                                    Classes="heading"
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
@@ -95,7 +102,7 @@
                     <Grid ColumnDefinitions="*" ColumnSpacing="8">
                         <TextBox Grid.Column="0"
                                  Text="{Binding CurrentNavigation.EntityFilter, Mode=TwoWay}"
-                                 PlaceholderText="Search queues, topics, or subscriptions"
+                                 PlaceholderText="Find an entity…"
                                  FontSize="12"
                                  Padding="4,4,4,4"
                                  CornerRadius="{StaticResource RadiusMedium}"

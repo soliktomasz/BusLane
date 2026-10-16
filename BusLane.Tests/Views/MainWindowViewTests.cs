@@ -71,10 +71,10 @@ public class MainWindowViewTests
     }
 
     [Fact]
-    public void MainWindow_EntityWorkspace_ShowsBreadcrumbWithoutOverviewLink()
+    public void MainWindow_EntityWorkspace_ShowsBreadcrumbInMessageHeaderWithoutOverviewLink()
     {
         // Arrange
-        var xaml = File.ReadAllText(GetMainWindowPath());
+        var xaml = File.ReadAllText(GetControlPath("MessagesPanelView.axaml"));
         var breadcrumbXaml = File.ReadAllText(GetControlPath("NamespaceWorkspaceBreadcrumb.axaml"));
 
         // Assert

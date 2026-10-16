@@ -4,10 +4,15 @@
              x:Class="BusLane.Views.Controls.NamespaceWorkspaceBreadcrumb"
              x:DataType="vm:MainWindowViewModel"
              x:CompileBindings="False">
-    <Border Padding="16,10"
-            BorderBrush="{DynamicResource BorderDefault}"
-            BorderThickness="0,0,0,1">
-        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+    <Border>
+        <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <WrapPanel.Styles>
+                <Style Selector="TextBlock">
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+                    <Setter Property="Margin" Value="0,0,6,0"/>
+                </Style>
+            </WrapPanel.Styles>
             <TextBlock Text="Entity Explorer"
                        FontWeight="SemiBold"
                        VerticalAlignment="Center"/>
@@ -23,18 +28,10 @@
                        Classes="caption"
                        VerticalAlignment="Center"
                        IsVisible="{Binding WorkspaceTopicName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-            <TextBlock Text="{Binding WorkspaceEntityName}"
-                       FontWeight="SemiBold"
-                       VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"
-                       ToolTip.Tip="{Binding WorkspaceEntityName}"
-                       IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-            <TextBlock Text="/" Classes="caption" VerticalAlignment="Center"
-                       IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
             <TextBlock Text="{Binding WorkspaceDestinationLabel}"
                        Classes="caption"
                        VerticalAlignment="Center"
                        IsVisible="{Binding WorkspaceDestinationLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-        </StackPanel>
+        </WrapPanel>
     </Border>
 </UserControl>

@@ -9,11 +9,11 @@
              x:CompileBindings="False">
 
     <UserControl.Resources>
-        <converters:MessageSelectionConverter x:Key="MessageSelectionConverter"/>
         <converters:IntEqualsConverter x:Key="IntEqualsConverter"/>
     </UserControl.Resources>
 
-    <Border Classes="pane-card" Padding="0">
+    <Grid x:Name="InspectorWorkspaceGrid" ColumnDefinitions="*,5,360">
+    <Border x:Name="MessageListPane" Grid.Column="0" Classes="pane-card" Padding="0">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Bar with Tabs and Actions -->
             <Border Grid.Row="0" Classes="message-command-bar">
@@ -30,7 +30,14 @@
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"/>
                             </Button>
-                            <TextBlock Margin="0,0,12,0" Text="Messages" Classes="heading" FontSize="16" VerticalAlignment="Center"/>
+                            <StackPanel Spacing="4" VerticalAlignment="Center" MaxWidth="360">
+                                <TextBlock Text="{Binding WorkspaceEntityName}" Classes="heading" FontSize="20"
+                                           TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding WorkspaceEntityName}"
+                                           IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                <TextBlock Text="Messages" Classes="heading" FontSize="20"
+                                           IsVisible="{Binding WorkspaceEntityName, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                                <controls:NamespaceWorkspaceBreadcrumb/>
+                            </StackPanel>
                             <Border Classes="badge-info"
                                     Padding="8,4"
                                     IsVisible="{Binding CurrentMessageOps.IsSessionScoped}">
@@ -54,7 +61,7 @@
                                 VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <LucideIcon Kind="Send" Size="14"/>
-                                <TextBlock Text="Send"/>
+                                <TextBlock Text="Send message"/>
                             </StackPanel>
                             <Button.IsVisible>
                                 <MultiBinding Converter="{x:Static BoolConverters.And}">
@@ -78,7 +85,7 @@
                                          Converter="{x:Static BoolConverters.Not}"/>
                             </MultiBinding>
                         </Border.IsVisible>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
                             <StackPanel Grid.Column="0"
                                         Orientation="Horizontal"
                                         Spacing="8"
@@ -98,7 +105,7 @@
                                         Padding="8,4"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="1"
+                            <StackPanel Grid.Row="1"
                                         Orientation="Horizontal"
                                         Spacing="6"
                                         HorizontalAlignment="Right">
@@ -339,6 +346,14 @@
                     </TabItem.Header>
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
+                            <Border Grid.Row="0" Padding="16,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1"
+                                    Background="{DynamicResource SurfaceSubtle}">
+                                <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
+                                    <TextBlock Text="Subject / sequence" Classes="caption" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" Text="Message ID" Classes="caption" FontSize="11"/>
+                                    <TextBlock Grid.Column="2" Text="Enqueued" Classes="caption" FontSize="11"/>
+                                </Grid>
+                            </Border>
                             <Border Grid.Row="0"
                                     Classes="inline-loading-surface"
                                     Margin="8,8,8,0"
@@ -356,10 +371,10 @@
 
                             <ListBox Grid.Row="1"
                                      ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
-                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage, Mode=TwoWay}"
                                      IsEnabled="{Binding !CurrentMessageOps.IsLoadingMessages}"
                                      Background="Transparent"
-                                     Padding="8"
+                                     Classes="message-table" Padding="0"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
@@ -372,130 +387,7 @@
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:MessageInfo">
-                                    <Grid ColumnDefinitions="Auto,*">
-                                        <!-- Checkbox for multi-select mode -->
-                                        <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding $parent[Window].DataContext.CurrentMessageOps.IsMultiSelectMode}"
-                                                  Command="{Binding $parent[Window].DataContext.ToggleMessageSelectionCommand}"
-                                                  CommandParameter="{Binding}"
-                                                  Margin="0,0,8,0"
-                                                  VerticalAlignment="Center">
-                                            <CheckBox.IsChecked>
-                                                <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
-                                                    <Binding Path="."/>
-                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectedMessages"/>
-                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectionVersion"/>
-                                                </MultiBinding>
-                                            </CheckBox.IsChecked>
-                                        </CheckBox>
-                                    <Border Grid.Column="1"
-                                            Classes="message-row"
-                                            PointerPressed="OnMessageRowPointerPressed"
-                                            Margin="0">
-                                        <Border.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="Resend"
-                                                          Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
-                                                          CommandParameter="{Binding}">
-                                                    <MenuItem.Icon>
-                                                        <LucideIcon Kind="Send" Size="16"/>
-                                                    </MenuItem.Icon>
-                                                </MenuItem>
-                                                <MenuItem Header="Clone"
-                                                          Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
-                                                          CommandParameter="{Binding}">
-                                                    <MenuItem.Icon>
-                                                        <LucideIcon Kind="Pencil" Size="16"/>
-                                                    </MenuItem.Icon>
-                                                </MenuItem>
-                                            </ContextMenu>
-                                        </Border.ContextMenu>
-                                        <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-                                            <Grid ColumnDefinitions="70,*,126,Auto" ColumnSpacing="8">
-                                                <Border Grid.Column="0" Classes="message-seq-pill">
-                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='#{0}'}"/>
-                                                </Border>
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding MessageId}"
-                                                           ToolTip.Tip="{Binding MessageId}"
-                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="12"
-                                                           VerticalAlignment="Center"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="2"
-                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
-                                                           Classes="caption"
-                                                           FontSize="11"
-                                                           HorizontalAlignment="Right"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource MutedForeground}"/>
-                                                <StackPanel Grid.Column="3"
-                                                            Classes="message-row-actions"
-                                                            Orientation="Horizontal"
-                                                            Spacing="2">
-                                                    <Button Classes="toolbar"
-                                                            Command="{Binding $parent[Window].DataContext.CopyMessageBodyCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip.Tip="Copy body">
-                                                        <LucideIcon Kind="Copy" Size="13"/>
-                                                    </Button>
-                                                    <Button Classes="toolbar"
-                                                            ToolTip.Tip="More actions">
-                                                        <Button.Flyout>
-                                                            <Flyout Placement="BottomEdgeAlignedRight">
-                                                                <StackPanel Spacing="4" MinWidth="140">
-                                                                    <Button Classes="subtle small"
-                                                                            Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Left">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <LucideIcon Kind="Send" Size="13"/>
-                                                                            <TextBlock Text="Resend"/>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                    <Button Classes="subtle small"
-                                                                            Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Left">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <LucideIcon Kind="Copy" Size="13"/>
-                                                                            <TextBlock Text="Clone"/>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                    <Button Classes="subtle small"
-                                                                            Command="{Binding $parent[Window].DataContext.ExportMessageCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Left">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <LucideIcon Kind="Upload" Size="13"/>
-                                                                            <TextBlock Text="Export"/>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                </StackPanel>
-                                                            </Flyout>
-                                                        </Button.Flyout>
-                                                        <LucideIcon Kind="Ellipsis" Size="13"/>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Grid>
-                                            <Border Grid.Row="1"
-                                                    Classes="message-preview"
-                                                    IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}">
-                                                <TextBlock Text="{Binding BodyPreview}"
-                                                           Classes="message-preview-text"
-                                                           Classes.xml="{Binding IsBodyXml}"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           MaxLines="2"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                    </Grid>
-                                </DataTemplate>
+                                <DataTemplate x:DataType="models:MessageInfo"><controls:MessageRowView/></DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
 
@@ -597,6 +489,14 @@
                     <!-- Loading indicator for dead letter messages -->
                     <TabItem.Content>
                         <Grid RowDefinitions="Auto,*,Auto">
+                            <Border Grid.Row="0" Padding="16,8" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1"
+                                    Background="{DynamicResource SurfaceSubtle}">
+                                <Grid ColumnDefinitions="*,*,92,28" ColumnSpacing="12">
+                                    <TextBlock Text="Subject / sequence" Classes="caption" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" Text="Message ID" Classes="caption" FontSize="11"/>
+                                    <TextBlock Grid.Column="2" Text="Enqueued" Classes="caption" FontSize="11"/>
+                                </Grid>
+                            </Border>
                             <Border Grid.Row="0"
                                     Classes="inline-loading-surface"
                                     Margin="8,8,8,0"
@@ -614,10 +514,10 @@
 
                             <ListBox Grid.Row="1"
                                      ItemsSource="{Binding CurrentMessageOps.FilteredMessages}"
-                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage}"
+                                     SelectedItem="{Binding CurrentMessageOps.SelectedMessage, Mode=TwoWay}"
                                      IsEnabled="{Binding !CurrentMessageOps.IsLoadingMessages}"
                                      Background="Transparent"
-                                     Padding="8"
+                                     Classes="message-table" Padding="0"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
@@ -630,136 +530,7 @@
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:MessageInfo">
-                                    <Grid ColumnDefinitions="Auto,*">
-                                        <!-- Checkbox for multi-select mode -->
-                                        <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding $parent[Window].DataContext.CurrentMessageOps.IsMultiSelectMode}"
-                                                  Command="{Binding $parent[Window].DataContext.ToggleMessageSelectionCommand}"
-                                                  CommandParameter="{Binding}"
-                                                  Margin="0,0,8,0"
-                                                  VerticalAlignment="Center">
-                                            <CheckBox.IsChecked>
-                                                <MultiBinding Converter="{StaticResource MessageSelectionConverter}">
-                                                    <Binding Path="."/>
-                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectedMessages"/>
-                                                    <Binding Path="$parent[Window].DataContext.CurrentMessageOps.SelectionVersion"/>
-                                                </MultiBinding>
-                                            </CheckBox.IsChecked>
-                                        </CheckBox>
-                                    <Border Grid.Column="1"
-                                            Classes="message-row"
-                                            PointerPressed="OnMessageRowPointerPressed"
-                                            Margin="0">
-                                        <Border.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="Resend"
-                                                          Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
-                                                          CommandParameter="{Binding}">
-                                                    <MenuItem.Icon>
-                                                        <LucideIcon Kind="Send" Size="16"/>
-                                                    </MenuItem.Icon>
-                                                </MenuItem>
-                                                <MenuItem Header="Clone"
-                                                          Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
-                                                          CommandParameter="{Binding}">
-                                                    <MenuItem.Icon>
-                                                        <LucideIcon Kind="Pencil" Size="16"/>
-                                                    </MenuItem.Icon>
-                                                </MenuItem>
-                                            </ContextMenu>
-                                        </Border.ContextMenu>
-                                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
-                                            <Grid ColumnDefinitions="70,*,126,Auto" ColumnSpacing="8">
-                                                <Border Grid.Column="0" Classes="message-seq-pill">
-                                                    <TextBlock Text="{Binding SequenceNumber, StringFormat='#{0}'}"/>
-                                                </Border>
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding MessageId}"
-                                                           ToolTip.Tip="{Binding MessageId}"
-                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="12"
-                                                           VerticalAlignment="Center"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="2"
-                                                           Text="{Binding EnqueuedTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
-                                                           Classes="caption"
-                                                           FontSize="11"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource MutedForeground}"/>
-                                                <StackPanel Grid.Column="3"
-                                                            Classes="message-row-actions"
-                                                            Orientation="Horizontal"
-                                                            Spacing="2">
-                                                    <Button Classes="toolbar"
-                                                            Command="{Binding $parent[Window].DataContext.CopyMessageBodyCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip.Tip="Copy body">
-                                                        <LucideIcon Kind="Copy" Size="13"/>
-                                                    </Button>
-                                                    <Button Classes="toolbar"
-                                                            ToolTip.Tip="More actions">
-                                                        <Button.Flyout>
-                                                            <Flyout Placement="BottomEdgeAlignedRight">
-                                                                <StackPanel Spacing="4" MinWidth="140">
-                                                                    <Button Classes="subtle small"
-                                                                            Command="{Binding $parent[Window].DataContext.ResendMessageCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Left">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <LucideIcon Kind="Send" Size="13"/>
-                                                                            <TextBlock Text="Resend"/>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                    <Button Classes="subtle small"
-                                                                            Command="{Binding $parent[Window].DataContext.CloneMessageCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Left">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <LucideIcon Kind="Copy" Size="13"/>
-                                                                            <TextBlock Text="Clone"/>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                    <Button Classes="subtle small"
-                                                                            Command="{Binding $parent[Window].DataContext.ExportMessageCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            HorizontalContentAlignment="Left">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <LucideIcon Kind="Upload" Size="13"/>
-                                                                            <TextBlock Text="Export"/>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                </StackPanel>
-                                                            </Flyout>
-                                                        </Button.Flyout>
-                                                        <LucideIcon Kind="Ellipsis" Size="13"/>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Grid>
-                                            <!-- Dead Letter Reason -->
-                                            <Border Grid.Row="1"
-                                                    Classes="deadletter-reason-pill"
-                                                    IsVisible="{Binding DeadLetterReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                <TextBlock Text="{Binding DeadLetterReason}"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </Border>
-                                            <Border Grid.Row="2"
-                                                    Classes="message-preview"
-                                                    IsVisible="{Binding $parent[Window].DataContext.EnableMessagePreview}">
-                                                <TextBlock Text="{Binding BodyPreview}"
-                                                           Classes="message-preview-text"
-                                                           Classes.xml="{Binding IsBodyXml}"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           MaxLines="2"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                    </Grid>
-                                </DataTemplate>
+                                <DataTemplate x:DataType="models:MessageInfo"><controls:MessageRowView/></DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
 
@@ -885,7 +656,7 @@
                                      ItemsSource="{Binding CurrentSessionInspector.Sessions}"
                                      SelectedItem="{Binding CurrentSessionInspector.SelectedSession}"
                                      Background="Transparent"
-                                     Padding="8"
+                                     Classes="message-table" Padding="0"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.Styles>
                                     <Style Selector="ListBoxItem">
@@ -997,4 +768,19 @@
             </TabControl>
         </Grid>
     </Border>
+    <GridSplitter x:Name="InspectorSplitter" Grid.Column="1" Classes="workspace-splitter"
+                  ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                  AutomationProperties.Name="Resize message list and inspector"/>
+    <Border x:Name="InspectorHost" Grid.Column="2">
+        <Border.IsVisible>
+            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding Path="CurrentNavigation.IsSessionInspectorTabSelected" Converter="{x:Static BoolConverters.Not}"/>
+                <Binding Path="CurrentMessageOps.LockedMessages.Count" Converter="{StaticResource IntEqualsConverter}" ConverterParameter="0"/>
+                <Binding Path="CurrentMessageOps.IsMultiSelectMode" Converter="{x:Static BoolConverters.Not}"/>
+            </MultiBinding>
+        </Border.IsVisible>
+        <controls:MessageInspectorView x:Name="InspectorPanel"/>
+    </Border>
+    </Grid>
 </UserControl>

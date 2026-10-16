@@ -11,6 +11,74 @@ using NSubstitute;
 public class MessageOperationsViewModelTests
 {
     [Fact]
+    public void ExpandMessageDetails_WithoutSelection_CannotExecute()
+    {
+        // Arrange
+        var sut = CreateSut(Substitute.For<IServiceBusOperations>(), () => "orders", () => null, () => false, () => false);
+
+        // Assert
+        sut.ExpandMessageDetailsCommand.CanExecute(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ExpandMessageDetails_WithSelection_KeepsMessageSelected()
+    {
+        // Arrange
+        var sut = CreateSut(Substitute.For<IServiceBusOperations>(), () => "orders", () => null, () => false, () => false);
+        var message = CreateMessage("first", DateTimeOffset.UtcNow, 1);
+        sut.SelectMessage(message);
+
+        // Act
+        sut.ExpandMessageDetailsCommand.Execute(null);
+
+        // Assert
+        sut.IsMessageDetailExpanded.Should().BeTrue();
+        sut.SelectedMessage.Should().BeSameAs(message);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ExpandMessageDetails_WithRowMessage_InspectsThatMessage(bool hasPreviousSelection)
+    {
+        // Arrange
+        var sut = CreateSut(Substitute.For<IServiceBusOperations>(), () => "orders", () => null, () => false, () => false);
+        if (hasPreviousSelection)
+            sut.SelectMessage(CreateMessage("first", DateTimeOffset.UtcNow, 1));
+        var message = CreateMessage("second", DateTimeOffset.UtcNow, 2);
+
+        // Act
+        var canInspect = sut.ExpandMessageDetailsCommand.CanExecute(message);
+        sut.ExpandMessageDetailsCommand.Execute(message);
+
+        // Assert
+        canInspect.Should().BeTrue();
+        sut.SelectedMessage.Should().BeSameAs(message);
+        sut.IsMessageDetailExpanded.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SelectMessage_AfterExpandedInspection_ReturnsToInlineInspector(bool clearSelection)
+    {
+        // Arrange
+        var sut = CreateSut(Substitute.For<IServiceBusOperations>(), () => "orders", () => null, () => false, () => false);
+        sut.SelectMessage(CreateMessage("first", DateTimeOffset.UtcNow, 1));
+        sut.ExpandMessageDetailsCommand.Execute(null);
+
+        // Act
+        if (clearSelection)
+            sut.ClearSelectedMessage();
+        else
+            sut.SelectMessage(CreateMessage("second", DateTimeOffset.UtcNow, 2));
+
+        // Assert
+        sut.IsMessageDetailExpanded.Should().BeFalse();
+        sut.ExpandMessageDetailsCommand.CanExecute(null).Should().Be(!clearSelection);
+    }
+
+    [Fact]
     public async Task LoadMessagesAsync_AfterDisplayingPage_AddsLoadedMessagesToCorrelationCatalog()
     {
         // Arrange

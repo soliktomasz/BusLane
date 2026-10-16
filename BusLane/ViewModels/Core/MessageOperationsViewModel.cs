@@ -43,7 +43,28 @@ public partial class MessageOperationsViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsMessageBodyJson))]
     [NotifyPropertyChangedFor(nameof(IsMessageBodyXml))]
     [NotifyPropertyChangedFor(nameof(FormattedApplicationProperties))]
+    [NotifyCanExecuteChangedFor(nameof(ExpandMessageDetailsCommand))]
     private MessageInfo? _selectedMessage;
+
+    [ObservableProperty] private bool _isMessageDetailExpanded;
+
+    partial void OnSelectedMessageChanged(MessageInfo? value)
+    {
+        IsMessageDetailExpanded = false;
+    }
+
+    private bool CanExpandMessageDetails(MessageInfo? message) => message != null || SelectedMessage != null;
+
+    [RelayCommand(CanExecute = nameof(CanExpandMessageDetails))]
+    private void ExpandMessageDetails(MessageInfo? message)
+    {
+        if (message != null)
+            SelectedMessage = message;
+        IsMessageDetailExpanded = true;
+    }
+
+    [RelayCommand]
+    private void CollapseMessageDetails() => IsMessageDetailExpanded = false;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedMessages))]
