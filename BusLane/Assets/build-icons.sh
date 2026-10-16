@@ -26,4 +26,10 @@ cp icon.png "$set_dir/icon_512x512.png"
 render icon.svg 1024 "$set_dir/icon_512x512@2x.png"
 
 iconutil -c icns "$set_dir" -o icon.icns
+
+# Website copy: the same artwork cropped to the tile, without the dock shadow,
+# so the favicon and 30-34px brand marks render full size on the page.
+web=../../docs/BusLane/Assets
+sed -e 's|viewBox="0 0 1024 1024"|viewBox="100 100 824 824"|' -e '/translate(0 10)/d' icon.svg > "$web/icon.svg"
+render "$web/icon.svg" 512 "$web/icon.png"
 echo "Icons regenerated."
