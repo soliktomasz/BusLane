@@ -115,7 +115,7 @@ The workspace is flat: square pane surfaces, thin dividers, tonal hover/selectio
 
 ## Motion
 
-Motion is feedback and continuity, never decoration. Row, button, tab, and splitter tints ease over (120-150ms). Main-screen command buttons settle from a (0.96) press scale. Selecting a message settles the inspector content from (0.35) opacity and a (4px) offset over (180ms) with `cubic-bezier(0.16, 1, 0.3, 1)`; a newer selection interrupts the running one. Message empty and loading states fade in over (200ms). The selected tab's bar grows from the centre over (220ms), and switching tabs crossfades the content over (150ms). Avalonia exposes no reduced-motion preference, so every effect stays short, small, and non-spatial beyond a few pixels.
+Motion is feedback and continuity, never decoration. Button, tab, and splitter tints ease over (120-150ms); message rows change hover and selection tint instantly, using the translucent `HoverBackground` overlay so hover stays visible in both themes. Main-screen command buttons settle from a (0.96) press scale. Selecting a message settles the inspector content from (0.35) opacity and a (4px) offset over (180ms) with `cubic-bezier(0.16, 1, 0.3, 1)`; a newer selection interrupts the running one. Message empty and loading states fade in over (200ms). The selected tab's bar grows from the centre over (220ms), and switching tabs crossfades the content over (150ms). Avalonia exposes no reduced-motion preference, so every effect stays short, small, and non-spatial beyond a few pixels.
 
 ## Shapes
 

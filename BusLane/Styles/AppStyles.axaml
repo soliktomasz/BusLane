@@ -2378,18 +2378,12 @@
         <Setter Property="CornerRadius" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     </Style>
-    <Style Selector="ListBox.message-table ListBoxItem /template/ ContentPresenter">
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.12"/>
-            </Transitions>
-        </Setter>
-    </Style>
     <Style Selector="ListBox.message-table ListBoxItem:selected /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
     </Style>
+    <!-- Translucent overlay: SurfaceSubtle matches the dark card exactly and is near-white in light. -->
     <Style Selector="ListBox.message-table ListBoxItem:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
     </Style>
     <Style Selector="ListBox.message-table ListBoxItem:selected:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrandHover}"/>
