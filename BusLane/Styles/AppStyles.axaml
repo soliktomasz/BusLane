@@ -2221,7 +2221,7 @@
     <!-- App header in sidebar (Height matches the tab bar so the dividers align at the corner) -->
     <Style Selector="Border.sidebar-header">
         <Setter Property="Background" Value="{DynamicResource TabNavBackground}"/>
-        <Setter Property="Height" Value="56"/>
+        <Setter Property="Height" Value="44"/>
         <Setter Property="Padding" Value="16,0"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
