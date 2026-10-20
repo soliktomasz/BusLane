@@ -162,6 +162,35 @@ public class ScheduledMessagesViewModelTests
         sut.StatusText.Should().Be("The scheduled payload is unavailable.");
     }
 
+    [Fact]
+    public void BeginReschedule_PrefillsCurrentScheduledTime()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+        var entry = CreateEntry();
+
+        sut.BeginRescheduleCommand.Execute(new ScheduledMessageResolvedEntry(entry, "Upcoming (local)", false));
+
+        sut.RescheduleTime.Should().Be(entry.ScheduledEnqueueTime);
+        sut.RescheduleClockTime.Should().Be(entry.ScheduledEnqueueTime.TimeOfDay);
+        sut.IsRescheduling.Should().BeTrue();
+    }
+
+    [Fact]
+    public void BeginCancel_ProductionEntry_RequiresAcknowledgementBeforeConfirm()
+    {
+        var service = Substitute.For<IScheduledMessageManagementService>();
+        var sut = new ScheduledMessagesViewModel(service, (_, _) => Task.CompletedTask, TimeProvider.System);
+
+        sut.BeginCancelCommand.Execute(new ScheduledMessageResolvedEntry(
+            CreateEntry() with { Environment = ConnectionEnvironment.Production }, "Upcoming (local)", false));
+
+        sut.RequiresProductionAcknowledgement.Should().BeTrue();
+        sut.CanConfirm.Should().BeFalse();
+        sut.IsProductionAcknowledged = true;
+        sut.CanConfirm.Should().BeTrue();
+    }
+
     private static ScheduledMessageIndexEntry CreateEntry() => new()
     {
         RecordId = "record-1",

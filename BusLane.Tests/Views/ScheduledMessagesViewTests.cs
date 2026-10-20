@@ -8,31 +8,20 @@ public class ScheduledMessagesViewTests
     [Fact]
     public void ScheduledMessagesView_ContainsManagementConsoleContracts()
     {
-        var path = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "BusLane",
-            "Views", "Controls", "ScheduledMessagesView.axaml"));
+        var xaml = File.ReadAllText(GetViewPath());
 
-        File.Exists(path).Should().BeTrue();
-        var xaml = File.ReadAllText(path);
         foreach (var value in new[]
                  {
                      "SearchText", "SelectedConnection", "SelectedEntity", "SelectedEnvironment",
                      "SelectedStatus", "SelectedTimeRange", "ShowListCommand", "ShowCalendarCommand",
                      "PreviousMonthCommand", "NextMonthCommand", "CloneCommand", "BeginCancelCommand",
-                     "BeginRescheduleCommand", "RefreshCommand", "ResolveCommand",
-                     "local index", "broker confirmed", "IsProductionAcknowledged",
-                     "partial failure", "No scheduled messages"
-                 })
-        {
-            xaml.Should().Contain(value);
-        }
-
-        foreach (var value in new[]
-                 {
-                     "Filters", "Connection filter", "Entity filter", "Environment filter",
+                     "BeginRescheduleCommand", "ResolveCommand", "ClearFiltersCommand",
+                     "Local index", "Broker confirmed", "IsProductionAcknowledged",
+                     "the original stays cancelled", "No scheduled messages yet",
+                     "Connection filter", "Entity filter", "Environment filter",
                      "Status filter", "Time range filter", "FilteredEntries.Count",
-                     "Scheduled", "Message / status", "Actions",
-                     "No scheduled messages match these filters",
+                     "Scheduled for", "Destination", "State",
+                     "No messages match these filters",
                      "IsVisible=\"{Binding !IsEmpty}\""
                  })
         {
@@ -41,60 +30,46 @@ public class ScheduledMessagesViewTests
     }
 
     [Fact]
-    public void ScheduledMessagesView_CollapsesRowActionsIntoFlyout()
+    public void ScheduledMessagesView_KeepsRescheduleVisibleAndOtherActionsInFlyout()
     {
-        var path = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "BusLane",
-            "Views", "Controls", "ScheduledMessagesView.axaml"));
-        var document = XDocument.Parse(File.ReadAllText(path));
+        var document = XDocument.Parse(File.ReadAllText(GetViewPath()));
 
-        var actionButton = document.Descendants()
+        var moreButton = document.Descendants()
             .Single(element => element.Name.LocalName == "Button" &&
-                               element.Attribute("ToolTip.Tip")?.Value == "More scheduled message actions");
+                               element.Attribute("AutomationProperties.Name")?.Value == "More scheduled message actions");
 
-        actionButton.Descendants()
+        moreButton.Descendants()
             .Single(element => element.Name.LocalName == "Flyout")
-            .Attribute("Placement")
-            ?.Value
-            .Should()
-            .Be("BottomEdgeAlignedRight");
+            .Attribute("Placement")?.Value
+            .Should().Be("BottomEdgeAlignedRight");
 
-        actionButton.Descendants()
+        moreButton.Descendants()
             .Where(element => element.Name.LocalName == "Button")
             .Select(element => element.Attribute("Command")?.Value)
             .Should()
             .Contain([
                 "{Binding $parent[UserControl].DataContext.CloneCommand}",
                 "{Binding $parent[UserControl].DataContext.BeginCancelCommand}",
-                "{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}",
                 "{Binding $parent[UserControl].DataContext.ResolveCommand}"
             ]);
 
-        document.Descendants()
+        moreButton.Parent!.Elements()
             .Where(element => element.Name.LocalName == "Button")
-            .Select(element => element.Attribute("Content")?.Value)
+            .Select(element => element.Attribute("Command")?.Value)
             .Should()
-            .NotContain(["Clone", "Cancel", "Reschedule", "Resolve"]);
+            .Contain("{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}");
     }
 
     [Fact]
-    public void ScheduledMessagesView_DisplaysMessageStatusInline()
+    public void ScheduledMessagesView_ShowsLocalStateAsLabelledPill()
     {
-        var path = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "BusLane",
-            "Views", "Controls", "ScheduledMessagesView.axaml"));
-        var document = XDocument.Parse(File.ReadAllText(path));
+        var xaml = File.ReadAllText(GetViewPath());
 
-        var messageId = document.Descendants()
-            .Single(element => element.Name.LocalName == "TextBlock" &&
-                               element.Attribute("Text")?.Value == "{Binding Entry.MessageId}");
-        var messageStatusContainer = messageId.Parent;
-
-        messageStatusContainer.Should().NotBeNull();
-        messageStatusContainer!.Name.LocalName.Should().Be("StackPanel");
-        var orientation = messageStatusContainer.Attribute("Orientation");
-
-        orientation.Should().NotBeNull();
-        orientation!.Value.Should().Be("Horizontal");
+        xaml.Should().Contain("{Binding LocalState, Converter={x:Static conv:ScheduledMessageConverters.StateLabel}}");
+        xaml.Should().Contain("ScheduledStateToBrushConverter");
     }
+
+    private static string GetViewPath() => Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", "BusLane",
+        "Views", "Controls", "ScheduledMessagesView.axaml"));
 }

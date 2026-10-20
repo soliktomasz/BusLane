@@ -1,235 +1,575 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:BusLane.Converters"
              x:Class="BusLane.Views.Controls.ScheduledMessagesView"
              x:CompileBindings="False">
-    <Grid RowDefinitions="Auto,Auto,*">
-        <Border Grid.Row="0" Classes="dialog-section-surface" Margin="16,12,16,8" Padding="12">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="Search" Classes="field-label"/>
-                    <TextBox Text="{Binding SearchText, Mode=TwoWay}"
-                             PlaceholderText="Connection, entity, message, body, or property"
-                             AutomationProperties.Name="Search scheduled messages"
-                             TabIndex="0"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Bottom">
-                    <TextBlock Text="View" Classes="field-label"/>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Classes="secondary small" Command="{Binding ShowListCommand}" Content="List" TabIndex="6"/>
-                        <Button Classes="secondary small" Command="{Binding ShowCalendarCommand}" Content="Calendar" TabIndex="7"/>
-                        <Button Classes="secondary small" Command="{Binding RefreshCommand}" TabIndex="8">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="RefreshCw" Size="13"/>
-                                <TextBlock Text="Refresh"/>
-                            </StackPanel>
-                        </Button>
+    <UserControl.Styles>
+        <!-- Flat timetable rows shared with the Alerts dialog: one seam per row, instant hover tint. -->
+        <Style Selector="Border.sched-table-header">
+            <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="24,7"/>
+        </Style>
+        <Style Selector="TextBlock.col-head">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        </Style>
+        <Style Selector="Border.sched-row">
+            <Setter Property="Padding" Value="24,10"/>
+            <Setter Property="MinHeight" Value="58"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style Selector="Border.sched-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        </Style>
+        <Style Selector="TextBlock.row-title">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style Selector="TextBlock.row-meta">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style Selector="TextBlock.row-meta.code">
+            <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+        </Style>
+        <Style Selector="Border.state-pill">
+            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+        <Style Selector="Border.state-pill TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="StackPanel.filter">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Spacing" Value="8"/>
+            <Setter Property="Margin" Value="0,0,16,8"/>
+        </Style>
+        <Style Selector="StackPanel.filter > TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="StackPanel.filter > ComboBox">
+            <Setter Property="MinWidth" Value="116"/>
+            <Setter Property="MaxWidth" Value="200"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.row-icon">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="StackPanel.sched-empty">
+            <Setter Property="Spacing" Value="6"/>
+            <Setter Property="Margin" Value="24,64"/>
+            <Setter Property="MaxWidth" Value="440"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="StackPanel.sched-empty TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <!-- Calendar -->
+        <Style Selector="Border.cal-cell">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+        </Style>
+        <Style Selector="Border.cal-cell.outside">
+            <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+        </Style>
+        <Style Selector="Border.cal-cell.outside TextBlock.cal-day">
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="FontWeight" Value="Regular"/>
+        </Style>
+        <Style Selector="TextBlock.cal-day">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        </Style>
+        <Style Selector="Button.cal-chip">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="6,1"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.cal-chip:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrandHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
+        </Style>
+        <Style Selector="TextBlock.detail-label">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        </Style>
+        <Style Selector="TextBlock.detail-value">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- View switch shares the message tabs' indicator -->
+        <Border Grid.Row="0" Classes="overview-section-strip">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Classes="section-tab" GroupName="ScheduledView"
+                             IsChecked="{Binding !IsCalendarMode, Mode=OneWay}"
+                             Command="{Binding ShowListCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <LucideIcon Kind="List" Size="14"/>
+                        <TextBlock Text="List"/>
                     </StackPanel>
-                </StackPanel>
-            </Grid>
+                </RadioButton>
+                <RadioButton Classes="section-tab" GroupName="ScheduledView"
+                             IsChecked="{Binding IsCalendarMode, Mode=OneWay}"
+                             Command="{Binding ShowCalendarCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <LucideIcon Kind="CalendarDays" Size="14"/>
+                        <TextBlock Text="Calendar"/>
+                    </StackPanel>
+                </RadioButton>
+            </StackPanel>
         </Border>
 
-        <Border Grid.Row="1" Classes="dialog-section-surface" Margin="16,0,16,12" Padding="12">
+        <!-- Search and filters -->
+        <Border Grid.Row="1" Classes="message-search-bar" Padding="24,12,24,4">
             <StackPanel Spacing="10">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <LucideIcon Kind="ListFilter" Size="14"/>
-                    <TextBlock Text="Filters" Classes="body-strong"/>
-                </StackPanel>
-                <WrapPanel Orientation="Horizontal">
-                    <StackPanel Width="170" Margin="0,0,8,8">
-                        <TextBlock Text="Connection" Classes="field-label"/>
-                        <ComboBox ItemsSource="{Binding ConnectionOptions}"
-                                  SelectedItem="{Binding SelectedConnection}"
-                                  AutomationProperties.Name="Connection filter" TabIndex="1"/>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <TextBox Classes="message-header-search" Width="440" HorizontalAlignment="Left"
+                             Text="{Binding SearchText, Mode=TwoWay}"
+                             PlaceholderText="Search connection, entity, message ID, body, or property"
+                             AutomationProperties.Name="Search scheduled messages">
+                        <TextBox.InnerLeftContent>
+                            <LucideIcon Kind="Search" Size="14" Margin="10,0,2,0"
+                                        Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                        </TextBox.InnerLeftContent>
+                    </TextBox>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="6"
+                                    ToolTip.Tip="BusLane lists messages it scheduled itself. States are tracked locally and are not checked against the broker; the broker may already have delivered or removed a message.">
+                            <LucideIcon Kind="Info" Size="13" Foreground="{DynamicResource SubtleForeground}" VerticalAlignment="Center"/>
+                            <TextBlock Classes="caption" Text="Local index, not verified with the broker" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </StackPanel>
-                    <StackPanel Width="170" Margin="0,0,8,8">
-                        <TextBlock Text="Entity" Classes="field-label"/>
-                        <ComboBox ItemsSource="{Binding EntityOptions}"
-                                  SelectedItem="{Binding SelectedEntity}"
-                                  AutomationProperties.Name="Entity filter" TabIndex="2"/>
+                </Grid>
+                <WrapPanel>
+                    <StackPanel Classes="filter">
+                        <TextBlock Text="Status"/>
+                        <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}"
+                                  AutomationProperties.Name="Status filter"/>
                     </StackPanel>
-                    <StackPanel Width="170" Margin="0,0,8,8">
-                        <TextBlock Text="Environment" Classes="field-label"/>
-                        <ComboBox ItemsSource="{Binding EnvironmentOptions}"
-                                  SelectedItem="{Binding SelectedEnvironment}"
-                                  AutomationProperties.Name="Environment filter" TabIndex="3"/>
+                    <StackPanel Classes="filter">
+                        <TextBlock Text="When"/>
+                        <ComboBox ItemsSource="{Binding TimeRangeOptions}" SelectedItem="{Binding SelectedTimeRange}"
+                                  AutomationProperties.Name="Time range filter"/>
                     </StackPanel>
-                    <StackPanel Width="170" Margin="0,0,8,8">
-                        <TextBlock Text="Status" Classes="field-label"/>
-                        <ComboBox ItemsSource="{Binding StatusOptions}"
-                                  SelectedItem="{Binding SelectedStatus}"
-                                  AutomationProperties.Name="Status filter" TabIndex="4"/>
+                    <StackPanel Classes="filter">
+                        <TextBlock Text="Environment"/>
+                        <ComboBox ItemsSource="{Binding EnvironmentOptions}" SelectedItem="{Binding SelectedEnvironment}"
+                                  AutomationProperties.Name="Environment filter"/>
                     </StackPanel>
-                    <StackPanel Width="170" Margin="0,0,0,8">
-                        <TextBlock Text="Time range" Classes="field-label"/>
-                        <ComboBox ItemsSource="{Binding TimeRangeOptions}"
-                                  SelectedItem="{Binding SelectedTimeRange}"
-                                  AutomationProperties.Name="Time range filter" TabIndex="5"/>
+                    <StackPanel Classes="filter">
+                        <TextBlock Text="Connection"/>
+                        <ComboBox ItemsSource="{Binding ConnectionOptions}" SelectedItem="{Binding SelectedConnection}"
+                                  AutomationProperties.Name="Connection filter"/>
+                    </StackPanel>
+                    <StackPanel Classes="filter">
+                        <TextBlock Text="Entity"/>
+                        <ComboBox ItemsSource="{Binding EntityOptions}" SelectedItem="{Binding SelectedEntity}"
+                                  AutomationProperties.Name="Entity filter"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8" VerticalAlignment="Center">
+                        <TextBlock Classes="caption" VerticalAlignment="Center"
+                                   Text="{Binding FilteredEntries.Count, StringFormat='{}{0} shown'}"/>
+                        <Button Classes="overview-row-action quiet" Content="Clear filters"
+                                Command="{Binding ClearFiltersCommand}"
+                                AutomationProperties.Name="Clear search and filters"/>
                     </StackPanel>
                 </WrapPanel>
             </StackPanel>
         </Border>
 
-        <Grid Grid.Row="2">
-            <Grid IsVisible="{Binding !IsEmpty}" RowDefinitions="Auto,*">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,0,16,8">
-                    <TextBlock Text="Scheduled messages" Classes="body-strong"/>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding FilteredEntries.Count, StringFormat='{}{0} results'}"
-                               Classes="caption"/>
-                </Grid>
+        <Panel Grid.Row="2">
+            <!-- ============ List ============ -->
+            <Panel IsVisible="{Binding !IsCalendarMode}">
+                <StackPanel Classes="sched-empty" IsVisible="{Binding !HasEntries}">
+                    <LucideIcon Kind="CalendarClock" Size="22" Foreground="{DynamicResource SubtleForeground}"
+                                HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                    <TextBlock Text="No scheduled messages yet" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Classes="caption"
+                               Text="Messages you schedule from Send message are indexed here, so you can reschedule, cancel, or clone them later."/>
+                </StackPanel>
 
-                <ScrollViewer Grid.Row="1" IsVisible="{Binding !IsCalendarMode}">
-                    <StackPanel>
-                        <Border Background="{DynamicResource SurfaceSubtle}"
-                                BorderBrush="{DynamicResource BorderDefault}"
-                                BorderThickness="0,0,0,1" Margin="16,0,16,8" Padding="12,8">
-                            <Grid ColumnDefinitions="150,160,160,*,Auto" ColumnSpacing="10">
-                                <TextBlock Text="Scheduled" Classes="field-label"/>
-                                <TextBlock Grid.Column="1" Text="Connection" Classes="field-label"/>
-                                <TextBlock Grid.Column="2" Text="Entity" Classes="field-label"/>
-                                <TextBlock Grid.Column="3" Text="Message / status" Classes="field-label"/>
-                                <TextBlock Grid.Column="4" Text="Actions" Classes="field-label"/>
-                            </Grid>
-                        </Border>
+                <StackPanel Classes="sched-empty">
+                    <StackPanel.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="HasEntries"/>
+                            <Binding Path="IsEmpty"/>
+                        </MultiBinding>
+                    </StackPanel.IsVisible>
+                    <LucideIcon Kind="SearchX" Size="22" Foreground="{DynamicResource SubtleForeground}"
+                                HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                    <TextBlock Text="No messages match these filters" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Classes="caption" Text="Status starts on Upcoming. Clear the filters to see every indexed message."/>
+                    <Button Classes="entity-header-action outline" HorizontalAlignment="Center" Margin="0,8,0,0"
+                            Command="{Binding ClearFiltersCommand}" Content="Clear filters"/>
+                </StackPanel>
+
+                <Grid RowDefinitions="Auto,*" IsVisible="{Binding !IsEmpty}">
+                    <Border Classes="sched-table-header">
+                        <Grid ColumnDefinitions="112,*,*,150,140" ColumnSpacing="16">
+                            <TextBlock Classes="col-head" Text="Scheduled for"/>
+                            <TextBlock Grid.Column="1" Classes="col-head" Text="Destination"/>
+                            <TextBlock Grid.Column="2" Classes="col-head" Text="Message"/>
+                            <TextBlock Grid.Column="3" Classes="col-head" Text="State"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding FilteredEntries}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Classes="property-row" Margin="16,0,16,6" Padding="12">
-                                <Grid ColumnDefinitions="150,160,160,*,Auto" ColumnSpacing="10">
-                                    <TextBlock Text="{Binding Entry.ScheduledEnqueueTime, StringFormat='{}{0:g}'}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Entry.ConnectionName}"/>
-                                    <TextBlock Grid.Column="2" Text="{Binding Entry.EntityName}"/>
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding Entry.MessageId}" Classes="caption"/>
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="{Binding LocalState}"/>
-                                            <TextBlock Text="local index" Classes="caption"/>
-                                            <TextBlock Text="broker confirmed" Classes="caption"
-                                                       IsVisible="{Binding Entry.IsBrokerConfirmed}"/>
-                                            <TextBlock Text="local only" Classes="caption"
-                                                       IsVisible="{Binding !Entry.IsBrokerConfirmed}"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <Button Grid.Column="4"
-                                            Classes="toolbar"
-                                            ToolTip.Tip="More scheduled message actions"
-                                            AutomationProperties.Name="Scheduled message actions"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center">
-                                        <Button.Flyout>
-                                            <Flyout Placement="BottomEdgeAlignedRight">
-                                                <StackPanel Spacing="4" MinWidth="160">
-                                                    <Button Classes="subtle small"
-                                                            Command="{Binding $parent[UserControl].DataContext.CloneCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left">
-                                                        <TextBlock Text="Clone"/>
-                                                    </Button>
-                                                    <Button Classes="subtle small"
-                                                            Command="{Binding $parent[UserControl].DataContext.BeginCancelCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left">
-                                                        <TextBlock Text="Cancel"/>
-                                                    </Button>
-                                                    <Button Classes="subtle small"
-                                                            Command="{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left">
-                                                        <TextBlock Text="Reschedule"/>
-                                                    </Button>
-                                                    <Button Classes="subtle small"
-                                                            Command="{Binding $parent[UserControl].DataContext.ResolveCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left">
-                                                        <TextBlock Text="Resolve"/>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Flyout>
-                                        </Button.Flyout>
-                                        <LucideIcon Kind="Ellipsis" Size="13"/>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="sched-row">
+                                        <Grid ColumnDefinitions="112,*,*,150,140" ColumnSpacing="16">
+                                            <StackPanel Spacing="2" VerticalAlignment="Center"
+                                                        ToolTip.Tip="{Binding Entry.ScheduledEnqueueTime.LocalDateTime}">
+                                                <TextBlock FontSize="13" FontWeight="SemiBold"
+                                                           Text="{Binding Entry.ScheduledEnqueueTime.LocalDateTime, StringFormat='{}{0:HH:mm}'}"/>
+                                                <TextBlock Classes="row-meta"
+                                                           Text="{Binding Entry.ScheduledEnqueueTime.LocalDateTime, StringFormat='{}{0:ddd d MMM yyyy}'}"/>
+                                            </StackPanel>
 
-                <Grid Grid.Row="1" IsVisible="{Binding IsCalendarMode}" RowDefinitions="Auto,*" Margin="16">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Button Command="{Binding PreviousMonthCommand}" Content="Previous"/>
-                    <TextBlock Grid.Column="1" Text="{Binding SelectedMonth, StringFormat='{}{0:MMMM yyyy}'}"
-                               HorizontalAlignment="Center"/>
-                    <Button Grid.Column="2" Command="{Binding NextMonthCommand}" Content="Next"/>
+                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Classes="row-title" Text="{Binding Entry.EntityName}"
+                                                           ToolTip.Tip="{Binding Entry.EntityName}"/>
+                                                <TextBlock Classes="row-meta">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}{1}">
+                                                            <Binding Path="Entry.ConnectionName"/>
+                                                            <Binding Path="Entry.Environment" Converter="{x:Static conv:ScheduledMessageConverters.EnvironmentSuffix}"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Classes="row-title" FontWeight="Medium"
+                                                           Text="{Binding Entry.MessageId, TargetNullValue='No message ID'}"
+                                                           ToolTip.Tip="{Binding Entry.MessageId}"/>
+                                                <TextBlock Classes="row-meta">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}Seq {0} · {1}">
+                                                            <Binding Path="Entry.SequenceNumber"/>
+                                                            <Binding Path="Entry.BodyPreview"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="3" Spacing="3" VerticalAlignment="Center"
+                                                        ToolTip.Tip="{Binding LocalState}">
+                                                <Border Classes="state-pill"
+                                                        Background="{Binding LocalState, Converter={StaticResource ScheduledStateToBrushConverter}, ConverterParameter=Background}">
+                                                    <TextBlock Text="{Binding LocalState, Converter={x:Static conv:ScheduledMessageConverters.StateLabel}}"
+                                                               Foreground="{Binding LocalState, Converter={StaticResource ScheduledStateToBrushConverter}}"/>
+                                                </Border>
+                                                <TextBlock Classes="row-meta" Text="Broker confirmed"
+                                                           IsVisible="{Binding Entry.IsBrokerConfirmed}"/>
+                                                <TextBlock Classes="row-meta" Text="Local index"
+                                                           IsVisible="{Binding !Entry.IsBrokerConfirmed}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <Button Classes="overview-row-action"
+                                                        Command="{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        AutomationProperties.Name="Reschedule message">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                        <LucideIcon Kind="CalendarClock" Size="13"/>
+                                                        <TextBlock Text="Reschedule"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Classes="overview-row-action quiet row-icon"
+                                                        ToolTip.Tip="More actions"
+                                                        AutomationProperties.Name="More scheduled message actions">
+                                                    <LucideIcon Kind="Ellipsis" Size="15"/>
+                                                    <Button.Flyout>
+                                                        <Flyout Placement="BottomEdgeAlignedRight" FlyoutPresenterClasses="menu-flyout">
+                                                            <StackPanel Spacing="2" Width="280">
+                                                                <Button Classes="menu-item" Click="OnMenuItemClick"
+                                                                        Command="{Binding $parent[UserControl].DataContext.CloneCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                                                        <LucideIcon Kind="Copy" Size="15"/>
+                                                                        <StackPanel Grid.Column="1" Spacing="2">
+                                                                            <TextBlock Text="Clone" Classes="menu-item-label"/>
+                                                                            <TextBlock Text="Open Send message with this payload." Classes="menu-item-description"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </Button>
+                                                                <Button Classes="menu-item" Click="OnMenuItemClick"
+                                                                        Command="{Binding $parent[UserControl].DataContext.ResolveCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                                                        <LucideIcon Kind="CircleCheck" Size="15"/>
+                                                                        <StackPanel Grid.Column="1" Spacing="2">
+                                                                            <TextBlock Text="Resolve locally" Classes="menu-item-label"/>
+                                                                            <TextBlock Text="Mark the record handled without contacting the broker." Classes="menu-item-description"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </Button>
+                                                                <Border Classes="menu-separator"/>
+                                                                <Button Classes="menu-item destructive" Click="OnMenuItemClick"
+                                                                        Command="{Binding $parent[UserControl].DataContext.BeginCancelCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                                                                        <LucideIcon Kind="CalendarX" Size="15"/>
+                                                                        <StackPanel Grid.Column="1" Spacing="2">
+                                                                            <TextBlock Text="Cancel message" Classes="menu-item-label"/>
+                                                                            <TextBlock Text="Remove it from the broker schedule. You confirm first." Classes="menu-item-description"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </Button>
+                                                            </StackPanel>
+                                                        </Flyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </Grid>
-                <ItemsControl Grid.Row="1" ItemsSource="{Binding CalendarDays}">
+            </Panel>
+
+            <!-- ============ Calendar ============ -->
+            <Grid RowDefinitions="Auto,Auto,*,Auto" IsVisible="{Binding IsCalendarMode}">
+                <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Margin="24,12">
+                    <Button Classes="entity-header-action outline icon-only" Command="{Binding PreviousMonthCommand}"
+                            ToolTip.Tip="Previous month" AutomationProperties.Name="Previous month">
+                        <LucideIcon Kind="ChevronLeft" Size="16"/>
+                    </Button>
+                    <Button Grid.Column="1" Classes="entity-header-action outline icon-only" Command="{Binding NextMonthCommand}"
+                            ToolTip.Tip="Next month" AutomationProperties.Name="Next month">
+                        <LucideIcon Kind="ChevronRight" Size="16"/>
+                    </Button>
+                    <TextBlock Grid.Column="2" Margin="8,0,0,0" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
+                               Text="{Binding SelectedMonth, StringFormat='{}{0:MMMM yyyy}'}"/>
+                </Grid>
+
+                <Border Grid.Row="1" Classes="sched-table-header" Padding="0,7" BorderThickness="0,1,0,1">
+                    <UniformGrid Columns="7">
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Mon"/>
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Tue"/>
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Wed"/>
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Thu"/>
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Fri"/>
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Sat"/>
+                        <TextBlock Classes="col-head" Margin="8,0" Text="Sun"/>
+                    </UniformGrid>
+                </Border>
+
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding CalendarDays}" MinHeight="540">
                     <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate><UniformGrid Columns="7"/></ItemsPanelTemplate>
+                        <ItemsPanelTemplate><UniformGrid Columns="7" Rows="6"/></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Classes="property-row" Margin="3" Padding="8">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding DisplayDay}" Classes="body-strong"/>
-                                    <TextBlock Text="{Binding Entries.Count, StringFormat='{}{0} scheduled'}"/>
+                            <Border Classes="cal-cell" Classes.outside="{Binding !IsInMonth}">
+                                <DockPanel>
+                                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                                        <TextBlock Classes="cal-day" Text="{Binding DisplayDay}"/>
+                                        <TextBlock Grid.Column="1" Classes="row-meta"
+                                                   Text="{Binding Entries.Count}" IsVisible="{Binding !!Entries.Count}"/>
+                                    </Grid>
                                     <ItemsControl ItemsSource="{Binding Entries}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Classes="subtle small"
-                                                        Content="{Binding Entry.EntityName}"
+                                                <Button Classes="cal-chip"
                                                         Command="{Binding $parent[UserControl].DataContext.SelectEntryCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="{Binding LocalState}">
+                                                    <TextBlock TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0:HH:mm} {1}">
+                                                                <Binding Path="Entry.ScheduledEnqueueTime.LocalDateTime"/>
+                                                                <Binding Path="Entry.EntityName"/>
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </Button>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
+                                </DockPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                </Grid>
-            </Grid>
+                </ScrollViewer>
 
-            <Border Classes="empty-state" Margin="24" IsVisible="{Binding IsEmpty}"
-                    HorizontalAlignment="Stretch" VerticalAlignment="Center">
-                <StackPanel HorizontalAlignment="Center" Spacing="8" MaxWidth="420">
-                    <LucideIcon Kind="SearchX" Size="28" HorizontalAlignment="Center"/>
-                    <TextBlock Text="No scheduled messages match these filters"
-                               Classes="body-strong" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Adjust the filters above or refresh to check for newly scheduled messages."
-                               Classes="caption" TextAlignment="Center" TextWrapping="Wrap"/>
+                <!-- Selected day entry -->
+                <Border Grid.Row="3" Padding="24,12" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0"
+                        Background="{DynamicResource CardBackground}"
+                        DataContext="{Binding SelectedEntry}"
+                        IsVisible="{Binding $parent[UserControl].DataContext.SelectedEntry, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="20">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock FontSize="13" FontWeight="SemiBold"
+                                       Text="{Binding Entry.ScheduledEnqueueTime.LocalDateTime, StringFormat='{}{0:HH:mm}'}"/>
+                            <TextBlock Classes="row-meta"
+                                       Text="{Binding Entry.ScheduledEnqueueTime.LocalDateTime, StringFormat='{}{0:ddd d MMM yyyy}'}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Classes="row-title" Text="{Binding Entry.EntityName}" VerticalAlignment="Center"/>
+                                <Border Classes="state-pill" VerticalAlignment="Center"
+                                        Background="{Binding LocalState, Converter={StaticResource ScheduledStateToBrushConverter}, ConverterParameter=Background}">
+                                    <TextBlock Text="{Binding LocalState, Converter={x:Static conv:ScheduledMessageConverters.StateLabel}}"
+                                               Foreground="{Binding LocalState, Converter={StaticResource ScheduledStateToBrushConverter}}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Classes="row-meta">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0}{1} · {2}">
+                                        <Binding Path="Entry.ConnectionName"/>
+                                        <Binding Path="Entry.Environment" Converter="{x:Static conv:ScheduledMessageConverters.EnvironmentSuffix}"/>
+                                        <Binding Path="Entry.MessageId" TargetNullValue="No message ID"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Button Classes="overview-row-action"
+                                    Command="{Binding $parent[UserControl].DataContext.BeginRescheduleCommand}"
+                                    CommandParameter="{Binding}" Content="Reschedule"/>
+                            <Button Classes="overview-row-action"
+                                    Command="{Binding $parent[UserControl].DataContext.CloneCommand}"
+                                    CommandParameter="{Binding}" Content="Clone"/>
+                            <Button Classes="overview-row-action"
+                                    Command="{Binding $parent[UserControl].DataContext.ResolveCommand}"
+                                    CommandParameter="{Binding}" Content="Resolve locally"/>
+                            <Button Classes="overview-row-action" Foreground="{DynamicResource TextDanger}"
+                                    Command="{Binding $parent[UserControl].DataContext.BeginCancelCommand}"
+                                    CommandParameter="{Binding}" Content="Cancel message"/>
+                            <Button Classes="overview-row-action quiet row-icon"
+                                    Command="{Binding $parent[UserControl].DataContext.SelectEntryCommand}"
+                                    CommandParameter="{x:Null}"
+                                    ToolTip.Tip="Close details" AutomationProperties.Name="Close message details">
+                                <LucideIcon Kind="X" Size="14"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Panel>
+
+        <!-- Outcome and error feedback sit below the content instead of over it -->
+        <StackPanel Grid.Row="3" Spacing="8" Margin="24,0,24,0">
+            <Border Classes="infobar" Margin="0,0,0,12" Padding="12,8"
+                    IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="{Binding StatusText}" FontSize="13" TextWrapping="Wrap"/>
+            </Border>
+            <Border Classes="infobar-error" Margin="0,0,0,12" Padding="12,8"
+                    IsVisible="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="{Binding ErrorText}" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextDanger}"/>
+            </Border>
+        </StackPanel>
+
+        <!-- Confirmation -->
+        <Border Grid.RowSpan="4" Classes="modal-overlay" IsVisible="{Binding ShowConfirmation}">
+            <Border Classes="modal" Width="600" Padding="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <StackPanel>
+                    <StackPanel Margin="24,22,24,0" Spacing="16">
+                        <TextBlock Text="{Binding ConfirmationTitle}" FontSize="18" FontWeight="SemiBold"/>
+
+                        <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6" ColumnSpacing="12"
+                              DataContext="{Binding SelectedEntry}">
+                            <TextBlock Classes="detail-label" Text="Destination"/>
+                            <TextBlock Grid.Column="1" Classes="detail-value" FontWeight="SemiBold" Text="{Binding Entry.EntityName}"/>
+                            <TextBlock Grid.Row="1" Classes="detail-label" Text="Connection"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="detail-value">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0}{1}">
+                                        <Binding Path="Entry.ConnectionName"/>
+                                        <Binding Path="Entry.Environment" Converter="{x:Static conv:ScheduledMessageConverters.EnvironmentSuffix}"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <TextBlock Grid.Row="2" Classes="detail-label" Text="Scheduled for"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="detail-value"
+                                       Text="{Binding Entry.ScheduledEnqueueTime.LocalDateTime, StringFormat='{}{0:ddd d MMM yyyy, HH:mm}'}"/>
+                            <TextBlock Grid.Row="3" Classes="detail-label" Text="Sequence"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Classes="detail-value" Text="{Binding Entry.SequenceNumber}"/>
+                        </Grid>
+
+                        <StackPanel Spacing="8" IsVisible="{Binding IsRescheduling}">
+                            <TextBlock Classes="form-label" Text="New time" FontSize="13" FontWeight="Medium"/>
+                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                                <DatePicker SelectedDate="{Binding RescheduleTime}"
+                                            AutomationProperties.Name="New scheduled date"/>
+                                <TimePicker Grid.Column="1" SelectedTime="{Binding RescheduleClockTime}"
+                                            AutomationProperties.Name="New scheduled time"/>
+                            </Grid>
+                            <TextBlock Classes="caption" TextWrapping="Wrap"
+                                       Text="BusLane cancels the current broker schedule, then schedules a copy at the new time. If the second step fails, the original stays cancelled."/>
+                        </StackPanel>
+
+                        <TextBlock Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !IsRescheduling}"
+                                   Text="The broker removes this scheduled message. This cannot be undone; clone it first if you may need it again."/>
+
+                        <Border Classes="infobar-warning" Padding="12,10"
+                                IsVisible="{Binding RequiresProductionAcknowledgement}">
+                            <CheckBox IsChecked="{Binding IsProductionAcknowledged}">
+                                <TextBlock TextWrapping="Wrap" FontSize="13"
+                                           Text="I understand this changes a Production destination."/>
+                            </CheckBox>
+                        </Border>
+
+                        <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource TextDanger}" FontSize="13" TextWrapping="Wrap"
+                                   IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+
+                    <Border Classes="dialog-footer" Margin="0,20,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button Classes="entity-header-action outline" Command="{Binding CancelActionCommand}" Content="Back"/>
+                            <Button Classes="entity-header-action primary" IsVisible="{Binding IsRescheduling}"
+                                    IsEnabled="{Binding CanConfirm}"
+                                    Command="{Binding ConfirmActionCommand}" Content="{Binding ConfirmationButtonText}"/>
+                            <Button Classes="danger" MinHeight="34" Height="34" Padding="12,0" CornerRadius="6" VerticalContentAlignment="Center"
+                                    IsVisible="{Binding !IsRescheduling}"
+                                    IsEnabled="{Binding CanConfirm}"
+                                    Command="{Binding ConfirmActionCommand}" Content="{Binding ConfirmationButtonText}"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
-
-            <Border Background="#99000000" IsVisible="{Binding ShowConfirmation}">
-                <Border Classes="dialog-card" Width="520" Padding="20"
-                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <StackPanel Spacing="12">
-                        <TextBlock Text="{Binding ConfirmationAction}" Classes="title"/>
-                        <TextBlock Text="{Binding ConfirmationText}" TextWrapping="Wrap"/>
-                        <TextBlock Text="A partial failure may leave the original broker schedule cancelled."
-                                   Classes="caption"/>
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <DatePicker SelectedDate="{Binding RescheduleTime}"/>
-                            <TimePicker Grid.Column="1" SelectedTime="{Binding RescheduleClockTime}"/>
-                        </Grid>
-                        <CheckBox IsChecked="{Binding IsProductionAcknowledged}"
-                                  Content="I acknowledge this Production destination"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                            <Button Command="{Binding CancelActionCommand}" Content="Back"/>
-                            <Button Classes="primary" Command="{Binding ConfirmActionCommand}" Content="Confirm"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-
-            <TextBlock Text="{Binding StatusText}" Margin="16" VerticalAlignment="Bottom"/>
-            <TextBlock Text="{Binding ErrorText}" Margin="16" VerticalAlignment="Bottom"/>
-        </Grid>
+        </Border>
     </Grid>
 </UserControl>

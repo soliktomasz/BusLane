@@ -30,14 +30,20 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     [ObservableProperty] private string _selectedTimeRange = "All";
     [ObservableProperty] private bool _isCalendarMode;
     [ObservableProperty] private DateTimeOffset _selectedMonth;
-    [ObservableProperty] private ScheduledMessageResolvedEntry? _selectedEntry;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RequiresProductionAcknowledgement), nameof(CanConfirm))]
+    private ScheduledMessageResolvedEntry? _selectedEntry;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorText;
     [ObservableProperty] private string? _statusText;
     [ObservableProperty] private bool _showConfirmation;
-    [ObservableProperty] private string? _confirmationAction;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRescheduling), nameof(ConfirmationTitle), nameof(ConfirmationButtonText))]
+    private string? _confirmationAction;
     [ObservableProperty] private string? _confirmationText;
-    [ObservableProperty] private bool _isProductionAcknowledged;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConfirm))]
+    private bool _isProductionAcknowledged;
     [ObservableProperty] private DateTimeOffset? _rescheduleTime;
     [ObservableProperty] private TimeSpan? _rescheduleClockTime;
 
@@ -85,6 +91,23 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     }
 
     public bool IsEmpty => FilteredEntries.Count == 0;
+    public bool HasEntries => Entries.Count > 0;
+
+    public string Summary
+    {
+        get
+        {
+            var upcoming = Entries.Count(e => e.LocalState == "Upcoming (local)");
+            return $"{upcoming} upcoming · {Entries.Count} in the local index";
+        }
+    }
+
+    public bool IsRescheduling => ConfirmationAction == "Reschedule";
+    public string ConfirmationTitle => IsRescheduling ? "Reschedule message" : "Cancel scheduled message";
+    public string ConfirmationButtonText => IsRescheduling ? "Reschedule" : "Cancel message";
+    public bool RequiresProductionAcknowledgement =>
+        SelectedEntry?.Entry.Environment == ConnectionEnvironment.Production;
+    public bool CanConfirm => !RequiresProductionAcknowledgement || IsProductionAcknowledged;
 
     public ScheduledMessagesViewModel(
         IScheduledMessageManagementService service,
@@ -147,6 +170,17 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
     [RelayCommand] private void ShowCalendar() => IsCalendarMode = true;
     [RelayCommand] private void PreviousMonth() => SelectedMonth = SelectedMonth.AddMonths(-1);
     [RelayCommand] private void NextMonth() => SelectedMonth = SelectedMonth.AddMonths(1);
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        SearchText = "";
+        SelectedConnection = "All";
+        SelectedEntity = "All";
+        SelectedEnvironment = "All";
+        SelectedStatus = "All";
+        SelectedTimeRange = "All";
+    }
+
     [RelayCommand] private void SelectEntry(ScheduledMessageResolvedEntry? item) => SelectedEntry = item;
 
     [RelayCommand]
@@ -168,6 +202,7 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         if (item is null) return;
         SelectedEntry = item;
         IsProductionAcknowledged = false;
+        StatusText = null;
         ConfirmationAction = "Cancel";
         ConfirmationText = BuildConfirmationText(item.Entry);
         RescheduleTime = item.Entry.ScheduledEnqueueTime;
@@ -181,8 +216,11 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         if (item is null) return;
         SelectedEntry = item;
         IsProductionAcknowledged = false;
+        StatusText = null;
         ConfirmationAction = "Reschedule";
         ConfirmationText = BuildConfirmationText(item.Entry);
+        RescheduleTime = item.Entry.ScheduledEnqueueTime;
+        RescheduleClockTime = item.Entry.ScheduledEnqueueTime.TimeOfDay;
         ShowConfirmation = true;
     }
 
@@ -271,6 +309,8 @@ public partial class ScheduledMessagesViewModel : ViewModelBase
         OnPropertyChanged(nameof(FilteredEntries));
         OnPropertyChanged(nameof(CalendarDays));
         OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(HasEntries));
+        OnPropertyChanged(nameof(Summary));
     }
 
     private void NotifyFilterOptionsChanged()

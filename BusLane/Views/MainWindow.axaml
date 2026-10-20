@@ -159,24 +159,37 @@
                     IsVisible="{Binding FeaturePanels.ShowScheduledMessages}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Classes="page-header-surface">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
-                                <LucideIcon Kind="CalendarClock" Size="18"
-                                            Foreground="{DynamicResource AccentBrand}"/>
+                    <!-- Header matches the entity workspace and namespace overview -->
+                    <Border Grid.Row="0" Classes="message-command-bar" Padding="24,18">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border Classes="entity-header-icon">
+                                <LucideIcon Kind="CalendarClock" Size="18" Foreground="{DynamicResource AccentBrand}"/>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock Text="Scheduled Messages" Classes="heading"/>
-                                <TextBlock Text="Manage messages scheduled through BusLane"
-                                           Classes="caption"/>
-                            </StackPanel>
-                            <Button Grid.Column="2" Classes="secondary small"
-                                    Command="{Binding CloseScheduledMessagesCommand}">
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Scheduled messages" Classes="entity-header-title"/>
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="14"/>
-                                    <TextBlock Text="Close"/>
+                                    <TextBlock Classes="overview-status"
+                                               Text="{Binding FeaturePanels.ScheduledMessagesViewModel.Summary, FallbackValue=''}"/>
+                                    <TextBlock Classes="overview-status accent" Text="· Refreshing"
+                                               IsVisible="{Binding FeaturePanels.ScheduledMessagesViewModel.IsLoading, FallbackValue=False}"/>
                                 </StackPanel>
-                            </Button>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button Classes="entity-header-action outline"
+                                        Command="{Binding FeaturePanels.ScheduledMessagesViewModel.RefreshCommand}"
+                                        AutomationProperties.Name="Refresh scheduled messages">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="RefreshCw" Size="14"/>
+                                        <TextBlock Text="Refresh"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="entity-header-action outline icon-only"
+                                        Command="{Binding CloseScheduledMessagesCommand}"
+                                        ToolTip.Tip="Close scheduled messages"
+                                        AutomationProperties.Name="Close scheduled messages">
+                                    <LucideIcon Kind="X" Size="16"/>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
                     <controls:ScheduledMessagesView Grid.Row="1"
