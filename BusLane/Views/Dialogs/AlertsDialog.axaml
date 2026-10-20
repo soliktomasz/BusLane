@@ -2,630 +2,611 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:BusLane.ViewModels"
              xmlns:models="using:BusLane.Models"
+             xmlns:conv="using:BusLane.Converters"
              x:Class="BusLane.Views.Dialogs.AlertsDialog"
              x:CompileBindings="False">
+    <UserControl.Styles>
+        <!-- Flat timetable rows: one seam per row, instant hover tint, no nested cards. -->
+        <Style Selector="Border.alert-toolbar">
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="MinHeight" Value="58"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style Selector="Border.alert-table-header">
+            <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="24,7"/>
+        </Style>
+        <Style Selector="TextBlock.col-head">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+        </Style>
+        <Style Selector="Border.alert-row">
+            <Setter Property="Padding" Value="24,10"/>
+            <Setter Property="MinHeight" Value="56"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style Selector="Border.alert-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        </Style>
+        <Style Selector="TextBlock.row-title">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style Selector="TextBlock.row-meta">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style Selector="TextBlock.row-figure">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <Style Selector="Border.alert-row.muted TextBlock.row-title, Border.alert-row.muted TextBlock.row-figure">
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="StackPanel.rule-fact">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Spacing" Value="5"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
+        </Style>
+        <Style Selector="StackPanel.rule-fact LucideIcon">
+            <Setter Property="Size" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="StackPanel.rule-fact TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.row-icon">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.row-icon.destructive">
+            <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
+        </Style>
+        <Style Selector="StackPanel.alert-empty">
+            <Setter Property="Spacing" Value="6"/>
+            <Setter Property="Margin" Value="24,56"/>
+            <Setter Property="MaxWidth" Value="420"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="StackPanel.alert-empty TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style Selector="TextBlock.form-group-title">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        </Style>
+        <Style Selector="TextBlock.form-label">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        </Style>
+        <Style Selector="TextBlock.form-hint">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <!-- Keep text, combo and number fields on one baseline in the rule form -->
+        <Style Selector="StackPanel.rule-form ComboBox, StackPanel.rule-form NumericUpDown, StackPanel.rule-form TextBox">
+            <Setter Property="MinHeight" Value="38"/>
+        </Style>
+        <Style Selector="ToggleSwitch.compact">
+            <Setter Property="OnContent" Value=""/>
+            <Setter Property="OffContent" Value=""/>
+            <Setter Property="MinWidth" Value="0"/>
+        </Style>
+    </UserControl.Styles>
 
     <Border Classes="modal-overlay">
-        <Border Classes="modal modal-large"
-                Width="800"
-                Height="650"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
+        <Border Classes="modal"
+                Margin="24"
+                MinWidth="720"
+                MaxWidth="960"
+                MaxHeight="720"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
                 Padding="0">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header -->
-                <Border Grid.Row="0"
-                        Classes="dialog-header">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Border Grid.Column="0"
-                                Width="44" Height="44"
-                                CornerRadius="{StaticResource RadiusLarge}"
-                                Background="{DynamicResource SurfaceDanger}"
-                                Margin="0,0,16,0">
-                            <LucideIcon Kind="Bell" Size="20"
-                                      Foreground="{DynamicResource TextDanger}"/>
+                <Border Grid.Row="0" Classes="dialog-header" Padding="24,18">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <Border Classes="entity-header-icon">
+                            <LucideIcon Kind="Bell" Size="18" Foreground="{DynamicResource AccentBrand}"/>
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBlock Text="Alerts" Classes="title-small"/>
-                                <Border Classes="badge-danger" CornerRadius="{StaticResource RadiusMedium}" Padding="8,3"
-                                        IsVisible="{Binding HasAlerts}" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding UnacknowledgedCount}" FontSize="12"/>
-                                </Border>
-                            </StackPanel>
-                            <TextBlock Text="Monitor thresholds and configure alert rules" Classes="caption"/>
+                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="Alerts" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Summary}" Classes="caption" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                         <Button Grid.Column="2"
-                                Classes="subtle"
-                                Padding="8"
-                                VerticalAlignment="Top"
-                                Command="{Binding CloseCommand}">
+                                Classes="entity-header-action outline icon-only"
+                                VerticalAlignment="Center"
+                                Command="{Binding CloseCommand}"
+                                ToolTip.Tip="Close alerts"
+                                AutomationProperties.Name="Close alerts">
                             <LucideIcon Kind="X" Size="16"/>
                         </Button>
                     </Grid>
                 </Border>
 
-                <!-- Tab Navigation -->
-                <Border Grid.Row="1"
-                        Classes="dialog-command-bar"
-                        Margin="24,16,24,0">
-                    <Border Classes="tab-nav">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <RadioButton Classes="tab-item"
-                                         Content="Active Alerts"
-                                         IsChecked="{Binding IsActiveAlertsTabSelected}"
-                                         GroupName="AlertTabs"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="Alert Rules"
-                                         IsChecked="{Binding IsRulesTabSelected}"
-                                         GroupName="AlertTabs"/>
-                            <RadioButton Classes="tab-item"
-                                         Content="History"
-                                         IsChecked="{Binding IsHistoryTabSelected}"
-                                         GroupName="AlertTabs"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Section tabs share the message tabs' indicator -->
+                <Border Grid.Row="1" Classes="overview-section-strip">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Classes="section-tab" GroupName="AlertTabs"
+                                     IsChecked="{Binding IsActiveAlertsTabSelected}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Active"/>
+                                <Border Classes="counter-active" VerticalAlignment="Center"
+                                        IsVisible="{Binding !!UnacknowledgedCount}">
+                                    <TextBlock Text="{Binding UnacknowledgedCount}"/>
+                                </Border>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Classes="section-tab" GroupName="AlertTabs"
+                                     IsChecked="{Binding IsRulesTabSelected}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Rules"/>
+                                <Border Classes="counter-active" VerticalAlignment="Center"
+                                        IsVisible="{Binding !!Rules.Count}">
+                                    <TextBlock Text="{Binding Rules.Count}"/>
+                                </Border>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Classes="section-tab" GroupName="AlertTabs"
+                                     IsChecked="{Binding IsHistoryTabSelected}">
+                            <TextBlock Text="History"/>
+                        </RadioButton>
+                    </StackPanel>
                 </Border>
 
-                <!-- Content -->
-                <ScrollViewer Grid.Row="2">
-                    <Border Classes="dialog-body">
-                        <Grid>
-                            <!-- Active Alerts Tab Content -->
-                            <StackPanel Spacing="16" IsVisible="{Binding IsActiveAlertsTabSelected}">
+                <Panel Grid.Row="2">
+                    <!-- ============ Active ============ -->
+                    <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsActiveAlertsTabSelected}">
+                        <Border Classes="alert-toolbar">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <TextBlock Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap"
+                                           Text="Alerts stay here until you clear them after acknowledging."/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                            IsVisible="{Binding HasAlerts}">
+                                    <Button Classes="entity-header-action outline"
+                                            Command="{Binding ClearAcknowledgedAlertsCommand}"
+                                            AutomationProperties.Name="Clear acknowledged alerts">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="ListX" Size="14"/>
+                                            <TextBlock Text="Clear acknowledged"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="entity-header-action primary"
+                                            Command="{Binding AcknowledgeAllAlertsCommand}"
+                                            IsEnabled="{Binding !!UnacknowledgedCount}"
+                                            AutomationProperties.Name="Acknowledge all alerts">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="CheckCheck" Size="14"/>
+                                            <TextBlock Text="Acknowledge all"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
 
-                                <!-- Quick Actions -->
-                                <Border Classes="dialog-command-bar"
-                                        IsVisible="{Binding HasAlerts}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Classes="primary small"
-                                                Command="{Binding AcknowledgeAllAlertsCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Check" Size="16"/>
-                                                <TextBlock Text="Acknowledge All"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Classes="subtle small"
-                                                Command="{Binding ClearAcknowledgedAlertsCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <LucideIcon Kind="Trash2" Size="16"/>
-                                                <TextBlock Text="Clear Acknowledged"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
+                        <StackPanel Grid.Row="1" Classes="alert-empty" IsVisible="{Binding !HasAlerts}">
+                            <LucideIcon Kind="BellOff" Size="22" Foreground="{DynamicResource SubtleForeground}"
+                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBlock Text="No active alerts" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Classes="form-hint"
+                                       Text="Rules are checked whenever entities load or refresh. When a value reaches a rule's threshold, the alert appears here."/>
+                        </StackPanel>
 
-                                <!-- Alerts List -->
-                                <Border Classes="dialog-section-surface" Padding="0">
-                                    <StackPanel>
-                                        <!-- Section Header -->
-                                        <Border Padding="16,16"
-                                                BorderBrush="{DynamicResource BorderDefault}"
-                                                BorderThickness="0,0,0,1"
-                                                Background="{DynamicResource CardBackground}"
-                                                CornerRadius="12,12,0,0">
-                                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                                <Border Width="28" Height="28"
-                                                        CornerRadius="{StaticResource RadiusSmall}"
-                                                        Background="{DynamicResource SurfaceWarning}">
-                                                    <LucideIcon Kind="TriangleAlert" Size="16"
-                                                              Foreground="{DynamicResource TextWarning}"/>
-                                                </Border>
-                                                <TextBlock Text="Triggered Alerts" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Alerts Content -->
-                                        <Border Padding="16">
-                                            <!-- Empty State -->
-                                            <StackPanel IsVisible="{Binding !HasAlerts}"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Center"
-                                                        Spacing="12"
-                                                        Margin="0,24">
-                                                <Border Width="64" Height="64"
-                                                        CornerRadius="{StaticResource RadiusPill}"
-                                                        Background="{DynamicResource SurfaceSuccess}"
-                                                        HorizontalAlignment="Center">
-                                                    <LucideIcon Kind="CircleCheck" Size="32"
-                                                              Foreground="{DynamicResource TextSuccess}"/>
-                                                </Border>
-                                                <TextBlock Text="All clear"
-                                                           FontSize="16"
-                                                           FontWeight="SemiBold"
-                                                           HorizontalAlignment="Center"/>
-                                                <TextBlock Text="No active alerts at this time"
-                                                           FontSize="13"
-                                                           Foreground="{DynamicResource SubtleForeground}"
-                                                           HorizontalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Alerts List -->
-                                        <ItemsControl ItemsSource="{Binding ActiveAlerts}"
-                                                      IsVisible="{Binding HasAlerts}"
-                                                      Margin="8,0,8,8">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="models:AlertEvent">
-                                                    <Border Padding="16"
-                                                            Margin="0,0,0,8"
-                                                            CornerRadius="{StaticResource RadiusMedium}"
-                                                            Background="{DynamicResource CardBackground}"
-                                                            BorderThickness="1"
-                                                            BorderBrush="{DynamicResource BorderDefault}"
-                                                            Opacity="{Binding IsAcknowledged, Converter={StaticResource BoolToOpacityConverter}}">
-                                                        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
-                                                            <!-- Severity Icon -->
-                                                            <Border Grid.Column="0" Grid.RowSpan="3"
-                                                                    Width="40" Height="40"
-                                                                    CornerRadius="{StaticResource RadiusMedium}"
-                                                                    Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}"
-                                                                    Margin="0,0,16,0"
-                                                                    VerticalAlignment="Top">
-                                                                <LucideIcon Kind="Bell" Size="20"
-                                                                          Foreground="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
-                                                            </Border>
-
-                                                            <!-- Alert Title and Badge -->
-                                                            <StackPanel Grid.Column="1" Grid.Row="0"
-                                                                        Orientation="Horizontal"
-                                                                        Spacing="10">
-                                                                <TextBlock Text="{Binding Rule.Name}"
-                                                                           FontWeight="SemiBold"
-                                                                           FontSize="16"/>
-                                                                <Border Classes="severity-pill"
-                                                                        Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
-                                                                    <TextBlock Text="{Binding Rule.Severity}"
-                                                                               Foreground="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
-                                                                </Border>
-                                                            </StackPanel>
-
-                                                            <!-- Entity Info -->
-                                                            <TextBlock Grid.Column="1" Grid.Row="1"
-                                                                       FontSize="13"
-                                                                       Foreground="{DynamicResource SubtleForeground}"
-                                                                       Margin="0,4,0,0">
-                                                                <Run Text="{Binding EntityType}"/>
-                                                                <Run Text=": "/>
-                                                                <Run Text="{Binding EntityName}" FontWeight="SemiBold"/>
-                                                            </TextBlock>
-
-                                                            <!-- Metrics and Time -->
-                                                            <StackPanel Grid.Column="1" Grid.Row="2"
-                                                                        Orientation="Horizontal"
-                                                                        Spacing="16"
-                                                                        Margin="0,6,0,0">
-                                                                <TextBlock FontSize="12" Foreground="{DynamicResource MutedForeground}">
-                                                                    <Run Text="Value: "/>
-                                                                    <Run Text="{Binding CurrentValue, StringFormat='{}{0:N0}'}" FontWeight="Medium"/>
-                                                                    <Run Text=" / "/>
-                                                                    <Run Text="{Binding Rule.Threshold, StringFormat='{}{0:N0}'}"/>
-                                                                </TextBlock>
-                                                                <TextBlock Text="{Binding TriggeredAt, StringFormat='{}{0:g}'}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource MutedForeground}"/>
-                                                            </StackPanel>
-
-                                                            <!-- Acknowledge Button -->
-                                                            <Button Grid.Column="2" Grid.RowSpan="3"
-                                                                    Classes="primary small"
-                                                                    Command="{Binding $parent[ItemsControl].DataContext.AcknowledgeAlertCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    IsVisible="{Binding !IsAcknowledged}"
-                                                                    VerticalAlignment="Center">
-                                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                    <LucideIcon Kind="Check" Size="16"/>
-                                                                    <TextBlock Text="Acknowledge"/>
-                                                                </StackPanel>
-                                                            </Button>
-
-                                                            <Border Grid.Column="2" Grid.RowSpan="3"
-                                                                    Classes="badge-success"
-                                                                    IsVisible="{Binding IsAcknowledged}"
-                                                                    VerticalAlignment="Center">
-                                                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                    <LucideIcon Kind="Check" Size="12"/>
-                                                                    <TextBlock Text="Done"/>
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </Grid>
+                        <Grid Grid.Row="1" RowDefinitions="Auto,*" IsVisible="{Binding HasAlerts}">
+                            <Border Classes="alert-table-header">
+                                <Grid ColumnDefinitions="84,*,96,92,128" ColumnSpacing="12">
+                                    <TextBlock Classes="col-head" Text="Severity"/>
+                                    <TextBlock Grid.Column="1" Classes="col-head" Text="Alert"/>
+                                    <TextBlock Grid.Column="2" Classes="col-head" Text="Value" HorizontalAlignment="Right"/>
+                                    <TextBlock Grid.Column="3" Classes="col-head" Text="Triggered"/>
+                                </Grid>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding ActiveAlerts}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:AlertEvent">
+                                            <Border Classes="alert-row" Classes.muted="{Binding IsAcknowledged}">
+                                                <Grid ColumnDefinitions="84,*,96,92,128" ColumnSpacing="12">
+                                                    <Border Classes="severity-pill" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                            Background="{Binding Rule.Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
+                                                        <TextBlock Text="{Binding Rule.Severity}" FontSize="12" FontWeight="Medium"
+                                                                   Foreground="{Binding Rule.Severity, Converter={StaticResource SeverityToColorConverter}}"/>
                                                     </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-
-                            <!-- Alert Rules Tab Content -->
-                            <StackPanel Spacing="16" IsVisible="{Binding IsRulesTabSelected}">
-
-                                <!-- Add/Edit Rule Form -->
-                                <Border Classes="dialog-section-surface" Padding="0"
-                                        IsVisible="{Binding IsAddingRule}">
-                                    <StackPanel>
-                                        <!-- Form Header -->
-                                        <Border Padding="16,16"
-                                                BorderBrush="{DynamicResource BorderDefault}"
-                                                BorderThickness="0,0,0,1"
-                                                Background="{DynamicResource CardBackground}"
-                                                CornerRadius="12,12,0,0">
-                                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                                <Border Width="28" Height="28"
-                                                        CornerRadius="{StaticResource RadiusSmall}"
-                                                        Background="{DynamicResource SurfaceBrand}">
-                                                    <Panel>
-                                                        <LucideIcon Kind="Pencil" Size="16"
-                                                                  Foreground="{DynamicResource AccentBrand}"
-                                                                  IsVisible="{Binding IsEditingRule}"/>
-                                                        <LucideIcon Kind="Plus" Size="16"
-                                                                  Foreground="{DynamicResource AccentBrand}"
-                                                                  IsVisible="{Binding !IsEditingRule}"/>
+                                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Classes="row-title" Text="{Binding Rule.Name}"
+                                                                   ToolTip.Tip="{Binding Rule.Name}"/>
+                                                        <TextBlock Classes="row-meta">
+                                                            <TextBlock.Text>
+                                                                <MultiBinding StringFormat="{}{0} · {1}">
+                                                                    <Binding Path="EntityType"/>
+                                                                    <Binding Path="EntityName"/>
+                                                                </MultiBinding>
+                                                            </TextBlock.Text>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Classes="row-figure" Text="{Binding CurrentValue, StringFormat='{}{0:N0}'}"/>
+                                                        <TextBlock Classes="row-meta" HorizontalAlignment="Right"
+                                                                   Text="{Binding Rule.Threshold, StringFormat='{}limit {0:N0}'}"
+                                                                   ToolTip.Tip="{Binding Rule.Type, Converter={x:Static conv:AlertConverters.TypeName}}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="3" Spacing="2" VerticalAlignment="Center"
+                                                                ToolTip.Tip="{Binding TriggeredAt.LocalDateTime}">
+                                                        <TextBlock FontSize="13" Text="{Binding TriggeredAt.LocalDateTime, StringFormat='{}{0:HH:mm:ss}'}"/>
+                                                        <TextBlock Classes="row-meta" Text="{Binding TriggeredAt.LocalDateTime, StringFormat='{}{0:dd MMM yyyy}'}"/>
+                                                    </StackPanel>
+                                                    <Panel Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                        <Button Classes="overview-row-action"
+                                                                IsVisible="{Binding !IsAcknowledged}"
+                                                                Command="{Binding $parent[ItemsControl].DataContext.AcknowledgeAlertCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                AutomationProperties.Name="Acknowledge alert">
+                                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                <LucideIcon Kind="Check" Size="13"/>
+                                                                <TextBlock Text="Acknowledge"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <StackPanel Orientation="Horizontal" Spacing="5"
+                                                                    IsVisible="{Binding IsAcknowledged}">
+                                                            <LucideIcon Kind="Check" Size="13" Foreground="{DynamicResource TextSuccess}"
+                                                                        VerticalAlignment="Center"/>
+                                                            <TextBlock Classes="row-meta" Text="Acknowledged" VerticalAlignment="Center"/>
+                                                        </StackPanel>
                                                     </Panel>
-                                                </Border>
-                                                <TextBlock Text="{Binding FormTitle}"
-                                                           FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Form Content -->
-                                        <Border Padding="16">
-                                            <StackPanel Spacing="16">
-                                                <!-- Rule Name -->
-                                                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                                                    <StackPanel Grid.Column="0" Spacing="6">
-                                                        <TextBlock Text="Rule name" FontWeight="Medium" FontSize="13"/>
-                                                        <TextBox Text="{Binding RuleName}"
-                                                                 PlaceholderText="e.g., High dead letters"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Spacing="6">
-                                                        <TextBlock Text="Alert type" FontWeight="Medium" FontSize="13"/>
-                                                        <ComboBox ItemsSource="{Binding AvailableAlertTypes}"
-                                                                  SelectedItem="{Binding SelectedAlertType}"
-                                                                  HorizontalAlignment="Stretch"/>
-                                                    </StackPanel>
                                                 </Grid>
-
-                                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                                <!-- Severity and Threshold -->
-                                                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                                                    <StackPanel Grid.Column="0" Spacing="6">
-                                                        <TextBlock Text="Severity" FontWeight="Medium" FontSize="13"/>
-                                                        <ComboBox ItemsSource="{Binding AvailableSeverities}"
-                                                                  SelectedItem="{Binding SelectedSeverity}"
-                                                                  HorizontalAlignment="Stretch"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Spacing="6">
-                                                        <TextBlock Text="Threshold" FontWeight="Medium" FontSize="13"/>
-                                                        <NumericUpDown Value="{Binding Threshold}"
-                                                                       Minimum="1"
-                                                                       FormatString="N0"/>
-                                                    </StackPanel>
-                                                </Grid>
-
-                                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                                <!-- Entity Pattern -->
-                                                <StackPanel Spacing="6">
-                                                    <TextBlock Text="Entity pattern (optional)" FontWeight="Medium" FontSize="13"/>
-                                                    <TextBox Text="{Binding EntityPattern}"
-                                                             PlaceholderText="e.g., orders-.* (regex supported, leave empty for all)"/>
-                                                    <TextBlock Text="Use regex patterns to match specific queues or topics"
-                                                               Classes="caption"/>
-                                                </StackPanel>
-
-                                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                                <!-- Cooldown and Quiet Hours -->
-                                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
-                                                    <StackPanel Grid.Column="0" Spacing="6">
-                                                        <TextBlock Text="Cooldown (minutes)" FontWeight="Medium" FontSize="13"/>
-                                                        <NumericUpDown Value="{Binding CooldownMinutes}"
-                                                                       Minimum="0"
-                                                                       Increment="5"
-                                                                       FormatString="N0"/>
-                                                        <TextBlock Text="0 disables cooldown suppression"
-                                                                   Classes="caption"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Spacing="6">
-                                                        <TextBlock Text="Quiet hours start" FontWeight="Medium" FontSize="13"/>
-                                                        <NumericUpDown Value="{Binding QuietHoursStartHour}"
-                                                                       Minimum="0"
-                                                                       Maximum="23"
-                                                                       FormatString="N0"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="2" Spacing="6">
-                                                        <TextBlock Text="Quiet hours end" FontWeight="Medium" FontSize="13"/>
-                                                        <NumericUpDown Value="{Binding QuietHoursEndHour}"
-                                                                       Minimum="0"
-                                                                       Maximum="23"
-                                                                       FormatString="N0"/>
-                                                    </StackPanel>
-                                                </Grid>
-
-                                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                                <!-- Webhook -->
-                                                <StackPanel Spacing="6">
-                                                    <TextBlock Text="Webhook URL (optional)" FontWeight="Medium" FontSize="13"/>
-                                                    <TextBox Text="{Binding WebhookUrl}"
-                                                             PlaceholderText="https://example.invalid/webhook"/>
-                                                    <TextBlock Text="When set, triggered alerts will also be sent to this webhook."
-                                                               Classes="caption"/>
-                                                </StackPanel>
-
-                                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
-
-                                                <!-- Enable Toggle and Actions -->
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                                        <ToggleSwitch IsChecked="{Binding RuleEnabled}"
-                                                                      OnContent="" OffContent=""/>
-                                                        <TextBlock Text="Enable this rule"
-                                                                   VerticalAlignment="Center"
-                                                                   FontWeight="Medium"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                                        <Button Classes="secondary small"
-                                                                Command="{Binding CancelEditCommand}">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <LucideIcon Kind="X" Size="16"/>
-                                                                <TextBlock Text="Cancel"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                        <Button Classes="primary small"
-                                                                Command="{Binding SaveRuleCommand}">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <LucideIcon Kind="Save" Size="16"/>
-                                                                <TextBlock Text="Save Rule"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Rules List -->
-                                <Border Classes="dialog-section-surface" Padding="0"
-                                        IsVisible="{Binding !IsAddingRule}">
-                                    <StackPanel>
-                                        <!-- Section Header with Add Button -->
-                                        <Border Padding="16,16"
-                                                BorderBrush="{DynamicResource BorderDefault}"
-                                                BorderThickness="0,0,0,1"
-                                                Background="{DynamicResource CardBackground}"
-                                                CornerRadius="12,12,0,0">
-                                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                                    <Border Width="28" Height="28"
-                                                            CornerRadius="{StaticResource RadiusSmall}"
-                                                            Background="{DynamicResource SurfaceBrand}">
-                                                        <LucideIcon Kind="Inbox" Size="16"
-                                                                  Foreground="{DynamicResource AccentBrand}"/>
-                                                    </Border>
-                                                    <TextBlock Text="Configured Rules" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <Button Grid.Column="2"
-                                                        Classes="primary small"
-                                                        Command="{Binding ShowAddRuleCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <LucideIcon Kind="Plus" Size="16"/>
-                                                        <TextBlock Text="Add Rule"/>
-                                                    </StackPanel>
-                                                </Button>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Rules Content -->
-                                        <Border Padding="8">
-                                            <!-- Empty State -->
-                                            <StackPanel IsVisible="{Binding !Rules.Count}"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Center"
-                                                        Spacing="12"
-                                                        Margin="0,24">
-                                                <Border Width="64" Height="64"
-                                                        CornerRadius="{StaticResource RadiusPill}"
-                                                        Background="{DynamicResource SurfaceSubtle}"
-                                                        HorizontalAlignment="Center"
-                                                        BorderThickness="2"
-                                                        BorderBrush="{DynamicResource BorderDefault}">
-                                                    <LucideIcon Kind="Inbox" Size="32"
-                                                              Foreground="{DynamicResource SubtleForeground}"/>
-                                                </Border>
-                                                <TextBlock Text="No rules configured"
-                                                           FontSize="16"
-                                                           FontWeight="SemiBold"
-                                                           HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Add a rule to start monitoring your entities"
-                                                           FontSize="13"
-                                                           Foreground="{DynamicResource SubtleForeground}"
-                                                           HorizontalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Rules List -->
-                                        <ItemsControl ItemsSource="{Binding Rules}" Margin="8,0,8,8">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="models:AlertRule">
-                                                    <Border Padding="16"
-                                                            Margin="0,0,0,8"
-                                                            CornerRadius="{StaticResource RadiusMedium}"
-                                                            Background="{DynamicResource CardBackground}"
-                                                            BorderThickness="1"
-                                                            BorderBrush="{DynamicResource BorderDefault}"
-                                                            Opacity="{Binding !IsEnabled, Converter={StaticResource BoolToOpacityConverter}}">
-                                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                                            <!-- Enable Toggle -->
-                                                            <ToggleSwitch Grid.Column="0"
-                                                                          IsChecked="{Binding IsEnabled}"
-                                                                          Margin="0,0,16,0"
-                                                                          OnContent="" OffContent=""
-                                                                          VerticalAlignment="Center"/>
-
-                                                            <!-- Rule Details -->
-                                                            <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
-                                                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                    <TextBlock Text="{Binding Name}"
-                                                                               FontWeight="SemiBold"
-                                                                               FontSize="16"/>
-                                                                    <Border Classes="severity-pill"
-                                                                            Background="{Binding Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
-                                                                        <TextBlock Text="{Binding Severity}"
-                                                                                   Foreground="{Binding Severity, Converter={StaticResource SeverityToColorConverter}}"/>
-                                                                    </Border>
-                                                                </StackPanel>
-                                                                <StackPanel Orientation="Horizontal" Spacing="16">
-                                                                    <TextBlock FontSize="13" Foreground="{DynamicResource SubtleForeground}">
-                                                                        <Run Text="{Binding Type}"/>
-                                                                        <Run Text=" "/>
-                                                                        <Run Text="&#8805;" FontFamily="Segoe UI Symbol"/>
-                                                                        <Run Text=" "/>
-                                                                        <Run Text="{Binding Threshold, StringFormat='{}{0:N0}'}" FontWeight="Medium"/>
-                                                                    </TextBlock>
-                                                                    <TextBlock Text="{Binding EntityPattern, StringFormat='{}Pattern: {0}'}"
-                                                                               FontSize="12"
-                                                                               Foreground="{DynamicResource MutedForeground}"
-                                                                               IsVisible="{Binding EntityPattern, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                                </StackPanel>
-                                                            </StackPanel>
-
-                                                            <!-- Actions -->
-                                                            <StackPanel Grid.Column="2"
-                                                                        Orientation="Horizontal"
-                                                                        Spacing="2"
-                                                                        VerticalAlignment="Center">
-                                                                <Button Classes="subtle small"
-                                                                        ToolTip.Tip="Test this rule"
-                                                                        Command="{Binding $parent[ItemsControl].DataContext.TestRuleCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        Padding="8">
-                                                                    <LucideIcon Kind="Radio" Size="16"/>
-                                                                </Button>
-                                                                <Button Classes="subtle small"
-                                                                        ToolTip.Tip="Edit rule"
-                                                                        Command="{Binding $parent[ItemsControl].DataContext.ShowEditRuleCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        Padding="8">
-                                                                    <LucideIcon Kind="Pencil" Size="16"/>
-                                                                </Button>
-                                                                <Button Classes="danger-subtle small"
-                                                                        ToolTip.Tip="Delete rule"
-                                                                        Command="{Binding $parent[ItemsControl].DataContext.DeleteRuleCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        Padding="8">
-                                                                    <LucideIcon Kind="Trash2" Size="16"/>
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-
-                            <!-- Alert History Tab Content -->
-                            <StackPanel Spacing="16" IsVisible="{Binding IsHistoryTabSelected}">
-                                <Border Classes="dialog-section-surface" Padding="0">
-                                    <StackPanel>
-                                        <Border Padding="16,16"
-                                                BorderBrush="{DynamicResource BorderDefault}"
-                                                BorderThickness="0,0,0,1"
-                                                Background="{DynamicResource CardBackground}"
-                                                CornerRadius="12,12,0,0">
-                                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                                <Border Width="28" Height="28"
-                                                        CornerRadius="{StaticResource RadiusSmall}"
-                                                        Background="{DynamicResource SurfaceBrand}">
-                                                    <LucideIcon Kind="RotateCcwClock" Size="16"
-                                                              Foreground="{DynamicResource AccentBrand}"/>
-                                                </Border>
-                                                <TextBlock Text="Alert History" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Padding="16">
-                                            <Grid>
-                                                <StackPanel IsVisible="{Binding !AlertHistory.Count}"
-                                                            VerticalAlignment="Center"
-                                                            HorizontalAlignment="Center"
-                                                            Spacing="12"
-                                                            Margin="0,24">
-                                                    <TextBlock Text="No alert history yet"
-                                                               FontSize="16"
-                                                               FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Triggered and suppressed alerts will appear here"
-                                                               FontSize="13"
-                                                               Foreground="{DynamicResource SubtleForeground}"
-                                                               HorizontalAlignment="Center"/>
-                                                </StackPanel>
-
-                                                <ItemsControl ItemsSource="{Binding AlertHistory}"
-                                                              IsVisible="{Binding AlertHistory.Count}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate DataType="models:AlertHistoryEntry">
-                                                            <Border Padding="14"
-                                                                    Margin="0,0,0,8"
-                                                                    CornerRadius="{StaticResource RadiusMedium}"
-                                                                    Background="{DynamicResource CardBackground}"
-                                                                    BorderThickness="1"
-                                                                    BorderBrush="{DynamicResource BorderDefault}">
-                                                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                                                                    <StackPanel Grid.Column="0" Spacing="6">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <TextBlock Text="{Binding RuleName}" FontWeight="SemiBold"/>
-                                                                            <Border Classes="badge-info">
-                                                                                <TextBlock Text="{Binding Status}" FontSize="11"/>
-                                                                            </Border>
-                                                                        </StackPanel>
-                                                                        <TextBlock FontSize="12" Foreground="{DynamicResource SubtleForeground}">
-                                                                            <Run Text="{Binding EntityType}"/>
-                                                                            <Run Text=": "/>
-                                                                            <Run Text="{Binding EntityName}"/>
-                                                                        </TextBlock>
-                                                                        <TextBlock Text="{Binding Details}"
-                                                                                   FontSize="12"
-                                                                                   Foreground="{DynamicResource MutedForeground}"
-                                                                                   IsVisible="{Binding Details, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                                    </StackPanel>
-
-                                                                    <TextBlock Grid.Column="1"
-                                                                               Text="{Binding Timestamp, StringFormat='{}{0:g}'}"
-                                                                               FontSize="12"
-                                                                               Foreground="{DynamicResource MutedForeground}"
-                                                                               VerticalAlignment="Top"/>
-                                                                </Grid>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Grid>
-                                        </Border>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
                         </Grid>
-                    </Border>
-                </ScrollViewer>
+                    </Grid>
+
+                    <!-- ============ Rules ============ -->
+                    <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsRulesTabSelected}">
+                        <!-- List toolbar -->
+                        <Border Classes="alert-toolbar" IsVisible="{Binding !IsAddingRule}">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <TextBlock Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap"
+                                           Text="A rule fires when a matching queue or subscription reaches its threshold."/>
+                                <Button Grid.Column="1" Classes="entity-header-action primary"
+                                        Command="{Binding ShowAddRuleCommand}"
+                                        AutomationProperties.Name="Add alert rule">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Plus" Size="14"/>
+                                        <TextBlock Text="Add rule"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Form toolbar: actions stay visible above the scrolling form -->
+                        <Border Classes="alert-toolbar" IsVisible="{Binding IsAddingRule}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Button Classes="entity-header-action outline icon-only"
+                                        Command="{Binding CancelEditCommand}"
+                                        ToolTip.Tip="Back to rules"
+                                        AutomationProperties.Name="Back to rules">
+                                    <LucideIcon Kind="ArrowLeft" Size="16"/>
+                                </Button>
+                                <TextBlock Grid.Column="1" Text="{Binding FormTitle}" FontSize="15" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Classes="form-hint" VerticalAlignment="Center" Text="Name the rule to save it"
+                                               IsVisible="{Binding RuleName, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                                    <Button Classes="entity-header-action outline" Content="Cancel"
+                                            Command="{Binding CancelEditCommand}"/>
+                                    <Button Classes="entity-header-action primary"
+                                            Command="{Binding SaveRuleCommand}"
+                                            IsEnabled="{Binding RuleName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <LucideIcon Kind="Check" Size="14"/>
+                                            <TextBlock Text="Save rule"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Rule form -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding IsAddingRule}">
+                            <StackPanel Classes="rule-form" Margin="24,20,24,28" Spacing="28" MaxWidth="680" HorizontalAlignment="Left">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Classes="form-group-title" Text="Condition"/>
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Classes="form-label" Text="Rule name"/>
+                                        <TextBox Text="{Binding RuleName}" PlaceholderText="High dead letters on orders"
+                                                 AutomationProperties.Name="Rule name"/>
+                                    </StackPanel>
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Classes="form-label" Text="Metric"/>
+                                            <ComboBox ItemsSource="{Binding AvailableAlertTypes}"
+                                                      SelectedItem="{Binding SelectedAlertType}"
+                                                      HorizontalAlignment="Stretch"
+                                                      AutomationProperties.Name="Metric">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Converter={x:Static conv:AlertConverters.TypeName}}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Classes="form-label" Text="Alert at or above"/>
+                                            <NumericUpDown Value="{Binding Threshold}" Minimum="1" FormatString="N0"
+                                                           AutomationProperties.Name="Threshold"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="6">
+                                            <TextBlock Classes="form-label" Text="Severity"/>
+                                            <ComboBox ItemsSource="{Binding AvailableSeverities}"
+                                                      SelectedItem="{Binding SelectedSeverity}"
+                                                      HorizontalAlignment="Stretch"
+                                                      AutomationProperties.Name="Severity"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Classes="form-label" Text="Entity pattern"/>
+                                        <TextBox Text="{Binding EntityPattern}" PlaceholderText="orders-.*"
+                                                 FontFamily="Cascadia Code, Consolas, Monaco, monospace" FontSize="13"
+                                                 AutomationProperties.Name="Entity pattern"/>
+                                        <TextBlock Classes="form-hint"
+                                                   Text="Regular expression matched against queue and subscription names. Leave empty to watch every entity."/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
+
+                                <StackPanel Spacing="14">
+                                    <TextBlock Classes="form-group-title" Text="Noise control"/>
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Classes="form-label" Text="Cooldown (minutes)"/>
+                                            <NumericUpDown Value="{Binding CooldownMinutes}" Minimum="0" Increment="5" FormatString="N0"
+                                                           AutomationProperties.Name="Cooldown in minutes"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Classes="form-label" Text="Quiet from (hour)"/>
+                                            <NumericUpDown Value="{Binding QuietHoursStartHour}" Minimum="0" Maximum="23" FormatString="N0"
+                                                           AutomationProperties.Name="Quiet hours start hour"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="6">
+                                            <TextBlock Classes="form-label" Text="Quiet until (hour)"/>
+                                            <NumericUpDown Value="{Binding QuietHoursEndHour}" Minimum="0" Maximum="23" FormatString="N0"
+                                                           AutomationProperties.Name="Quiet hours end hour"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Classes="form-hint"
+                                               Text="Cooldown silences repeats of the same alert for that many minutes; 0 turns it off. Quiet hours use local time; the same start and end hour turns them off."/>
+                                </StackPanel>
+
+                                <Border Height="1" Background="{DynamicResource BorderDefault}"/>
+
+                                <StackPanel Spacing="14">
+                                    <TextBlock Classes="form-group-title" Text="Delivery"/>
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Classes="form-label" Text="Webhook URL"/>
+                                        <TextBox Text="{Binding WebhookUrl}" PlaceholderText="https://example.invalid/webhook"
+                                                 AutomationProperties.Name="Webhook URL"/>
+                                        <TextBlock Classes="form-hint" Text="Optional. Triggered alerts are also posted to this address."/>
+                                    </StackPanel>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                        <ToggleSwitch Classes="compact" IsChecked="{Binding RuleEnabled}" VerticalAlignment="Center"
+                                                      AutomationProperties.Name="Rule enabled"/>
+                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Classes="form-label" Text="Enabled"/>
+                                            <TextBlock Classes="form-hint" Text="Disabled rules are kept but not checked."/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Rule list -->
+                        <Panel Grid.Row="1" IsVisible="{Binding !IsAddingRule}">
+                            <StackPanel Classes="alert-empty" IsVisible="{Binding !Rules.Count}">
+                                <LucideIcon Kind="BellPlus" Size="22" Foreground="{DynamicResource SubtleForeground}"
+                                            HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                <TextBlock Text="No alert rules yet" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Classes="form-hint"
+                                           Text="Add a rule to be alerted when dead letters, message counts, or queue size reach a threshold."/>
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !!Rules.Count}">
+                                <ItemsControl ItemsSource="{Binding Rules}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:AlertRule">
+                                            <Border Classes="alert-row" Classes.muted="{Binding !IsEnabled}">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                                    <ToggleSwitch Classes="compact" VerticalAlignment="Center"
+                                                                  IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                                                                  Command="{Binding $parent[ItemsControl].DataContext.ToggleRuleEnabledCommand}"
+                                                                  CommandParameter="{Binding}"
+                                                                  ToolTip.Tip="Enable or disable this rule"
+                                                                  AutomationProperties.Name="{Binding Name, StringFormat='Enable {0}'}"/>
+                                                    <StackPanel Grid.Column="1" Spacing="5" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <TextBlock Classes="row-title" Text="{Binding Name}" MaxWidth="360"
+                                                                       ToolTip.Tip="{Binding Name}" VerticalAlignment="Center"/>
+                                                            <Border Classes="severity-pill" VerticalAlignment="Center" Padding="7,1"
+                                                                    Background="{Binding Severity, Converter={StaticResource SeverityToBackgroundConverter}}">
+                                                                <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Medium"
+                                                                           Foreground="{Binding Severity, Converter={StaticResource SeverityToColorConverter}}"/>
+                                                            </Border>
+                                                            <TextBlock Classes="row-meta" Text="Off" VerticalAlignment="Center"
+                                                                       IsVisible="{Binding !IsEnabled}"/>
+                                                        </StackPanel>
+                                                        <WrapPanel>
+                                                            <StackPanel Classes="rule-fact">
+                                                                <LucideIcon Kind="Gauge"/>
+                                                                <TextBlock Text="{Binding Type, Converter={x:Static conv:AlertConverters.TypeName}}"/>
+                                                                <TextBlock Text="≥"/>
+                                                                <TextBlock Text="{Binding Threshold, StringFormat='{}{0:N0}'}"
+                                                                           Foreground="{DynamicResource AppForeground}" FontWeight="Medium"/>
+                                                            </StackPanel>
+                                                            <StackPanel Classes="rule-fact">
+                                                                <LucideIcon Kind="Funnel"/>
+                                                                <TextBlock Text="All entities"
+                                                                           IsVisible="{Binding EntityPattern, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                                                                <TextBlock Text="{Binding EntityPattern}" MaxWidth="220" TextTrimming="CharacterEllipsis"
+                                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                           ToolTip.Tip="{Binding EntityPattern}"
+                                                                           IsVisible="{Binding EntityPattern, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                            </StackPanel>
+                                                            <StackPanel Classes="rule-fact"
+                                                                        IsVisible="{Binding Cooldown, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <LucideIcon Kind="Timer"/>
+                                                                <TextBlock Text="{Binding Cooldown.TotalMinutes, StringFormat='{}{0:N0} min cooldown'}"/>
+                                                            </StackPanel>
+                                                            <StackPanel Classes="rule-fact"
+                                                                        IsVisible="{Binding QuietHours, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <LucideIcon Kind="Moon"/>
+                                                                <TextBlock>
+                                                                    <TextBlock.Text>
+                                                                        <MultiBinding StringFormat="{}Quiet {0:00}:00–{1:00}:00">
+                                                                            <Binding Path="QuietHours.StartHour"/>
+                                                                            <Binding Path="QuietHours.EndHour"/>
+                                                                        </MultiBinding>
+                                                                    </TextBlock.Text>
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                            <StackPanel Classes="rule-fact"
+                                                                        IsVisible="{Binding DeliveryTargets, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                                <LucideIcon Kind="Webhook"/>
+                                                                <TextBlock Text="Webhook"/>
+                                                            </StackPanel>
+                                                        </WrapPanel>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <Button Classes="overview-row-action"
+                                                                Command="{Binding $parent[ItemsControl].DataContext.TestRuleCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="Adds a sample alert for this rule to Active"
+                                                                AutomationProperties.Name="{Binding Name, StringFormat='Test {0}'}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                <LucideIcon Kind="FlaskConical" Size="13"/>
+                                                                <TextBlock Text="Test"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button Classes="overview-row-action quiet row-icon"
+                                                                Command="{Binding $parent[ItemsControl].DataContext.ShowEditRuleCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="Edit rule"
+                                                                AutomationProperties.Name="{Binding Name, StringFormat='Edit {0}'}">
+                                                            <LucideIcon Kind="Pencil" Size="14"/>
+                                                        </Button>
+                                                        <Button Classes="overview-row-action quiet row-icon destructive"
+                                                                Command="{Binding $parent[ItemsControl].DataContext.DeleteRuleCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="Delete rule"
+                                                                AutomationProperties.Name="{Binding Name, StringFormat='Delete {0}'}">
+                                                            <LucideIcon Kind="Trash2" Size="14"/>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Panel>
+                    </Grid>
+
+                    <!-- ============ History ============ -->
+                    <Grid RowDefinitions="Auto,Auto,*" IsVisible="{Binding IsHistoryTabSelected}">
+                        <Border Classes="alert-toolbar">
+                            <TextBlock Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap"
+                                       Text="The latest 100 events: triggered, suppressed, delivered and acknowledged alerts."/>
+                        </Border>
+
+                        <StackPanel Grid.Row="2" Classes="alert-empty" IsVisible="{Binding !AlertHistory.Count}">
+                            <LucideIcon Kind="RotateCcwClock" Size="22" Foreground="{DynamicResource SubtleForeground}"
+                                        HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBlock Text="No alert history" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Classes="form-hint" Text="Each time a rule fires, is suppressed, or is acknowledged, it is recorded here."/>
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Classes="alert-table-header" IsVisible="{Binding !!AlertHistory.Count}">
+                            <Grid ColumnDefinitions="92,116,*,96" ColumnSpacing="12">
+                                <TextBlock Classes="col-head" Text="Time"/>
+                                <TextBlock Grid.Column="1" Classes="col-head" Text="Outcome"/>
+                                <TextBlock Grid.Column="2" Classes="col-head" Text="Rule"/>
+                                <TextBlock Grid.Column="3" Classes="col-head" Text="Value" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" IsVisible="{Binding !!AlertHistory.Count}">
+                            <ItemsControl ItemsSource="{Binding AlertHistory}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="models:AlertHistoryEntry">
+                                        <Border Classes="alert-row">
+                                            <Grid ColumnDefinitions="92,116,*,96" ColumnSpacing="12">
+                                                <StackPanel Spacing="2" VerticalAlignment="Center"
+                                                            ToolTip.Tip="{Binding Timestamp.LocalDateTime}">
+                                                    <TextBlock FontSize="13" Text="{Binding Timestamp.LocalDateTime, StringFormat='{}{0:HH:mm:ss}'}"/>
+                                                    <TextBlock Classes="row-meta" Text="{Binding Timestamp.LocalDateTime, StringFormat='{}{0:dd MMM yyyy}'}"/>
+                                                </StackPanel>
+                                                <Border Grid.Column="1" Classes="severity-pill" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="{Binding Status, Converter={StaticResource AlertHistoryStatusToBrushConverter}, ConverterParameter=Background}">
+                                                    <TextBlock FontSize="12" FontWeight="Medium"
+                                                               Text="{Binding Status, Converter={x:Static conv:AlertConverters.StatusName}}"
+                                                               Foreground="{Binding Status, Converter={StaticResource AlertHistoryStatusToBrushConverter}}"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                                                    <TextBlock Classes="row-title" Text="{Binding RuleName}" ToolTip.Tip="{Binding RuleName}"/>
+                                                    <TextBlock Classes="row-meta">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0} · {1}{2}">
+                                                                <Binding Path="EntityType"/>
+                                                                <Binding Path="EntityName"/>
+                                                                <Binding Path="Reason" Converter="{x:Static conv:AlertConverters.ReasonSuffix}"/>
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                    <TextBlock Classes="row-meta" Text="{Binding Details}" TextWrapping="Wrap" TextTrimming="None"
+                                                               IsVisible="{Binding Details, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="3" Classes="row-figure" VerticalAlignment="Center"
+                                                           Text="{Binding CurrentValue, StringFormat='{}{0:N0}'}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Panel>
 
                 <!-- Footer -->
-                <Border Grid.Row="3"
-                        Classes="dialog-footer">
-                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                        <ToggleSwitch IsChecked="{Binding SystemNotificationsEnabled}"
-                                      OnContent="" OffContent=""/>
-                        <StackPanel Spacing="2">
+                <Border Grid.Row="3" Classes="dialog-footer" Padding="24,12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <ToggleSwitch Classes="compact" IsChecked="{Binding SystemNotificationsEnabled}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="System notifications"/>
+                        <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
                             <TextBlock Text="System notifications" FontWeight="Medium" FontSize="13"/>
-                            <TextBlock Text="Get desktop alerts when rules trigger"
-                                       Classes="caption" FontSize="11"/>
+                            <TextBlock Text="Show a desktop notification when a rule triggers." Classes="caption"/>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>

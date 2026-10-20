@@ -163,6 +163,10 @@ Compose gives the available height to a native multiline body editor using the e
 
 The native Templates flyout retains search, Use, Duplicate, and Delete, with compact metadata and an empty label tied to the actual displayed item count. Import, Save template, Update, and Clear retain their existing bindings. No send shortcut is advertised without an implemented binding. Surface dimensions, states, evidence, and limits are recorded in [desktop-send-message.md](../.impeccable/surfaces/desktop-send-message.md); these local choices do not add global desktop tokens.
 
+### Alerts dialog
+
+Alerts reuses the Namespace overview's vocabulary inside a modal capped at (960 × 720px) with a (24px) margin: a violet Bell tile, Alerts over a live summary, an outlined icon-only Close, and Active / Rules / History section tabs with counts. Each tab keeps a fixed toolbar above flat, full-bleed timetable rows with column headers, right-aligned values, and local `HH:mm:ss` over `dd MMM yyyy` times. Acknowledged alerts and disabled rules use subtle foregrounds rather than opacity. The rule form replaces the list in place with Save and Cancel held in its toolbar, grouped as Condition, Noise control, and Delivery. History colours outcomes by meaning and names suppression reasons. Dimensions, behavior fixes, evidence, and limits are recorded in [desktop-alerts.md](../.impeccable/surfaces/desktop-alerts.md).
+
 ### Settings dialog
 
 Settings uses a native left-hand TabControl for General, Messages, Security & privacy, Updates, and Help & support. The category rail remains visible while each category scrolls independently. Flat label-and-control rows and group headings provide hierarchy within the existing Fluent dialog; preserve Inter, Lucide icons, dynamic light/dark resources, and violet selection feedback.

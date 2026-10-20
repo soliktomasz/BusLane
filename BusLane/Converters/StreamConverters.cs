@@ -175,3 +175,57 @@ public class SeverityToBackgroundConverter : IValueConverter
     }
 }
 
+
+/// <summary>
+/// Display text for alert rule types and history entries.
+/// </summary>
+public static class AlertConverters
+{
+    public static readonly FuncValueConverter<AlertType, string> TypeName =
+        new(type => ViewModels.AlertsViewModel.GetAlertTypeDisplayName(type));
+
+    public static readonly FuncValueConverter<AlertHistoryStatus, string> StatusName =
+        new(status => status switch
+        {
+            AlertHistoryStatus.DeliveryFailed => "Delivery failed",
+            _ => status.ToString()
+        });
+
+    public static readonly FuncValueConverter<AlertSuppressionReason, string> ReasonSuffix =
+        new(reason => reason switch
+        {
+            AlertSuppressionReason.Cooldown => " · during cooldown",
+            AlertSuppressionReason.QuietHours => " · during quiet hours",
+            _ => ""
+        });
+}
+
+/// <summary>
+/// Converts AlertHistoryStatus to a semantic brush. Pass "Background" as the parameter for the surface tint.
+/// </summary>
+public class AlertHistoryStatusToBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var background = parameter as string == "Background";
+        var resourceKey = value switch
+        {
+            AlertHistoryStatus.Triggered => background ? "SurfaceWarning" : "TextWarning",
+            AlertHistoryStatus.Delivered => background ? "SurfaceSuccess" : "TextSuccess",
+            AlertHistoryStatus.DeliveryFailed => background ? "SurfaceDanger" : "TextDanger",
+            AlertHistoryStatus.Acknowledged => background ? "SurfaceBrand" : "AccentBrand",
+            _ => background ? "SurfaceSubtle" : "SubtleForeground"
+        };
+
+        if (App.Current?.Resources.TryGetResource(resourceKey, App.Current.ActualThemeVariant, out var resource) == true && resource is SolidColorBrush brush)
+        {
+            return brush;
+        }
+        return new SolidColorBrush(Colors.Gray);
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

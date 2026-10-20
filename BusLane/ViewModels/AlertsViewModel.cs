@@ -45,6 +45,20 @@ public partial class AlertsViewModel : ViewModelBase, IDisposable
     public int UnacknowledgedCount => ActiveAlerts.Count(a => !a.IsAcknowledged);
     public bool HasAlerts => ActiveAlerts.Count > 0;
 
+    public string Summary
+    {
+        get
+        {
+            var waiting = UnacknowledgedCount == 0
+                ? "Nothing awaiting acknowledgement"
+                : $"{UnacknowledgedCount} awaiting acknowledgement";
+            if (Rules.Count == 0)
+                return $"{waiting} · No rules yet";
+            var enabled = Rules.Count(r => r.IsEnabled);
+            return $"{waiting} · {enabled} of {Rules.Count} {(Rules.Count == 1 ? "rule" : "rules")} enabled";
+        }
+    }
+
     public AlertsViewModel(IAlertService alertService, INotificationService notificationService, Action onClose)
     {
         _alertService = alertService;
@@ -87,6 +101,7 @@ public partial class AlertsViewModel : ViewModelBase, IDisposable
 
         OnPropertyChanged(nameof(UnacknowledgedCount));
         OnPropertyChanged(nameof(HasAlerts));
+        OnPropertyChanged(nameof(Summary));
     }
 
     private void OnAlertsChanged(object? sender, EventArgs e)
@@ -114,6 +129,9 @@ public partial class AlertsViewModel : ViewModelBase, IDisposable
     {
         EditingRule = rule;
         RuleName = rule.Name;
+        SelectedAlertType = rule.Type;
+        SelectedSeverity = rule.Severity;
+        Threshold = rule.Threshold;
         EntityPattern = rule.EntityPattern ?? "";
         RuleEnabled = rule.IsEnabled;
         CooldownMinutes = rule.Cooldown?.TotalMinutes ?? 0;

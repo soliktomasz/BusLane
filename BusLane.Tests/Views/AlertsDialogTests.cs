@@ -12,7 +12,7 @@ public class AlertsDialogTests
 
         // Assert
         xaml.Should().Contain("Classes=\"dialog-header\"");
-        xaml.Should().Contain("Classes=\"dialog-body\"");
+        xaml.Should().Contain("Classes=\"overview-section-strip\"");
         xaml.Should().Contain("Classes=\"dialog-footer\"");
     }
 
