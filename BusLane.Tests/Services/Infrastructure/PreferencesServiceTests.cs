@@ -137,4 +137,21 @@ public class PreferencesServiceTests : IDisposable
         // Assert
         reloaded.HasSeenIntroduction.Should().BeTrue();
     }
+
+    [Fact]
+    public void SaveAndReload_ShouldRoundTripDesign()
+    {
+        // Arrange
+        var _sut = new PreferencesService(_preferencesPath)
+        {
+            Design = "Zed"
+        };
+
+        // Act
+        _sut.Save();
+        var reloaded = new PreferencesService(_preferencesPath);
+
+        // Assert
+        reloaded.Design.Should().Be("Zed");
+    }
 }
