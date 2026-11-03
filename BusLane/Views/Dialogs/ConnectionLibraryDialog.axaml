@@ -246,7 +246,7 @@
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <Border Width="28"
                                         Height="28"
-                                        CornerRadius="{StaticResource RadiusLarge}"
+                                        CornerRadius="{DynamicResource RadiusLarge}"
                                         Background="{DynamicResource TextSuccess}">
                                         <LucideIcon Kind="Check"
                                             Size="16"
@@ -274,7 +274,7 @@
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <Border Width="28"
                                         Height="28"
-                                        CornerRadius="{StaticResource RadiusLarge}"
+                                        CornerRadius="{DynamicResource RadiusLarge}"
                                         Background="{DynamicResource TextDanger}">
                                         <LucideIcon Kind="TriangleAlert"
                                             Size="16"

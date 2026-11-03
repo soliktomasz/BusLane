@@ -24,7 +24,7 @@
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="10">
                                 <Border Grid.Column="0"
                                         Width="8" Height="8"
-                                        CornerRadius="{StaticResource RadiusPill}"
+                                        CornerRadius="{DynamicResource RadiusPill}"
                                         Background="{Binding Status, Converter={StaticResource InboxStatusToBrushConverter}}"
                                         VerticalAlignment="Top"
                                         Margin="0,6,0,0"/>

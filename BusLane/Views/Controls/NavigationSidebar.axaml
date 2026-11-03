@@ -98,7 +98,7 @@
                                     <Border Grid.Column="1"
                                             Width="36"
                                             Height="36"
-                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            CornerRadius="{DynamicResource RadiusMedium}"
                                             Background="{DynamicResource SurfaceBrand}"
                                             HorizontalAlignment="Right">
                                         <LucideIcon Kind="Waypoints"
@@ -157,7 +157,7 @@
                                 IsVisible="{Binding ShowNamespaceSelectionPrompt}">
                             <StackPanel Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Border Width="40" Height="40" CornerRadius="{StaticResource RadiusMedium}" Background="{DynamicResource SurfaceBrand}">
+                                    <Border Width="40" Height="40" CornerRadius="{DynamicResource RadiusMedium}" Background="{DynamicResource SurfaceBrand}">
                                         <LucideIcon Kind="Server"
                                                     Size="18"
                                                     Foreground="{DynamicResource AccentBrand}"
@@ -250,7 +250,7 @@
                                 <Border Grid.Column="0"
                                         Width="32"
                                         Height="32"
-                                        CornerRadius="{StaticResource RadiusMedium}"
+                                        CornerRadius="{DynamicResource RadiusMedium}"
                                         Background="{DynamicResource SurfaceBrand}">
                                     <LucideIcon Kind="Library"
                                                 Size="14"
@@ -311,7 +311,7 @@
                                                     <Border Grid.Column="0"
                                                             Width="30"
                                                             Height="30"
-                                                            CornerRadius="{StaticResource RadiusMedium}"
+                                                            CornerRadius="{DynamicResource RadiusMedium}"
                                                             Background="{DynamicResource SurfaceBrand}">
                                                         <LucideIcon Kind="Cable"
                                                                     Size="13"
@@ -443,7 +443,7 @@
                             </StackPanel>
                             <Border Grid.Column="2"
                                     Background="{DynamicResource DangerBackground}"
-                                    CornerRadius="{StaticResource RadiusMedium}"
+                                    CornerRadius="{DynamicResource RadiusMedium}"
                                     Padding="8,2"
                                     IsVisible="{Binding FeaturePanels.ActiveAlertCount}"
                                     VerticalAlignment="Center">
@@ -527,7 +527,7 @@
                         <LucideIcon Kind="Bell" Size="17"/>
                         <Border Width="8"
                                 Height="8"
-                                CornerRadius="{StaticResource RadiusSmall}"
+                                CornerRadius="{DynamicResource RadiusSmall}"
                                 Background="{DynamicResource TextDanger}"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"

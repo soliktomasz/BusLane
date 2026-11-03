@@ -2,6 +2,7 @@ namespace BusLane.Services.Infrastructure;
 
 using System.Text.Json;
 using BusLane.Services.Abstractions;
+using BusLane.Styling;
 using static BusLane.Services.Infrastructure.SafeJsonSerializer;
 
 /// <summary>
@@ -26,6 +27,7 @@ public class PreferencesService : IPreferencesService
     public double TerminalDockHeight { get; set; } = 260;
     public string? TerminalWindowBoundsJson { get; set; }
     public string Theme { get; set; } = "Light";
+    public string Design { get; set; } = AppThemes.ClassicDesign;
     public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
 
     // Session persistence
@@ -75,6 +77,7 @@ public class PreferencesService : IPreferencesService
                     TerminalDockHeight = data.TerminalDockHeight > 0 ? data.TerminalDockHeight : TerminalDockHeight;
                     TerminalWindowBoundsJson = data.TerminalWindowBoundsJson;
                     Theme = data.Theme ?? "Light";
+                    Design = data.Design ?? AppThemes.ClassicDesign;
                     LiveStreamPollingIntervalSeconds = data.LiveStreamPollingIntervalSeconds;
                     RestoreTabsOnStartup = data.RestoreTabsOnStartup;
                     OpenTabsJson = data.OpenTabsJson ?? "[]";
@@ -120,6 +123,7 @@ public class PreferencesService : IPreferencesService
                 TerminalDockHeight = TerminalDockHeight,
                 TerminalWindowBoundsJson = TerminalWindowBoundsJson,
                 Theme = Theme,
+                Design = Design,
                 LiveStreamPollingIntervalSeconds = LiveStreamPollingIntervalSeconds,
                 RestoreTabsOnStartup = RestoreTabsOnStartup,
                 OpenTabsJson = OpenTabsJson,
@@ -159,6 +163,7 @@ public class PreferencesService : IPreferencesService
         public double TerminalDockHeight { get; set; } = 260;
         public string? TerminalWindowBoundsJson { get; set; }
         public string? Theme { get; set; }
+        public string? Design { get; set; }
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string? OpenTabsJson { get; set; }

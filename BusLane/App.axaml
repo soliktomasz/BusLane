@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="using:BusLane.Converters"
+             xmlns:styling="using:BusLane.Styling"
              xmlns:viewsConverters="using:BusLane.Views.Converters"
              x:Class="BusLane.App"
              Name="BusLane"
@@ -39,10 +40,6 @@
             <viewsConverters:GridColumnToWidthConverter x:Key="GridColumnToWidthConverter"/>
             <viewsConverters:GridRowToHeightConverter x:Key="GridRowToHeightConverter"/>
             
-            <!-- Additional theme resources (legacy - prefer ThemeDictionaries) -->
-            <SolidColorBrush x:Key="DangerBackground" Color="#E11D48"/>
-            <SolidColorBrush x:Key="SuccessForeground" Color="#16A34A"/>
-
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light Theme - Cloud Workspace -->
                 <ResourceDictionary x:Key="Light">
@@ -135,6 +132,22 @@
                     <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4338CA</BoxShadows>
                     <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #E11D48</BoxShadows>
                     <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
+
+                    <!-- Solid status colors used outside badge surfaces -->
+                    <SolidColorBrush x:Key="DangerBackground" Color="#E11D48"/>
+                    <SolidColorBrush x:Key="SuccessForeground" Color="#16A34A"/>
+
+                    <!-- Typography - Inter for UI, platform monospace stack for code -->
+                    <FontFamily x:Key="UiFont">Inter, Segoe UI Variable, SF Pro Display, Segoe UI, San Francisco, Helvetica Neue, Arial</FontFamily>
+                    <FontFamily x:Key="MonoFont">Cascadia Code, Consolas, Monaco, monospace</FontFamily>
+
+                    <!-- Radius scale: Xs=tiny marks, Small=chips/inputs, Medium=buttons,
+                         Large=cards/dialogs, Pill=badges and status dots -->
+                    <CornerRadius x:Key="RadiusXs">2</CornerRadius>
+                    <CornerRadius x:Key="RadiusSmall">6</CornerRadius>
+                    <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
+                    <CornerRadius x:Key="RadiusLarge">12</CornerRadius>
+                    <CornerRadius x:Key="RadiusPill">999</CornerRadius>
                 </ResourceDictionary>
 
                 <!-- Dark Theme - Cloud Workspace -->
@@ -228,6 +241,34 @@
                     <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #B8ADFF</BoxShadows>
                     <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #FDA4AF</BoxShadows>
                     <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
+
+                    <!-- Solid status colors used outside badge surfaces -->
+                    <SolidColorBrush x:Key="DangerBackground" Color="#E11D48"/>
+                    <SolidColorBrush x:Key="SuccessForeground" Color="#16A34A"/>
+
+                    <!-- Typography - Inter for UI, platform monospace stack for code -->
+                    <FontFamily x:Key="UiFont">Inter, Segoe UI Variable, SF Pro Display, Segoe UI, San Francisco, Helvetica Neue, Arial</FontFamily>
+                    <FontFamily x:Key="MonoFont">Cascadia Code, Consolas, Monaco, monospace</FontFamily>
+
+                    <!-- Radius scale - see the Light theme for what each step is for -->
+                    <CornerRadius x:Key="RadiusXs">2</CornerRadius>
+                    <CornerRadius x:Key="RadiusSmall">6</CornerRadius>
+                    <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
+                    <CornerRadius x:Key="RadiusLarge">12</CornerRadius>
+                    <CornerRadius x:Key="RadiusPill">999</CornerRadius>
+                </ResourceDictionary>
+
+                <!-- Zed design palettes - Zed's One Dark and One Light, Lilex type, 4px geometry.
+                     Active only while the Zed design is selected (see AppThemes.Resolve). -->
+                <ResourceDictionary x:Key="{x:Static styling:AppThemes.ZedDark}">
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceInclude Source="avares://BusLane/Styles/Themes/ZedDark.axaml"/>
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="{x:Static styling:AppThemes.ZedLight}">
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceInclude Source="avares://BusLane/Styles/Themes/ZedLight.axaml"/>
+                    </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
@@ -238,6 +279,8 @@
             <FluentTheme.Palettes>
                 <ColorPaletteResources x:Key="Light" Accent="#4338CA"/>
                 <ColorPaletteResources x:Key="Dark" Accent="#B8ADFF"/>
+                <!-- The Zed variants cannot be listed here: FluentTheme.Palettes accepts only Light
+                     and Dark. Their accent overrides live in Styles/Themes/Zed*.axaml instead. -->
             </FluentTheme.Palettes>
         </FluentTheme>
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>

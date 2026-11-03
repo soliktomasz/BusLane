@@ -7,6 +7,7 @@ using BusLane.Services.Abstractions;
 using BusLane.Services.Diagnostics;
 using BusLane.Services.Security;
 using BusLane.Services.Update;
+using BusLane.Styling;
 using BusLane.ViewModels.Core;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,6 +21,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     private readonly IUpdateService? _updateService;
     private readonly IDiagnosticBundleService? _diagnosticBundleService;
     private string _originalTheme = "Light";
+    private string _originalDesign = AppThemes.ClassicDesign;
     private bool _isLoading;
     private bool _disposed;
 
@@ -33,6 +35,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _showTopicActionButtons = true;
     [ObservableProperty] private bool _enableMessagePreview = true;
     [ObservableProperty] private string _theme = "Light";
+    [ObservableProperty] private string _design = AppThemes.ClassicDesign;
     [ObservableProperty] private bool _restoreTabsOnStartup = true;
     [ObservableProperty] private bool _enableTelemetry;
     [ObservableProperty] private bool _autoCheckForUpdates = true;
@@ -53,6 +56,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     private bool _canSelfUpdate = true;
 
     public string[] AvailableThemes { get; } = ["Light", "Dark", "System"];
+    public string[] AvailableDesigns { get; } = [AppThemes.ClassicDesign, AppThemes.ZedDesign];
     public int[] AvailableMessageCounts { get; } = [25, 50, 100, 200, 500];
     public int[] MessagesPerPageOptions { get; } = [25, 50, 100];
     public int[] AvailableRefreshIntervals { get; } = [10, 30, 60, 120, 300];
@@ -103,6 +107,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
 
         // Capture original theme BEFORE loading to avoid any binding interference
         _originalTheme = preferencesService.Theme;
+        _originalDesign = preferencesService.Design;
 
         LoadSettings();
 
@@ -123,7 +128,16 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             return;
 
         // Apply theme immediately as preview when user changes it
-        App.Instance?.ApplyTheme(value);
+        App.Instance?.ApplyTheme(value, Design);
+    }
+
+    partial void OnDesignChanged(string value)
+    {
+        // Same preview rules as OnThemeChanged
+        if (_isLoading || string.IsNullOrEmpty(value))
+            return;
+
+        App.Instance?.ApplyTheme(Theme, value);
     }
 
     private void LoadSettings()
@@ -142,6 +156,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             ShowTopicActionButtons = _preferencesService.ShowTopicActionButtons;
             EnableMessagePreview = _preferencesService.EnableMessagePreview;
             Theme = _preferencesService.Theme;
+            Design = _preferencesService.Design;
             RestoreTabsOnStartup = _preferencesService.RestoreTabsOnStartup;
             EnableTelemetry = _preferencesService.EnableTelemetry;
             AutoCheckForUpdates = _preferencesService.AutoCheckForUpdates;
@@ -161,6 +176,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     {
         // Store the theme we want to keep
         var themeToApply = Theme;
+        var designToApply = Design;
 
         _preferencesService.ConfirmBeforeDelete = ConfirmBeforeDelete;
         _preferencesService.ConfirmBeforePurge = ConfirmBeforePurge;
@@ -172,6 +188,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         _preferencesService.ShowTopicActionButtons = ShowTopicActionButtons;
         _preferencesService.EnableMessagePreview = EnableMessagePreview;
         _preferencesService.Theme = themeToApply;
+        _preferencesService.Design = designToApply;
         _preferencesService.RestoreTabsOnStartup = RestoreTabsOnStartup;
         _preferencesService.EnableTelemetry = EnableTelemetry;
         _preferencesService.AutoCheckForUpdates = AutoCheckForUpdates;
@@ -186,7 +203,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         // Use Dispatcher to re-apply theme after UI has updated
         Dispatcher.UIThread.Post(() =>
         {
-            App.Instance?.ApplyTheme(themeToApply);
+            App.Instance?.ApplyTheme(themeToApply, designToApply);
         }, DispatcherPriority.Background);
     }
 
@@ -197,12 +214,13 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         _isLoading = true;
 
         var themeToRestore = _originalTheme;
+        var designToRestore = _originalDesign;
         _onClose();
 
         // Apply theme AFTER dialog is fully closed to override any binding-triggered changes
         Dispatcher.UIThread.Post(() =>
         {
-            App.Instance?.ApplyTheme(themeToRestore);
+            App.Instance?.ApplyTheme(themeToRestore, designToRestore);
         }, DispatcherPriority.Background);
     }
 
@@ -219,6 +237,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         ShowTopicActionButtons = true;
         EnableMessagePreview = true;
         Theme = "Light";
+        Design = AppThemes.ClassicDesign;
         RestoreTabsOnStartup = true;
         EnableTelemetry = false;
         AutoCheckForUpdates = true;

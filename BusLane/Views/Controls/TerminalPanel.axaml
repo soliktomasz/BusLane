@@ -83,7 +83,7 @@
                          IsReadOnly="True"
                          Background="Transparent"
                          BorderThickness="0"
-                         FontFamily="Consolas, Menlo, Monaco"
+                         FontFamily="{DynamicResource MonoFont}"
                          FontSize="12"
                          TextWrapping="NoWrap"
                          AcceptsReturn="True"/>
@@ -99,7 +99,7 @@
                     <TextBox Grid.Column="1"
                              Text="{Binding InputText, Mode=TwoWay}"
                              PlaceholderText="Type a command and press Enter"
-                             FontFamily="Consolas, Menlo, Monaco"
+                             FontFamily="{DynamicResource MonoFont}"
                              FontSize="12">
                         <TextBox.KeyBindings>
                             <KeyBinding Gesture="Enter" Command="{Binding SendInputCommand}"/>

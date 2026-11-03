@@ -9,6 +9,7 @@ using Avalonia.Styling;
 using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
+using BusLane.Styling;
 
 public partial class SyntaxHighlightedTextBox : UserControl
 {
@@ -16,6 +17,8 @@ public partial class SyntaxHighlightedTextBox : UserControl
     private static IHighlightingDefinition? _xmlHighlighting;
     private static IHighlightingDefinition? _jsonLightHighlighting;
     private static IHighlightingDefinition? _xmlLightHighlighting;
+    private static IHighlightingDefinition? _jsonZedHighlighting;
+    private static IHighlightingDefinition? _xmlZedHighlighting;
     private static bool _highlightingsLoaded;
 
     public static readonly StyledProperty<string?> TextProperty =
@@ -69,23 +72,47 @@ public partial class SyntaxHighlightedTextBox : UserControl
         _xmlHighlighting = LoadHighlighting(assembly, "BusLane.Assets.Highlighting.XML.xshd");
         _jsonLightHighlighting = LoadHighlighting(assembly, "BusLane.Assets.Highlighting.JSON.xshd");
         _xmlLightHighlighting = LoadHighlighting(assembly, "BusLane.Assets.Highlighting.XML.xshd");
+        _jsonZedHighlighting = LoadHighlighting(assembly, "BusLane.Assets.Highlighting.JSON.xshd");
+        _xmlZedHighlighting = LoadHighlighting(assembly, "BusLane.Assets.Highlighting.XML.xshd");
+
         foreach (var definition in new[] { _jsonLightHighlighting, _xmlLightHighlighting })
+            Recolor(definition, LightSyntaxColor);
+        foreach (var definition in new[] { _jsonZedHighlighting, _xmlZedHighlighting })
+            Recolor(definition, ZedSyntaxColor);
+    }
+
+    private static void Recolor(IHighlightingDefinition? definition, Func<string, string> colorFor)
+    {
+        if (definition == null) return;
+
+        foreach (var color in definition.NamedHighlightingColors)
         {
-            if (definition == null) continue;
-            foreach (var color in definition.NamedHighlightingColors)
-            {
-                var foreground = color.Name switch
-                {
-                    "String" or "AttributeValue" or "CData" => "#376B5E",
-                    "Number" => "#85551F",
-                    "Comment" => "#596B47",
-                    "Punctuation" or "XmlTag" => "#69647F",
-                    _ => "#644391"
-                };
-                color.Foreground = new SimpleHighlightingBrush(Color.Parse(foreground));
-            }
+            color.Foreground = new SimpleHighlightingBrush(Color.Parse(colorFor(color.Name)));
         }
     }
+
+    private static string LightSyntaxColor(string name) => name switch
+    {
+        "String" or "AttributeValue" or "CData" => "#376B5E",
+        "Number" => "#85551F",
+        "Comment" => "#596B47",
+        "Punctuation" or "XmlTag" => "#69647F",
+        _ => "#644391"
+    };
+
+    /// <summary>
+    /// Syntax colors from the Zed editor's One Dark palette, so the payload viewer in the
+    /// Zed Dark theme reads like a Zed buffer rather than a generic dark editor.
+    /// </summary>
+    private static string ZedSyntaxColor(string name) => name switch
+    {
+        "String" or "AttributeValue" or "CData" => "#A1C181",
+        "Number" => "#DFC184",
+        "Boolean" or "Null" => "#BF956A",
+        "Comment" => "#5D636F",
+        "Punctuation" or "XmlTag" => "#A9AFBC",
+        _ => "#74ADE8"
+    };
 
     private static IHighlightingDefinition? LoadHighlighting(Assembly assembly, string resourceName)
     {
@@ -129,17 +156,31 @@ public partial class SyntaxHighlightedTextBox : UserControl
     {
         if (_editor == null) return;
 
+        var variant = ActualThemeVariant;
         if (IsJson)
         {
-            _editor.SyntaxHighlighting = ActualThemeVariant == ThemeVariant.Dark ? _jsonHighlighting : _jsonLightHighlighting;
+            _editor.SyntaxHighlighting = PickHighlighting(variant, _jsonZedHighlighting, _jsonHighlighting, _jsonLightHighlighting);
         }
         else if (IsXml)
         {
-            _editor.SyntaxHighlighting = ActualThemeVariant == ThemeVariant.Dark ? _xmlHighlighting : _xmlLightHighlighting;
+            _editor.SyntaxHighlighting = PickHighlighting(variant, _xmlZedHighlighting, _xmlHighlighting, _xmlLightHighlighting);
         }
         else
         {
             _editor.SyntaxHighlighting = null;
         }
+    }
+
+    private static IHighlightingDefinition? PickHighlighting(
+        ThemeVariant variant,
+        IHighlightingDefinition? zed,
+        IHighlightingDefinition? dark,
+        IHighlightingDefinition? light)
+    {
+        // Zed Light uses the stock light highlighting; only One Dark has its own syntax palette
+        if (variant == AppThemes.ZedDark)
+            return zed;
+
+        return AppThemes.IsDark(variant) ? dark : light;
     }
 }

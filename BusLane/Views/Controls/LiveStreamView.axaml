@@ -69,7 +69,7 @@
                     Padding="12,10">
                 <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12">
                     <Border Grid.Column="0"
-                            CornerRadius="{StaticResource RadiusSmall}"
+                            CornerRadius="{DynamicResource RadiusSmall}"
                             Padding="8,5"
                             Background="{DynamicResource SurfaceSuccess}"
                             BorderBrush="{DynamicResource TextSuccess}"
@@ -98,7 +98,7 @@
                             Background="{DynamicResource InputBackground}"
                             BorderBrush="{DynamicResource BorderDefault}"
                             BorderThickness="1"
-                            CornerRadius="{StaticResource RadiusSmall}"
+                            CornerRadius="{DynamicResource RadiusSmall}"
                             MaxWidth="460"
                             HorizontalAlignment="Stretch">
                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -206,7 +206,7 @@
                                          Classes="entity-list"
                                          BorderBrush="{DynamicResource BorderDefault}"
                                          BorderThickness="1"
-                                         CornerRadius="{StaticResource RadiusSmall}"
+                                         CornerRadius="{DynamicResource RadiusSmall}"
                                          Padding="4">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate DataType="models:QueueInfo">
@@ -250,7 +250,7 @@
                                                          Classes="entity-list"
                                                          BorderBrush="{DynamicResource BorderDefault}"
                                                          BorderThickness="1"
-                                                         CornerRadius="{StaticResource RadiusSmall}"
+                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                          Margin="28,0,0,0"
                                                          Padding="4"
                                                          IsVisible="{Binding Subscriptions.Count}">
@@ -361,7 +361,7 @@
                                         <Grid ColumnDefinitions="88,*" ColumnSpacing="12">
                                             <StackPanel Grid.Column="0" Spacing="3">
                                                 <TextBlock Text="{Binding EnqueuedAt, StringFormat='{}{0:HH:mm:ss.fff}'}"
-                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                           FontFamily="{DynamicResource MonoFont}"
                                                            FontSize="11"
                                                            Foreground="{DynamicResource SubtleForeground}"/>
                                                 <TextBlock Text="{Binding SequenceNumber, StringFormat='{}Seq {0}'}"

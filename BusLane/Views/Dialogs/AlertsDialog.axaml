@@ -370,7 +370,7 @@
                                     <StackPanel Spacing="6">
                                         <TextBlock Classes="form-label" Text="Entity pattern"/>
                                         <TextBox Text="{Binding EntityPattern}" PlaceholderText="orders-.*"
-                                                 FontFamily="Cascadia Code, Consolas, Monaco, monospace" FontSize="13"
+                                                 FontFamily="{DynamicResource MonoFont}" FontSize="13"
                                                  AutomationProperties.Name="Entity pattern"/>
                                         <TextBlock Classes="form-hint"
                                                    Text="Regular expression matched against queue and subscription names. Leave empty to watch every entity."/>
@@ -470,7 +470,7 @@
                                                                 <TextBlock Text="All entities"
                                                                            IsVisible="{Binding EntityPattern, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
                                                                 <TextBlock Text="{Binding EntityPattern}" MaxWidth="220" TextTrimming="CharacterEllipsis"
-                                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                           FontFamily="{DynamicResource MonoFont}"
                                                                            ToolTip.Tip="{Binding EntityPattern}"
                                                                            IsVisible="{Binding EntityPattern, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                                             </StackPanel>

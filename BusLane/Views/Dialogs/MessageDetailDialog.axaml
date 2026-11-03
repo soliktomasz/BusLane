@@ -29,7 +29,7 @@
             Classes="modal-overlay"
             IsVisible="{Binding CurrentMessageOps.IsMessageDetailExpanded}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="{StaticResource RadiusLarge}"
+                CornerRadius="{DynamicResource RadiusLarge}"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
                 VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
@@ -114,15 +114,15 @@
                                 <TextBlock Text="Identity" Classes="message-detail-section"/>
                                 <StackPanel Spacing="3">
                                     <TextBlock Text="Message ID" Classes="caption"/>
-                                    <SelectableTextBlock Text="{Binding CurrentMessageOps.SelectedMessage.MessageId}" TextWrapping="Wrap" FontSize="12" FontFamily="Cascadia Code, Consolas, Monaco, monospace"/>
+                                    <SelectableTextBlock Text="{Binding CurrentMessageOps.SelectedMessage.MessageId}" TextWrapping="Wrap" FontSize="12" FontFamily="{DynamicResource MonoFont}"/>
                                 </StackPanel>
                                 <StackPanel Spacing="3" IsVisible="{Binding CurrentMessageOps.SelectedMessage.CorrelationId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                     <TextBlock Text="Correlation ID" Classes="caption"/>
-                                    <SelectableTextBlock Text="{Binding CurrentMessageOps.SelectedMessage.CorrelationId}" TextWrapping="Wrap" FontSize="12" FontFamily="Cascadia Code, Consolas, Monaco, monospace"/>
+                                    <SelectableTextBlock Text="{Binding CurrentMessageOps.SelectedMessage.CorrelationId}" TextWrapping="Wrap" FontSize="12" FontFamily="{DynamicResource MonoFont}"/>
                                 </StackPanel>
                                 <StackPanel Spacing="3" IsVisible="{Binding CurrentMessageOps.SelectedMessage.SessionId, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                     <TextBlock Text="Session ID" Classes="caption"/>
-                                    <SelectableTextBlock Text="{Binding CurrentMessageOps.SelectedMessage.SessionId}" TextWrapping="Wrap" FontSize="12" FontFamily="Cascadia Code, Consolas, Monaco, monospace"/>
+                                    <SelectableTextBlock Text="{Binding CurrentMessageOps.SelectedMessage.SessionId}" TextWrapping="Wrap" FontSize="12" FontFamily="{DynamicResource MonoFont}"/>
                                 </StackPanel>
                                 <StackPanel Spacing="3" IsVisible="{Binding CurrentMessageOps.SelectedMessage.Subject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                     <TextBlock Text="Subject" Classes="caption"/>
@@ -211,7 +211,7 @@
                                 <TextBlock Grid.Row="0" Text="Application properties" Classes="message-detail-section" Margin="16,12,16,8"/>
                                 <TextBox Grid.Row="1" Text="{Binding CurrentMessageOps.FormattedApplicationProperties, Mode=OneWay}"
                                          IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-                                         FontFamily="Cascadia Code, Consolas, Monaco, monospace" FontSize="12"
+                                         FontFamily="{DynamicResource MonoFont}" FontSize="12"
                                          Background="Transparent" BorderThickness="0" Padding="16,0,16,12"
                                          ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                             </Grid>

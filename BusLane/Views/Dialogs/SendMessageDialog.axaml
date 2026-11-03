@@ -166,7 +166,7 @@
                                 </StackPanel>
                             </ScrollViewer>
                             <TextBox Grid.Row="2" Name="MessageBodyEditor" Text="{Binding SendMessageViewModel.Body}" Classes="code-editor"
-                                AutomationProperties.Name="Message body" PlaceholderForeground="{DynamicResource CodeForeground}" FontSize="13" FontFamily="Cascadia Code, Consolas, Monaco, monospace" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64"
+                                AutomationProperties.Name="Message body" PlaceholderForeground="{DynamicResource CodeForeground}" FontSize="13" FontFamily="{DynamicResource MonoFont}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64"
                                 VerticalAlignment="Stretch" PlaceholderText="Enter JSON, XML, or plain text"/>
                         </Grid>
 
