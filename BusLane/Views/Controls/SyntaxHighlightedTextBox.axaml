@@ -6,7 +6,7 @@
     <AvalonEdit:TextEditor x:Name="Editor"
                            IsReadOnly="True"
                            ShowLineNumbers="True"
-                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                           FontFamily="{DynamicResource MonoFont}"
                            FontSize="13"
                            Foreground="{DynamicResource AppForeground}"
                            LineNumbersForeground="{DynamicResource SubtleForeground}"

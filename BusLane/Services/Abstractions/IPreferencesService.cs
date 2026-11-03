@@ -20,6 +20,7 @@ public interface IPreferencesService
     double TerminalDockHeight { get; set; }
     string? TerminalWindowBoundsJson { get; set; }
     string Theme { get; set; }
+    string Design { get; set; }
     int LiveStreamPollingIntervalSeconds { get; set; }
 
     // Session persistence

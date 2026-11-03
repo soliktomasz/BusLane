@@ -1,31 +1,11 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Styles.Resources>
-        <ResourceDictionary>
-            <BoxShadows x:Key="FocusRingAccent">0 0 0 2 #4F46E5</BoxShadows>
-            <BoxShadows x:Key="FocusRingDanger">0 0 0 2 #E11D48</BoxShadows>
-            <BoxShadows x:Key="FocusRingContrast">0 0 0 2 #FFFFFF</BoxShadows>
-
-            <!-- Radius scale (one documented system, applied everywhere).
-                 Xs=2    tiny accent bars / separators
-                 Small=6 chips, inputs, inner tiles, small list items
-                 Medium=8 buttons, icon buttons, control boxes
-                 Large=12 cards, dialogs, panel surfaces, detail headers
-                 Pill=999 badges, status dots, avatars, pills -->
-            <CornerRadius x:Key="RadiusXs">2</CornerRadius>
-            <CornerRadius x:Key="RadiusSmall">6</CornerRadius>
-            <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
-            <CornerRadius x:Key="RadiusLarge">12</CornerRadius>
-            <CornerRadius x:Key="RadiusPill">999</CornerRadius>
-        </ResourceDictionary>
-    </Styles.Resources>
-
     <!-- BusLane warm command workspace system -->
 
     <Style Selector="Window">
         <Setter Property="Background" Value="{DynamicResource AppBackground}"/>
-        <Setter Property="FontFamily" Value="Inter, Segoe UI Variable, SF Pro Display, Segoe UI, San Francisco, Helvetica Neue, Arial"/>
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
     </Style>
 
@@ -99,7 +79,7 @@
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="14"/>
@@ -119,13 +99,13 @@
     </Style>
 
     <Style Selector="Button.primary:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingContrast}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingContrast}"/>
     </Style>
 
     <Style Selector="Button.secondary">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="FontWeight" Value="Regular"/>
         <Setter Property="FontSize" Value="14"/>
@@ -145,13 +125,13 @@
     </Style>
 
     <Style Selector="Button.secondary:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Button.subtle">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12,8"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -166,13 +146,13 @@
     </Style>
 
     <Style Selector="Button.subtle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Button.danger">
         <Setter Property="Background" Value="{DynamicResource TextDanger}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -191,13 +171,13 @@
     </Style>
 
     <Style Selector="Button.danger:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingContrast}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingContrast}"/>
     </Style>
 
     <Style Selector="Button.danger-outline">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource TextDanger}"/>
@@ -210,13 +190,13 @@
     </Style>
 
     <Style Selector="Button.danger-outline:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingDanger}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingDanger}"/>
     </Style>
 
     <Style Selector="Button.danger-subtle">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDanger}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12,8"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -231,14 +211,14 @@
     </Style>
 
     <Style Selector="Button.danger-subtle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingDanger}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingDanger}"/>
     </Style>
 
     <!-- Warning Button Styles -->
     <Style Selector="Button.warning">
         <Setter Property="Background" Value="{DynamicResource TextWarning}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextOnBrand}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -257,7 +237,7 @@
     </Style>
 
     <Style Selector="Button.warning:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingContrast}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingContrast}"/>
     </Style>
 
     <Style Selector="Button.small">
@@ -285,7 +265,7 @@
     </Style>
 
     <Style Selector="Button.icon:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- ListBox - Fluent 2 with Virtualization Support -->
@@ -297,7 +277,7 @@
 
     <Style Selector="ListBoxItem">
         <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Margin" Value="2"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
@@ -315,7 +295,7 @@
     </Style>
 
     <Style Selector="ListBoxItem:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- ListBox for custom item templates (no default item selection styling).
@@ -400,7 +380,7 @@
 
     <!-- Input Controls - Fluent 2 -->
     <Style Selector="TextBox">
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="12,10"/>
@@ -421,7 +401,7 @@
     </Style>
 
     <Style Selector="ComboBox">
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="12,10"/>
@@ -464,7 +444,7 @@
     <Style Selector="ToggleButton.pill">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12,6"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
@@ -484,13 +464,13 @@
     </Style>
 
     <Style Selector="ToggleButton.pill:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- Card - Fluent 2 with elevation system -->
     <Style Selector="Border.card">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -522,7 +502,7 @@
 
     <Style Selector="Border.card-elevated">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -601,7 +581,7 @@
 
     <Style Selector="Border.badge-success-soft">
         <Setter Property="Background" Value="{DynamicResource SurfaceSuccess}"/>
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
@@ -614,7 +594,7 @@
 
     <Style Selector="Border.badge-danger-soft">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
@@ -675,7 +655,7 @@
         <Setter Property="Template">
             <ControlTemplate TargetType="RadioButton">
                 <Border Background="{TemplateBinding Background}"
-                        CornerRadius="{StaticResource RadiusSmall}"
+                        CornerRadius="{DynamicResource RadiusSmall}"
                         Padding="12,6"
                         BorderThickness="0,0,0,2"
                         BorderBrush="Transparent"
@@ -757,7 +737,7 @@
 
     <Style Selector="Border.modal">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}"/>
         <Setter Property="Padding" Value="24"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
@@ -805,7 +785,7 @@
 
     <Style Selector="Border.connection-library-command-bar">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -813,7 +793,7 @@
 
     <Style Selector="Border.dialog-command-bar">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -821,7 +801,7 @@
 
     <Style Selector="Border.dialog-section-surface">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -829,7 +809,7 @@
 
     <Style Selector="Border.form-section">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -842,7 +822,7 @@
     </Style>
 
     <Style Selector="Border.severity-pill">
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="8,3"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -855,7 +835,7 @@
 
     <Style Selector="Border.settings-section">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
     </Style>
@@ -869,39 +849,39 @@
     <Style Selector="ProgressBar">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="Background" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="CornerRadius" Value="2"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusXs}"/>
     </Style>
 
     <!-- Info/Surface backgrounds - Fluent 2 -->
     <Style Selector="Border.surface-subtle">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Border.surface-brand">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Border.surface-danger">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Border.surface-success">
         <Setter Property="Background" Value="{DynamicResource SurfaceSuccess}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Border.surface-warning">
         <Setter Property="Background" Value="{DynamicResource SurfaceWarning}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <!-- Entity Card Styles - Fluent 2 with smooth transitions -->
     <Style Selector="Border.entity-item">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="Margin" Value="0,2"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -922,7 +902,7 @@
 
     <Style Selector="Border.entity-item-selected">
         <Setter Property="Background" Value="{DynamicResource SelectedBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="Margin" Value="0,2"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -944,7 +924,7 @@
     <Style Selector="Border.selection-indicator">
         <Setter Property="Width" Value="3"/>
         <Setter Property="Background" Value="{DynamicResource AccentBrand}"/>
-        <Setter Property="CornerRadius" Value="2"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusXs}"/>
         <Setter Property="Margin" Value="0,4"/>
     </Style>
 
@@ -963,16 +943,16 @@
          this shows through for exactly one row. -->
     <Style Selector="Button.entity-tree-row:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Button.entity-tree-row:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Button.entity-tree-row:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-group">
@@ -1033,7 +1013,7 @@
     <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:pointerover /template/ ContentPresenter">
@@ -1053,7 +1033,7 @@
     <Style Selector="Expander.entity-tree-node /template/ ToggleButton#ExpanderHeader:checked:pointerover /template/ Border#ToggleButtonBackground">
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
     </Style>
 
     <Style Selector="Expander.entity-tree-node /template/ Border#ExpanderContent">
@@ -1079,13 +1059,13 @@
 
     <Style Selector="Border.entity-group-header">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
     <Style Selector="Border.entity-tree-row-surface">
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="10,8"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -1104,7 +1084,7 @@
     </Style>
 
     <Style Selector="Border.entity-tree-badge">
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="6,2"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
@@ -1126,7 +1106,7 @@
     <Style Selector="Border.entity-header-icon">
         <Setter Property="Width" Value="40"/>
         <Setter Property="Height" Value="40"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
     </Style>
     <Style Selector="Border.entity-header-icon LucideIcon">
@@ -1145,7 +1125,7 @@
         <Setter Property="MinHeight" Value="34"/>
         <Setter Property="Height" Value="34"/>
         <Setter Property="Padding" Value="12,0"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -1177,7 +1157,7 @@
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
     </Style>
     <Style Selector="Button.entity-header-action.outline:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
     <Style Selector="Button.entity-header-action.icon-only">
         <Setter Property="Width" Value="34"/>
@@ -1219,11 +1199,11 @@
     </Style>
     <Style Selector="Button.menu-item">
         <Setter Property="Padding" Value="10,8"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
     </Style>
     <Style Selector="Border.menu-item-static">
         <Setter Property="Padding" Value="10,8"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
     </Style>
     <Style Selector="Button.menu-item">
         <Setter Property="Background" Value="Transparent"/>
@@ -1248,7 +1228,7 @@
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
     </Style>
     <Style Selector="Button.menu-item:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
     <Style Selector="Button.menu-item:disabled">
         <Setter Property="Opacity" Value="0.45"/>
@@ -1286,14 +1266,14 @@
         <Setter Property="MinHeight" Value="30"/>
         <Setter Property="Padding" Value="8,5"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
     <Style Selector="Button.menu-input-action">
         <Setter Property="MinHeight" Value="30"/>
         <Setter Property="Padding" Value="10,0"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
@@ -1303,7 +1283,7 @@
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="ClipToBounds" Value="True"/>
     </Style>
     <Style Selector="Border.overview-panel-header">
@@ -1392,7 +1372,7 @@
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
     </Style>
     <Style Selector="RadioButton.section-tab:focus-visible /template/ Border#PART_HoverSurface">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
     <Style Selector="RadioButton.section-tab:checked">
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
@@ -1442,7 +1422,7 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="Border.overview-chip">
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="8,2"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -1473,7 +1453,7 @@
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Padding" Value="10,0"/>
         <Setter Property="MinHeight" Value="28"/>
         <Setter Property="Height" Value="28"/>
@@ -1491,7 +1471,7 @@
         <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
     </Style>
     <Style Selector="Button.overview-row-action:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
     <Style Selector="Button.overview-row-action.quiet">
         <Setter Property="Background" Value="Transparent"/>
@@ -1509,7 +1489,7 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="8,4"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -1519,13 +1499,13 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
     </Style>
     <Style Selector="Button.overview-link:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="ProgressBar.overview-share">
         <Setter Property="Height" Value="4"/>
         <Setter Property="MinHeight" Value="4"/>
-        <Setter Property="CornerRadius" Value="2"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusXs}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="Foreground" Value="{DynamicResource AccentBrand}"/>
     </Style>
@@ -1533,7 +1513,7 @@
         <Setter Property="MinHeight" Value="28"/>
         <Setter Property="Padding" Value="8,0"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
@@ -1553,7 +1533,7 @@
 
     <Style Selector="Border.message-search-surface">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -1592,7 +1572,7 @@
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+        <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     </Style>
 
     <Style Selector="Border.message-preview">
@@ -1606,7 +1586,7 @@
     <Style Selector="TextBlock.message-preview-text">
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+        <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     </Style>
 
     <Style Selector="TextBlock.message-preview-text.xml">
@@ -1615,7 +1595,7 @@
 
     <Style Selector="Border.deadletter-reason-pill">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Padding" Value="8,4"/>
     </Style>
 
@@ -1627,7 +1607,7 @@
 
     <Style Selector="Border.inline-loading-surface">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="14,12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -1635,7 +1615,7 @@
 
     <Style Selector="Border.message-empty-state">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="20"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -1720,7 +1700,7 @@
     <!-- Message Counter Styles - Compact Fluent 2 -->
     <Style Selector="Border.counter-active">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="5,2"/>
     </Style>
 
@@ -1732,7 +1712,7 @@
 
     <Style Selector="Border.counter-dead">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="5,2"/>
     </Style>
 
@@ -1758,7 +1738,7 @@
     <!-- Empty state -->
     <Style Selector="Border.empty-state">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="24,32"/>
     </Style>
 
@@ -1772,7 +1752,7 @@
 
     <Style Selector="Border.dashboard-summary-surface">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -1781,7 +1761,7 @@
 
     <Style Selector="Border.metric-icon-surface">
         <Setter Property="Background" Value="{DynamicResource DashboardTileBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="8"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
@@ -1814,20 +1794,20 @@
 
     <Style Selector="Border.dashboard-control-chip">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="Padding" Value="8,3,10,3"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
 
     <Style Selector="Button.dashboard-refresh-button">
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
         <Setter Property="MinHeight" Value="30"/>
         <Setter Property="Padding" Value="12,4"/>
     </Style>
 
     <Style Selector="Border.dashboard-card">
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}"/>
         <Setter Property="BoxShadow" Value="0 1 2 0 #0D000000"/>
     </Style>
 
@@ -1837,7 +1817,7 @@
 
     <Style Selector="Border.inbox-stat-block">
         <Setter Property="Background" Value="{DynamicResource DashboardTileBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="10"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -1860,7 +1840,7 @@
     <!-- Fluent 2 Segmented Control / Tab Navigation for dialogs -->
     <Style Selector="Border.tab-nav">
         <Setter Property="Background" Value="{DynamicResource TabNavBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -1879,7 +1859,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="Transparent"
                         BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusSmall}"
+                        CornerRadius="{DynamicResource RadiusSmall}"
                         Padding="16,8">
                     <Border.Transitions>
                         <Transitions>
@@ -1985,7 +1965,7 @@
     </Style>
 
     <Style Selector="RadioButton.workspace-tab:focus-visible /template/ Border#PART_Border">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="TextBlock.workspace-tab-title">
@@ -2002,7 +1982,7 @@
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
         <Setter Property="Opacity" Value="1"/>
-        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Monaco, monospace"/>
+        <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     </Style>
 
     <Style Selector="Button.workspace-tab-close">
@@ -2010,7 +1990,7 @@
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="MinWidth" Value="24"/>
         <Setter Property="MinHeight" Value="24"/>
@@ -2022,7 +2002,7 @@
     </Style>
 
     <Style Selector="Button.workspace-tab-close:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- Field group header -->
@@ -2088,7 +2068,7 @@
     <Style Selector="Button.toolbar">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="FontSize" Value="12"/>
@@ -2106,7 +2086,7 @@
     </Style>
 
     <Style Selector="Button.toolbar:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- Property row for custom properties -->
@@ -2124,7 +2104,7 @@
     <!-- Send message dialog specific -->
     <Style Selector="Border.send-message-panel">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}"/>
@@ -2148,13 +2128,13 @@
     </Style>
 
     <Style Selector="Button.chip:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- InfoBar styles -->
     <Style Selector="Border.infobar">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrand}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorder}"/>
@@ -2162,7 +2142,7 @@
 
     <Style Selector="Border.infobar-success">
         <Setter Property="Background" Value="{DynamicResource SurfaceSuccess}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource TextSuccess}"/>
@@ -2170,7 +2150,7 @@
 
     <Style Selector="Border.infobar-warning">
         <Setter Property="Background" Value="{DynamicResource SurfaceWarning}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource TextWarning}"/>
@@ -2178,7 +2158,7 @@
 
     <Style Selector="Border.infobar-error">
         <Setter Property="Background" Value="{DynamicResource SurfaceDanger}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource TextDanger}"/>
@@ -2213,7 +2193,7 @@
     <!-- Sidebar subscription picker card -->
     <Style Selector="Border.subscription-picker">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="Margin" Value="12,0"/>
     </Style>
@@ -2277,7 +2257,7 @@
 
     <Style Selector="Border.sidebar-hint-card">
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -2285,7 +2265,7 @@
 
     <Style Selector="Border.welcome-primary-surface">
         <Setter Property="Background" Value="{DynamicResource LayerBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="28"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderMuted}"/>
@@ -2293,7 +2273,7 @@
 
     <Style Selector="Border.welcome-recent-surface">
         <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="20"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -2310,7 +2290,7 @@
 
     <Style Selector="Border.sidebar-quick-switch-item">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="6,8"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
@@ -2331,13 +2311,13 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="Margin" Value="0,0,0,4"/>
     </Style>
 
     <Style Selector="ToggleButton.sidebar-more-tools-toggle">
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="10,6"/>
         <Setter Property="MinHeight" Value="36"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -2354,7 +2334,7 @@
     </Style>
 
     <Style Selector="Button.sidebar-utility-button">
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="10,6"/>
         <Setter Property="MinHeight" Value="36"/>
     </Style>
@@ -2364,7 +2344,7 @@
         <Setter Property="Foreground" Value="{DynamicResource SubtleForeground}"/>
         <Setter Property="Padding" Value="10,6"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="MinWidth" Value="32"/>
         <Setter Property="MinHeight" Value="30"/>
@@ -2376,7 +2356,7 @@
     </Style>
 
     <Style Selector="Button.workspace-new-tab:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- Compact icon button for toolbar area -->
@@ -2385,7 +2365,7 @@
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
         <Setter Property="Padding" Value="6"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="MinWidth" Value="36"/>
         <Setter Property="MinHeight" Value="36"/>
@@ -2410,7 +2390,7 @@
     </Style>
 
     <Style Selector="Button.icon-button:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <!-- Sidebar panel toggle button -->
@@ -2420,7 +2400,7 @@
         <Setter Property="Padding" Value="6"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="MinWidth" Value="36"/>
         <Setter Property="MinHeight" Value="36"/>
@@ -2438,7 +2418,7 @@
     </Style>
 
     <Style Selector="Button.panel-toggle:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="ToggleButton.icon-button">
@@ -2446,7 +2426,7 @@
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
         <Setter Property="Padding" Value="6"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="MinWidth" Value="36"/>
         <Setter Property="MinHeight" Value="36"/>
@@ -2462,7 +2442,7 @@
     </Style>
 
     <Style Selector="ToggleButton.icon-button:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Button.entity-pane-restore-command">
@@ -2471,7 +2451,7 @@
         <Setter Property="Padding" Value="0"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="36"/>
@@ -2490,7 +2470,7 @@
     </Style>
 
     <Style Selector="Button.entity-pane-restore-command:focus-visible /template/ ContentPresenter">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
 
     <Style Selector="Border.status-bar">
@@ -2588,7 +2568,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}"/>
         <Setter Property="Padding" Value="12"/>
         <Setter Property="Margin" Value="0,4,10,4"/>
     </Style>
@@ -2709,7 +2689,7 @@
         <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
     </Style>
     <Style Selector="TabItem.message-tab:focus-visible /template/ Border#PART_HoverSurface, TabControl.message-inspector-tabs TabItem:focus-visible /template/ Border#PART_HoverSurface">
-        <Setter Property="BoxShadow" Value="{StaticResource FocusRingAccent}"/>
+        <Setter Property="BoxShadow" Value="{DynamicResource FocusRingAccent}"/>
     </Style>
     <Style Selector="TabItem.message-tab:selected, TabControl.message-inspector-tabs TabItem:selected">
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
@@ -2748,7 +2728,7 @@
         <Setter Property="MinHeight" Value="34"/>
         <Setter Property="Padding" Value="6,6"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceSubtle}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
     </Style>
@@ -2764,7 +2744,7 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.message-header-utility, ToggleButton.message-header-select">
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>

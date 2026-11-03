@@ -102,6 +102,22 @@
 
                                             <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
 
+                                            <!-- Design -->
+                                            <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="Design" FontWeight="Medium" FontSize="13"/>
+                                                    <TextBlock Text="Classic, or Zed's palette, type and dense controls"
+                                                               Classes="caption" FontSize="12"/>
+                                                </StackPanel>
+                                                <ComboBox AutomationProperties.Name="Design" Grid.Column="1"
+                                                          ItemsSource="{Binding SettingsViewModel.AvailableDesigns}"
+                                                          SelectedItem="{Binding SettingsViewModel.Design}"
+                                                          Width="130"
+                                                          VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Border Height="1" Background="{DynamicResource BorderDefault}" Margin="0,4"/>
+
                                             <!-- Dead Letter Badges -->
                                             <Grid Classes="settings-row" ColumnDefinitions="*,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">

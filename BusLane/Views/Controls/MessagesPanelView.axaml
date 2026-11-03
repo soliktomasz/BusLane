@@ -792,7 +792,7 @@
                                     IsHitTestVisible="True">
                                 <Border Background="{DynamicResource CardBackground}"
                                         Padding="32,24"
-                                        CornerRadius="{StaticResource RadiusLarge}"
+                                        CornerRadius="{DynamicResource RadiusLarge}"
                                         BorderThickness="1"
                                         BorderBrush="{DynamicResource BorderDefault}"
                                         BoxShadow="0 12 32 0 #38000000"

@@ -54,7 +54,7 @@
                                  PlaceholderText="Find an entity…"
                                  FontSize="12"
                                  Padding="4,4,4,4"
-                                 CornerRadius="{StaticResource RadiusMedium}"
+                                 CornerRadius="{DynamicResource RadiusMedium}"
                                  BorderBrush="{DynamicResource BorderMuted}">
                             <TextBox.InnerLeftContent>
                                 <LucideIcon Kind="Search"
@@ -122,7 +122,7 @@
                                                                Text="{Binding DisplayName}"
                                                                FontSize="12"
                                                                FontWeight="Medium"
-                                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                               FontFamily="{DynamicResource MonoFont}"
                                                                Foreground="{DynamicResource AppForeground}"
                                                                VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis"/>
@@ -272,7 +272,7 @@
                                                                    Text="{Binding Name}"
                                                                    FontSize="12"
                                                                    FontWeight="Medium"
-                                                                   FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                   FontFamily="{DynamicResource MonoFont}"
                                                                    Foreground="{DynamicResource AppForeground}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"/>
@@ -432,7 +432,7 @@
                                                                        Text="{Binding Name}"
                                                                        FontSize="12"
                                                                        FontWeight="Medium"
-                                                                       FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                       FontFamily="{DynamicResource MonoFont}"
                                                                        Foreground="{DynamicResource AppForeground}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"/>
@@ -564,7 +564,7 @@
                                                                                                Text="{Binding Name}"
                                                                                                FontSize="12"
                                                                                                FontWeight="Medium"
-                                                                                               FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                                               FontFamily="{DynamicResource MonoFont}"
                                                                                                Foreground="{DynamicResource AppForeground}"
                                                                                                VerticalAlignment="Center"
                                                                                                TextTrimming="CharacterEllipsis"/>

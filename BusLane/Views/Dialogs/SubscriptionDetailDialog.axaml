@@ -8,7 +8,7 @@
     <Border Classes="modal-overlay"
             IsVisible="{Binding ShowSubscriptionDetailDialog}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="{StaticResource RadiusLarge}"
+                CornerRadius="{DynamicResource RadiusLarge}"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
                 BoxShadow="0 12 32 0 #38000000"
@@ -28,7 +28,7 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="36" Height="36"
-                                CornerRadius="{StaticResource RadiusMedium}"
+                                CornerRadius="{DynamicResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceWarning}"
                                 Margin="0,0,12,0">
                             <LucideIcon Kind="Inbox" Size="18"
@@ -42,7 +42,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="{Binding SubscriptionDetailItem.Name}"
                                            FontSize="12"
-                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                           FontFamily="{DynamicResource MonoFont}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource AccentBrand}"/>
                                 <TextBlock Text="on"
@@ -51,7 +51,7 @@
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding SubscriptionDetailItem.TopicName}"
                                            FontSize="12"
-                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                           FontFamily="{DynamicResource MonoFont}"
                                            Foreground="{DynamicResource SubtleForeground}"/>
                             </StackPanel>
                         </StackPanel>
@@ -150,7 +150,7 @@
                                                 IsVisible="{Binding SubscriptionDetailItem.ForwardTo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                         <TextBlock Text="Forward To" Classes="caption" Margin="0,0,0,4"/>
                                         <SelectableTextBlock Text="{Binding SubscriptionDetailItem.ForwardTo}"
-                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontFamily="{DynamicResource MonoFont}"
                                                              FontSize="12"
                                                              TextWrapping="Wrap"/>
                                     </StackPanel>
@@ -158,7 +158,7 @@
                                                 IsVisible="{Binding SubscriptionDetailItem.ForwardDeadLetteredMessagesTo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                         <TextBlock Text="Forward DLQ To" Classes="caption" Margin="0,0,0,4"/>
                                         <SelectableTextBlock Text="{Binding SubscriptionDetailItem.ForwardDeadLetteredMessagesTo}"
-                                                             FontFamily="Cascadia Code, Consolas, monospace"
+                                                             FontFamily="{DynamicResource MonoFont}"
                                                              FontSize="12"
                                                              TextWrapping="Wrap"/>
                                     </StackPanel>

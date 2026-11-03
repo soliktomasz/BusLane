@@ -8,7 +8,7 @@
     <Border Classes="modal-overlay"
             IsVisible="{Binding EntityOperations.ShowSubscriptionRulesDialog}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="{StaticResource RadiusLarge}"
+                CornerRadius="{DynamicResource RadiusLarge}"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
                 BoxShadow="0 12 32 0 #38000000"
@@ -27,7 +27,7 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="36" Height="36"
-                                CornerRadius="{StaticResource RadiusMedium}"
+                                CornerRadius="{DynamicResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceBrand}"
                                 Margin="0,0,12,0">
                             <LucideIcon Kind="ListFilter" Size="18"
@@ -41,14 +41,14 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="{Binding EntityOperations.RulesSubscription.TopicName}"
                                            FontSize="12"
-                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                           FontFamily="{DynamicResource MonoFont}"
                                            Foreground="{DynamicResource SubtleForeground}"/>
                                 <TextBlock Text="/"
                                            FontSize="12"
                                            Foreground="{DynamicResource SubtleForeground}"/>
                                 <TextBlock Text="{Binding EntityOperations.RulesSubscription.Name}"
                                            FontSize="12"
-                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                           FontFamily="{DynamicResource MonoFont}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource AccentBrand}"/>
                             </StackPanel>
@@ -81,17 +81,17 @@
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <TextBlock Text="{Binding Name}"
                                                                            FontWeight="SemiBold"
-                                                                           FontFamily="Cascadia Code, Consolas, Monaco, monospace"/>
+                                                                           FontFamily="{DynamicResource MonoFont}"/>
                                                                 <TextBlock Text="{Binding FilterType}"
                                                                            Classes="caption"/>
                                                             </StackPanel>
                                                             <SelectableTextBlock Text="{Binding DisplayExpression}"
                                                                                  TextWrapping="Wrap"
-                                                                                 FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                                 FontFamily="{DynamicResource MonoFont}"
                                                                                  FontSize="12"/>
                                                             <SelectableTextBlock Text="{Binding ActionExpression}"
                                                                                  TextWrapping="Wrap"
-                                                                                 FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                                                                 FontFamily="{DynamicResource MonoFont}"
                                                                                  FontSize="12"
                                                                                  IsVisible="{Binding ActionExpression, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                                         </StackPanel>

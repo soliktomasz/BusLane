@@ -1,0 +1,125 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Zed Dark - dark palette of the Zed design, sourced from the Zed editor's One Dark theme.
+        Values are taken from zed-industries/zed, assets/themes/one/one.json, so the
+        theme reads as Zed rather than as an approximation of it:
+
+            editor canvas      #282C33      accent blue       #74ADE8
+            panel / surface    #2F343E      border            #464B57
+            chrome / bar       #3B414D      border (subtle)   #363C46
+            text               #DCE0E5      selection tint    #293B5B
+            text muted         #A9AFBC      element selected  #454A56
+
+        Categorical colors reuse Zed's syntax and player palette (blue, green, yellow,
+        red, purple, cyan) so charts, badges and the payload editor agree with each other.
+    -->
+
+    <!-- Typography - the Zed design sets everything in Lilex, the monospace Zed ships -->
+    <FontFamily x:Key="UiFont">avares://BusLane/Assets/Fonts#Lilex</FontFamily>
+    <FontFamily x:Key="MonoFont">avares://BusLane/Assets/Fonts#Lilex</FontFamily>
+    <!-- Fluent controls read this for their text; Zed chrome runs at 13px -->
+    <x:Double x:Key="ControlContentThemeFontSize">13</x:Double>
+
+    <!-- Background and surface layers -->
+    <SolidColorBrush x:Key="AppBackground" Color="#282C33"/>
+    <SolidColorBrush x:Key="AppForeground" Color="#DCE0E5"/>
+    <SolidColorBrush x:Key="SubtleForeground" Color="#A9AFBC"/>
+    <SolidColorBrush x:Key="MutedForeground" Color="#A9AFBC"/>
+    <SolidColorBrush x:Key="CardBackground" Color="#2F343E"/>
+    <SolidColorBrush x:Key="SidebarBackground" Color="#2F343E"/>
+    <SolidColorBrush x:Key="SurfaceSubtle" Color="#2B3038"/>
+    <SolidColorBrush x:Key="LayerBackground" Color="#333944"/>
+    <SolidColorBrush x:Key="DashboardTileBackground" Color="#2F343E"/>
+
+    <!-- Border colors -->
+    <SolidColorBrush x:Key="BorderDefault" Color="#404652"/>
+    <SolidColorBrush x:Key="BorderStrong" Color="#545B69"/>
+    <SolidColorBrush x:Key="BorderMuted" Color="#363C46"/>
+
+    <!-- Brand accent colors - Zed's accent blue replaces BusLane's violet -->
+    <SolidColorBrush x:Key="AccentBrand" Color="#74ADE8"/>
+    <SolidColorBrush x:Key="AccentBrandHover" Color="#8FC3F2"/>
+    <SolidColorBrush x:Key="AccentBrandPressed" Color="#5B93CF"/>
+    <SolidColorBrush x:Key="AccentBrandSubtle" Color="#293B5B"/>
+    <SolidColorBrush x:Key="TextOnBrand" Color="#17191D"/>
+
+    <!-- Surface backgrounds with brand tint -->
+    <SolidColorBrush x:Key="SurfaceBrand" Color="#2A3342"/>
+    <SolidColorBrush x:Key="SurfaceBrandHover" Color="#33404F"/>
+    <SolidColorBrush x:Key="SurfaceAccent" Color="#2A3342"/>
+
+    <!-- Semantic surface colors -->
+    <SolidColorBrush x:Key="SurfaceDanger" Color="#3A2A2C"/>
+    <SolidColorBrush x:Key="SurfaceSuccess" Color="#2A3226"/>
+    <SolidColorBrush x:Key="SurfaceWarning" Color="#37322A"/>
+
+    <!-- Subtle semantic backgrounds for badges and indicators -->
+    <SolidColorBrush x:Key="AccentSubtle" Color="#293B5B"/>
+    <SolidColorBrush x:Key="SuccessSubtle" Color="#2A3226"/>
+    <SolidColorBrush x:Key="WarningSubtle" Color="#363127"/>
+    <SolidColorBrush x:Key="DangerSubtle" Color="#3A2A2C"/>
+
+    <!-- Semantic text colors -->
+    <SolidColorBrush x:Key="TextDanger" Color="#D9898D"/>
+    <SolidColorBrush x:Key="TextDangerHover" Color="#E5A3A6"/>
+    <SolidColorBrush x:Key="TextSuccess" Color="#A1C181"/>
+    <SolidColorBrush x:Key="TextSuccessHover" Color="#B7D09B"/>
+    <SolidColorBrush x:Key="TextWarning" Color="#DFC184"/>
+    <SolidColorBrush x:Key="TextWarningHover" Color="#EBD2A6"/>
+
+    <!-- Interactive states -->
+    <SolidColorBrush x:Key="HoverBackground" Color="#1AFFFFFF"/>
+    <SolidColorBrush x:Key="PressedBackground" Color="#26FFFFFF"/>
+    <SolidColorBrush x:Key="SelectedBackground" Color="#2B3D5C"/>
+    <SolidColorBrush x:Key="SelectedBorder" Color="#74ADE8"/>
+
+    <!-- Overlay and inputs -->
+    <SolidColorBrush x:Key="ModalOverlay" Color="#99000000"/>
+    <SolidColorBrush x:Key="LoadingOverlay" Color="#B3000000"/>
+    <SolidColorBrush x:Key="InputBackground" Color="#24282F"/>
+
+    <!-- Tab, toolbar, and utility surfaces -->
+    <SolidColorBrush x:Key="TabNavBackground" Color="#2F343E"/>
+    <SolidColorBrush x:Key="TabItemHover" Color="#363C46"/>
+    <SolidColorBrush x:Key="ToolbarHover" Color="#363C46"/>
+    <SolidColorBrush x:Key="ToolbarPressed" Color="#454A56"/>
+    <SolidColorBrush x:Key="PropertyRowBackground" Color="#2B3038"/>
+    <SolidColorBrush x:Key="PropertyRowHover" Color="#363C46"/>
+    <SolidColorBrush x:Key="ChipBackground" Color="#363C46"/>
+    <SolidColorBrush x:Key="ChipHover" Color="#454A56"/>
+
+    <!-- Code editor -->
+    <SolidColorBrush x:Key="CodeBackground" Color="#282C33"/>
+    <SolidColorBrush x:Key="CodeForeground" Color="#ACB2BE"/>
+    <SolidColorBrush x:Key="CodeBorder" Color="#363C46"/>
+
+    <!-- Brand mark (logo tile + bars) -->
+    <SolidColorBrush x:Key="BrandMarkTile" Color="#21252B"/>
+    <SolidColorBrush x:Key="BrandMarkBar" Color="#5A6F89"/>
+
+    <!-- Chart palette (Zed syntax/player colors) -->
+    <SolidColorBrush x:Key="PaletteChart1" Color="#73ADE9"/>
+    <SolidColorBrush x:Key="PaletteChart2" Color="#A1C181"/>
+    <SolidColorBrush x:Key="PaletteChart3" Color="#DFC184"/>
+    <SolidColorBrush x:Key="PaletteChart4" Color="#D07277"/>
+    <SolidColorBrush x:Key="PaletteChart5" Color="#B477CF"/>
+    <SolidColorBrush x:Key="PaletteChart6" Color="#6EB4BF"/>
+
+    <!-- Solid status colors used outside badge surfaces -->
+    <SolidColorBrush x:Key="DangerBackground" Color="#D07277"/>
+    <SolidColorBrush x:Key="SuccessForeground" Color="#A1C181"/>
+
+    <!-- Focus ring shadows -->
+    <BoxShadows x:Key="FocusRingAccent">0 0 0 1 #74ADE8</BoxShadows>
+    <BoxShadows x:Key="FocusRingDanger">0 0 0 1 #D07277</BoxShadows>
+    <BoxShadows x:Key="FocusRingContrast">0 0 0 1 #FFFFFF</BoxShadows>
+
+    <!-- Zed geometry: 4px controls, near-square panels -->
+    <CornerRadius x:Key="RadiusXs">2</CornerRadius>
+    <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="RadiusMedium">4</CornerRadius>
+    <CornerRadius x:Key="RadiusLarge">6</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">999</CornerRadius>
+</ResourceDictionary>

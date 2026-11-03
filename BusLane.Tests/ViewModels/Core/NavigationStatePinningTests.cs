@@ -233,6 +233,7 @@ public class NavigationStatePinningTests
         public double TerminalDockHeight { get; set; } = 260;
         public string? TerminalWindowBoundsJson { get; set; }
         public string Theme { get; set; } = "System";
+        public string Design { get; set; } = "Classic";
         public int LiveStreamPollingIntervalSeconds { get; set; } = 1;
         public bool RestoreTabsOnStartup { get; set; } = true;
         public string OpenTabsJson { get; set; } = "[]";

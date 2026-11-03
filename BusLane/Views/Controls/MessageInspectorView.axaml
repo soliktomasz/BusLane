@@ -136,7 +136,7 @@
                                     <TextBlock Text="Application properties" FontWeight="SemiBold" FontSize="12"/>
                                     <TextBox Text="{Binding CurrentMessageOps.FormattedApplicationProperties, Mode=OneWay}"
                                              IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-                                             FontFamily="Cascadia Code, Consolas, Monaco, monospace" FontSize="12"
+                                             FontFamily="{DynamicResource MonoFont}" FontSize="12"
                                              Background="Transparent" BorderThickness="0" Padding="0"/>
                                 </StackPanel>
                                 <Button Content="Open all message properties" Classes="subtle small" HorizontalAlignment="Left"

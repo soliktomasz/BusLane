@@ -8,7 +8,7 @@
     <Border Classes="modal-overlay"
             IsVisible="{Binding EntityOperations.ShowEntityEditDialog}">
         <Border Background="{DynamicResource CardBackground}"
-                CornerRadius="{StaticResource RadiusLarge}"
+                CornerRadius="{DynamicResource RadiusLarge}"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource BorderDefault}"
                 BoxShadow="0 12 32 0 #38000000"
@@ -26,7 +26,7 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="36" Height="36"
-                                CornerRadius="{StaticResource RadiusMedium}"
+                                CornerRadius="{DynamicResource RadiusMedium}"
                                 Background="{DynamicResource SurfaceWarning}"
                                 Margin="0,0,12,0">
                             <LucideIcon Kind="Pencil" Size="18"

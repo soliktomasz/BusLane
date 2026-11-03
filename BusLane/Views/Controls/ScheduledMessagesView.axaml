@@ -562,7 +562,7 @@
                             <Button Classes="entity-header-action primary" IsVisible="{Binding IsRescheduling}"
                                     IsEnabled="{Binding CanConfirm}"
                                     Command="{Binding ConfirmActionCommand}" Content="{Binding ConfirmationButtonText}"/>
-                            <Button Classes="danger" MinHeight="34" Height="34" Padding="12,0" CornerRadius="6" VerticalContentAlignment="Center"
+                            <Button Classes="danger" MinHeight="34" Height="34" Padding="12,0" CornerRadius="{DynamicResource RadiusSmall}" VerticalContentAlignment="Center"
                                     IsVisible="{Binding !IsRescheduling}"
                                     IsEnabled="{Binding CanConfirm}"
                                     Command="{Binding ConfirmActionCommand}" Content="{Binding ConfirmationButtonText}"/>

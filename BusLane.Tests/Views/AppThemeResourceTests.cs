@@ -63,6 +63,72 @@ public class AppThemeResourceTests
         invalidSetters.Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData("ZedDark")]
+    [InlineData("ZedLight")]
+    public void AppResources_DeclareZedThemeDictionary(string variant)
+    {
+        // Arrange
+        var xaml = File.ReadAllText(GetAppPath());
+
+        // Assert
+        xaml.Should().Contain($"x:Key=\"{{x:Static styling:AppThemes.{variant}}}\"");
+        xaml.Should().Contain($"avares://BusLane/Styles/Themes/{variant}.axaml");
+    }
+
+    [Theory]
+    [InlineData("ZedDark", "Dark")]
+    [InlineData("ZedLight", "Light")]
+    public void ZedTheme_DefinesEveryTokenItsBaseThemeDefines(string zedVariant, string baseVariant)
+    {
+        // Arrange
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var baseKeys = XDocument.Parse(File.ReadAllText(GetAppPath()))
+            .Descendants()
+            .Where(element => element.Name.LocalName == "ResourceDictionary"
+                              && (string?)element.Attribute(x + "Key") == baseVariant)
+            .SelectMany(element => element.Elements())
+            .Select(element => (string?)element.Attribute(x + "Key"))
+            .OfType<string>()
+            .ToHashSet();
+        var zedKeys = XDocument.Parse(File.ReadAllText(GetZedThemePath(zedVariant)))
+            .Root!.Elements()
+            .Select(element => (string?)element.Attribute(x + "Key"))
+            .OfType<string>()
+            .ToHashSet();
+
+        // Assert
+        baseKeys.Should().NotBeEmpty();
+        zedKeys.Should().Contain(baseKeys, $"every token the {baseVariant} theme defines must have a {zedVariant} value");
+    }
+
+    [Fact]
+    public void ZedDesign_OnlyOverridesSelectorsTheBaseStylesDefine()
+    {
+        // Arrange - an override for a selector AppStyles lacks would silently match nothing.
+        // Bare control-type selectors are deliberate Zed-only additions, not overrides.
+        var zedOnlySelectors = new HashSet<string> { "Button, ToggleButton" };
+        var baseSelectors = XDocument.Parse(File.ReadAllText(GetStylesPath()))
+            .Descendants()
+            .Where(element => element.Name.LocalName == "Style")
+            .Select(element => (string?)element.Attribute("Selector"))
+            .OfType<string>()
+            .ToHashSet();
+        var zedSelectors = XDocument.Parse(File.ReadAllText(GetZedDesignPath()))
+            .Descendants()
+            .Where(element => element.Name.LocalName == "Style")
+            .Select(element => (string?)element.Attribute("Selector"))
+            .OfType<string>()
+            .ToList();
+
+        // Assert
+        zedSelectors.Should().NotBeEmpty();
+        zedSelectors.Where(selector => !baseSelectors.Contains(selector)
+                                       && !zedOnlySelectors.Contains(selector)
+                                       && !selector.Contains("/template/"))
+            .Should().BeEmpty();
+    }
+
     private static string GetAppPath()
     {
         return Path.GetFullPath(Path.Combine(
@@ -73,6 +139,34 @@ public class AppThemeResourceTests
             "..",
             "BusLane",
             "App.axaml"));
+    }
+
+    private static string GetZedThemePath(string variant)
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Styles",
+            "Themes",
+            $"{variant}.axaml"));
+    }
+
+    private static string GetZedDesignPath()
+    {
+        return Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "BusLane",
+            "Styles",
+            "Designs",
+            "Zed.axaml"));
     }
 
     private static string GetStylesPath()

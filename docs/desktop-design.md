@@ -89,6 +89,24 @@ Danger identifies dead-letter diagnostics and destructive operations; success an
 
 Use dynamic resources for theme-dependent UI. Entity-selection bindings also observe `Window.ActualThemeVariant`, so changing theme refreshes selected queue, topic, and subscription presentation. Placeholders use `SubtleForeground` with `TextControlPlaceholderOpacity` (1); do not compound that deliberately subtle foreground with additional opacity.
 
+### Themes and designs
+
+Theme (Light / Dark / System) and Design (Classic / Zed) are separate settings. **Classic** is the default dictionaries above. **Zed** follows the Zed editor and the zed.dev / Delta site:
+
+- **Palettes**: `Styles/Themes/ZedDark.axaml` and `ZedLight.axaml`, traced to Zed's One Dark and One Light (`assets/themes/one/one.json`). They are custom `ThemeVariant`s that inherit Dark or Light, so any Fluent or control resource they don't override still resolves. `AppThemes.Resolve` picks one from the theme and design. Under "System" it reads the OS appearance, because a custom variant can't follow the platform the way `Default` does.
+- **Type**: everything is set in bundled Lilex (`Assets/Fonts`, OFL), the monospace Zed ships, with Fluent control text at 13px. Fonts are the `UiFont` and `MonoFont` theme resources, so views reference `{DynamicResource MonoFont}`, not literal font stacks.
+- **Elements**: `Styles/Designs/Zed.axaml` is added after `AppStyles.axaml` while the Zed design is active, and wins by order. Its rules:
+  - controls about 28px tall, list rows about 24px
+  - 4px controls, near-square panels, 1px hairlines, no card shadows
+  - the primary button is an accent tint with an accent border; danger and warning use the same recipe in their own colors
+  - badges are 4px labels
+  - workspace tabs are flush and square
+  - regular-weight controls
+
+  It sets only selectors that `AppStyles.axaml` defines, which a test enforces.
+
+The radius scale and focus rings live in the theme dictionaries, not in `AppStyles.axaml`, so a palette can change geometry as well as color. Every reference to them is a `DynamicResource`.
+
 ## Typography
 
 Inter with the existing platform fallbacks remains the UI family. The shared desktop body and caption styles use the frontmatter roles. Workspace entity titles use the larger workspace-title role; table subjects and tab titles use compact semibold text. Message IDs and timestamps use the UI family. Code, payloads, and optional row body previews use the existing monospace stack.

@@ -2,17 +2,22 @@ namespace BusLane;
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Styling;
+using Avalonia.Themes.Fluent;
 using BusLane.Models.Update;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Infrastructure;
 using BusLane.Services.Update;
+using BusLane.Styling;
 using BusLane.ViewModels;
 using BusLane.Views;
 using BusLane.Views.Dialogs;
@@ -29,6 +34,11 @@ public partial class App : Application
     /// Gets the main window (used for file dialogs).
     /// </summary>
     public static Window? MainWindow { get; private set; }
+
+    private string _themeName = "Light";
+    private string _designName = AppThemes.ClassicDesign;
+    private IStyle? _zedStyles;
+    private (Color Light, Color Dark)? _classicAccents;
     
     public override void Initialize()
     {
@@ -44,7 +54,10 @@ public partial class App : Application
         {
             // Apply theme from preferences service
             var preferencesService = Program.Services!.GetRequiredService<IPreferencesService>();
-            ApplyTheme(preferencesService.Theme);
+            ApplyTheme(preferencesService.Theme, preferencesService.Design);
+            // "System" under the Zed design picks a Zed variant itself, so it has to follow OS changes
+            if (PlatformSettings is not null)
+                PlatformSettings.ColorValuesChanged += (_, _) => ApplyTheme(_themeName, _designName);
             
             var vm = Program.Services!.GetRequiredService<MainWindowViewModel>();
             var mainWindow = new MainWindow { DataContext = vm, Title = "BusLane" };
@@ -60,14 +73,34 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
     
-    public void ApplyTheme(string themeName)
+    public void ApplyTheme(string themeName, string designName)
     {
-        RequestedThemeVariant = themeName switch
+        _themeName = themeName;
+        _designName = designName;
+
+        var systemIsDark = PlatformSettings?.GetColorValues().ThemeVariant == PlatformThemeVariant.Dark;
+        RequestedThemeVariant = AppThemes.Resolve(themeName, designName, systemIsDark);
+
+        var useZed = designName == AppThemes.ZedDesign;
+        if (useZed)
         {
-            "Dark" => ThemeVariant.Dark,
-            "Light" => ThemeVariant.Light,
-            "System" or _ => ThemeVariant.Default
-        };
+            _zedStyles ??= (IStyle)AvaloniaXamlLoader.Load(new Uri(AppThemes.ZedStylesUri));
+            if (!Styles.Contains(_zedStyles))
+                Styles.Add(_zedStyles);
+        }
+        else if (_zedStyles is not null)
+        {
+            Styles.Remove(_zedStyles);
+        }
+
+        if (Styles.OfType<FluentTheme>().FirstOrDefault() is { } fluent)
+        {
+            var light = fluent.Palettes[ThemeVariant.Light];
+            var dark = fluent.Palettes[ThemeVariant.Dark];
+            _classicAccents ??= (light.Accent, dark.Accent);
+            light.Accent = useZed ? AppThemes.ZedLightAccent : _classicAccents.Value.Light;
+            dark.Accent = useZed ? AppThemes.ZedDarkAccent : _classicAccents.Value.Dark;
+        }
     }
     
     private static void SetMacOSDockIcon()

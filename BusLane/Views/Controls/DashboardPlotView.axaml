@@ -13,7 +13,7 @@
                 Background="{DynamicResource SurfaceSubtle}"
                 BorderBrush="{DynamicResource BorderMuted}"
                 BorderThickness="1"
-                CornerRadius="{StaticResource RadiusMedium}"
+                CornerRadius="{DynamicResource RadiusMedium}"
                 Margin="6"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch">

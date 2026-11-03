@@ -204,7 +204,7 @@
                     IsHitTestVisible="True">
                 <Border Background="{DynamicResource CardBackground}"
                         Padding="48,40"
-                        CornerRadius="{StaticResource RadiusLarge}"
+                        CornerRadius="{DynamicResource RadiusLarge}"
                         BorderThickness="1"
                         BorderBrush="{DynamicResource BorderDefault}"
                         BoxShadow="0 16 48 0 #40000000"
@@ -215,7 +215,7 @@
                         <!-- Animated loading ring -->
                         <Border Width="64" Height="64"
                                 HorizontalAlignment="Center"
-                                CornerRadius="{StaticResource RadiusPill}"
+                                CornerRadius="{DynamicResource RadiusPill}"
                                 BorderThickness="4"
                                 BorderBrush="{DynamicResource AccentBrand}"
                                 Background="Transparent">
@@ -310,7 +310,7 @@
                             <LucideIcon Kind="ScrollText" Size="14"/>
                             <Border Width="8"
                                     Height="8"
-                                    CornerRadius="{StaticResource RadiusSmall}"
+                                    CornerRadius="{DynamicResource RadiusSmall}"
                                     Background="{DynamicResource TextDanger}"
                                     BorderBrush="{DynamicResource CardBackground}"
                                     BorderThickness="1"
@@ -370,7 +370,7 @@
                 IsVisible="{Binding FeaturePanels.ShowAlerts}"
                 Background="{DynamicResource ModalOverlay}">
             <Border Background="{DynamicResource CardBackground}"
-                    CornerRadius="{StaticResource RadiusLarge}"
+                    CornerRadius="{DynamicResource RadiusLarge}"
                     MaxWidth="900" MaxHeight="700"
                     VerticalAlignment="Center" HorizontalAlignment="Center"
                     BoxShadow="0 12 32 0 #38000000">
@@ -402,7 +402,7 @@
                             <Border Grid.Column="0"
                                     Width="52"
                                     Height="52"
-                                    CornerRadius="{StaticResource RadiusLarge}"
+                                    CornerRadius="{DynamicResource RadiusLarge}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     Margin="0,0,16,0">
                                 <LucideIcon Kind="Rocket" Size="26"
@@ -519,7 +519,7 @@
                             <Border Grid.Column="0"
                                     Width="44"
                                     Height="44"
-                                    CornerRadius="{StaticResource RadiusLarge}"
+                                    CornerRadius="{DynamicResource RadiusLarge}"
                                     Background="{DynamicResource SurfaceBrand}"
                                     Margin="0,0,16,0">
                                 <LucideIcon Kind="Lock" Size="20"

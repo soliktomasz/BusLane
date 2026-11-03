@@ -14,7 +14,7 @@
                     <Border Classes="inbox-item-surface">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
                             <Border Width="8" Height="8"
-                                    CornerRadius="{StaticResource RadiusPill}"
+                                    CornerRadius="{DynamicResource RadiusPill}"
                                     Background="{Binding Status, Converter={StaticResource InboxStatusToBrushConverter}}"
                                     VerticalAlignment="Top" Margin="0,6,0,0"/>
                             <StackPanel Grid.Column="1" Spacing="2">
