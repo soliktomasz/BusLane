@@ -116,17 +116,6 @@
     <BoxShadows x:Key="FocusRingDanger">0 0 0 1 #D07277</BoxShadows>
     <BoxShadows x:Key="FocusRingContrast">0 0 0 1 #FFFFFF</BoxShadows>
 
-    <!-- Fluent accent. FluentTheme.Palettes only accepts the built-in Light and Dark variants,
-         so the Zed accent is provided here; Application.Resources is consulted before the
-         Fluent theme's own resources, which makes these win while this variant is active. -->
-    <Color x:Key="SystemAccentColor">#74ADE8</Color>
-    <Color x:Key="SystemAccentColorDark1">#6698CC</Color>
-    <Color x:Key="SystemAccentColorDark2">#5883B0</Color>
-    <Color x:Key="SystemAccentColorDark3">#4A6F94</Color>
-    <Color x:Key="SystemAccentColorLight1">#89B9EB</Color>
-    <Color x:Key="SystemAccentColorLight2">#9EC6EF</Color>
-    <Color x:Key="SystemAccentColorLight3">#B3D2F2</Color>
-
     <!-- Zed geometry: 4px controls, near-square panels -->
     <CornerRadius x:Key="RadiusXs">2</CornerRadius>
     <CornerRadius x:Key="RadiusSmall">4</CornerRadius>

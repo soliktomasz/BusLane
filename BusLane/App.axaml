@@ -280,7 +280,7 @@
                 <ColorPaletteResources x:Key="Light" Accent="#4338CA"/>
                 <ColorPaletteResources x:Key="Dark" Accent="#B8ADFF"/>
                 <!-- The Zed variants cannot be listed here: FluentTheme.Palettes accepts only Light
-                     and Dark. Their accent overrides live in Styles/Themes/Zed*.axaml instead. -->
+                     and Dark. App.ApplyTheme swaps these accents for Zed's while the design is on. -->
             </FluentTheme.Palettes>
         </FluentTheme>
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>

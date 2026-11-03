@@ -2,14 +2,17 @@ namespace BusLane;
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Styling;
+using Avalonia.Themes.Fluent;
 using BusLane.Models.Update;
 using BusLane.Services.Abstractions;
 using BusLane.Services.Infrastructure;
@@ -35,6 +38,7 @@ public partial class App : Application
     private string _themeName = "Light";
     private string _designName = AppThemes.ClassicDesign;
     private IStyle? _zedStyles;
+    private (Color Light, Color Dark)? _classicAccents;
     
     public override void Initialize()
     {
@@ -87,6 +91,15 @@ public partial class App : Application
         else if (_zedStyles is not null)
         {
             Styles.Remove(_zedStyles);
+        }
+
+        if (Styles.OfType<FluentTheme>().FirstOrDefault() is { } fluent)
+        {
+            var light = fluent.Palettes[ThemeVariant.Light];
+            var dark = fluent.Palettes[ThemeVariant.Dark];
+            _classicAccents ??= (light.Accent, dark.Accent);
+            light.Accent = useZed ? AppThemes.ZedLightAccent : _classicAccents.Value.Light;
+            dark.Accent = useZed ? AppThemes.ZedDarkAccent : _classicAccents.Value.Dark;
         }
     }
     

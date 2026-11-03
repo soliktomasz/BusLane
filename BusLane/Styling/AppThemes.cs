@@ -1,5 +1,6 @@
 namespace BusLane.Styling;
 
+using Avalonia.Media;
 using Avalonia.Styling;
 
 /// <summary>
@@ -21,6 +22,16 @@ public static class AppThemes
     /// Element layer loaded over AppStyles.axaml while the Zed design is selected.
     /// </summary>
     public const string ZedStylesUri = "avares://BusLane/Styles/Designs/Zed.axaml";
+
+    /// <summary>
+    /// Fluent palette accents for the Zed design. Fluent derives its control accents (toggles,
+    /// checkboxes, progress) from FluentTheme.Palettes, not from resources a variant overrides,
+    /// so App swaps these into the palettes while Zed is active.
+    /// </summary>
+    public static Color ZedDarkAccent { get; } = Color.Parse("#74ADE8");
+
+    /// <inheritdoc cref="ZedDarkAccent"/>
+    public static Color ZedLightAccent { get; } = Color.Parse("#5C78E2");
 
     /// <summary>
     /// Dark palette of the Zed design, from the Zed editor's One Dark theme.

@@ -112,15 +112,6 @@
     <BoxShadows x:Key="FocusRingDanger">0 0 0 1 #D36151</BoxShadows>
     <BoxShadows x:Key="FocusRingContrast">0 0 0 1 #242529</BoxShadows>
 
-    <!-- Fluent accent - see ZedDark.axaml for why it lives here -->
-    <Color x:Key="SystemAccentColor">#5C78E2</Color>
-    <Color x:Key="SystemAccentColorDark1">#4C68D2</Color>
-    <Color x:Key="SystemAccentColorDark2">#3F5BC4</Color>
-    <Color x:Key="SystemAccentColorDark3">#334EAF</Color>
-    <Color x:Key="SystemAccentColorLight1">#7A91E8</Color>
-    <Color x:Key="SystemAccentColorLight2">#98AAEE</Color>
-    <Color x:Key="SystemAccentColorLight3">#B6C3F3</Color>
-
     <!-- Zed geometry: 4px controls, near-square panels -->
     <CornerRadius x:Key="RadiusXs">2</CornerRadius>
     <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
