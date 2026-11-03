@@ -39,6 +39,12 @@
     <Style Selector="TextBlock.message-preview-text"><Setter Property="FontSize" Value="12"/></Style>
 
     <!-- ── Buttons ───────────────────────────────────────────────────────── -->
+    <!-- Fluent 12 stretches button content vertically, so text drawn in a button taller than
+         its content (MinHeight/Height with Zed's tight padding) sat at the top. -->
+    <Style Selector="Button, ToggleButton">
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
     <!-- Primary: accent tint + accent hairline, regular weight, not a solid fill -->
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource AccentBrandSubtle}"/>

@@ -105,7 +105,9 @@ public class AppThemeResourceTests
     [Fact]
     public void ZedDesign_OnlyOverridesSelectorsTheBaseStylesDefine()
     {
-        // Arrange - an override for a selector AppStyles lacks would silently match nothing
+        // Arrange - an override for a selector AppStyles lacks would silently match nothing.
+        // Bare control-type selectors are deliberate Zed-only additions, not overrides.
+        var zedOnlySelectors = new HashSet<string> { "Button, ToggleButton" };
         var baseSelectors = XDocument.Parse(File.ReadAllText(GetStylesPath()))
             .Descendants()
             .Where(element => element.Name.LocalName == "Style")
@@ -121,7 +123,9 @@ public class AppThemeResourceTests
 
         // Assert
         zedSelectors.Should().NotBeEmpty();
-        zedSelectors.Where(selector => !baseSelectors.Contains(selector) && !selector.Contains("/template/"))
+        zedSelectors.Where(selector => !baseSelectors.Contains(selector)
+                                       && !zedOnlySelectors.Contains(selector)
+                                       && !selector.Contains("/template/"))
             .Should().BeEmpty();
     }
 
