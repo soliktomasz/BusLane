@@ -109,47 +109,11 @@ public partial class MessageOperationsViewModel : ViewModelBase
     public bool IsSessionScoped => !string.IsNullOrWhiteSpace(ScopedSessionId);
     public string? SessionScopeLabel => IsSessionScoped ? $"Session: {ScopedSessionId}" : null;
 
-    public bool IsMessageBodyJson
-    {
-        get
-        {
-            if (SelectedMessage?.Body == null) return false;
-            var trimmed = SelectedMessage.Body.Trim();
-            return (trimmed.StartsWith("{") && trimmed.EndsWith("}")) ||
-                   (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
-        }
-    }
+    public bool IsMessageBodyJson => MessageBodyFormat.IsJson(SelectedMessage?.Body);
 
-    public bool IsMessageBodyXml
-    {
-        get
-        {
-            if (SelectedMessage?.Body == null) return false;
-            var trimmed = SelectedMessage.Body.Trim();
-            return trimmed.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) ||
-                   (trimmed.StartsWith("<") && trimmed.Contains("</") && trimmed.EndsWith(">"));
-        }
-    }
+    public bool IsMessageBodyXml => MessageBodyFormat.IsXml(SelectedMessage?.Body);
 
-    public string? FormattedMessageBody
-    {
-        get
-        {
-            if (SelectedMessage?.Body == null) return null;
-            if (!IsMessageBodyJson) return SelectedMessage.Body;
-
-            try
-            {
-                var jsonDoc = System.Text.Json.JsonDocument.Parse(SelectedMessage.Body);
-                return System.Text.Json.JsonSerializer.Serialize(jsonDoc.RootElement,
-                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            }
-            catch
-            {
-                return SelectedMessage.Body;
-            }
-        }
-    }
+    public string? FormattedMessageBody => MessageBodyFormat.Format(SelectedMessage?.Body);
 
     public string? FormattedApplicationProperties
     {

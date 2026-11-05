@@ -101,11 +101,12 @@ public class LiveStreamViewModelTests
     }
 
     [Fact]
-    public async Task StopStream_WithSelectedMessage_ClearsDetailSelection()
+    public async Task StopStream_WithCapturedMessages_KeepsMessagesAndSelectionForReview()
     {
         // Arrange
         var liveStreamService = new FakeLiveStreamService();
-        await using var sut = new LiveStreamViewModel(liveStreamService, () => null);
+        await using var sut = new LiveStreamViewModel(liveStreamService, () => Substitute.For<IServiceBusOperations>());
+        await sut.StartQueueAsync("orders");
         liveStreamService.EmitMessage(CreateMessage("message-1", 1));
         await WaitForAsync(() => sut.Messages.Count == 1);
         sut.SelectedMessage = sut.Messages.Single();
@@ -114,7 +115,98 @@ public class LiveStreamViewModelTests
         await sut.StopStreamCommand.ExecuteAsync(null);
 
         // Assert
+        sut.IsStopped.Should().BeTrue();
+        sut.ShowSession.Should().BeTrue();
+        sut.Messages.Should().ContainSingle();
+        sut.SelectedMessage.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ChangeSource_WithCapturedMessages_ClearsCaptureAndShowsSourcePicker()
+    {
+        // Arrange
+        var liveStreamService = new FakeLiveStreamService();
+        await using var sut = new LiveStreamViewModel(liveStreamService, () => Substitute.For<IServiceBusOperations>());
+        await sut.StartQueueAsync("orders");
+        liveStreamService.EmitMessage(CreateMessage("message-1", 1));
+        await WaitForAsync(() => sut.Messages.Count == 1);
+        sut.SelectedMessage = sut.Messages.Single();
+
+        // Act
+        await sut.ChangeSourceCommand.ExecuteAsync(null);
+
+        // Assert
+        liveStreamService.IsStreaming.Should().BeFalse();
+        sut.ShowEntitySelector.Should().BeTrue();
+        sut.Messages.Should().BeEmpty();
         sut.SelectedMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ResumeStream_SameSource_SkipsMessagesAlreadyCaptured()
+    {
+        // Arrange
+        var liveStreamService = new FakeLiveStreamService();
+        await using var sut = new LiveStreamViewModel(liveStreamService, () => Substitute.For<IServiceBusOperations>());
+        await sut.StartQueueAsync("orders");
+        liveStreamService.EmitMessage(CreateMessage("message-1", 1));
+        await WaitForAsync(() => sut.Messages.Count == 1);
+        await sut.StopStreamCommand.ExecuteAsync(null);
+
+        // Act: the service peeks from the start again after a restart
+        await sut.ResumeStreamCommand.ExecuteAsync(null);
+        liveStreamService.EmitMessage(CreateMessage("message-1", 1));
+        liveStreamService.EmitMessage(CreateMessage("message-2", 2));
+        await WaitForAsync(() => sut.Messages.Count == 2);
+
+        // Assert
+        sut.IsLive.Should().BeTrue();
+        sut.Messages.Select(message => message.MessageId).Should().Equal("message-2", "message-1");
+    }
+
+    [Fact]
+    public async Task StartQueue_DifferentSource_StartsFreshCapture()
+    {
+        // Arrange
+        var liveStreamService = new FakeLiveStreamService();
+        await using var sut = new LiveStreamViewModel(liveStreamService, () => Substitute.For<IServiceBusOperations>());
+        await sut.StartQueueAsync("orders");
+        liveStreamService.EmitMessage(CreateMessage("message-5", 5));
+        await WaitForAsync(() => sut.Messages.Count == 1);
+
+        // Act
+        await sut.StartQueueAsync("invoices");
+        liveStreamService.EmitMessage(CreateMessage("invoice-1", 1));
+        await WaitForAsync(() => sut.Messages.Count == 1 && sut.Messages[0].MessageId == "invoice-1");
+
+        // Assert
+        sut.CurrentEntityName.Should().Be("invoices");
+        sut.Messages.Should().ContainSingle(message => message.MessageId == "invoice-1");
+    }
+
+    [Fact]
+    public async Task TogglePause_WhilePaused_HoldsMessagesUntilResumed()
+    {
+        // Arrange
+        var liveStreamService = new FakeLiveStreamService();
+        await using var sut = new LiveStreamViewModel(liveStreamService, () => Substitute.For<IServiceBusOperations>());
+        await sut.StartQueueAsync("orders");
+        liveStreamService.EmitMessage(CreateMessage("message-1", 1));
+        await WaitForAsync(() => sut.Messages.Count == 1);
+
+        // Act
+        sut.TogglePauseCommand.Execute(null);
+        liveStreamService.EmitMessage(CreateMessage("message-2", 2));
+        liveStreamService.EmitMessage(CreateMessage("message-3", 3));
+        await WaitForAsync(() => sut.PausedMessageCount == 2);
+        var countWhilePaused = sut.Messages.Count;
+        sut.TogglePauseCommand.Execute(null);
+        await WaitForAsync(() => sut.Messages.Count == 3);
+
+        // Assert
+        countWhilePaused.Should().Be(1);
+        sut.PausedMessageCount.Should().Be(0);
+        sut.IsLive.Should().BeTrue();
     }
 
     [Fact]
