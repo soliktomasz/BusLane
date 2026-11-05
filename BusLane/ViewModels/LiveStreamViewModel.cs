@@ -3,6 +3,7 @@ namespace BusLane.ViewModels;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using Avalonia;
+using Avalonia.Input.Platform;
 using BusLane.Models;
 using BusLane.ViewModels.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,25 +23,61 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     private readonly List<LiveStreamMessage> _pendingMessages = [];
     private readonly List<LiveStreamMessage> _messageBuffer = [];
     private int _isFlushScheduled;
+    // Guarded by _messageLock. Resuming peeks the entity from its start, so already-seen sequence numbers are dropped.
+    private long _lastSequenceNumber;
+    private Func<Task>? _restartStream;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowEntitySelector))]
+    [NotifyPropertyChangedFor(nameof(IsLive), nameof(IsStopped), nameof(IsActive))]
     private bool _isStreaming;
-    [ObservableProperty] private string? _currentEntityName;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEntitySelector), nameof(ShowSession), nameof(IsStopped))]
+    private string? _currentEntityName;
     [ObservableProperty] private string? _currentEntityType;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowEntitySelector))]
+    [NotifyPropertyChangedFor(nameof(IsStopped), nameof(IsActive))]
     private bool _isConnecting;
-    [ObservableProperty] private int _messageCount;
-    [ObservableProperty] private LiveStreamMessage? _selectedMessage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLive))]
+    private bool _isPaused;
+    [ObservableProperty] private int _pausedMessageCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CountSummary))]
+    private int _messageCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedBody), nameof(IsSelectedBodyJson), nameof(IsSelectedBodyXml))]
+    private LiveStreamMessage? _selectedMessage;
     [ObservableProperty] private bool _autoScroll = true;
     [ObservableProperty] private string _filterText = "";
 
     [ObservableProperty] private object? _selectedStreamEntity;
     [ObservableProperty] private bool _hasEntities;
 
-    public bool ShowEntitySelector => !IsStreaming && !IsConnecting;
+    public bool ShowEntitySelector => CurrentEntityName == null;
+    public bool ShowSession => CurrentEntityName != null;
+    public bool IsLive => IsStreaming && !IsPaused;
+    public bool IsStopped => CurrentEntityName != null && !IsStreaming && !IsConnecting;
+    /// <summary>True while the service is polling or retrying the current source.</summary>
+    public bool IsActive => IsStreaming || IsConnecting;
+    public int MaxCapturedMessages => MaxMessages;
+
+    public string CountSummary
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(FilterText))
+                return $"{FilteredMessages.Count} of {MessageCount} match";
+
+            return MessageCount >= MaxMessages
+                ? $"Newest {MaxMessages} kept"
+                : $"{MessageCount} captured";
+        }
+    }
+
+    public string? SelectedBody => MessageBodyFormat.Format(SelectedMessage?.Body);
+    public bool IsSelectedBodyJson => MessageBodyFormat.IsJson(SelectedMessage?.Body);
+    public bool IsSelectedBodyXml => MessageBodyFormat.IsXml(SelectedMessage?.Body);
 
     public ObservableCollection<LiveStreamMessage> Messages { get; } = [];
     public ObservableCollection<LiveStreamMessage> FilteredMessages { get; } = [];
@@ -74,6 +111,10 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         {
             IsStreaming = isStreaming;
             IsConnecting = false;
+            if (isStreaming)
+            {
+                ErrorMessage = null;
+            }
         });
     }
 
@@ -81,8 +122,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     {
         RunOnUiThread(() =>
         {
+            // The service keeps retrying after poll errors, so connecting state is left to StreamingStatusChanged.
             ErrorMessage = ex.Message;
-            IsConnecting = false;
         });
     }
 
@@ -90,7 +131,15 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
     {
         lock (_messageLock)
         {
+            if (message.SequenceNumber <= _lastSequenceNumber)
+                return;
+
+            _lastSequenceNumber = message.SequenceNumber;
             _pendingMessages.Add(message);
+            if (_pendingMessages.Count > MaxMessages)
+            {
+                _pendingMessages.RemoveRange(0, _pendingMessages.Count - MaxMessages);
+            }
         }
 
         ScheduleFlush();
@@ -124,6 +173,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         {
             SelectedMessage = null;
         }
+
+        OnPropertyChanged(nameof(CountSummary));
     }
 
     private bool MatchesFilter(LiveStreamMessage message)
@@ -150,10 +201,7 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
                 return;
             }
 
-            ErrorMessage = null;
-            IsConnecting = true;
-            CurrentEntityName = queueName;
-            CurrentEntityType = "Queue";
+            BeginSession(queueName, "Queue", () => StartQueueStreamAsync(queueName));
 
             await _liveStreamService.StartQueueStreamAsync(operations, queueName);
         }
@@ -177,10 +225,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
                 return;
             }
 
-            ErrorMessage = null;
-            IsConnecting = true;
-            CurrentEntityName = $"{args.topicName}/{args.subscriptionName}";
-            CurrentEntityType = "Subscription";
+            BeginSession($"{args.topicName}/{args.subscriptionName}", "Subscription",
+                () => StartSubscriptionStreamAsync(args));
 
             await _liveStreamService.StartSubscriptionStreamAsync(operations, args.topicName, args.subscriptionName);
         }
@@ -189,6 +235,26 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
             ErrorMessage = ex.Message;
             IsConnecting = false;
         }
+    }
+
+    private void BeginSession(string entityName, string entityType, Func<Task> restart)
+    {
+        // A different source starts a fresh capture; resuming the same one keeps what was captured.
+        if (entityName != CurrentEntityName || entityType != CurrentEntityType)
+        {
+            ClearMessages();
+            lock (_messageLock)
+            {
+                _lastSequenceNumber = 0;
+            }
+        }
+
+        ErrorMessage = null;
+        IsPaused = false;
+        IsConnecting = true;
+        CurrentEntityName = entityName;
+        CurrentEntityType = entityType;
+        _restartStream = restart;
     }
 
     /// <summary>
@@ -207,13 +273,79 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         return StartSubscriptionStreamAsync((topicName, subscriptionName));
     }
 
+    /// <summary>
+    /// Stops polling but keeps the captured messages for review.
+    /// </summary>
     [RelayCommand]
     private async Task StopStreamAsync()
     {
         await _liveStreamService.StopStreamAsync();
-        SelectedMessage = null;
+        IsConnecting = false;
+        if (IsPaused)
+        {
+            TogglePause();
+        }
+    }
+
+    [RelayCommand]
+    private async Task ResumeStreamAsync()
+    {
+        if (_restartStream != null)
+        {
+            await _restartStream();
+        }
+    }
+
+    /// <summary>
+    /// Stops the stream, discards the capture and returns to source selection.
+    /// </summary>
+    [RelayCommand]
+    private async Task ChangeSourceAsync()
+    {
+        await _liveStreamService.StopStreamAsync();
+        ClearMessages();
+        lock (_messageLock)
+        {
+            _lastSequenceNumber = 0;
+        }
+
+        _restartStream = null;
+        IsConnecting = false;
+        IsPaused = false;
+        ErrorMessage = null;
         CurrentEntityName = null;
         CurrentEntityType = null;
+    }
+
+    /// <summary>
+    /// Holds incoming messages so the list stops moving; resuming shows them all.
+    /// </summary>
+    [RelayCommand]
+    private void TogglePause()
+    {
+        IsPaused = !IsPaused;
+        if (!IsPaused)
+        {
+            ScheduleFlush();
+        }
+    }
+
+    [RelayCommand]
+    private Task CopySelectedBodyAsync() => SetClipboardTextAsync(SelectedBody);
+
+    [RelayCommand]
+    private Task CopySelectedMessageIdAsync() => SetClipboardTextAsync(SelectedMessage?.MessageId);
+
+    private static async Task SetClipboardTextAsync(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+
+        if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow?.Clipboard is { } clipboard)
+        {
+            await clipboard.SetTextAsync(text);
+        }
     }
 
     [RelayCommand]
@@ -229,6 +361,8 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         FilteredMessages.Clear();
         SelectedMessage = null;
         MessageCount = 0;
+        PausedMessageCount = 0;
+        OnPropertyChanged(nameof(CountSummary));
     }
 
     [RelayCommand]
@@ -364,6 +498,13 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
 
         lock (_messageLock)
         {
+            if (IsPaused)
+            {
+                PausedMessageCount = _pendingMessages.Count;
+                Interlocked.Exchange(ref _isFlushScheduled, 0);
+                return;
+            }
+
             if (_pendingMessages.Count == 0)
             {
                 Interlocked.Exchange(ref _isFlushScheduled, 0);
@@ -424,6 +565,9 @@ public partial class LiveStreamViewModel : ViewModelBase, IAsyncDisposable
         }
 
         MessageCount = _messageBuffer.Count;
+        PausedMessageCount = 0;
+        ErrorMessage = null;
+        OnPropertyChanged(nameof(CountSummary));
         Interlocked.Exchange(ref _isFlushScheduled, 0);
 
         lock (_messageLock)

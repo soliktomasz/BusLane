@@ -98,26 +98,106 @@
                     IsVisible="{Binding FeaturePanels.ShowLiveStream}"
                     Background="{DynamicResource AppBackground}">
                 <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Classes="page-header-surface" Margin="0,0,0,16">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Border Grid.Column="0" Classes="metric-icon-surface" Margin="0,0,12,0">
-                                <LucideIcon Kind="Radio" Size="18"
-                                            Foreground="{DynamicResource AccentBrand}"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
+                    <!-- Header matches Scheduled messages and the entity workspace -->
+                    <Border Grid.Row="0" Classes="message-command-bar" Padding="24,18">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border Classes="entity-header-icon">
+                                <LucideIcon Kind="Radio" Size="18" Foreground="{DynamicResource AccentBrand}"/>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Live Message Stream" Classes="heading"/>
-                                <TextBlock Text="Real-time message monitoring for queues and subscriptions"
-                                           Classes="caption"/>
-                            </StackPanel>
-                            <Button Grid.Column="2" Classes="secondary small"
-                                    Command="{Binding CloseLiveStreamCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="X" Size="14"/>
-                                    <TextBlock Text="Close"/>
+                            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                <TextBlock Text="Live stream" Classes="entity-header-title"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border CornerRadius="999" Padding="8,1" Background="{DynamicResource SurfaceSuccess}"
+                                            IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsLive, FallbackValue=False}"
+                                            ToolTip.Tip="Peek-based: BusLane polls about once a second and never receives, so delivery is unaffected. Messages another receiver completes between polls can be missed.">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Ellipse Width="6" Height="6" Fill="{DynamicResource TextSuccess}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Live" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextSuccess}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border CornerRadius="999" Padding="8,1" Background="{DynamicResource SurfaceWarning}"
+                                            IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsPaused, FallbackValue=False}">
+                                        <TextBlock Text="Paused" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextWarning}"/>
+                                    </Border>
+                                    <Border CornerRadius="999" Padding="8,1" Background="{DynamicResource SurfaceBrand}"
+                                            IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsConnecting, FallbackValue=False}">
+                                        <TextBlock Text="Connecting" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource AccentBrand}"/>
+                                    </Border>
+                                    <Border CornerRadius="999" Padding="8,1" Background="{DynamicResource ChipBackground}"
+                                            IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsStopped, FallbackValue=False}">
+                                        <TextBlock Text="Stopped" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SubtleForeground}"/>
+                                    </Border>
+                                    <TextBlock Classes="overview-status" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               IsVisible="{Binding FeaturePanels.LiveStreamViewModel.ShowSession, FallbackValue=False}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} · {1}" FallbackValue="">
+                                                <Binding Path="FeaturePanels.LiveStreamViewModel.CurrentEntityType"/>
+                                                <Binding Path="FeaturePanels.LiveStreamViewModel.CurrentEntityName"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <TextBlock Classes="overview-status" VerticalAlignment="Center"
+                                               Text="Watch a queue or subscription without receiving its messages"
+                                               IsVisible="{Binding FeaturePanels.LiveStreamViewModel.ShowEntitySelector, FallbackValue=False}"/>
                                 </StackPanel>
-                            </Button>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button Classes="entity-header-action outline"
+                                        Command="{Binding FeaturePanels.LiveStreamViewModel.TogglePauseCommand}"
+                                        IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsLive, FallbackValue=False}"
+                                        ToolTip.Tip="Freeze the list to read it. New messages are held until you resume."
+                                        AutomationProperties.Name="Pause list updates">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Pause" Size="14"/>
+                                        <TextBlock Text="Pause"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="entity-header-action outline"
+                                        Command="{Binding FeaturePanels.LiveStreamViewModel.TogglePauseCommand}"
+                                        IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsPaused, FallbackValue=False}"
+                                        AutomationProperties.Name="Resume list updates">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Play" Size="14"/>
+                                        <TextBlock Text="Resume"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="entity-header-action outline"
+                                        Command="{Binding FeaturePanels.LiveStreamViewModel.StopStreamCommand}"
+                                        IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsActive, FallbackValue=False}"
+                                        ToolTip.Tip="Stop polling. Captured messages stay here for review."
+                                        AutomationProperties.Name="Stop live stream">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Square" Size="13"/>
+                                        <TextBlock Text="Stop"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="entity-header-action primary"
+                                        Command="{Binding FeaturePanels.LiveStreamViewModel.ResumeStreamCommand}"
+                                        IsVisible="{Binding FeaturePanels.LiveStreamViewModel.IsStopped, FallbackValue=False}"
+                                        ToolTip.Tip="Start polling the same source again. Messages already captured are not repeated."
+                                        AutomationProperties.Name="Resume live stream">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Play" Size="14"/>
+                                        <TextBlock Text="Resume stream"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="entity-header-action outline"
+                                        Command="{Binding FeaturePanels.LiveStreamViewModel.ChangeSourceCommand}"
+                                        IsVisible="{Binding FeaturePanels.LiveStreamViewModel.ShowSession, FallbackValue=False}"
+                                        ToolTip.Tip="Stop this stream, discard its capture, and pick another source."
+                                        AutomationProperties.Name="Change live stream source">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="ArrowLeftRight" Size="14"/>
+                                        <TextBlock Text="Change source"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="entity-header-action outline icon-only"
+                                        Command="{Binding CloseLiveStreamCommand}"
+                                        ToolTip.Tip="Close live stream"
+                                        AutomationProperties.Name="Close live stream">
+                                    <LucideIcon Kind="X" Size="16"/>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
                     <controls:LiveStreamView Grid.Row="1" DataContext="{Binding FeaturePanels.LiveStreamViewModel}"/>
