@@ -56,7 +56,7 @@
     <PackageReference Include="Velopack" Version="1.2.0" />
 
     <!-- MinVer for automatic versioning from Git tags -->
-    <PackageReference Include="MinVer" Version="7.0.0">
+    <PackageReference Include="MinVer" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
