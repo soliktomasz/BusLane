@@ -27,6 +27,16 @@ render icon.svg 1024 "$set_dir/icon_512x512@2x.png"
 
 iconutil -c icns "$set_dir" -o icon.icns
 
+# macOS 26+ bundle icon: compile the Icon Composer source (AppIcon.icon) into
+# Assets.car plus a pre-26 AppIcon.icns fallback. The release workflow copies both
+# into BusLane.app/Contents/Resources. Requires Xcode 26+ (xcrun actool).
+car_tmp=$(mktemp -d)
+xcrun actool AppIcon.icon --compile "$car_tmp" --platform macosx \
+  --minimum-deployment-target 10.15 --app-icon AppIcon \
+  --output-partial-info-plist "$car_tmp/partial.plist" >/dev/null
+cp "$car_tmp/Assets.car" "$car_tmp/AppIcon.icns" .
+rm -rf "$car_tmp"
+
 # Website copy: the same artwork cropped to the tile, without the dock shadow,
 # so the favicon and 30-34px brand marks render full size on the page.
 web=../../docs/BusLane/Assets

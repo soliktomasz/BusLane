@@ -1,0 +1,12 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="flow" x1="264" y1="0" x2="760" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="0.55" stop-color="#7C6CF7"/>
+      <stop offset="1" stop-color="#BDB0FF"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(512 512) scale(1.24272) translate(-512 -512)">
+    <rect x="264" y="468" width="496" height="88" rx="44" fill="url(#flow)"/>
+  </g>
+</svg>
