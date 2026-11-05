@@ -108,6 +108,10 @@ public partial class App : Application
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return;
 
+        // A bundled app gets its system-rendered icon from Assets.car; overriding it here would show the flat legacy art.
+        if (AppContext.BaseDirectory.Contains(".app/Contents/MacOS", StringComparison.Ordinal))
+            return;
+
         try
         {
             var iconPath = Path.Combine(AppContext.BaseDirectory, "icon.icns");

@@ -229,6 +229,39 @@ jobs:
             -p:UseAppHost=true \
             -o ./publish
 
+      # Velopack's generated bundle only carries a legacy .icns, which macOS 26+ clips
+      # into a squircle with rough edges. Build the bundle here so it ships Assets.car.
+      # Identity keys match what Velopack generated before, so installs keep updating.
+      - name: Assemble app bundle
+        env:
+          PACK_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          APP=./BusLane.app/Contents
+          mkdir -p "$APP/MacOS" "$APP/Resources"
+          cp -R ./publish/. "$APP/MacOS/"
+          rm -f "$APP/MacOS/Info.plist"
+          cp BusLane/Assets/AppIcon.icns BusLane/Assets/Assets.car "$APP/Resources/"
+          cat > "$APP/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key><string>BusLane</string>
+            <key>CFBundleIdentifier</key><string>com.BusLane.BusLane</string>
+            <key>CFBundleName</key><string>BusLane</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>${PACK_VERSION%%-*}</string>
+            <key>CFBundleVersion</key><string>${PACK_VERSION}</string>
+            <key>CFBundleSignature</key><string>????</string>
+            <key>CFBundleIconFile</key><string>AppIcon</string>
+            <key>CFBundleIconName</key><string>AppIcon</string>
+            <key>NSHighResolutionCapable</key><true/>
+            <key>NSPrincipalClass</key><string>NSApplication</string>
+          </dict>
+          </plist>
+          EOF
+          plutil -lint "$APP/Info.plist"
+
       - name: Install Velopack CLI
         run: dotnet tool install --global vpk --version ${{ env.VELOPACK_VERSION }}
 
@@ -274,7 +307,7 @@ jobs:
             --packTitle BusLane \
             --packAuthors BusLane \
             --packVersion "$PACK_VERSION" \
-            --packDir ./publish \
+            --packDir ./BusLane.app \
             --mainExe BusLane \
             --runtime ${{ matrix.runtime }} \
             --channel ${{ matrix.runtime }} \
