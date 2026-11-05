@@ -92,7 +92,7 @@
                                                                                     ToolTip.Tip="Delete template" AutomationProperties.Name="Delete template"
                                                                                     Command="{ReflectionBinding $parent[Window].DataContext.SendMessageViewModel.DeleteSavedMessageCommand}"
                                                                                     CommandParameter="{Binding}">
-                                                                                    <LucideIcon Kind="Trash2" Size="16"/>
+                                                                                    <LucideIcon Kind="Trash" Size="16"/>
                                                                                 </Button>
                                                                             </StackPanel>
                                                                         </Grid>

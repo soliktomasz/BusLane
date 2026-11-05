@@ -521,7 +521,7 @@
                                                                 CommandParameter="{Binding}"
                                                                 ToolTip.Tip="Delete rule"
                                                                 AutomationProperties.Name="{Binding Name, StringFormat='Delete {0}'}">
-                                                            <LucideIcon Kind="Trash2" Size="14"/>
+                                                            <LucideIcon Kind="Trash" Size="14"/>
                                                         </Button>
                                                     </StackPanel>
                                                 </Grid>

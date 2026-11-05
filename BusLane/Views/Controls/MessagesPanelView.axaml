@@ -136,7 +136,7 @@
                                             Padding="10,6"
                                             ToolTip.Tip="Delete selected messages">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <LucideIcon Kind="Trash2" Size="12"/>
+                                            <LucideIcon Kind="Trash" Size="12"/>
                                             <TextBlock Text="Delete"/>
                                         </StackPanel>
                                     </Button>
@@ -301,7 +301,7 @@
                                 <Button Classes="menu-item destructive" Command="{Binding PurgeMessagesCommand}"
                                         Click="OnMoreMenuItemClick">
                                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                                        <LucideIcon Kind="Trash2" Size="15"/>
+                                        <LucideIcon Kind="Trash" Size="15"/>
                                         <StackPanel Grid.Column="1" Spacing="2">
                                             <TextBlock Text="Purge messages" Classes="menu-item-label"/>
                                             <TextBlock Text="Shows a preview first. Purged messages can't be recovered."

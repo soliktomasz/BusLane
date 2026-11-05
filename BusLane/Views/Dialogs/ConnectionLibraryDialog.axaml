@@ -134,7 +134,7 @@
                                                             AutomationProperties.Name="Delete connection"
                                                             Command="{Binding $parent[Window].DataContext.Connection.ConnectionLibraryViewModel.DeleteConnectionCommand}"
                                                             CommandParameter="{Binding}">
-                                                            <LucideIcon Kind="Trash2" Size="16"/>
+                                                            <LucideIcon Kind="Trash" Size="16"/>
                                                         </Button>
                                                         <Button Classes="secondary" MinHeight="34" Margin="8,0,0,0"
                                                             Command="{Binding $parent[Window].DataContext.Connection.ConnectionLibraryViewModel.SelectConnectionCommand}"
@@ -373,7 +373,7 @@
                                     <Button Classes="danger-subtle" HorizontalAlignment="Left"
                                         Command="{Binding Connection.ConnectionLibraryViewModel.ClearAllConnectionsCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <LucideIcon Kind="Trash2" Size="16"/>
+                                            <LucideIcon Kind="Trash" Size="16"/>
                                             <TextBlock Text="Clear All Connections"/>
                                         </StackPanel>
                                     </Button>

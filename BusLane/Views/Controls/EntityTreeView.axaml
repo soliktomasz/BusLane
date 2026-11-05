@@ -666,7 +666,7 @@
                                                                             IsVisible="{Binding $parent[Window].DataContext.ShowTopicActionButtons}"
                                                                             VerticalAlignment="Center"
                                                                             Margin="0,0,0,0">
-                                                                        <LucideIcon Kind="Trash2" Size="11"
+                                                                        <LucideIcon Kind="Trash" Size="11"
                                                                                     Foreground="{DynamicResource TextDanger}"/>
                                                                     </Button>
                                                                 </Grid>

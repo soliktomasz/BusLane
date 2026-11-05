@@ -100,7 +100,7 @@
                                                                 Command="{Binding $parent[Window].DataContext.EntityOperations.DeleteSubscriptionRuleRequestCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 ToolTip.Tip="Delete rule">
-                                                            <LucideIcon Kind="Trash2" Size="15"/>
+                                                            <LucideIcon Kind="Trash" Size="15"/>
                                                         </Button>
                                                     </Grid>
                                                 </Border>

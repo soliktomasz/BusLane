@@ -227,7 +227,7 @@
                         <Button Grid.Column="3" Classes="danger-subtle" Command="{Binding ClearLogsCommand}"
                                 IsEnabled="{Binding TotalLogCount}" ToolTip.Tip="Clear all logs, including hidden entries">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="Trash2" Size="16"/>
+                                <LucideIcon Kind="Trash" Size="16"/>
                                 <TextBlock Text="Clear all"/>
                             </StackPanel>
                         </Button>
